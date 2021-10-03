@@ -15,4 +15,7 @@ std::string getEnvironmentVariable (std::string const &);
 std::string readConfig (const std::string &);
 void writeConfig (const std::string &);
 
+/* execution engine */
+void runCommand (const std::string);
+
 #endif /* _HPP_FUNCTIONS_ */

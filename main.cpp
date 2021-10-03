@@ -57,6 +57,8 @@ int main(int argc, char **argv) {
     }
 
     /* At this point we can start the installation */
+    std::string command = "ls -l";
+    runCommand(command);
 
 #if 0
     /* execvp test */

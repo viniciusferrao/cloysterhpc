@@ -14,6 +14,7 @@
 /* This is when we just don't care anymore */
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/process.hpp>
 
 /* getopt code:
  * Return optind to manipulate argc and argv outside function.
@@ -119,4 +120,17 @@ void writeConfig (const std::string &filename) {
     tree.put("headnode.LANG", getEnvironmentVariable("LANG"));
 
     boost::property_tree::write_ini(filename, tree);
+}
+
+/* Execution engine code */
+void runCommand (const std::string command) {
+    boost::process::ipstream pipe_stream;
+    boost::process::child c(command, boost::process::std_out > pipe_stream);
+
+    std::string line;
+
+    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty())
+        std::cerr << line << std::endl;
+
+    c.wait();    
 }
