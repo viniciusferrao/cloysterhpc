@@ -11,7 +11,7 @@ LFLAGS		= -Wall
 #
 # Project files
 #
-SRCS = main.cpp server.cpp cluster.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
+SRCS = main.cpp functions.cpp server.cpp cluster.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main 
 

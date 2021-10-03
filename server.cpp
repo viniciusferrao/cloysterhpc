@@ -5,6 +5,9 @@
 
 #include <sys/utsname.h>
 
+/* We should refactor to boost::property_tree on both methods: fetchValue() and
+ * setOS().
+ */
 std::string Server::fetchValue (std::string line) {
     std::string value;
 
