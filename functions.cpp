@@ -130,7 +130,9 @@ void runCommand (const std::string command) {
     std::string line;
 
     while (pipe_stream && std::getline(pipe_stream, line) && !line.empty())
+#ifdef _DEBUG_
         std::cerr << line << std::endl;
+#endif
 
     c.wait();    
 }

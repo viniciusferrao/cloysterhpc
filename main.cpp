@@ -57,29 +57,16 @@ int main(int argc, char **argv) {
     }
 
     /* At this point we can start the installation */
-    std::string command = "ls -l";
-    runCommand(command);
+    Cluster cluster;
 
-#if 0
-    /* execvp test */
-    char *argumentList[] = {"ls", "-l", NULL};
-    int statusCode = execvp(argumentList[0], argumentList);
-#endif
+    /* Trash initialization */
+    cluster.timezone = "America/Sao_Paolo";
+    cluster.locale = "en_US.utf8";
+    cluster.fqdn = "headnode.cloyster.invalid";
+    cluster.firewall = false;
+    cluster.selinux = false;
 
-#if 0
-    /* popen test */
-    FILE* file = popen("ls -l", "r"); // You should add error checking here.
-    char *out = NULL;
-    size_t outlen = 0;
-    while (getline(&out, &outlen, file) >= 0)
-    {
-        printf("%s", out);
-        printf("oi\n");
-    }
-    pclose(file);
-    free(out);
-#endif
-
+    cluster.install();
 
 #if 0
     printf("Cluster attributes defined:\n");

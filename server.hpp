@@ -19,6 +19,11 @@ public:
         unsigned majorVersion;
         unsigned minorVersion;
     } os;
+    struct {
+        std::string hostname;
+        std::string domainname;
+        IP ip;
+    } network;
 
     int setOS (void);
     int checkSupportedOS (void);   

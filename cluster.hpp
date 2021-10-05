@@ -7,32 +7,42 @@
 
 class Cluster {
 private:
-    void setTimezone (std::string timezone);
+    void setTimezone (std::string);
+    void setLocale (std::string);
+    void setFQDN (std::string);
+    void enableFirewall (void);
+    void disableFirewall (void);
+    int setSELinuxMode (std::string);
+    void installRequiredPackages (void);
+    void setupRepositories (void);
+    void installProvisioningServices (void);
 
 public:
-    char *timezone;
-    char *locale;
-    char *hostname;
-    char *domainname;
-    char *fqdn;
+    bool firewall;
+    bool selinux;
+    std::string timezone;
+    std::string locale;
+    std::string hostname;
+    std::string domainname;
+    std::string fqdn;
     NETWORK service;
     NETWORK management;
     NETWORK application;
-    char *interfaceExternal;
-    char *interfaceInternal;
-    char *interfaceInternalNetwork;
-    char *interfaceInternalIP;
-    char *xCATDynamicRangeStart;
-    char *xCATDynamicRangeEnd;
-    char *directoryAdminPassword;
-    char *directoryManagerPassword;
+    std::string interfaceExternal;
+    std::string interfaceInternal;
+    std::string interfaceInternalNetwork;
+    std::string interfaceInternalIP;
+    std::string xCATDynamicRangeStart;
+    std::string xCATDynamicRangeEnd;
+    std::string directoryAdminPassword;
+    std::string directoryManagerPassword;
     bool directoryDisableDNSSEC;
-    char *nodePrefix;
-    char *nodePadding;
-    char *nodeStartIP;
-    char *nodeRootPassword;
-    char *nodeISOPath;
-    char *ibStack;
+    std::string nodePrefix;
+    std::string nodePadding;
+    std::string nodeStartIP;
+    std::string nodeRootPassword;
+    std::string nodeISOPath;
+    std::string ibStack;
     QUEUESYSTEM queueSystem;
     POSTFIX postfix;
     bool updateSystem;
