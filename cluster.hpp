@@ -13,18 +13,20 @@ private:
     void enableFirewall (void);
     void disableFirewall (void);
     int setSELinuxMode (std::string);
+    void systemUpdate (void);
     void installRequiredPackages (void);
     void setupRepositories (void);
     void installProvisioningServices (void);
+    void setupTimeService (void);
 
 public:
-    bool firewall;
-    bool selinux;
+    bool firewall; // Perhaps this should be on Headnode instead
+    bool selinux; // Perhaps this should be on Headnode instead
     std::string timezone;
-    std::string locale;
-    std::string hostname;
+    std::string locale; // Perhaps this should be on Headnode instead
+    std::string hostname; // Definitely on Headnode
     std::string domainname;
-    std::string fqdn;
+    std::string fqdn; // FQDN of the Headnode
     NETWORK service;
     NETWORK management;
     NETWORK application;

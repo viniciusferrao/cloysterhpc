@@ -8,10 +8,6 @@
 
 #include <string> /* std::string */
 
-typedef enum {
-    X86_64
-} ARCH;
-
 typedef struct {
     uint32_t address;
     uint32_t netmask;
@@ -62,7 +58,7 @@ typedef struct {
 } POSTFIX;
 
 #if 0
-/* We describe the entire cluster in a single struct and this is a bada data 
+/* We describe the entire cluster in a single struct and this is a bad data 
  * model. We need to adapt this to have smaller structs merged in a single
  * struct at the end.
  * Unions may be used in mutually exclusive selections, for instance the queue

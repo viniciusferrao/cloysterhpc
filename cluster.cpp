@@ -44,6 +44,10 @@ int Cluster::setSELinuxMode (std::string mode) {
     return -1; /* Failed to parse SELinux mode */
 }
 
+void Cluster::systemUpdate (void) {
+    runCommand("dnf -y update");
+}
+
 void Cluster::installRequiredPackages (void) {
     runCommand("dnf -y install wget dnf-plugins-core");
 }
@@ -65,6 +69,16 @@ void Cluster::setupRepositories (void) {
 void Cluster::installProvisioningServices (void) {
     runCommand("dnf -y install ohpc-base");
     runCommand("dnf -y install xCAT");
+}
+
+void Cluster::setupTimeService (void) {
+    runCommand("rpm -q chrony");
+    //if not installed
+    runCommand("dnf -y install chrony");
+
+    // this should be a parse solution directly on the file instead
+    runCommand("echo \"allow all\" >> /etc/chrony.conf");
+    runCommand("systemctl start --now chronyd");
 }
 
 void Cluster::install (void) {

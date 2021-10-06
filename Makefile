@@ -1,17 +1,17 @@
 #
 # Compiler flags
 #
-CC			= clang
+CC		= clang
 CFLAGS		= -Wall -Wextra #-Werror
-CXX			= clang++ --std=c++2a
+CXX		= clang++ --std=c++2a
 CXXFLAGS	= $(CFLAGS)
-LD			= clang++
+LD		= clang++
 LFLAGS		= -Wall
 
 #
 # Project files
 #
-SRCS = main.cpp functions.cpp server.cpp cluster.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
+SRCS = main.cpp functions.cpp headnode.cpp cluster.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main 
 
@@ -47,7 +47,9 @@ DUMMYCXXFLAGS = $(DUMMYCFLAGS)
 # Libraries needed during dynamic linking
 #
 NEWT = -lnewt
-DYNLIBS = $(NEWT)
+BOOST = -lboost_system
+PTHREAD = -lpthread
+DYNLIBS = $(NEWT) $(BOOST) $(LPTHREAD) 
 
 .PHONY: all clean debug prep release remake
 

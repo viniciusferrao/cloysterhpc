@@ -12,6 +12,7 @@
 #endif
 
 /* This is when we just don't care anymore */
+#pragma clang system_header /* This would suppress abusive warning messages */
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>
@@ -104,7 +105,8 @@ std::string readConfig (const std::string &filename) {
 
     boost::property_tree::ini_parser::read_ini(filename, tree);
 
-    const std::string value = tree.get<std::string>("headnode.LANG");
+    const std::string value = tree.get<std::string>("headnode.LANG",
+                                                    "en_US.utf8");
 #ifdef _DEBUG_
     std::cout << "Read configFile variables:" << std::endl;
     std::cout << "LANG: " << value << std::endl;

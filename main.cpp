@@ -12,7 +12,7 @@
 #include "types.hpp"
 #include "messages.hpp"
 #include "functions.hpp"
-#include "server.hpp"
+#include "headnode.hpp"
 #include "cluster.hpp"
 //#include "tui.hpp"
 
@@ -44,10 +44,10 @@ int main(int argc, char **argv) {
     /* .conf file manipulation */
     std::string homeDirectory = getEnvironmentVariable("HOME");
     std::string configFile = homeDirectory + "/.cloyster.conf";
-    readConfig(configFile);
+    readConfig(configFile); /* crashes if file does not exist */
     writeConfig(configFile);
 
-    Server headnode;
+    Headnode headnode;
     if ((rc = headnode.setOS())) {
         std::cout << "Failed to setOS: return code " << rc << std::endl;
     }
@@ -60,13 +60,14 @@ int main(int argc, char **argv) {
     Cluster cluster;
 
     /* Trash initialization */
-    cluster.timezone = "America/Sao_Paolo";
+    cluster.timezone = "America/Sao_Paulo";
     cluster.locale = "en_US.utf8";
     cluster.fqdn = "headnode.cloyster.invalid";
     cluster.firewall = false;
     cluster.selinux = false;
 
-    cluster.install();
+    runCommand("ls -l");
+    //cluster.install();
 
 #if 0
     printf("Cluster attributes defined:\n");

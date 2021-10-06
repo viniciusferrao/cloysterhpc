@@ -1,20 +1,39 @@
-#ifndef _HPP_SERVER_
-#define _HPP_SERVER_
+#ifndef _HPP_HEADNODE_
+#define _HPP_HEADNODE_
 
 #include <string> /* std::string */
 
 #include "types.hpp"
 
-class Server {
+enum class Arch {
+    x86_64,
+    ppc64le
+};
+
+enum class Family {
+    Linux,
+    Darwin // Development reasons, not really supported.
+};
+
+enum class Platform {
+    el8
+};
+
+enum class Distro {
+    RHEL,
+    OL
+};
+
+class Headnode {
 private:
     std::string fetchValue (std::string line);
 
 public:
-    ARCH arch;
+    Arch arch;
     struct {
-        std::string family;
-        std::string platform;
-        std::string id;
+        Family family;
+        Platform platform;
+        Distro distro;
         std::string kernel;
         unsigned majorVersion;
         unsigned minorVersion;
@@ -29,4 +48,4 @@ public:
     int checkSupportedOS (void);   
 };
 
-#endif /* _HPP_SERVER_ */
+#endif /* _HPP_HEADNODE_ */
