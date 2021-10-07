@@ -1,12 +1,27 @@
 #
+# OS detection to select with C++ release should we use
+#
+OS := $(shell uname -s)
+OS_RELEASE := $(shell uname -r)
+ifeq ($(OS),Linux)
+	ifeq ($(OS_RELEASE),el8) # Enterprise Linux 8 does not support C++2a
+		STDCXX = c++17
+	else
+		STDCXX = c++2a
+	endif
+else
+	STDCXX = c++2a
+endif
+
+#
 # Compiler flags
 #
-CC		= clang
-CFLAGS		= -Wall -Wextra #-Werror
-CXX		= clang++ --std=c++2a
-CXXFLAGS	= $(CFLAGS)
-LD		= clang++
-LFLAGS		= -Wall
+CC = clang
+CFLAGS = -Wall -Wextra #-Werror
+CXX = clang++ --std=$(STDCXX)
+CXXFLAGS = $(CFLAGS)
+LD = clang++
+LFLAGS = -Wall
 
 #
 # Project files
