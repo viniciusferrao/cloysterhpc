@@ -1,10 +1,12 @@
 #
-# OS detection to select with C++ release should we use
+# OS detection to select which C++ release should we use
+# Enterprise Linux 8 does not support C++2a, we select C++17 instead for
+# everything else we default to C++2a
 #
 OS := $(shell uname -s)
 OS_RELEASE := $(shell uname -r)
 ifeq ($(OS),Linux)
-	ifeq ($(OS_RELEASE),el8) # Enterprise Linux 8 does not support C++2a
+	ifeq ($(filter el8%,$(OS_RELEASE)),)
 		STDCXX = c++17
 	else
 		STDCXX = c++2a
@@ -12,6 +14,11 @@ ifeq ($(OS),Linux)
 else
 	STDCXX = c++2a
 endif
+
+osdetect:
+	@echo $(OS)
+	@echo $(OS_RELEASE)
+	@echo $(STDCXX)
 
 #
 # Compiler flags
