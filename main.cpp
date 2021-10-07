@@ -65,8 +65,8 @@ int main(int argc, char **argv) {
     headnode.network.setProfile("External");
     std::cout << headnode.network.getProfile() << std::endl;
 
-    headnode.network.setType("Ethernet");
-    std::cout << headnode.network.getType() << std::endl;
+    headnode.network.setType(Network::Type::Ethernet);
+    std::cout << (int)headnode.network.getType() << std::endl;
 
     /* At this point we can start the installation */
     Cluster cluster;
@@ -78,8 +78,14 @@ int main(int argc, char **argv) {
     cluster.firewall = false;
     cluster.selinux = false;
 
-    runCommand("ls -l");
-    //cluster.install();
+#ifndef _DUMMY_
+    if (headnode.os.family == OS::Family::Darwin) {
+        std::cerr << "ERROR: Cowardly refusing to run commands on macOS!" <<
+                                                                    std::endl;
+        exit(-1);
+    }
+#endif
+        cluster.install();
 
 #if 0
     printf("Cluster attributes defined:\n");

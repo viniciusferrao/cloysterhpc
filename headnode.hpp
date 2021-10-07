@@ -11,16 +11,16 @@
 enum class Arch { x86_64, ppc64le };
 
 class Network {
-private:
+public:
     enum class Profile { External, Management, Service, Application };
     enum class Type { Ethernet, Infiniband };
 
-    struct in_addr addr;
+private:
+    Profile m_profile;
+    Type m_type;
+    struct in_addr m_addr;
 
 public:
-    Profile profile;
-    Type type;
-    
     struct {
         std::string interface;
         uint16_t mtu;
@@ -37,13 +37,13 @@ public:
     std::string fqdn;
     std::vector<std::string> nameserver;
 
-    int setProfile (std::string profile);
+    int setProfile (std::string);
     std::string getProfile (void);
 
-    int setType (std::string type);
-    std::string getType (void);
+    int setType (Type);
+    Type getType (void);
 
-    int setIPAddress (std::string address);
+    int setIPAddress (std::string);
     std::string getIPAddress (void);
 
 };

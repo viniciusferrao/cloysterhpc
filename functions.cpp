@@ -12,7 +12,6 @@
 #endif
 
 /* This is when we just don't care anymore */
-#pragma clang system_header /* This would suppress abusive warning messages */
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>
@@ -126,6 +125,7 @@ void writeConfig (const std::string &filename) {
 
 /* Execution engine code */
 void runCommand (const std::string command) {
+#ifndef _DUMMY_
     boost::process::ipstream pipe_stream;
     boost::process::child c(command, boost::process::std_out > pipe_stream);
 
@@ -136,5 +136,8 @@ void runCommand (const std::string command) {
         std::cerr << line << std::endl;
 #endif
 
-    c.wait();    
+    c.wait();
+#else
+    std::cout << "exec: " << command << std::endl;
+#endif
 }

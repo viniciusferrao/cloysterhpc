@@ -40,8 +40,10 @@ RELLFLAGS =
 #
 DUMMYDIR = dummy
 DUMMYEXE = $(DUMMYDIR)/$(EXE)
+DUMMYOBJS = $(addprefix $(DUMMYDIR)/, $(OBJS))
 DUMMYCFLAGS = -D_DUMMY_
 DUMMYCXXFLAGS = $(DUMMYCFLAGS)
+DUMMYLFLAGS =
 
 #
 # Libraries needed during dynamic linking
@@ -74,13 +76,13 @@ $(DBGDIR)/%.o: %.cpp
 #
 dummy: prep $(DUMMYEXE)
 
-$(DUMMYEXE): $(RELOBJS)
-	$(LD) $(LFLAGS) $(RELLFLAGS) $(DYNLIBS) -o $(RELEXE) $^
+$(DUMMYEXE): $(DUMMYOBJS)
+	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DUMMYLFLAGS) $(DYNLIBS) -o $(DUMMYEXE) $^
 	rm -f $(EXE)
-	ln -s $(RELEXE)
+	ln -s $(DUMMYEXE)
 
 $(DUMMYDIR)/%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $(RELCFLAGS) $(DUMMYCXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(DBGCXXFLAGS) $(DUMMYCXXFLAGS) -o $@ $<
 
 #
 # Release rules
@@ -104,6 +106,6 @@ prep:
 remake: clean all
 
 clean:
-	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(EXE)
+	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(EXE)
 	rm -rf $(RELDIR) $(DBGDIR)
 	rm -rf *.dSYM

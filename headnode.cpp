@@ -12,25 +12,25 @@
 #endif
 
 int Network::setIPAddress (std::string address) {
-    if (inet_aton(address.c_str(), &addr) == 0)
+    if (inet_aton(address.c_str(), &m_addr) == 0)
         return -1; /* Invalid IP Address */
     return 0;
 }
 
 std::string Network::getIPAddress (void) {
-    return inet_ntoa(addr);
+    return inet_ntoa(m_addr);
 }
 
 /* This implementation is not good. We should make Network::Profile public. */
 int Network::setProfile (std::string profile) {
     if (profile == "External")
-        this->profile = Network::Profile::External;
+        this->m_profile = Network::Profile::External;
     else if (profile == "Management")
-        this->profile = Network::Profile::Management;
+        this->m_profile = Network::Profile::Management;
     else if (profile == "Service")
-        this->profile = Network::Profile::Service;
+        this->m_profile = Network::Profile::Service;
     else if (profile == "Application")
-        this->profile = Network::Profile::Application;
+        this->m_profile = Network::Profile::Application;
     else
         return -1;
     
@@ -38,24 +38,37 @@ int Network::setProfile (std::string profile) {
 }
 
 std::string Network::getProfile (void) {
-    if (this->profile == Network::Profile::External)
+    if (this->m_profile == Network::Profile::External)
         return "External";
-    else if (this->profile == Network::Profile::Management)
+    else if (this->m_profile == Network::Profile::Management)
         return "Management";
-    else if (this->profile == Network::Profile::Service)
+    else if (this->m_profile == Network::Profile::Service)
         return "Service";
-    else if (this->profile == Network::Profile::Application)
+    else if (this->m_profile == Network::Profile::Application)
         return "Application";
 
     return "Error";
 }
 
-int Network::setType (std::string type) {
+int Network::setType (Network::Type type) {
+    switch (type) {
+        case Type::Ethernet:
+            this->m_type = Type::Ethernet;
+            break;
+
+        case Type::Infiniband:
+            this->m_type = Type::Infiniband;
+            break;
+
+        default:
+            return -1; /* Invalid type */
+    }
+
     return 0;
 }
 
-std::string Network::getType (void) {
-    return "Type not defined";
+Network::Type Network::getType (void) {
+    return this->m_type;
 }
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
