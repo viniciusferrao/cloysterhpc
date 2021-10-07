@@ -27,7 +27,7 @@ public:
     std::string hostname; // Definitely on Headnode
     std::string domainname;
     std::string fqdn; // FQDN of the Headnode
-    NETWORK service;
+    NETWORK service; // This should describle available nets but not addresses
     NETWORK management;
     NETWORK application;
     std::string interfaceExternal;

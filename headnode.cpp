@@ -11,6 +11,53 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
+int Network::setIPAddress (std::string address) {
+    if (inet_aton(address.c_str(), &addr) == 0)
+        return -1; /* Invalid IP Address */
+    return 0;
+}
+
+std::string Network::getIPAddress (void) {
+    return inet_ntoa(addr);
+}
+
+/* This implementation is not good. We should make Network::Profile public. */
+int Network::setProfile (std::string profile) {
+    if (profile == "External")
+        this->profile = Network::Profile::External;
+    else if (profile == "Management")
+        this->profile = Network::Profile::Management;
+    else if (profile == "Service")
+        this->profile = Network::Profile::Service;
+    else if (profile == "Application")
+        this->profile = Network::Profile::Application;
+    else
+        return -1;
+    
+    return 0;
+}
+
+std::string Network::getProfile (void) {
+    if (this->profile == Network::Profile::External)
+        return "External";
+    else if (this->profile == Network::Profile::Management)
+        return "Management";
+    else if (this->profile == Network::Profile::Service)
+        return "Service";
+    else if (this->profile == Network::Profile::Application)
+        return "Application";
+
+    return "Error";
+}
+
+int Network::setType (std::string type) {
+    return 0;
+}
+
+std::string Network::getType (void) {
+    return "Type not defined";
+}
+
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS().
  */
@@ -44,9 +91,9 @@ int Headnode::setOS (void) {
      * std::map<std::string, Family> osFamily
      */
     if (std::string{system.sysname} == "Linux")
-        this->os.family = Family::Linux;
+        this->os.family = OS::Family::Linux;
     if (std::string{system.sysname} == "Darwin")
-        this->os.family = Family::Darwin;
+        this->os.family = OS::Family::Darwin;
 
     /* Store kernel release in string format */
     this->os.kernel = std::string{system.release};
@@ -82,7 +129,7 @@ int Headnode::setOS (void) {
 
                 std::string parser = fetchValue(line);
                 if (parser.substr(parser.find(":") + 1) == "el8")
-                    this->os.platform = Platform::el8;
+                    this->os.platform = OS::Platform::el8;
             }
 
 #if __cplusplus >= 202002L
@@ -92,9 +139,9 @@ int Headnode::setOS (void) {
 #endif
 
                 if (fetchValue(line) == "rhel")
-                    this->os.distro = Distro::RHEL;
+                    this->os.distro = OS::Distro::RHEL;
                 if (fetchValue(line) == "ol")
-                    this->os.distro = Distro::OL;
+                    this->os.distro = OS::Distro::OL;
             }
 
 #if __cplusplus >= 202002L
@@ -143,19 +190,20 @@ int Headnode::checkSupportedOS (void) {
         return -1;
     }
 
-    if (this->os.family != Family::Linux) {
+    if (this->os.family != OS::Family::Linux) {
         std::cout << (int)this->os.family 
             << " is not a supported operating system" << std::endl;
         return -2;
     }
 
-    if (this->os.platform != Platform::el8) {
+    if (this->os.platform != OS::Platform::el8) {
         std::cout << (int)this->os.platform 
             << " is not a supported Linux platform" << std::endl;
         return -3;
     }
 
-    if ((this->os.distro != Distro::RHEL) && (this->os.distro != Distro::OL)) {
+    if ((this->os.distro != OS::Distro::RHEL) && 
+        (this->os.distro != OS::Distro::OL)) {
         std::cout << (int)this->os.distro 
             << " is not a supported Linux distribution" << std::endl;
         return -4;

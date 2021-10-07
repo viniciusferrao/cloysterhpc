@@ -56,6 +56,18 @@ int main(int argc, char **argv) {
         std::cout << "Unsupported OS: return code " << rc << std::endl;
     }
 
+    /* Testing */
+    std::string CSIIPAddress = "359.33.9.234";
+    if (headnode.network.setIPAddress(CSIIPAddress) != 0)
+        std::cout << "Invalid IPv4,5 address" << std::endl;
+    std::cout << headnode.network.getIPAddress() << std::endl;
+
+    headnode.network.setProfile("External");
+    std::cout << headnode.network.getProfile() << std::endl;
+
+    headnode.network.setType("Ethernet");
+    std::cout << headnode.network.getType() << std::endl;
+
     /* At this point we can start the installation */
     Cluster cluster;
 
