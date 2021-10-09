@@ -29,7 +29,8 @@
  * optstring: if it is ':', then ':' is returned; otherwise '?' is returned.
  * https://www.man7.org/linux/man-pages/man3/getopt.3.html
  * 
- * Finally we should consider reimplementing this is boost:program_options.
+ * Finally we should consider reimplementing this with boost:
+ * boost::program_options
  */
 int parseArguments(int argc, char **argv) {
     int ch;
@@ -102,7 +103,15 @@ std::string getEnvironmentVariable (std::string const &key) {
 std::string readConfig (const std::string &filename) {
     boost::property_tree::ptree tree;
 
-    boost::property_tree::ini_parser::read_ini(filename, tree);
+    try {
+        boost::property_tree::ini_parser::read_ini(filename, tree);
+    } 
+    
+    catch(boost::property_tree::ini_parser_error) {
+#ifdef _DEBUG_
+        std::cerr << filename << " not found" << std::endl;
+#endif
+    }
 
     const std::string value = tree.get<std::string>("headnode.LANG",
                                                     "en_US.utf8");

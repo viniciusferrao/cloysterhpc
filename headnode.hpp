@@ -15,37 +15,31 @@ public:
     enum class Profile { External, Management, Service, Application };
     enum class Type { Ethernet, Infiniband };
 
-private:
-    Profile m_profile;
-    Type m_type;
-    struct in_addr m_addr;
-
-public:
-    struct {
-        std::string interface;
-        uint16_t mtu;
-    } l2;
-
-    struct {
-        uint32_t ip;
-        uint32_t mask;
-        uint32_t gateway;
-    } l3;
-
     std::string hostname;
     std::string domainname;
     std::string fqdn;
     std::vector<std::string> nameserver;
 
-    int setProfile (std::string);
-    std::string getProfile (void);
+private:
+    Profile m_profile;
+    Type m_type;
+    struct in_addr m_addr;
+    struct ifaddrs *m_ifaddr;
 
-    int setType (Type);
+public:
+    Network ();
+
+    void setProfile (Profile);
+    Profile getProfile (void);
+
+    void setType (Type);
     Type getType (void);
+
+    int setInterfaceName (void);
+    void printInterfaceName (void);
 
     int setIPAddress (std::string);
     std::string getIPAddress (void);
-
 };
 
 class OS {
@@ -75,6 +69,7 @@ public:
     Network network;
 
     int setOS (void);
+    void printOS (void);
     int checkSupportedOS (void);   
 };
 

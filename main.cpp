@@ -19,28 +19,6 @@
 int main(int argc, char **argv) {
     int rc; /* return code */
 
-#if 0 /* Not ported yet to C++; broken */
-    if (argc == 1) {
-        /* Start up the graphical terminal interface */
-        tuiStartup();
-        exit(0);
-
-#ifdef _DEBUG_
-        tuiDebugInfo();
-#endif
-
-        tuiBeginInstall(&cluster);
-        tuiExit();
-    } else {
-#endif
-        optind = parseArguments(argc, argv);
-
-        argc -= optind;
-        argv += optind;
-#if 0
-    }
-#endif
-
     /* .conf file manipulation */
     std::string homeDirectory = getEnvironmentVariable("HOME");
     std::string configFile = homeDirectory + "/.cloyster.conf";
@@ -49,24 +27,31 @@ int main(int argc, char **argv) {
 
     Headnode headnode;
     if ((rc = headnode.setOS())) {
-        std::cout << "Failed to setOS: return code " << rc << std::endl;
+        std::cerr << "Failed to setOS: return code " << rc << std::endl;
+        exit(-1);
     }
 
+#ifdef _DEBUG_
+    headnode.printOS();
+#endif
+
     if ((rc = headnode.checkSupportedOS())) {
-        std::cout << "Unsupported OS: return code " << rc << std::endl;
+        std::cerr << "Unsupported OS: return code " << rc << std::endl;
     }
 
     /* Testing */
-    std::string CSIIPAddress = "359.33.9.234";
+    std::string CSIIPAddress = "146.164.36.16";
     if (headnode.network.setIPAddress(CSIIPAddress) != 0)
-        std::cout << "Invalid IPv4,5 address" << std::endl;
+        std::cerr << "Invalid IPv4,5 address" << std::endl;
     std::cout << headnode.network.getIPAddress() << std::endl;
 
-    headnode.network.setProfile("External");
-    std::cout << headnode.network.getProfile() << std::endl;
+    //headnode.network.setProfile(Network::Profile::Application);
+    if (headnode.network.getProfile() == Network::Profile::External)
+        std::cout << "External" << std::endl;
 
-    headnode.network.setType(Network::Type::Ethernet);
-    std::cout << (int)headnode.network.getType() << std::endl;
+    //headnode.network.setType(Network::Type::Infiniband);
+    if (headnode.network.getType() == Network::Type::Ethernet)
+        std::cout << "Ethernet" << std::endl;
 
     /* At this point we can start the installation */
     Cluster cluster;

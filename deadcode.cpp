@@ -1,6 +1,30 @@
 /* This is the graveyard where dead code resides for future reference */
 
 #if 0
+#if 0 /* Not ported yet to C++; broken */
+    if (argc == 1) {
+        /* Start up the graphical terminal interface */
+        tuiStartup();
+        exit(0);
+
+#ifdef _DEBUG_
+        tuiDebugInfo();
+#endif
+
+        tuiBeginInstall(&cluster);
+        tuiExit();
+    } else {
+#endif
+        optind = parseArguments(argc, argv);
+
+        argc -= optind;
+        argv += optind;
+#if 0
+    }
+#endif
+#endif
+
+#if 0
     tuiStartup();
 
     /* popen(); with "FILE*" to "fd" converter test to newt

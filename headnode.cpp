@@ -7,9 +7,43 @@
 
 #include <sys/utsname.h>
 
+#include <ifaddrs.h> /* getifaddrs() */
+
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
 #endif
+
+/* Constructor */
+Network::Network () : m_profile (Profile::External), m_type (Type::Ethernet) {
+    setIPAddress("0.0.0.0");
+}
+
+void Network::setProfile (Network::Profile profile) {
+    this->m_profile = profile;
+}
+
+Network::Profile Network::getProfile (void) {
+    return this->m_profile;
+}
+
+void Network::setType (Network::Type type) {
+    this->m_type = type;
+}
+
+Network::Type Network::getType (void) {
+    return this->m_type;
+}
+
+int Network::setInterfaceName (void) {
+    if (getifaddrs(&this->m_ifaddr) == -1) {
+        return -1;
+    }
+    return 0;
+}
+
+void Network::printInterfaceName (void) {
+
+}
 
 int Network::setIPAddress (std::string address) {
     if (inet_aton(address.c_str(), &m_addr) == 0)
@@ -19,56 +53,6 @@ int Network::setIPAddress (std::string address) {
 
 std::string Network::getIPAddress (void) {
     return inet_ntoa(m_addr);
-}
-
-/* This implementation is not good. We should make Network::Profile public. */
-int Network::setProfile (std::string profile) {
-    if (profile == "External")
-        this->m_profile = Network::Profile::External;
-    else if (profile == "Management")
-        this->m_profile = Network::Profile::Management;
-    else if (profile == "Service")
-        this->m_profile = Network::Profile::Service;
-    else if (profile == "Application")
-        this->m_profile = Network::Profile::Application;
-    else
-        return -1;
-    
-    return 0;
-}
-
-std::string Network::getProfile (void) {
-    if (this->m_profile == Network::Profile::External)
-        return "External";
-    else if (this->m_profile == Network::Profile::Management)
-        return "Management";
-    else if (this->m_profile == Network::Profile::Service)
-        return "Service";
-    else if (this->m_profile == Network::Profile::Application)
-        return "Application";
-
-    return "Error";
-}
-
-int Network::setType (Network::Type type) {
-    switch (type) {
-        case Type::Ethernet:
-            this->m_type = Type::Ethernet;
-            break;
-
-        case Type::Infiniband:
-            this->m_type = Type::Infiniband;
-            break;
-
-        default:
-            return -1; /* Invalid type */
-    }
-
-    return 0;
-}
-
-Network::Type Network::getType (void) {
-    return this->m_type;
 }
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
@@ -87,6 +71,7 @@ std::string Headnode::fetchValue (std::string line) {
     return value;    
 }
 
+/* TODO: Better error return codes */
 int Headnode::setOS (void) {
     struct utsname system;
 
@@ -98,8 +83,6 @@ int Headnode::setOS (void) {
 
     this->arch = Arch::x86_64;
 
-    
-    
     /* A map would be a better ideia:
      * std::map<std::string, Family> osFamily
      */
@@ -117,10 +100,13 @@ int Headnode::setOS (void) {
     std::cout << "Kernel Release: " << this->os.kernel << std::endl;
 #endif
 
+#ifdef _DUMMY_
     if (std::string{system.sysname} == "Darwin") {
-    //if (std::string{system.sysname} == "Linux") {
         std::string filename = "chroot/etc/os-release";
-        //std::string filename = "/etc/os-release";
+#else
+    if (std::string{system.sysname} == "Linux") {
+        std::string filename = "/etc/os-release";
+#endif
         std::ifstream file(filename);
 
         if (!file.is_open()) {
@@ -191,39 +177,59 @@ int Headnode::setOS (void) {
     return 0;
 }
 
+void Headnode::printOS (void) {
+    std::cout << "Architecture: " << (int)this->arch << std::endl;
+    std::cout << "Family: " << (int)this->os.family << std::endl;
+    std::cout << "Kernel Release: " << this->os.kernel << std::endl;
+    std::cout << "Platform: " << (int)this->os.platform << std::endl;
+    std::cout << "Distribution: " << (int)this->os.distro << std::endl;
+    std::cout << "Major Version: " << this->os.majorVersion << std::endl;
+    std::cout << "Minor Version: " << this->os.minorVersion << std::endl;
+}
+
 /* Supported releases must be a constexpr defined elsewhere and not hardcoded as
  * a value on the code.
  * Return values should be errorcodes that match the failure and not being
- * written directly on the method. Also they need to be a bitmap.
+ * written directly on the method. Also they might need to be a bitmap or enum
  */
 int Headnode::checkSupportedOS (void) {
     if (this->arch != Arch::x86_64) {
+#ifdef _DEBUG_
         std::cout << (int)this->arch 
             << " is not a supported architecture" << std::endl;
+#endif
         return -1;
     }
 
     if (this->os.family != OS::Family::Linux) {
+#ifdef _DEBUG_
         std::cout << (int)this->os.family 
             << " is not a supported operating system" << std::endl;
+#endif
         return -2;
     }
 
     if (this->os.platform != OS::Platform::el8) {
+#ifdef _DEBUG_
         std::cout << (int)this->os.platform 
             << " is not a supported Linux platform" << std::endl;
+#endif
         return -3;
     }
 
     if ((this->os.distro != OS::Distro::RHEL) && 
         (this->os.distro != OS::Distro::OL)) {
+#ifdef _DEBUG_
         std::cout << (int)this->os.distro 
             << " is not a supported Linux distribution" << std::endl;
+#endif
         return -4;
     }
 
     if (this->os.majorVersion < 8) {
+#ifdef _DEBUG_
         std::cout << "This software is only supported on EL8" << std::endl;
+#endif
         return -5;
     }
 

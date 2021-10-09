@@ -1,7 +1,7 @@
 #
-# OS detection to select which C++ release should we use
-# Enterprise Linux 8 does not support C++2a, we select C++17 instead for
-# everything else we default to C++2a
+# OS detection to select which C++ version should we use
+# Enterprise Linux 8 does not support C++2a by default, we select C++17 instead,
+# for everything else we default to C++2a
 #
 OS := $(shell uname -s)
 OS_RELEASE := $(shell uname -r)
@@ -14,11 +14,6 @@ ifeq ($(OS),Linux)
 else
 	STDCXX = c++2a
 endif
-
-osdetect:
-	@echo $(OS)
-	@echo $(OS_RELEASE)
-	@echo $(STDCXX)
 
 #
 # Compiler flags
@@ -75,7 +70,7 @@ BOOST = -lboost_system
 PTHREAD = -lpthread
 DYNLIBS = $(NEWT) $(BOOST) $(LPTHREAD) 
 
-.PHONY: all clean debug prep release remake
+.PHONY: all osdetect clean debug dummy prep release remake
 
 # Default build
 all: release
@@ -126,6 +121,11 @@ prep:
 	@mkdir -p $(DBGDIR) $(RELDIR) $(DUMMYDIR)
 
 remake: clean all
+
+osdetect:
+	@echo $(OS)
+	@echo $(OS_RELEASE)
+	@echo $(STDCXX)
 
 clean:
 	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(EXE)
