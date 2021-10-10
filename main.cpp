@@ -20,7 +20,8 @@ int main(int argc, char **argv) {
     int rc; /* return code */
 
     /* TerminalUI entrypoint */
-    TerminalUI terminalui;
+    Headnode headnode;
+    TerminalUI terminalui(&headnode);
 
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */
