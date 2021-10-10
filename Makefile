@@ -28,7 +28,7 @@ LFLAGS = -Wall
 #
 # Project files
 #
-SRCS = main.cpp functions.cpp headnode.cpp cluster.cpp xcat.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
+SRCS = main.cpp functions.cpp headnode.cpp cluster.cpp xcat.cpp terminalui.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main 
 
@@ -128,6 +128,6 @@ osdetect:
 	@echo $(STDCXX)
 
 clean:
-	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(EXE)
+	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(DUMMYOBJS) $(EXE)
 	rm -rf $(RELDIR) $(DBGDIR)
 	rm -rf *.dSYM

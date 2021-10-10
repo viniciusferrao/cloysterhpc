@@ -6,6 +6,7 @@
 #ifndef _H_CONST_
 #define _H_CONST_
 
+#if 0 /* Port to C++ */
 extern const char* const ibStacks[];
 extern const char* const queueSystems[];
 extern const char* const pbsDefaultPlace[];
@@ -37,5 +38,6 @@ const char* const postfixProfiles[] = {
     "SASL",
     NULL
 };
+#endif
 
 #endif /* _H_CONST_ */

@@ -14,11 +14,15 @@
 #include "functions.hpp"
 #include "headnode.hpp"
 #include "cluster.hpp"
-//#include "tui.hpp"
+#include "terminalui.hpp"
 
 int main(int argc, char **argv) {
     int rc; /* return code */
 
+    /* TerminalUI entrypoint */
+    TerminalUI terminalui;
+
+#if 0 /* Porting TerminalUI */
     /* .conf file manipulation */
     std::string homeDirectory = getEnvironmentVariable("HOME");
     std::string configFile = homeDirectory + "/.cloyster.conf";
@@ -71,6 +75,7 @@ int main(int argc, char **argv) {
     }
 #endif
         cluster.install();
+#endif
 
 #if 0
     printf("Cluster attributes defined:\n");
