@@ -68,6 +68,9 @@ public:
     //std::vector<Network> network;
     Network network;
 
+    std::string timezone;
+    std::string locale;
+
     int setOS (void);
     void printOS (void);
     int checkSupportedOS (void);   

@@ -18,6 +18,11 @@ private:
     void setupRepositories (void);
     void installProvisioningServices (void);
     void setupTimeService (void);
+    void setupSLURM (void);
+    void setupInfiniband (void);
+    void disableNetworkManagerDNSOverride (void); // This should be on Network
+    void setupInternalNetwork (void); // This should be on Network
+    void setupNetworkFileSystem (void);
 
 public:
     bool firewall; // Perhaps this should be on Headnode instead

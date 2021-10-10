@@ -1,5 +1,10 @@
+/* This file contains just placeholder implementations for future reference.
+ * Everything here must be (re)factored.
+ */
+
 #include "cluster.hpp"
 #include "functions.hpp"
+#include "xcat.hpp"
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>    
@@ -81,7 +86,45 @@ void Cluster::setupTimeService (void) {
     runCommand("systemctl start --now chronyd");
 }
 
+void Cluster::setupSLURM (void) {
+    runCommand("dnf -y install ohpc-slurm-server");
+    runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
+    runCommand("perl -pi -e \
+        \"s/ControlMachine=\\S+/ControlMachine={HEADNODE_NAME}/\" \
+        /etc/slurm/slurm.conf");
+}
+
+void Cluster::setupInfiniband (void) {
+    runCommand("dnf -y groupinstall \"Infiniband Support\"");
+
+    /* TODO: We must call the network method to configure IPoIB here */
+    runCommand("cat /etc/sysconfig/network-scripts/ifcfg-ib0"); // Placeholder
+}
+
+void Cluster::disableNetworkManagerDNSOverride (void) {
+    runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
+    runCommand("echo \"dns=none\" >> \
+        /etc/NetworkManager/conf.d/90-dns-none.conf");
+
+    runCommand("systemctl restart NetworkManager");
+}
+
+/* TODO: Implement with NetworkManager */
+void Cluster::setupInternalNetwork (void) {
+    runCommand("nmcli --help"); // Placeholder
+}
+
+void Cluster::setupNetworkFileSystem (void) {
+    runCommand("echo \"/home *(rw,no_subtree_check,fsid=10,no_root_squash)\" \
+        >> /etc/exports");
+    runCommand("echo \"/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\" \
+        >> /etc/exports");
+    runCommand("exportfs -a");
+    runCommand("systemctl enable --now nfs-server");
+}
+
 void Cluster::install (void) {
+    XCAT xCAT;
 
     setTimezone(this->timezone);
     setLocale(this->locale);
@@ -93,5 +136,16 @@ void Cluster::install (void) {
     installRequiredPackages();
     setupRepositories();
     installProvisioningServices();
-
+    setupTimeService();
+    setupSLURM();
+    setupInfiniband();
+    disableNetworkManagerDNSOverride();
+    setupInternalNetwork();
+    xCAT.setDHCPInterfaces("eth0");
+    xCAT.setDomain("invalid.tld");
+    xCAT.copycds("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
+    xCAT.genimage("ol8.4.0-x86_64-netboot-compute");
+    xCAT.addOpenHPCComponents(
+        "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
+    setupNetworkFileSystem();
 }
