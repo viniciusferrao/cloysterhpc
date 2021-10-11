@@ -1,26 +1,33 @@
 #ifndef _HPP_TERMINALUI_
 #define _HPP_TERMINALUI_
 
+#include <string>
+#include <vector>
+
 #include <newt.h>
 #include "headnode.hpp"
 
 class TerminalUI {
 private:
     /* Ancillary private methods */
-    //bool hasEmptyField (const struct newtWinEntry *);
     void abortInstall (void);
     void beginInstall (Headnode *);
+    bool hasEmptyField (const struct newtWinEntry *);
 
     /* Interface helpers */
     std::string drawListMenu (const char *, const char *, const char * const *,
                               const char *);
+    std::vector<std::string> drawFieldMenu (const char *, const char *, 
+                               struct newtWinEntry *, const char *);
 
-    void helpMessage (const char*);
-    void welcomeMessage (void);
-    void timeSettings (Headnode *);
-    void localeSettings (Headnode *);
+    /* Interface screens */
+    void drawHelpMessage (const char*);
+    void drawWelcomeMessage (void);
+    void drawTimeSettings (Headnode *);
+    void drawLocaleSettings (Headnode *);
+    void drawNetworkSettings (Headnode *);
+
 #if 0 /* Port to C++ */
-    void networkSettings (CLUSTER *);
     void directoryServicesSettings (CLUSTER *);
     void nodeSettings (CLUSTER *);
     void infinibandSettings (CLUSTER *);

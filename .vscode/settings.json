@@ -69,6 +69,14 @@
         "filesystem": "cpp",
         "__tree": "cpp",
         "map": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "codecvt": "cpp",
+        "list": "cpp",
+        "numeric": "cpp",
+        "set": "cpp",
+        "strstream": "cpp",
+        "thread": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp"
     }
 }

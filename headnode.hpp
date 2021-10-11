@@ -70,6 +70,14 @@ public:
 
     std::string timezone;
     std::string locale;
+    std::string hostname;
+    std::string domainname;
+    std::string fqdn = hostname + "." + domainname;
+    std::vector<std::string> nameserver;
+
+    std::string interfaceExternal; // Placeholder; should be on Network.
+    std::string interfaceInternal; // Placeholder; should be on Network.
+
 
     int setOS (void);
     void printOS (void);
