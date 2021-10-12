@@ -14,6 +14,9 @@ private:
     void abortInstall (void);
     void beginInstall (Cluster *, Headnode *);
     bool hasEmptyField (const struct newtWinEntry *);
+#ifdef _DEBUG_
+    void drawDebugEntries(const struct newtWinEntry *);
+#endif
 
     /* Interface helpers */
     bool drawYesNoQuestion (const char *, const char *, const char *);
@@ -21,6 +24,8 @@ private:
                               const char *);
     std::vector<std::string> drawFieldMenu (const char *, const char *, 
                                struct newtWinEntry *, const char *);
+    std::vector<std::string> drawIPSettings (const char *, const char *, 
+                                             const char */*, Network **/);
 
     /* Interface screens */
     void drawHelpMessage (const char *);
@@ -33,27 +38,21 @@ private:
         void drawNetworkManagementInterfaceSelection (Headnode *);
         void drawNetworkManagementAddress (Headnode *);
         void drawNetworkManagementXCATRange (Cluster *);
+    void drawInfinibandSettings(Cluster *);
     void drawDirectoryServicesSettings (Cluster *);
         void drawDirectoryServicesPassword (Cluster *);
         void drawDirectoryServicesDisableDNSSEC (Cluster *);
     void drawNodeSettings (Cluster *);
-    
-    void drawQueueSystemSelection (Cluster *);
+    void drawQueueSystemSettings (Cluster *);
         void drawSLURMSettings (Cluster *);
         void drawPBSSettings (Cluster *);
-
-
-#if 0 /* Port to C++ */
-    void infinibandSettings (CLUSTER *);
-    /* Rearrange */
-    void IPv4Settings (CLUSTER *);
-    /* End of Rearrange */
-    void PostfixSettings (CLUSTER *);
-    void PostfixRelaySettings (CLUSTER *);
-    void PostfixSASLSettings (CLUSTER *);
-    void updateSystem (CLUSTER *);
-    void remoteAccessSettings (CLUSTER *);
-#endif
+    void drawPostfixSettings (Cluster *);
+        void drawPostfixEnable (Cluster *);
+        void drawPostfixProfile (Cluster *);
+        void drawPostfixRelaySettings (Cluster *);
+        void drawPostfixSASLSettings (Cluster *);
+    void drawUpdateSystem (Cluster *);
+    void drawRemoteAccess (Cluster *);
 
 public:
     TerminalUI (Cluster *, Headnode *);

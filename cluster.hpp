@@ -12,6 +12,7 @@ struct SLURM {
 
 struct PBS {
     enum class DefaultPlace { Shared, Scatter };
+    DefaultPlace defaultPlace;
 };
 
 struct QueueSystem {
@@ -35,6 +36,7 @@ struct PostfixSASL {
 struct Postfix {
     bool enable;
     enum class ProfileId { Relay, SASL };
+    ProfileId profileId;
     std::optional<PostfixRelay> relay;
     std::optional<PostfixSASL> sasl;
 };
@@ -83,7 +85,7 @@ public:
     std::string nodeStartIP;
     std::string nodeRootPassword;
     std::string nodeISOPath;
-    std::string ibStack;
+    std::string ibStack; /* Refactor */
     QueueSystem queueSystem;
     Postfix postfix;
     bool updateSystem;

@@ -95,6 +95,10 @@ constexpr const char * MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE = \
     "Enter the xCAT Dynamic range for node discovery\n";
 constexpr const char * MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE_HELP = \
     MSG_DEFAULT_HELP_NOT_AVAILABLE;
+constexpr const char * MSG_NETWORK_SETTINGS_IP = \
+    "Fill the IP network information\n";
+constexpr const char * MSG_NETWORK_SETTINGS_IP_HELP = \
+    MSG_DEFAULT_HELP_NOT_AVAILABLE;
 
 constexpr const char * MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD = \
     "Enter the admin and directory manager passwords\n";
