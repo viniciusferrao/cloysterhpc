@@ -3,6 +3,7 @@
 
 #include <string> /* std::string */
 #include <vector>
+#include <optional>
 
 #include <arpa/inet.h>
 
@@ -23,8 +24,10 @@ public:
 private:
     Profile m_profile;
     Type m_type;
-    struct in_addr m_addr;
     struct ifaddrs *m_ifaddr;
+    struct in_addr m_address;
+    struct in_addr m_subnetmask;
+    struct in_addr m_gateway;
 
 public:
     Network ();
@@ -38,7 +41,7 @@ public:
     int setInterfaceName (void);
     void printInterfaceName (void);
 
-    int setIPAddress (std::string);
+    int setIPAddress (std::string, std::string);
     std::string getIPAddress (void);
 };
 
@@ -65,19 +68,18 @@ private:
 public:
     Arch arch;
     OS os;
-    //std::vector<Network> network;
-    Network network;
+    std::vector<Network> externalNetwork;
+    std::vector<Network> managementNetwork;
+    std::optional<std::vector<Network>> serviceNetwork;
+    std::optional<std::vector<Network>> applicationNetwork;
+    std::optional<std::vector<Network>> otherNetwork;
 
     std::string timezone;
     std::string locale;
     std::string hostname;
     std::string domainname;
-    std::string fqdn = hostname + "." + domainname;
+    std::string fqdn;
     std::vector<std::string> nameserver;
-
-    std::string interfaceExternal; // Placeholder; should be on Network.
-    std::string interfaceInternal; // Placeholder; should be on Network.
-
 
     int setOS (void);
     void printOS (void);

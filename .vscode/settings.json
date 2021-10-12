@@ -78,5 +78,17 @@
         "thread": "cpp",
         "typeindex": "cpp",
         "variant": "cpp"
-    }
+    },
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "release",
+            "binaryPath": "release/main",
+            "binaryArgs": []
+        },
+        {
+            "cwd": "debug",
+            "binaryPath": "debug/main",
+            "binaryArgs": []
+        }
+    ]
 }

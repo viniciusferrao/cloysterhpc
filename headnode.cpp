@@ -15,7 +15,7 @@
 
 /* Constructor */
 Network::Network () : m_profile (Profile::External), m_type (Type::Ethernet) {
-    setIPAddress("0.0.0.0");
+    setIPAddress("0.0.0.0", "0.0.0.0");
 }
 
 void Network::setProfile (Network::Profile profile) {
@@ -45,14 +45,17 @@ void Network::printInterfaceName (void) {
 
 }
 
-int Network::setIPAddress (std::string address) {
-    if (inet_aton(address.c_str(), &m_addr) == 0)
+/* TODO: Check against /xx declaration on subnetMask */
+int Network::setIPAddress (std::string address, std::string subnetMask) {
+    if (inet_aton(address.c_str(), &m_address) == 0)
         return -1; /* Invalid IP Address */
+    if (inet_aton(subnetMask.c_str(), &m_subnetmask) == 0)
+        return -2; /* Invalid Subnet Mask */
     return 0;
 }
 
 std::string Network::getIPAddress (void) {
-    return inet_ntoa(m_addr);
+    return inet_ntoa(m_address);
 }
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and

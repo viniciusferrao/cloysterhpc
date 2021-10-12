@@ -21,7 +21,10 @@ int main(int argc, char **argv) {
 
     /* TerminalUI entrypoint */
     Headnode headnode;
-    TerminalUI terminalui(&headnode);
+    Cluster cluster;
+    TerminalUI terminalui(&cluster, &headnode);
+
+    std::cout << "End of TerminalUI execution" << std::endl;
 
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */

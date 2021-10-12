@@ -8,7 +8,7 @@
 #include <vector>
 
 /* Constructor */
-TerminalUI::TerminalUI (Headnode *headnode) {
+TerminalUI::TerminalUI (Cluster *cluster, Headnode *headnode) {
     newtInit();
     newtCls();
 
@@ -19,7 +19,7 @@ TerminalUI::TerminalUI (Headnode *headnode) {
     newtPushHelpLine(MSG_INSTALL_HELP_LINE);
     newtRefresh();
 
-    beginInstall(headnode);
+    beginInstall(cluster, headnode);
 }
 
 /* Destructor */
@@ -27,19 +27,21 @@ TerminalUI::~TerminalUI (void) {
     newtFinished();
 }
 
-void TerminalUI::beginInstall (Headnode *headnode) {
-//    drawWelcomeMessage();
-//    drawWimeSettings(headnode);
-//    drawLocaleSettings(headnode);
-    drawNetworkSettings(headnode);
+void TerminalUI::beginInstall (Cluster *cluster, Headnode *headnode) {
 #if 0
-    directoryServicesSettings(cluster);
-    nodeSettings(cluster);
-    infinibandSettings(cluster);
-    queueSystemSettings(cluster);
-    postfixSettings(cluster);
-    updateSystem(cluster);
-    remoteAccessSettings(cluster);
+    drawWelcomeMessage();
+    drawWimeSettings(headnode);
+    drawLocaleSettings(headnode);
+    drawNetworkSettings(headnode);
+    drawDirectoryServicesSettings(cluster);
+#endif
+    drawNodeSettings(cluster);
+#if 0
+    drawInfinibandSettings(cluster);
+    drawQueueSystemSettings(cluster);
+    drawPostfixSettings(cluster);
+    drawUpdateSystem(cluster);
+    drawRemoteAccessSettings(cluster);
 #endif
 }
 
@@ -69,6 +71,31 @@ bool TerminalUI::hasEmptyField (const struct newtWinEntry *entries) {
     return false;
 }
 
+bool TerminalUI::drawYesNoQuestion (const char * title, const char * message, 
+                                    const char * helpMessage) {
+    int returnValue;
+
+    question:
+    returnValue = newtWinTernary(const_cast<char *>(title), 
+                                 const_cast<char *>(MSG_BUTTON_YES),
+                                 const_cast<char *>(MSG_BUTTON_NO),
+                                 const_cast<char *>(MSG_BUTTON_HELP),
+                                 const_cast<char *>(message), NULL);
+
+    switch(returnValue) {
+        case 0:
+            /* F12 is pressed, and we don't care; continue to case 1 */
+        case 1:
+            return true;
+        case 2:
+            return false;
+        case 3:
+            drawHelpMessage(helpMessage);
+            goto question; /* Yeah it's a goto... deal with it */
+    }
+    return false; /* We should never reach here */
+}
+
 std::string TerminalUI::drawListMenu (const char * title, const char * message,
                                       const char * const * items,
                                       const char * helpMessage) {
@@ -80,7 +107,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
     int flexUp = 5;
     int flexDown = 5;
     int maxHeightList = 3; 
-
+#if 1
     /* Goto implementation */
     question:
     returnValue = newtWinMenu(const_cast<char *>(title),
@@ -102,7 +129,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
             drawHelpMessage(helpMessage);
             goto question;
     }
-
+#endif
 #if 0
     /* Gotoless implementation */
     for (;;) {
@@ -133,8 +160,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
 
 std::vector<std::string> TerminalUI::drawFieldMenu (
     const char * title, const char * message, struct newtWinEntry * items, 
-    const char * helpMessage
-) {
+    const char * helpMessage) {
 
     int returnValue;
 
@@ -160,7 +186,7 @@ std::vector<std::string> TerminalUI::drawFieldMenu (
             if (hasEmptyField(items))
                 goto question;      
 #ifdef _DEBUG_
-            tuiDebugEntries(hostId);
+            //tuiDebugEntries(hostId);
 #endif
             /* Cleanup the memory for items: that's a funny thing here, our
              * friend newtWinEntries() it's not really here to free hostId but 
@@ -258,18 +284,17 @@ void TerminalUI::drawLocaleSettings (Headnode *headnode) {
  * networks, so it's duplicated code. xCAT does not have a good fit here too, it
  * should be modular so we can remove xCAT if we need to.
  */
-void TerminalUI::drawNetworkSettings (Headnode *headnode) {
-    //char **netInterfaces;
-    /* Implement with https://linux.die.net/man/3/getifaddrs */
-    const char* const netInterfaces[] = {
-        "eth0",
-        "eth1",
-        "enp4s0f0",
-        "lo",
-        "ib0",
-        NULL
-    };
+void TerminalUI::drawNetworkSettings (Cluster *cluster, 
+                                      Headnode *headnode) {
 
+    drawNetworkHostnameSettings(headnode);
+    drawNetworkExternalInterfaceSelection(headnode);
+    drawNetworkManagementInterfaceSelection(headnode);
+    drawNetworkManagementAddress(headnode);
+    drawNetworkManagementXCATRange(cluster);
+}
+
+void TerminalUI::drawNetworkHostnameSettings (Headnode *headnode) {
     /* Request hostname and domain name */
     char *hostIdEntries[2];
     struct newtWinEntry hostId[] = {
@@ -295,87 +320,237 @@ void TerminalUI::drawNetworkSettings (Headnode *headnode) {
     std::cerr << std::endl;
 #endif
 
-    headnode->interfaceExternal = drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-                                      MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
-                                      MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
+}
 
-    headnode->interfaceInternal = drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-                                      MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
-                                      MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP);
- 
-#if 0
+void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode *headnode) {
+    //char **netInterfaces;
+    /* Implement with https://linux.die.net/man/3/getifaddrs */
+    const char* const netInterfaces[] = {
+        "eth0",
+        "eth1",
+        "enp4s0f0",
+        "lo",
+        "ib0",
+        NULL
+    };
+
+    /* This is totally wrong, it should set the interface name and not the IP
+     * address of the interface
+     */
+    Network network;
+    network.setProfile(Network::Profile::External);
+    network.setType(Network::Type::Ethernet);
+    //network.setIPAddress(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+    drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+                     MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
+                     MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
+
+    headnode->externalNetwork.push_back(network);
+}
+
+void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode *headnode) {
+    //char **netInterfaces;
+    /* Implement with https://linux.die.net/man/3/getifaddrs */
+    const char* const netInterfaces[] = {
+        "eth0",
+        "eth1",
+        "enp4s0f0",
+        "lo",
+        "ib0",
+        NULL
+    };
+
+    /* This is totally wrong, it should set the interface name and not the IP
+     * address of the interface
+     */
+    Network network;
+    network.setProfile(Network::Profile::Management);
+    network.setType(Network::Type::Ethernet);
+    //network.setIPAddress(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+    drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+                    MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
+                    MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP);
+
+    headnode->managementNetwork.push_back(network);
+}
+
+void TerminalUI::drawNetworkManagementAddress (Headnode *headnode) {
     char *entries[10];
     struct newtWinEntry managementNetworkEntries[] = {
-        { "Management Network", entries + 0, 0 },
-        { "Headnode IP", entries + 1, 0 },
+        { const_cast<char *>("Headnode IP"), entries + 0, 0 },
+        { const_cast<char *>("Management Network"), entries + 1, 0 },
         { NULL, NULL, 0 } };
     memset(entries, 0, sizeof(entries));
 
-    question3:
-    returnValue = newtWinEntries(
-        MSG_TITLE_NETWORK_SETTINGS, MSG_NETWORK_SETTINGS_INTERNAL_IPV4, 50, 5, 5, 20,
-        managementNetworkEntries, MSG_BUTTON_OK, MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL
-    );
+    std::vector<std::string> fields = drawFieldMenu(
+                                    MSG_TITLE_NETWORK_SETTINGS,
+                                    MSG_NETWORK_SETTINGS_INTERNAL_IPV4,
+                                    managementNetworkEntries,
+                                    MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
 
-    switch(returnValue) {
-        case 0:
-            /* F12 is pressed, and we don't care; continue to case 1 */
-        case 1:
-            /* Some password check logic should be implemented here*/
-            if (tuiHasEmptyField(managementNetworkEntries))
-                goto question3;
+    headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
+
 #ifdef _DEBUG_
-            tuiDebugEntries(managementNetworkEntries);
-#endif
-            cluster->interfaceInternalNetwork = strdup(*managementNetworkEntries[0].value);
-            cluster->interfaceInternalIP = strdup(*managementNetworkEntries[1].value);
-
-            /* Clanup the memory */
-            for (unsigned i = 0; i < sizeof (managementNetworkEntries) / sizeof (struct newtWinEntry) && managementNetworkEntries[i].value; i++)
-                free(*(managementNetworkEntries[i].value));
-            break;
-        case 2:
-            tuiAbortInstall();
-        case 3:
-            tuiHelpMessage(MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
-            goto question3; /* Yeah it's a goto... deal with it */
+    std::cerr << "Strings on Vector: ";
+    for (std::string i : fields) {
+        std::cerr << i << ' ';
     }
+    std::cerr << std::endl;
+#endif
+}
 
+void TerminalUI::drawNetworkManagementXCATRange (Cluster *cluster) {
+    char *entries[10];
     struct newtWinEntry xCATDynamicRange[] = {
-        { "Start IP", entries + 0, 0 },
-        { "End IP", entries + 1, 0 },
+        { const_cast<char *>("Start IP"), entries + 0, 0 },
+        { const_cast<char *>("End IP"), entries + 1, 0 },
         { NULL, NULL, 0 } };
     memset(entries, 0, sizeof(entries));
 
-    question4:
-    returnValue = newtWinEntries(
-        MSG_TITLE_NETWORK_SETTINGS, MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE, 50, 5, 5, 20,
-        xCATDynamicRange, MSG_BUTTON_OK, MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL
-    );
+    std::vector<std::string> fields = drawFieldMenu(
+                                    MSG_TITLE_NETWORK_SETTINGS,
+                                    MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE,
+                                    xCATDynamicRange,
+                                    MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE_HELP);
 
-    switch(returnValue) {
-        case 0:
-            /* F12 is pressed, and we don't care; continue to case 1 */
-        case 1:
-            /* Some password check logic should be implemented here*/
-            if (tuiHasEmptyField(xCATDynamicRange))
-                goto question4;
+    cluster->xCATDynamicRangeStart = fields[0];
+    cluster->xCATDynamicRangeEnd = fields[1];
+
 #ifdef _DEBUG_
-            tuiDebugEntries(xCATDynamicRange);
-#endif
-            cluster->xCATDynamicRangeStart = strdup(*xCATDynamicRange[0].value);
-            cluster->xCATDynamicRangeEnd = strdup(*xCATDynamicRange[1].value);
-
-            /* Clanup the memory */
-            for (unsigned i = 0; i < sizeof (xCATDynamicRange) / sizeof (struct newtWinEntry) && xCATDynamicRange[i].value; i++)
-                free(*(xCATDynamicRange[i].value));
-
-            break;
-        case 2:
-            tuiAbortInstall();
-        case 3:
-            tuiHelpMessage(MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE_HELP);
-            goto question3; /* Yeah it's a goto... deal with it */
+    std::cerr << "Strings on Vector: ";
+    for (std::string i : fields) {
+        std::cerr << i << ' ';
     }
-#endif /* #if 0 */
+    std::cerr << std::endl;
+#endif
+}
+
+void TerminalUI::drawDirectoryServicesSettings (Cluster *cluster) {
+    drawDirectoryServicesPassword(cluster);
+    drawDirectoryServicesDisableDNSSEC(cluster);
+}
+
+void TerminalUI::drawDirectoryServicesPassword (Cluster *cluster) {
+    char *entries[10];
+    struct newtWinEntry autoEntries[] = {
+        { const_cast<char *>("FreeIPA admin password"), 
+            entries + 0, NEWT_FLAG_PASSWORD },
+        { const_cast<char *>("FreeIPA directory manager password"), 
+            entries + 1, NEWT_FLAG_PASSWORD },
+        { NULL, NULL, 0 } };
+    memset(entries, 0, sizeof(entries));
+
+    std::vector<std::string> fields = drawFieldMenu(
+                                MSG_TITLE_DIRECTORY_SERVICES_SETTINGS,
+                                MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD,
+                                autoEntries,
+                                MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD_HELP);
+
+    cluster->directoryAdminPassword = fields[0];
+    cluster->directoryManagerPassword = fields[1];
+}
+
+void TerminalUI::drawDirectoryServicesDisableDNSSEC (Cluster *cluster) {
+    const bool disableDNSSEC = drawYesNoQuestion(
+                                MSG_TITLE_DIRECTORY_SERVICES_SETTINGS,
+                                MSG_DIRECTORY_SERVICES_SETTINGS_DNSSEC,
+                                MSG_DIRECTORY_SERVICES_SETTINGS_DNSSEC_HELP);
+
+    disableDNSSEC ? 
+        cluster->directoryDisableDNSSEC = true : 
+        cluster->directoryDisableDNSSEC = false;
+}
+
+void TerminalUI::drawNodeSettings (Cluster *cluster) {
+    char *entries[10];
+    struct newtWinEntry autoEntries[] = {
+        { const_cast<char *>("Prefix"), entries + 0, 0 },
+        { const_cast<char *>("Padding"), entries + 1, 0 },
+        { const_cast<char *>("Compute node first IP"), entries + 2, 0 },
+        { const_cast<char *>("Compute node root password"), 
+            entries + 3, NEWT_FLAG_PASSWORD},
+        { const_cast<char *>("ISO path of Node OS"), entries + 4, 0 },
+        { NULL, NULL, 0 } };
+    memset(entries, 0, sizeof(entries));
+
+    retry:
+    std::vector<std::string> fields = drawFieldMenu(
+                                MSG_TITLE_NETWORK_SETTINGS,
+                                MSG_NODE_SETTINGS,
+                                autoEntries,
+                                MSG_NODE_SETTINGS_HELP);
+
+    /* TODO: Better implementation */
+    if (isalpha(fields[0][0]) == false) {
+        newtWinMessage(NULL, const_cast<char *>(MSG_BUTTON_OK), 
+                       const_cast<char *>("Prefix must start with a letter"));
+        memset(entries, 0, sizeof(entries));
+        goto retry;
+    }
+
+    cluster->nodePrefix = fields[0];
+    cluster->nodePadding = fields[1];
+    cluster->nodeStartIP = fields[2];
+    cluster->nodeRootPassword = fields[3];
+    cluster->nodeISOPath = fields[4];
+}
+
+void TerminalUI::drawQueueSystemSelection (Cluster *cluster) {
+    const char* const queueSystems[] = {
+        "None",
+        "SLURM",
+        "PBS Professional",
+        NULL
+    };
+
+    std::string queueSystem = drawListMenu(
+        MSG_TITLE_QUEUE_SYSTEM_SETTINGS, MSG_QUEUE_SYSTEM_SETTINGS,
+        queueSystems, MSG_QUEUE_SYSTEM_SETTINGS_HELP);
+
+    cluster->queueSystem.name = queueSystem;
+
+    if (queueSystem == "SLURM") {
+        drawSLURMSettings(cluster);
+        return;
+    }
+
+    if (queueSystem == "PBS Professional") {
+        drawPBSSettings(cluster);
+        return;
+    }
+}
+
+void TerminalUI::drawSLURMSettings (Cluster *cluster) {
+    char *entries[10];
+    struct newtWinEntry autoEntries[] = {
+        { const_cast<char *>("Partition name"), entries + 0, 0 },
+        { NULL, NULL, 0 } };
+    memset(entries, 0, sizeof(entries));
+
+    const std::vector<std::string> fields = drawFieldMenu(
+                                    MSG_TITLE_SLURM_SETTINGS,
+                                    MSG_SLURM_SETTINGS,
+                                    autoEntries,
+                                    MSG_SLURM_SETTINGS_HELP);
+
+    cluster->queueSystem.slurm = { fields[0] };
+}
+
+void TerminalUI::drawPBSSettings (Cluster *cluster) {
+    const char* const pbsDefaultPlace[] = {
+        "Shared",
+        "Scatter",
+        NULL
+    };
+
+    const std::string defaultPlace = drawListMenu(MSG_TITLE_PBS_SETTINGS,
+                                      MSG_PBS_SETTINGS, 
+                                      pbsDefaultPlace,
+                                      MSG_PBS_SETTINGS_HELP);
+
+    if (defaultPlace == "Shared")
+        cluster->queueSystem.pbs = { PBS::DefaultPlace::Shared };
+    if (defaultPlace == "Scatter")
+        cluster->queueSystem.pbs = { PBS::DefaultPlace::Scatter };
+
 }

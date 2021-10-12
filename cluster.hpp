@@ -2,8 +2,42 @@
 #define _HPP_CLUSTER_
 
 #include <string> /* std::string */
+#include <optional>
 
 #include "types.hpp"
+
+struct SLURM {
+    std::string partition;
+};
+
+struct PBS {
+    enum class DefaultPlace { Shared, Scatter };
+};
+
+struct QueueSystem {
+    std::string name;
+    std::optional<SLURM> slurm;
+    std::optional<PBS> pbs;
+};
+
+struct PostfixRelay {
+    std::string hostname;
+    uint16_t port;
+};
+
+struct PostfixSASL {
+    std::string hostname;
+    uint16_t port;
+    std::string username;
+    std::string password;
+};
+
+struct Postfix {
+    bool enable;
+    enum class ProfileId { Relay, SASL };
+    std::optional<PostfixRelay> relay;
+    std::optional<PostfixSASL> sasl;
+};
 
 class Cluster {
 private:
@@ -32,13 +66,13 @@ public:
     std::string hostname; // Definitely on Headnode
     std::string domainname;
     std::string fqdn; // FQDN of the Headnode
+
+#if 0
     NETWORK service; // This should describle available nets but not addresses
     NETWORK management;
     NETWORK application;
-    std::string interfaceExternal;
-    std::string interfaceInternal;
-    std::string interfaceInternalNetwork;
-    std::string interfaceInternalIP;
+#endif
+
     std::string xCATDynamicRangeStart;
     std::string xCATDynamicRangeEnd;
     std::string directoryAdminPassword;
@@ -50,8 +84,8 @@ public:
     std::string nodeRootPassword;
     std::string nodeISOPath;
     std::string ibStack;
-    QUEUESYSTEM queueSystem;
-    POSTFIX postfix;
+    QueueSystem queueSystem;
+    Postfix postfix;
     bool updateSystem;
     bool remoteAccess;
 
