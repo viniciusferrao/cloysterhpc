@@ -7,14 +7,14 @@
 #include <getopt.h>
 #endif
 
-#include "error.hpp"
-#include "const.hpp"
-#include "types.hpp"
-#include "messages.hpp"
-#include "functions.hpp"
-#include "headnode.hpp"
-#include "cluster.hpp"
-#include "terminalui.hpp"
+#include "error.h"
+#include "const.h"
+#include "types.h"
+#include "messages.h"
+#include "functions.h"
+#include "headnode.h"
+#include "cluster.h"
+#include "terminalui.h"
 
 int main(int argc, char **argv) {
     int rc; /* return code */

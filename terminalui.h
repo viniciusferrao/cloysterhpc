@@ -1,12 +1,12 @@
-#ifndef _HPP_TERMINALUI_
-#define _HPP_TERMINALUI_
+#ifndef TERMINALUI_H
+#define TERMINALUI_H
 
 #include <string>
 #include <vector>
 
 #include <newt.h>
-#include "cluster.hpp"
-#include "headnode.hpp"
+#include "cluster.h"
+#include "headnode.h"
 
 class TerminalUI {
 private:
@@ -63,4 +63,4 @@ public:
 #endif /* _DEBUG_ */
 };
 
-#endif /* _HPP_TERMINALUI */
+#endif /* TERMINALUI_H */

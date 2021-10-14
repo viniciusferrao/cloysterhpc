@@ -1,11 +1,11 @@
-#ifndef _HPP_REPOS_
-#define _HPP_REPOS_
+#ifndef REPOS_H
+#define REPOS_H
 
 #include <string> /* std::string */
 
-#include "types.hpp"
+#include "types.h"
 
-typedef struct {
+struct repofile {
     std::string id;
     bool enabled;
     std::string name;
@@ -14,7 +14,7 @@ typedef struct {
     bool gpgcheck;
     std::string gpgkey;
     std::string gpgkeyContent;    
-} repofile;
+};
 
 namespace ol {
     repofile ol8_base_latest = {
@@ -100,4 +100,4 @@ public:
     void disable (std::string);
 };
 
-#endif /* _HPP_REPOS_ */
+#endif /* REPOS_H */

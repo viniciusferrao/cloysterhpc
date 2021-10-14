@@ -2,9 +2,9 @@
  * Everything here must be (re)factored.
  */
 
-#include "cluster.hpp"
-#include "functions.hpp"
-#include "xcat.hpp"
+#include "cluster.h"
+#include "functions.h"
+#include "xcat.h"
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>    

@@ -2,8 +2,8 @@
  * Everything here must be (re)factored.
  */
 
-#include "xcat.hpp"
-#include "functions.hpp"
+#include "xcat.h"
+#include "functions.h"
 
 void XCAT::setDHCPInterfaces (std::string interface) {
     std::string command = "chdef -t site dhcpinterfaces=\"xcatmn|" + interface

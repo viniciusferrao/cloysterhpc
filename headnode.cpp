@@ -1,4 +1,4 @@
-#include "headnode.hpp"
+#include "headnode.h"
 
 #include <iostream>
 #include <fstream>
@@ -7,59 +7,12 @@
 
 #include <sys/utsname.h>
 
-#include <ifaddrs.h> /* getifaddrs() */
-
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
 #endif
 
-/* Constructor */
-Network::Network () : m_profile (Profile::External), m_type (Type::Ethernet) {
-    setIPAddress("0.0.0.0", "0.0.0.0");
-}
-
-void Network::setProfile (Network::Profile profile) {
-    this->m_profile = profile;
-}
-
-Network::Profile Network::getProfile (void) {
-    return this->m_profile;
-}
-
-void Network::setType (Network::Type type) {
-    this->m_type = type;
-}
-
-Network::Type Network::getType (void) {
-    return this->m_type;
-}
-
-int Network::setInterfaceName (void) {
-    if (getifaddrs(&this->m_ifaddr) == -1) {
-        return -1;
-    }
-    return 0;
-}
-
-void Network::printInterfaceName (void) {
-
-}
-
-/* TODO: Check against /xx declaration on subnetMask */
-int Network::setIPAddress (std::string address, std::string subnetMask) {
-    if (inet_aton(address.c_str(), &m_address) == 0)
-        return -1; /* Invalid IP Address */
-    if (inet_aton(subnetMask.c_str(), &m_subnetmask) == 0)
-        return -2; /* Invalid Subnet Mask */
-    return 0;
-}
-
-std::string Network::getIPAddress (void) {
-    return inet_ntoa(m_address);
-}
-
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
- * setOS().
+ * setOS(); an those methods should really be on OS class and not here.
  */
 std::string Headnode::fetchValue (std::string line) {
     std::string value;
@@ -84,7 +37,7 @@ int Headnode::setOS (void) {
         return -1;
     }
 
-    this->arch = Arch::x86_64;
+    this->os.arch = OS::Arch::x86_64;
 
     /* A map would be a better ideia:
      * std::map<std::string, Family> osFamily
@@ -98,7 +51,7 @@ int Headnode::setOS (void) {
     this->os.kernel = std::string{system.release};
 
 #ifdef _DEBUG_
-    std::cout << "Architecture: " << (int)this->arch << std::endl;
+    std::cout << "Architecture: " << (int)this->os.arch << std::endl;
     std::cout << "Family: " << (int)this->os.family << std::endl;
     std::cout << "Kernel Release: " << this->os.kernel << std::endl;
 #endif
@@ -181,7 +134,7 @@ int Headnode::setOS (void) {
 }
 
 void Headnode::printOS (void) {
-    std::cout << "Architecture: " << (int)this->arch << std::endl;
+    std::cout << "Architecture: " << (int)this->os.arch << std::endl;
     std::cout << "Family: " << (int)this->os.family << std::endl;
     std::cout << "Kernel Release: " << this->os.kernel << std::endl;
     std::cout << "Platform: " << (int)this->os.platform << std::endl;
@@ -196,9 +149,9 @@ void Headnode::printOS (void) {
  * written directly on the method. Also they might need to be a bitmap or enum
  */
 int Headnode::checkSupportedOS (void) {
-    if (this->arch != Arch::x86_64) {
+    if (this->os.arch != OS::Arch::x86_64) {
 #ifdef _DEBUG_
-        std::cout << (int)this->arch 
+        std::cout << (int)this->os.arch 
             << " is not a supported architecture" << std::endl;
 #endif
         return -1;

@@ -1,10 +1,10 @@
-#ifndef _HPP_CLUSTER_
-#define _HPP_CLUSTER_
+#ifndef CLUSTER_H
+#define CLUSTER_H
 
 #include <string> /* std::string */
 #include <optional>
 
-#include "types.hpp"
+#include "types.h"
 
 struct SLURM {
     std::string partition;
@@ -94,4 +94,4 @@ public:
     void install (void);
 };
 
-#endif /* _HPP_CLUSTER_ */
+#endif /* CLUSTER_H */

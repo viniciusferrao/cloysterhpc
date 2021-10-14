@@ -1,6 +1,6 @@
-#include "terminalui.hpp"
-#include "messages.hpp"
-#include "headnode.hpp"
+#include "terminalui.h"
+#include "messages.h"
+#include "headnode.h"
 
 #include <cstddef>
 #include <iostream>
@@ -211,8 +211,8 @@ std::vector<std::string> TerminalUI::drawFieldMenu (
              * using it.
              */
             for (unsigned i = 0 ; items[i].value ; i++) {
-                     fields.push_back(*items[i].value);
-                     free(*(items[i].value));
+                fields.push_back(*items[i].value);
+                free(*(items[i].value));
             }
 
             return fields;
@@ -268,8 +268,8 @@ std::vector<std::string> TerminalUI::drawIPSettings (const char * title,
             drawDebugEntries(items);
 #endif
             for (unsigned i = 0 ; items[i].value ; i++) {
-                     fields.push_back(*items[i].value);
-                     free(*(items[i].value));
+                fields.push_back(*items[i].value);
+                free(*(items[i].value));
             }
 
             return fields;

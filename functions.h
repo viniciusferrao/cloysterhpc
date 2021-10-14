@@ -1,9 +1,9 @@
-#ifndef _HPP_FUNCTIONS_
-#define _HPP_FUNCTIONS_
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 #include <string> /* std::string */
 
-#include "types.hpp"
+#include "types.h"
 
 /* getopt */
 int parseArguments(int, char **);
@@ -18,4 +18,4 @@ void writeConfig (const std::string &);
 /* execution engine */
 void runCommand (const std::string);
 
-#endif /* _HPP_FUNCTIONS_ */
+#endif /* FUNCTIONS_H */

@@ -3,9 +3,7 @@
  * Authores to be added
  */
 
-#ifndef _H_ERROR_
-#define _H_ERROR_
+#ifndef CONST_H
+#define CONST_H
 
-//#define OK 0
-
-#endif /* _H_ERROR_ */
+#endif /* CONST_H */

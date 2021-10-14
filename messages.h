@@ -3,8 +3,8 @@
  * Authores to be added
  */
 
-#ifndef _HPP_MESSAGES_
-#define _HPP_MESSAGES_
+#ifndef MESSAGES_H
+#define MESSAGES_H
 
 //constexpr const char * MSG_INSTALL_HELP_LINE "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled"
 #define MSG_INSTALL_HELP_LINE NULL
@@ -169,4 +169,4 @@ constexpr const char * MSG_DEFINE_DOMAINNAME = \
     "Enter the domain name of the cluster to be used:\n";
 #endif
 
-#endif /* _HPP_MESSAGES_ */
+#endif /* MESSAGES_H */

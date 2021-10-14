@@ -3,7 +3,7 @@
  * Authores to be added
  */
 
-#ifndef _H_TYPES_
-#define _H_TYPES_
+#ifndef TYPES_H
+#define TYPES_H
 
-#endif /* _H_TYPES_ */
+#endif /* TYPES_H */

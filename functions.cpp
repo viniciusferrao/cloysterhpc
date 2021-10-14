@@ -1,4 +1,4 @@
-#include "functions.hpp"
+#include "functions.h"
 
 #include <cstdlib> /* getenv() */
 

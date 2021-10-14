@@ -81,13 +81,14 @@
     },
     "makefile.launchConfigurations": [
         {
-            "cwd": "release",
-            "binaryPath": "release/main",
-            "binaryArgs": []
+            "cwd": "/Users/ferrao/Development/cloyster/debug",
+            "binaryPath": "/Users/ferrao/Development/cloyster/debug/main",
+            "binaryArgs": [],
+            "MIMode": "lldb"
         },
         {
-            "cwd": "debug",
-            "binaryPath": "debug/main",
+            "cwd": "/Users/ferrao/Development/cloyster/dummy",
+            "binaryPath": "/Users/ferrao/Development/cloyster/dummy/main",
             "binaryArgs": []
         }
     ]

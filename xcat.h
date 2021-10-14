@@ -1,5 +1,5 @@
-#ifndef _HPP_XCAT_
-#define _HPP_XCAT_
+#ifndef XCAT_H
+#define XCAT_H
 
 #include <string>
 
@@ -12,4 +12,4 @@ public:
     void addOpenHPCComponents (std::string);
 };
 
-#endif /* _HPP_XCAT_ */
+#endif /* XCAT_H */

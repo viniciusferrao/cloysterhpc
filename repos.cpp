@@ -1,5 +1,5 @@
-#include "repos.hpp"
-#include "functions.hpp"
+#include "repos.h"
+#include "functions.h"
 
 #include <iostream>
 
