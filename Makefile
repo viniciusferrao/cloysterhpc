@@ -28,7 +28,7 @@ LFLAGS = -Wall
 #
 # Project files
 #
-SRCS = main.cpp functions.cpp headnode.cpp cluster.cpp xcat.cpp terminalui.cpp #tui.cpp #install.cpp #file2.c file3.c file4.c
+SRCS = main.cpp functions.cpp headnode.cpp cluster.cpp xcat.cpp terminalui.cpp network.cpp os.cpp repos.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main 
 
@@ -66,9 +66,19 @@ DUMMYLFLAGS =
 # Libraries needed during dynamic linking
 #
 NEWT = -lnewt
-BOOST = -lboost_system
 PTHREAD = -lpthread
-DYNLIBS = $(NEWT) $(BOOST) $(LPTHREAD) 
+
+# Boost
+BOOST = -lboost_system
+ifeq ($(OS),Linux)
+	BOOSTTHREAD = -lboost_thread
+	BOOSTLOG = -DBOOST_LOG_DYN_LINK -lboost_log -lboost_log_setup
+else
+	BOOSTTHREAD = -lboost_thread-mt
+	BOOSTLOG = -DBOOST_LOG_DYN_LINK -lboost_log-mt -lboost_log_setup-mt
+endif
+
+DYNLIBS = $(NEWT) $(LPTHREAD) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
 
 .PHONY: all osdetect clean debug dummy prep release remake
 
