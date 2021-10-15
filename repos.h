@@ -22,7 +22,7 @@ namespace ol {
         true,
         "Oracle Linux 8 BaseOS Latest ($basearch)",
         "https://yum$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/$basearch/",
-        NULL,
+        "",
         true,
         "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle",
         R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
