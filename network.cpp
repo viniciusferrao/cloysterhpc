@@ -2,10 +2,6 @@
 
 #include <ifaddrs.h> /* getifaddrs() */
 
-Network::Network () {
-    setIPAddress("0.0.0.0", "0.0.0.0");
-}
-
 void Network::setProfile (Network::Profile profile) {
     this->m_profile = profile;
 }

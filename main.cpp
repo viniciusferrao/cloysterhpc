@@ -14,6 +14,7 @@
 #include "functions.h"
 #include "headnode.h"
 #include "cluster.h"
+#include "connection.h"
 #include "terminalui.h"
 
 int main(int argc, char **argv) {
@@ -21,8 +22,8 @@ int main(int argc, char **argv) {
 
     /* TerminalUI entrypoint */
     Headnode headnode;
-    Cluster cluster;
-    TerminalUI terminalui(&cluster, &headnode);
+    Cluster cluster(headnode);
+    TerminalUI terminalui(cluster, headnode);
 
     std::cout << "End of TerminalUI execution" << std::endl;
 

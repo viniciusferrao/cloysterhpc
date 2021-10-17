@@ -77,7 +77,11 @@
         "strstream": "cpp",
         "thread": "cpp",
         "typeindex": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "any": "cpp",
+        "condition_variable": "cpp",
+        "csignal": "cpp",
+        "future": "cpp"
     },
     "makefile.launchConfigurations": [
         {

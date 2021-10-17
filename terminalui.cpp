@@ -8,7 +8,7 @@
 #include <vector>
 
 /* Constructor */
-TerminalUI::TerminalUI (Cluster *cluster, Headnode *headnode) {
+TerminalUI::TerminalUI (Cluster& cluster, Headnode& headnode) {
     newtInit();
     newtCls();
 
@@ -27,7 +27,7 @@ TerminalUI::~TerminalUI (void) {
     newtFinished();
 }
 
-void TerminalUI::beginInstall (Cluster *cluster, Headnode *headnode) {
+void TerminalUI::beginInstall (Cluster& cluster, Headnode& headnode) {
 #if 1
     drawWelcomeMessage();
     drawTimeSettings(headnode);
@@ -317,7 +317,7 @@ void TerminalUI::drawWelcomeMessage (void) {
     }
 }
 
-void TerminalUI::drawTimeSettings (Headnode *headnode) {
+void TerminalUI::drawTimeSettings (Headnode& headnode) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported timezones from the OS instead.
      */
@@ -330,12 +330,12 @@ void TerminalUI::drawTimeSettings (Headnode *headnode) {
         NULL 
     };
 
-    headnode->timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
+    headnode.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
                                       MSG_TIME_SETTINGS_TIMEZONE, timezones,
                                       MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
-void TerminalUI::drawLocaleSettings (Headnode *headnode) {
+void TerminalUI::drawLocaleSettings (Headnode& headnode) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported locales from the OS instead.
      */
@@ -346,7 +346,7 @@ void TerminalUI::drawLocaleSettings (Headnode *headnode) {
         NULL
     };
 
-    headnode->timezone = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
+    headnode.timezone = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
                                       MSG_LOCALE_SETTINGS_LOCALE, locales,
                                       MSG_LOCALE_SETTINGS_LOCALE_HELP);
 }
@@ -358,8 +358,8 @@ void TerminalUI::drawLocaleSettings (Headnode *headnode) {
  * networks, so it's duplicated code. xCAT does not have a good fit here too, it
  * should be modular so we can remove xCAT if we need to.
  */
-void TerminalUI::drawNetworkSettings (Cluster *cluster, 
-                                      Headnode *headnode) {
+void TerminalUI::drawNetworkSettings (Cluster& cluster, 
+                                      Headnode& headnode) {
 
     drawNetworkHostnameSettings(headnode);
     drawNetworkExternalInterfaceSelection(headnode);
@@ -368,7 +368,7 @@ void TerminalUI::drawNetworkSettings (Cluster *cluster,
     drawNetworkManagementXCATRange(cluster);
 }
 
-void TerminalUI::drawNetworkHostnameSettings (Headnode *headnode) {
+void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
     /* Request hostname and domain name */
     char *hostIdEntries[2];
     struct newtWinEntry hostId[] = {
@@ -382,9 +382,9 @@ void TerminalUI::drawNetworkHostnameSettings (Headnode *headnode) {
                                         MSG_NETWORK_SETTINGS_HOSTID, hostId,
                                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
 
-    headnode->hostname = fields[0];
-    headnode->domainname = fields[1];
-    headnode->fqdn = headnode->hostname + "." + headnode->domainname;
+    headnode.hostname = fields[0];
+    headnode.domainname = fields[1];
+    headnode.fqdn = headnode.hostname + "." + headnode.domainname;
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -396,7 +396,7 @@ void TerminalUI::drawNetworkHostnameSettings (Headnode *headnode) {
 
 }
 
-void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode *headnode) {
+void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
     //char **netInterfaces;
     /* Implement with https://linux.die.net/man/3/getifaddrs */
     const char* const netInterfaces[] = {
@@ -419,10 +419,10 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode *headnode) {
                      MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
                      MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
 
-    headnode->externalNetwork.push_back(network);
+    headnode.externalNetwork.push_back(network);
 }
 
-void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode *headnode) {
+void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
     //char **netInterfaces;
     /* Implement with https://linux.die.net/man/3/getifaddrs */
     const char* const netInterfaces[] = {
@@ -445,10 +445,10 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode *headnode) {
                     MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
                     MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP);
 
-    headnode->managementNetwork.push_back(network);
+    headnode.managementNetwork.push_back(network);
 }
 
-void TerminalUI::drawNetworkManagementAddress (Headnode *headnode) {
+void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
     char *entries[10];
     struct newtWinEntry managementNetworkEntries[] = {
         { const_cast<char *>("Headnode IP"), entries + 0, 0 },
@@ -462,7 +462,7 @@ void TerminalUI::drawNetworkManagementAddress (Headnode *headnode) {
                                     managementNetworkEntries,
                                     MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
 
-    headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
+    headnode.managementNetwork[0].setIPAddress(fields[0], fields[1]);
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -473,7 +473,7 @@ void TerminalUI::drawNetworkManagementAddress (Headnode *headnode) {
 #endif
 }
 
-void TerminalUI::drawNetworkManagementXCATRange (Cluster *cluster) {
+void TerminalUI::drawNetworkManagementXCATRange (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry xCATDynamicRange[] = {
         { const_cast<char *>("Start IP"), entries + 0, 0 },
@@ -487,8 +487,8 @@ void TerminalUI::drawNetworkManagementXCATRange (Cluster *cluster) {
                                     xCATDynamicRange,
                                     MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE_HELP);
 
-    cluster->xCATDynamicRangeStart = fields[0];
-    cluster->xCATDynamicRangeEnd = fields[1];
+    cluster.xCATDynamicRangeStart = fields[0];
+    cluster.xCATDynamicRangeEnd = fields[1];
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -502,7 +502,7 @@ void TerminalUI::drawNetworkManagementXCATRange (Cluster *cluster) {
 /* To be implemented
  * Here is another case where IPv4 settings are required for IPoIB specifically 
  */
-void TerminalUI::drawInfinibandSettings (Cluster *cluster) {
+void TerminalUI::drawInfinibandSettings (Cluster& cluster) {
     const char* const ibStacks[] = {
         "None",
         "Inbox",
@@ -510,7 +510,7 @@ void TerminalUI::drawInfinibandSettings (Cluster *cluster) {
         NULL
     };
     
-    cluster->ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
+    cluster.ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
                                       MSG_INFINIBAND_SETTINGS, ibStacks,
                                       MSG_INFINIBAND_SETTINGS_HELP);
 
@@ -518,12 +518,12 @@ void TerminalUI::drawInfinibandSettings (Cluster *cluster) {
     //drawIPSettings(application);
 }
 
-void TerminalUI::drawDirectoryServicesSettings (Cluster *cluster) {
+void TerminalUI::drawDirectoryServicesSettings (Cluster& cluster) {
     drawDirectoryServicesPassword(cluster);
     drawDirectoryServicesDisableDNSSEC(cluster);
 }
 
-void TerminalUI::drawDirectoryServicesPassword (Cluster *cluster) {
+void TerminalUI::drawDirectoryServicesPassword (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("FreeIPA admin password"), 
@@ -539,22 +539,22 @@ void TerminalUI::drawDirectoryServicesPassword (Cluster *cluster) {
                                 autoEntries,
                                 MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD_HELP);
 
-    cluster->directoryAdminPassword = fields[0];
-    cluster->directoryManagerPassword = fields[1];
+    cluster.directoryAdminPassword = fields[0];
+    cluster.directoryManagerPassword = fields[1];
 }
 
-void TerminalUI::drawDirectoryServicesDisableDNSSEC (Cluster *cluster) {
+void TerminalUI::drawDirectoryServicesDisableDNSSEC (Cluster& cluster) {
     const bool disableDNSSEC = drawYesNoQuestion(
                                 MSG_TITLE_DIRECTORY_SERVICES_SETTINGS,
                                 MSG_DIRECTORY_SERVICES_SETTINGS_DNSSEC,
                                 MSG_DIRECTORY_SERVICES_SETTINGS_DNSSEC_HELP);
 
     disableDNSSEC ? 
-        cluster->directoryDisableDNSSEC = true : 
-        cluster->directoryDisableDNSSEC = false;
+        cluster.directoryDisableDNSSEC = true : 
+        cluster.directoryDisableDNSSEC = false;
 }
 
-void TerminalUI::drawNodeSettings (Cluster *cluster) {
+void TerminalUI::drawNodeSettings (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Prefix"), entries + 0, 0 },
@@ -581,14 +581,14 @@ void TerminalUI::drawNodeSettings (Cluster *cluster) {
         goto retry;
     }
 
-    cluster->nodePrefix = fields[0];
-    cluster->nodePadding = fields[1];
-    cluster->nodeStartIP = fields[2];
-    cluster->nodeRootPassword = fields[3];
-    cluster->nodeISOPath = fields[4];
+    cluster.nodePrefix = fields[0];
+    cluster.nodePadding = fields[1];
+    cluster.nodeStartIP = fields[2];
+    cluster.nodeRootPassword = fields[3];
+    cluster.nodeISOPath = fields[4];
 }
 
-void TerminalUI::drawQueueSystemSettings (Cluster *cluster) {
+void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {
     const char* const queueSystems[] = {
         "None",
         "SLURM",
@@ -600,7 +600,7 @@ void TerminalUI::drawQueueSystemSettings (Cluster *cluster) {
         MSG_TITLE_QUEUE_SYSTEM_SETTINGS, MSG_QUEUE_SYSTEM_SETTINGS,
         queueSystems, MSG_QUEUE_SYSTEM_SETTINGS_HELP);
 
-    cluster->queueSystem.name = queueSystem;
+    cluster.queueSystem.name = queueSystem;
 
     if (queueSystem == "SLURM") {
         drawSLURMSettings(cluster);
@@ -613,7 +613,7 @@ void TerminalUI::drawQueueSystemSettings (Cluster *cluster) {
     }
 }
 
-void TerminalUI::drawSLURMSettings (Cluster *cluster) {
+void TerminalUI::drawSLURMSettings (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Partition name"), entries + 0, 0 },
@@ -626,11 +626,11 @@ void TerminalUI::drawSLURMSettings (Cluster *cluster) {
                                     autoEntries,
                                     MSG_SLURM_SETTINGS_HELP);
 
-    cluster->queueSystem.slurm = { fields[0] };
+    cluster.queueSystem.slurm = { fields[0] };
 }
 
 /* This function is broken since we still don't know how to use std::optional */
-void TerminalUI::drawPBSSettings (Cluster *cluster) {
+void TerminalUI::drawPBSSettings (Cluster& cluster) {
     const char* const pbsDefaultPlace[] = {
         const_cast<char *>("Shared"),
         const_cast<char *>("Scatter"),
@@ -645,40 +645,40 @@ void TerminalUI::drawPBSSettings (Cluster *cluster) {
     /* std::optional implementation is wrong */
 #if 0
     if (defaultPlace == "Shared")
-        cluster->queueSystem.pbs.defaultPlace = { PBS::DefaultPlace::Shared };
+        cluster.queueSystem.pbs.defaultPlace = { PBS::DefaultPlace::Shared };
     if (defaultPlace == "Scatter")
-        cluster->queueSystem.pbs.defaultPlace = { PBS::DefaultPlace::Scatter };
+        cluster.queueSystem.pbs.defaultPlace = { PBS::DefaultPlace::Scatter };
 #endif
 
 }
 
-void TerminalUI::drawPostfixSettings (Cluster *cluster) {
+void TerminalUI::drawPostfixSettings (Cluster& cluster) {
     drawPostfixEnable(cluster);
 
-    if (!cluster->postfix.enable)
+    if (!cluster.postfix.enable)
         return;
     
     drawPostfixProfile(cluster);
 
-    if (cluster->postfix.profileId == Postfix::ProfileId::Relay)
+    if (cluster.postfix.profileId == Postfix::ProfileId::Relay)
         drawPostfixRelaySettings(cluster);
 
-    if (cluster->postfix.profileId == Postfix::ProfileId::SASL)
+    if (cluster.postfix.profileId == Postfix::ProfileId::SASL)
         drawPostfixSASLSettings(cluster);
 }
 
-void TerminalUI::drawPostfixEnable (Cluster *cluster) {
+void TerminalUI::drawPostfixEnable (Cluster& cluster) {
     const bool enablePostfix = drawYesNoQuestion(
                                 MSG_TITLE_POSTFIX_SETTINGS,
                                 MSG_POSTFIX_ENABLE,
                                 MSG_POSTFIX_ENABLE_HELP);
 
     enablePostfix ? 
-        cluster->postfix.enable = true : 
-        cluster->postfix.enable = false;
+        cluster.postfix.enable = true : 
+        cluster.postfix.enable = false;
 }
 
-void TerminalUI::drawPostfixProfile (Cluster *cluster) {
+void TerminalUI::drawPostfixProfile (Cluster& cluster) {
     const char* const postfixProfiles[] = {
         "Local",
         "Relay",
@@ -694,12 +694,12 @@ void TerminalUI::drawPostfixProfile (Cluster *cluster) {
     if (postfixProfile == "Local")
         return;
     if (postfixProfile == "Relay")
-        cluster->postfix.profileId = Postfix::ProfileId::Relay;
+        cluster.postfix.profileId = Postfix::ProfileId::Relay;
     if (postfixProfile == "SASL")
-        cluster->postfix.profileId = Postfix::ProfileId::SASL;
+        cluster.postfix.profileId = Postfix::ProfileId::SASL;
 }
 
-void TerminalUI::drawPostfixRelaySettings (Cluster *cluster) {
+void TerminalUI::drawPostfixRelaySettings (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Hostname of the MTA"), entries + 0, 0 },
@@ -715,12 +715,12 @@ void TerminalUI::drawPostfixRelaySettings (Cluster *cluster) {
 
     /* More std::optional shenanigans */
 #if 0
-    cluster->postfix.relay.hostname = fields[0];
-    cluster->postfix.relay.port = fields[1];
+    cluster.postfix.relay.hostname = fields[0];
+    cluster.postfix.relay.port = fields[1];
 #endif
 }
 
-void TerminalUI::drawPostfixSASLSettings (Cluster *cluster) {
+void TerminalUI::drawPostfixSASLSettings (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Hostname of the MTA"), entries + 0, 0 },
@@ -738,31 +738,31 @@ void TerminalUI::drawPostfixSASLSettings (Cluster *cluster) {
 
     /* More std::optional shenanigans */
 #if 0
-    cluster->postfix.sasl.hostname = fields[0];
-    cluster->postfix.sasl.port = fields[1];
-    cluster->postfix.sasl.username = fields[2];
-    cluster->postfix.sasl.password = fields[3];
+    cluster.postfix.sasl.hostname = fields[0];
+    cluster.postfix.sasl.port = fields[1];
+    cluster.postfix.sasl.username = fields[2];
+    cluster.postfix.sasl.password = fields[3];
 #endif
 }
 
-void TerminalUI::drawUpdateSystem (Cluster *cluster) {
+void TerminalUI::drawUpdateSystem (Cluster& cluster) {
     const bool updateSystem = drawYesNoQuestion(
                             MSG_TITLE_UPDATE_SYSTEM,
                             MSG_UPDATE_SYSTEM,
                             MSG_UPDATE_SYSTEM_HELP);
 
     updateSystem ? 
-        cluster->updateSystem = true : 
-        cluster->updateSystem = false;
+        cluster.updateSystem = true : 
+        cluster.updateSystem = false;
 }
 
-void TerminalUI::drawRemoteAccess (Cluster *cluster) {
+void TerminalUI::drawRemoteAccess (Cluster& cluster) {
     const bool remoteAccess = drawYesNoQuestion(
                             MSG_TITLE_REMOTE_ACCESS,
                             MSG_REMOTE_ACCESS,
                             MSG_REMOTE_ACCESS_HELP);
 
     remoteAccess ? 
-        cluster->remoteAccess = true : 
-        cluster->remoteAccess = false;
+        cluster.remoteAccess = true : 
+        cluster.remoteAccess = false;
 }

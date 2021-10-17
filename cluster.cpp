@@ -4,10 +4,15 @@
 
 #include "cluster.h"
 #include "functions.h"
+#include "headnode.h"
 #include "xcat.h"
 
 #include <iostream>
-#include <boost/algorithm/string.hpp>    
+#include <boost/algorithm/string.hpp>
+
+Cluster::Cluster (const Headnode& headnode) {
+    m_headnode = headnode;
+}
 
 void Cluster::setTimezone (std::string timezone) {
     runCommand("timedatectl set-timezone " + timezone);
@@ -128,7 +133,7 @@ void Cluster::install (void) {
 
     setTimezone(this->timezone);
     setLocale(this->locale);
-    setFQDN(this->fqdn);
+    setFQDN(this->m_headnode.fqdn);
 
     this->firewall ? enableFirewall() : disableFirewall();
     this->selinux ? setSELinuxMode("enabled") : setSELinuxMode("disabled");

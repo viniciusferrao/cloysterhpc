@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <utility> /* std::pair */
 #include <arpa/inet.h>
 
 class Network {
@@ -22,10 +23,9 @@ private:
     struct in_addr m_address;
     struct in_addr m_subnetmask;
     struct in_addr m_gateway;
+    std::pair<bool, unsigned> vlan;
 
 public:
-    Network ();
-
     void setProfile (Profile);
     Profile getProfile (void);
 
@@ -40,3 +40,4 @@ public:
 };
 
 #endif /* NETWORK_H */
+

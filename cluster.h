@@ -4,6 +4,7 @@
 #include <string> /* std::string */
 #include <optional>
 
+#include "headnode.h"
 #include "types.h"
 
 struct SLURM {
@@ -42,6 +43,9 @@ struct Postfix {
 };
 
 class Cluster {
+protected:
+    Headnode m_headnode;
+
 private:
     void setTimezone (std::string);
     void setLocale (std::string);
@@ -61,19 +65,17 @@ private:
     void setupNetworkFileSystem (void);
 
 public:
-    bool firewall; // Perhaps this should be on Headnode instead
-    bool selinux; // Perhaps this should be on Headnode instead
+    bool firewall; // Cluster-wide firewall settings
+    bool selinux; // Cluster-wide SELinux settings
     std::string timezone;
-    std::string locale; // Perhaps this should be on Headnode instead
-    std::string hostname; // Definitely on Headnode
+    std::string locale; // Default locale cluster wide.
     std::string domainname;
-    std::string fqdn; // FQDN of the Headnode
 
-#if 0
-    NETWORK service; // This should describle available nets but not addresses
-    NETWORK management;
-    NETWORK application;
-#endif
+
+    Network service;
+    Network management;
+    Network application;
+
 
     std::string xCATDynamicRangeStart;
     std::string xCATDynamicRangeEnd;
@@ -91,6 +93,7 @@ public:
     bool updateSystem;
     bool remoteAccess;
 
+    Cluster (const Headnode&);
     void install (void);
 };
 

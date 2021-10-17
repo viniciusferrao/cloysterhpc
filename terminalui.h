@@ -12,7 +12,7 @@ class TerminalUI {
 private:
     /* Ancillary private methods */
     void abortInstall (void);
-    void beginInstall (Cluster *, Headnode *);
+    void beginInstall (Cluster&, Headnode&);
     bool hasEmptyField (const struct newtWinEntry *);
 #ifdef _DEBUG_
     void drawDebugEntries(const struct newtWinEntry *);
@@ -30,32 +30,32 @@ private:
     /* Interface screens */
     void drawHelpMessage (const char *);
     void drawWelcomeMessage (void);
-    void drawTimeSettings (Headnode *);
-    void drawLocaleSettings (Headnode *);
-    void drawNetworkSettings (Cluster *, Headnode *);
-        void drawNetworkHostnameSettings (Headnode *);
-        void drawNetworkExternalInterfaceSelection (Headnode *);
-        void drawNetworkManagementInterfaceSelection (Headnode *);
-        void drawNetworkManagementAddress (Headnode *);
-        void drawNetworkManagementXCATRange (Cluster *);
-    void drawInfinibandSettings(Cluster *);
-    void drawDirectoryServicesSettings (Cluster *);
-        void drawDirectoryServicesPassword (Cluster *);
-        void drawDirectoryServicesDisableDNSSEC (Cluster *);
-    void drawNodeSettings (Cluster *);
-    void drawQueueSystemSettings (Cluster *);
-        void drawSLURMSettings (Cluster *);
-        void drawPBSSettings (Cluster *);
-    void drawPostfixSettings (Cluster *);
-        void drawPostfixEnable (Cluster *);
-        void drawPostfixProfile (Cluster *);
-        void drawPostfixRelaySettings (Cluster *);
-        void drawPostfixSASLSettings (Cluster *);
-    void drawUpdateSystem (Cluster *);
-    void drawRemoteAccess (Cluster *);
+    void drawTimeSettings (Headnode&);
+    void drawLocaleSettings (Headnode&);
+    void drawNetworkSettings (Cluster&, Headnode&);
+        void drawNetworkHostnameSettings (Headnode&);
+        void drawNetworkExternalInterfaceSelection (Headnode&);
+        void drawNetworkManagementInterfaceSelection (Headnode&);
+        void drawNetworkManagementAddress (Headnode&);
+        void drawNetworkManagementXCATRange (Cluster&);
+    void drawInfinibandSettings(Cluster&);
+    void drawDirectoryServicesSettings (Cluster&);
+        void drawDirectoryServicesPassword (Cluster&);
+        void drawDirectoryServicesDisableDNSSEC (Cluster&);
+    void drawNodeSettings (Cluster&);
+    void drawQueueSystemSettings (Cluster&);
+        void drawSLURMSettings (Cluster&);
+        void drawPBSSettings (Cluster&);
+    void drawPostfixSettings (Cluster&);
+        void drawPostfixEnable (Cluster&);
+        void drawPostfixProfile (Cluster&);
+        void drawPostfixRelaySettings (Cluster&);
+        void drawPostfixSASLSettings (Cluster&);
+    void drawUpdateSystem (Cluster&);
+    void drawRemoteAccess (Cluster&);
 
 public:
-    TerminalUI (Cluster *, Headnode *);
+    TerminalUI (Cluster&, Headnode&);
     ~TerminalUI (void);
 
 #ifdef _DEBUG_
