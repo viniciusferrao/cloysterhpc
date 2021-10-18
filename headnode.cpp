@@ -14,7 +14,7 @@
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS(); an those methods should really be on OS class and not here.
  */
-std::string Headnode::fetchValue (std::string line) {
+std::string Headnode::fetchValue (const std::string& line) {
     std::string value;
 
     /* Get values from keys */
@@ -28,7 +28,7 @@ std::string Headnode::fetchValue (std::string line) {
 }
 
 /* TODO: Better error return codes */
-int Headnode::setOS (void) {
+int Headnode::setOS () {
     struct utsname system;
 
     uname(&system);
@@ -133,7 +133,7 @@ int Headnode::setOS (void) {
     return 0;
 }
 
-void Headnode::printOS (void) {
+void Headnode::printOS () {
     std::cout << "Architecture: " << (int)this->os.arch << std::endl;
     std::cout << "Family: " << (int)this->os.family << std::endl;
     std::cout << "Kernel Release: " << this->os.kernel << std::endl;
@@ -146,9 +146,9 @@ void Headnode::printOS (void) {
 /* Supported releases must be a constexpr defined elsewhere and not hardcoded as
  * a value on the code.
  * Return values should be errorcodes that match the failure and not being
- * written directly on the method. Also they might need to be a bitmap or enum
+ * written directly on the method. Also, they might need to be a bitmap or enum
  */
-int Headnode::checkSupportedOS (void) {
+int Headnode::checkSupportedOS () {
     if (this->os.arch != OS::Arch::x86_64) {
 #ifdef _DEBUG_
         std::cout << (int)this->os.arch 

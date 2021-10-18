@@ -16,11 +16,11 @@ private:
 public:
     Connection ();
 
-    int setInterfaceName (void);
-    auto getInterfaceName (void);
+    int setInterfaceName ();
+    auto getInterfaceName ();
 
-    int setIPAddress (std::string);
-    std::string getIPAddress (void);
+    int setIPAddress (const std::string&);
+    std::string getIPAddress ();
 };
 
 #endif /* CONNECTION_H */

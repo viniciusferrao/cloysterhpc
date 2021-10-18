@@ -27,16 +27,16 @@ private:
 
 public:
     void setProfile (Profile);
-    Profile getProfile (void);
+    Profile getProfile ();
 
     void setType (Type);
-    Type getType (void);
+    Type getType ();
 
-    int setInterfaceName (void);
-    void printInterfaceName (void);
+    int setInterfaceName ();
+    void printInterfaceName ();
 
-    int setIPAddress (std::string, std::string);
-    std::string getIPAddress (void);
+    int setIPAddress (const std::string&, const std::string&);
+    std::string getIPAddress ();
 };
 
 #endif /* NETWORK_H */

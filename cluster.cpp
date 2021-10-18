@@ -22,14 +22,14 @@ void Cluster::setLocale (std::string locale) {
     runCommand("localectl set-locale " + locale);
 }
 
-void Cluster::setFQDN (std::string fqdn) {
+void Cluster::setFQDN (const std::string& fqdn) {
     runCommand("hostnamectl set-hostname " + fqdn);
 }
 
-void Cluster::enableFirewall (void) {
+void Cluster::enableFirewall () {
     runCommand("systemctl enable --now firewalld");
 }
-void Cluster::disableFirewall (void) {
+void Cluster::disableFirewall () {
     runCommand("systemctl disable --now firewalld");
 }
 
@@ -54,34 +54,34 @@ int Cluster::setSELinuxMode (std::string mode) {
     return -1; /* Failed to parse SELinux mode */
 }
 
-void Cluster::systemUpdate (void) {
+void Cluster::systemUpdate () {
     runCommand("dnf -y update");
 }
 
-void Cluster::installRequiredPackages (void) {
+void Cluster::installRequiredPackages () {
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Cluster::setupRepositories (void) {
+void Cluster::setupRepositories () {
     runCommand("dnf -y install \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install \
-        http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
+        https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
     runCommand("wget -P /etc/yum.repos.d \
         https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
     runCommand("wget -P /etc/yum.repos.d \
-        http://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
+        https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 
     //if (headnode->os.id == "ol")
     runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
 }
 
-void Cluster::installProvisioningServices (void) {
+void Cluster::installProvisioningServices () {
     runCommand("dnf -y install ohpc-base");
     runCommand("dnf -y install xCAT");
 }
 
-void Cluster::setupTimeService (void) {
+void Cluster::setupTimeService () {
     runCommand("rpm -q chrony");
     //if not installed
     runCommand("dnf -y install chrony");
@@ -91,7 +91,7 @@ void Cluster::setupTimeService (void) {
     runCommand("systemctl start --now chronyd");
 }
 
-void Cluster::setupSLURM (void) {
+void Cluster::setupSLURM () {
     runCommand("dnf -y install ohpc-slurm-server");
     runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
     runCommand("perl -pi -e \
@@ -99,14 +99,14 @@ void Cluster::setupSLURM (void) {
         /etc/slurm/slurm.conf");
 }
 
-void Cluster::setupInfiniband (void) {
+void Cluster::setupInfiniband () {
     runCommand("dnf -y groupinstall \"Infiniband Support\"");
 
     /* TODO: We must call the network method to configure IPoIB here */
     runCommand("cat /etc/sysconfig/network-scripts/ifcfg-ib0"); // Placeholder
 }
 
-void Cluster::disableNetworkManagerDNSOverride (void) {
+void Cluster::disableNetworkManagerDNSOverride () {
     runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
     runCommand("echo \"dns=none\" >> \
         /etc/NetworkManager/conf.d/90-dns-none.conf");
@@ -115,11 +115,11 @@ void Cluster::disableNetworkManagerDNSOverride (void) {
 }
 
 /* TODO: Implement with NetworkManager */
-void Cluster::setupInternalNetwork (void) {
+void Cluster::setupInternalNetwork () {
     runCommand("nmcli --help"); // Placeholder
 }
 
-void Cluster::setupNetworkFileSystem (void) {
+void Cluster::setupNetworkFileSystem () {
     runCommand("echo \"/home *(rw,no_subtree_check,fsid=10,no_root_squash)\" \
         >> /etc/exports");
     runCommand("echo \"/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\" \
@@ -128,7 +128,7 @@ void Cluster::setupNetworkFileSystem (void) {
     runCommand("systemctl enable --now nfs-server");
 }
 
-void Cluster::install (void) {
+void Cluster::install () {
     XCAT xCAT;
 
     setTimezone(this->timezone);

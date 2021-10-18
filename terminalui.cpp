@@ -24,7 +24,7 @@ TerminalUI::TerminalUI (Cluster& cluster, Headnode& headnode) {
 }
 
 /* Destructor */
-TerminalUI::~TerminalUI (void) {
+TerminalUI::~TerminalUI () {
     newtFinished();
 }
 
@@ -44,7 +44,7 @@ void TerminalUI::beginInstall (Cluster& cluster, Headnode& headnode) {
 #endif
 }
 
-void TerminalUI::abortInstall (void) {
+void TerminalUI::abortInstall () {
     TerminalUI::~TerminalUI();
     std::cout << MSG_INSTALL_ABORT;
     exit(EXIT_SUCCESS);
@@ -55,14 +55,14 @@ bool TerminalUI::hasEmptyField (const struct newtWinEntry *entries) {
     /* This may result in a buffer overflow if the string is > 63 chars */
     char message[63] = {};
 
-    /* This for loop will check for empty values on the entries and it will
+    /* This for loop will check for empty values on the entries, and it will
      * return true if any value is empty based on the length of the string.
      */
     for (unsigned i = 0 ; entries[i].text ; i++) {
         if (strlen(*entries[i].value) == 0) {
             sprintf(message, "%s cannot be empty\n", entries[i].text);
 
-            newtWinMessage(NULL, const_cast<char *>(MSG_BUTTON_OK), message);
+            newtWinMessage(nullptr, const_cast<char *>(MSG_BUTTON_OK), message);
             return true;
         }
     }
@@ -130,7 +130,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
     question:
     returnValue = newtWinMenu(const_cast<char *>(title),
                               const_cast<char *>(message),
-                              suggestedWidth, flexUp, flexDown, maxHeightList,
+                              suggestedWidth, flexDown, flexUp, maxHeightList,
                               const_cast<char **>(items), &selector,
                               const_cast<char *>(MSG_BUTTON_OK),
                               const_cast<char *>(MSG_BUTTON_CANCEL), 
@@ -192,7 +192,7 @@ std::vector<std::string> TerminalUI::drawFieldMenu (
     question: 
     returnValue = newtWinEntries(const_cast<char *>(title), 
                                  const_cast<char *>(message),
-                                 suggestedWidth, flexUp, flexDown,
+                                 suggestedWidth, flexDown, flexUp,
                                  maxHeightList, items, 
                                  const_cast<char *>(MSG_BUTTON_OK), 
                                  MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL);
@@ -245,7 +245,7 @@ std::vector<std::string> TerminalUI::drawIPSettings (const char * title,
         { const_cast<char *>("Address"), entries + 0, 0 },
         { const_cast<char *>("Subnet Mask"), entries + 1, 0 },
         { const_cast<char *>("Gateway"), entries + 2, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(items, 0, sizeof(items));
 
     std::vector<std::string> fields;
@@ -296,15 +296,15 @@ void TerminalUI::drawHelpMessage (const char* message) {
                    const_cast<char *>(message));
 }
 
-void TerminalUI::drawWelcomeMessage (void) {
+void TerminalUI::drawWelcomeMessage () {
     int returnValue;
 
     /* We start pushing the welcome message */
-    newtWinMessage(NULL, const_cast<char *>(MSG_BUTTON_OK), 
+    newtWinMessage(nullptr, const_cast<char *>(MSG_BUTTON_OK),
                    const_cast<char *>(MSG_WELCOME));
 
     /* Information about the installation scheme */
-    returnValue = newtWinChoice(NULL, const_cast<char *>(MSG_BUTTON_OK), 
+    returnValue = newtWinChoice(nullptr, const_cast<char *>(MSG_BUTTON_OK),
                                 const_cast<char *>(MSG_BUTTON_CANCEL),
                                 const_cast<char *>(MSG_GUIDED_INSTALL));
 
@@ -333,7 +333,7 @@ void TerminalUI::drawTimeSettings (Headnode& headnode) {
         "Gadific Mean Bolsotime",
         "Chronus",
         "Two blocks ahead",
-        NULL 
+        nullptr
     };
 
     headnode.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
@@ -349,7 +349,7 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
         "en.US_UTF-8",
         "pt.BR_UTF-8",
         "C",
-        NULL
+        nullptr
     };
 
     headnode.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
@@ -362,7 +362,7 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
  * we should have a function to handle IPv4 questions and call it when needed.
  * Questions about network are much the same on the service and application
  * networks, so it's duplicated code. xCAT does not have a good fit here too, it
- * should be modular so we can remove xCAT if we need to.
+ * should be an interface (modular), so we can remove xCAT if we need to.
  */
 void TerminalUI::drawNetworkSettings (Cluster& cluster, 
                                       Headnode& headnode) {
@@ -380,7 +380,7 @@ void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
     struct newtWinEntry hostId[] = {
         { const_cast<char *>("Hostname"), hostIdEntries + 0, 0 },
         { const_cast<char *>("Domain name"), hostIdEntries + 1, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(hostIdEntries, 0, sizeof(hostIdEntries));
 
     std::vector<std::string> fields = drawFieldMenu(
@@ -411,7 +411,7 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
         "enp4s0f0",
         "lo",
         "ib0",
-        NULL
+        nullptr
     };
 
     /* This is totally wrong, it should set the interface name and not the IP
@@ -437,7 +437,7 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
         "enp4s0f0",
         "lo",
         "ib0",
-        NULL
+        nullptr
     };
 
     /* This is totally wrong, it should set the interface name and not the IP
@@ -459,7 +459,7 @@ void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
     struct newtWinEntry managementNetworkEntries[] = {
         { const_cast<char *>("Headnode IP"), entries + 0, 0 },
         { const_cast<char *>("Management Network"), entries + 1, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     std::vector<std::string> fields = drawFieldMenu(
@@ -484,7 +484,7 @@ void TerminalUI::drawNetworkManagementXCATRange (Cluster& cluster) {
     struct newtWinEntry xCATDynamicRange[] = {
         { const_cast<char *>("Start IP"), entries + 0, 0 },
         { const_cast<char *>("End IP"), entries + 1, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     std::vector<std::string> fields = drawFieldMenu(
@@ -513,7 +513,7 @@ void TerminalUI::drawInfinibandSettings (Cluster& cluster) {
         "None",
         "Inbox",
         "Mellanox",
-        NULL
+        nullptr
     };
     
     cluster.ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
@@ -536,7 +536,7 @@ void TerminalUI::drawDirectoryServicesPassword (Cluster& cluster) {
             entries + 0, NEWT_FLAG_PASSWORD },
         { const_cast<char *>("FreeIPA directory manager password"), 
             entries + 1, NEWT_FLAG_PASSWORD },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     std::vector<std::string> fields = drawFieldMenu(
@@ -569,7 +569,7 @@ void TerminalUI::drawNodeSettings (Cluster& cluster) {
         { const_cast<char *>("Compute node root password"), 
             entries + 3, NEWT_FLAG_PASSWORD},
         { const_cast<char *>("ISO path of Node OS"), entries + 4, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     retry:
@@ -581,7 +581,7 @@ void TerminalUI::drawNodeSettings (Cluster& cluster) {
 
     /* TODO: Better implementation */
     if (isalpha(fields[0][0]) == false) {
-        newtWinMessage(NULL, const_cast<char *>(MSG_BUTTON_OK), 
+        newtWinMessage(nullptr, const_cast<char *>(MSG_BUTTON_OK),
                        const_cast<char *>("Prefix must start with a letter"));
         memset(entries, 0, sizeof(entries));
         goto retry;
@@ -599,7 +599,7 @@ void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {
         "None",
         "SLURM",
         "PBS Professional",
-        NULL
+        nullptr
     };
 
     std::string queueSystem = drawListMenu(
@@ -623,7 +623,7 @@ void TerminalUI::drawSLURMSettings (Cluster& cluster) {
     char *entries[10];
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Partition name"), entries + 0, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     const std::vector<std::string> fields = drawFieldMenu(
@@ -640,7 +640,7 @@ void TerminalUI::drawPBSSettings (Cluster& cluster) {
     const char* const pbsDefaultPlace[] = {
         const_cast<char *>("Shared"),
         const_cast<char *>("Scatter"),
-        NULL
+        nullptr
     };
 
     const std::string defaultPlace = drawListMenu(MSG_TITLE_PBS_SETTINGS,
@@ -689,7 +689,7 @@ void TerminalUI::drawPostfixProfile (Cluster& cluster) {
         "Local",
         "Relay",
         "SASL",
-        NULL
+        nullptr
     };
 
     const std::string postfixProfile = drawListMenu(MSG_TITLE_POSTFIX_SETTINGS,
@@ -710,7 +710,7 @@ void TerminalUI::drawPostfixRelaySettings (Cluster& cluster) {
     struct newtWinEntry autoEntries[] = {
         { const_cast<char *>("Hostname of the MTA"), entries + 0, 0 },
         { const_cast<char *>("Port"), entries + 1, 0 },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     std::vector<std::string> fields = drawFieldMenu(
@@ -733,7 +733,7 @@ void TerminalUI::drawPostfixSASLSettings (Cluster& cluster) {
         { const_cast<char *>("Port"), entries + 1, 0 },
         { const_cast<char *>("Username"), entries + 2, 0 },
         { const_cast<char *>("Password"), entries + 3, NEWT_FLAG_PASSWORD },
-        { NULL, NULL, 0 } };
+        { nullptr, nullptr, 0 } };
     memset(entries, 0, sizeof(entries));
 
     std::vector<std::string> fields = drawFieldMenu(

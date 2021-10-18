@@ -3,21 +3,21 @@
 
 #include <iostream>
 
-void Repos::createConfigurationFile (std::string id, 
+void Repos::createConfigurationFile (const std::string& id,
         bool enabled, 
-        std::string name,
-        std::string baseurl, 
-        std::string metalink, 
+        const std::string& name,
+        const std::string& baseurl,
+        const std::string& metalink,
         bool gpgcheck, 
-        std::string gpgkey,
-        std::string gpgkeyPath) {
+        const std::string& gpgkey,
+        const std::string& gpgkeyPath) {
 
 }
 
-void Repos::enable (std::string id) {
+void Repos::enable (const std::string& id) {
 
 }
 
-void Repos::disable (std::string id) {
+void Repos::disable (const std::string& id) {
 
 }

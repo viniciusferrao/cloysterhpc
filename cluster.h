@@ -49,20 +49,20 @@ private:
 private:
     void setTimezone (std::string);
     void setLocale (std::string);
-    void setFQDN (std::string);
-    void enableFirewall (void);
-    void disableFirewall (void);
+    void setFQDN (const std::string&);
+    void enableFirewall ();
+    void disableFirewall ();
     int setSELinuxMode (std::string);
-    void systemUpdate (void);
-    void installRequiredPackages (void);
-    void setupRepositories (void);
-    void installProvisioningServices (void);
-    void setupTimeService (void);
-    void setupSLURM (void);
-    void setupInfiniband (void);
-    void disableNetworkManagerDNSOverride (void); // This should be on Network
-    void setupInternalNetwork (void); // This should be on Network
-    void setupNetworkFileSystem (void);
+    void systemUpdate ();
+    void installRequiredPackages ();
+    void setupRepositories ();
+    void installProvisioningServices ();
+    void setupTimeService ();
+    void setupSLURM ();
+    void setupInfiniband ();
+    void disableNetworkManagerDNSOverride (); // This should be on Network
+    void setupInternalNetwork (); // This should be on Network
+    void setupNetworkFileSystem ();
 
 public:
     bool firewall; // Cluster-wide firewall settings
@@ -93,8 +93,8 @@ public:
     bool updateSystem;
     bool remoteAccess;
 
-    Cluster (Headnode&);
-    void install (void);
+    explicit Cluster (Headnode&);
+    void install ();
 #ifdef _DEBUG_
     void printData ();
 #endif

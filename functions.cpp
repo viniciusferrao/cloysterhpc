@@ -29,7 +29,7 @@
  * optstring: if it is ':', then ':' is returned; otherwise '?' is returned.
  * https://www.man7.org/linux/man-pages/man3/getopt.3.html
  * 
- * Finally we should consider reimplementing this with boost:
+ * Finally, we should consider reimplementing this with boost:
  * boost::program_options
  */
 int parseArguments(int argc, char **argv) {
@@ -40,9 +40,9 @@ int parseArguments(int argc, char **argv) {
 #ifdef ENABLE_GETOPT_H
         int optionIndex = 0;
         static struct option const longOptions[] = {
-            {"help", no_argument, NULL, 'h'},
-            {"version", no_argument, NULL, 'v'},
-            {NULL, 0, NULL, 0}
+            {"help", no_argument, nullptr, 'h'},
+            {"version", no_argument, nullptr, 'v'},
+            {nullptr, 0, nullptr, 0}
         };
 
         ch = getopt_long(argc, argv, shortOptions, longOptions, &optionIndex);
@@ -94,13 +94,13 @@ int parseArguments(int argc, char **argv) {
  * If the variable is not set it will return as an empty string. That's by 
  * design and not considered a bug right now.
  */
-std::string getEnvironmentVariable (std::string const &key) {
+std::string getEnvironmentVariable (const std::string& key) {
     char *value = getenv(key.c_str());
-    return value == NULL ? std::string("") : std::string(value);
+    return value == nullptr ? std::string("") : std::string(value);
 }
 
 /* Read .conf file */
-std::string readConfig (const std::string &filename) {
+std::string readConfig (const std::string& filename) {
     boost::property_tree::ptree tree;
 
     try {
@@ -113,7 +113,7 @@ std::string readConfig (const std::string &filename) {
 #endif
     }
 
-    const std::string value = tree.get<std::string>("headnode.LANG",
+    std::string value = tree.get<std::string>("headnode.LANG",
                                                     "en_US.utf8");
 #ifdef _DEBUG_
     std::cout << "Read configFile variables:" << std::endl;
@@ -124,7 +124,7 @@ std::string readConfig (const std::string &filename) {
 }
 
 /* Write .conf file function */
-void writeConfig (const std::string &filename) {
+void writeConfig (const std::string& filename) {
     boost::property_tree::ptree tree;
 
     tree.put("headnode.LANG", getEnvironmentVariable("LANG"));
@@ -133,7 +133,7 @@ void writeConfig (const std::string &filename) {
 }
 
 /* Execution engine code */
-void runCommand (const std::string command) {
+void runCommand (const std::string& command) {
 #ifndef _DUMMY_
     boost::process::ipstream pipe_stream;
     boost::process::child c(command, boost::process::std_out > pipe_stream);

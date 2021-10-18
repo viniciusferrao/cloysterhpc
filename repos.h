@@ -94,10 +94,10 @@ private:
     std::string gpgkeyPath; /* Location of the keyfile on filesystem */
 
 public:
-    void createConfigurationFile (std::string, bool, std::string, std::string,
-        std::string, bool, std::string, std::string);
-    void enable (std::string);
-    void disable (std::string);
+    void createConfigurationFile (const std::string&, bool, const std::string&, const std::string&,
+        const std::string&, bool, const std::string&, const std::string&);
+    void enable (const std::string&);
+    void disable (const std::string&);
 };
 
 #endif /* REPOS_H */

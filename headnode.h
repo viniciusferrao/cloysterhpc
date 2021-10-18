@@ -13,7 +13,7 @@
 
 class Headnode : public Server {
 private:
-    std::string fetchValue (std::string line);
+    std::string fetchValue (const std::string& line);
 
 public:
     OS os;
@@ -36,9 +36,9 @@ public:
     std::string fqdn;
     std::vector<std::string> nameserver;
 
-    int setOS (void);
-    void printOS (void);
-    int checkSupportedOS (void);   
+    int setOS ();
+    void printOS ();
+    int checkSupportedOS ();
 };
 
 #endif /* HEADNODE_H */

@@ -11,7 +11,7 @@
 class TerminalUI {
 private:
     /* Ancillary private methods */
-    void abortInstall (void);
+    void abortInstall ();
     void beginInstall (Cluster&, Headnode&);
     bool hasEmptyField (const struct newtWinEntry *);
 #ifdef _DEBUG_
@@ -29,7 +29,7 @@ private:
 
     /* Interface screens */
     void drawHelpMessage (const char *);
-    void drawWelcomeMessage (void);
+    void drawWelcomeMessage ();
     void drawTimeSettings (Headnode&);
     void drawLocaleSettings (Headnode&);
     void drawNetworkSettings (Cluster&, Headnode&);
@@ -56,7 +56,7 @@ private:
 
 public:
     TerminalUI (Cluster&, Headnode&);
-    ~TerminalUI (void);
+    ~TerminalUI ();
 
 #ifdef _DEBUG_
     void debugInfo (void);
