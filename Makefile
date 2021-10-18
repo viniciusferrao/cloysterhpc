@@ -19,7 +19,7 @@ endif
 # Compiler flags
 #
 CC = clang
-CFLAGS = -Wall -Wextra #-Werror
+CFLAGS = -Wall -Wextra -Wno-unused-private-field -Wno-unused-parameter -Wno-unused-variable #-Werror
 CXX = clang++ --std=$(STDCXX)
 CXXFLAGS = $(CFLAGS)
 LD = clang++

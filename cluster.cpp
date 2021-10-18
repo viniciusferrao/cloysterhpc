@@ -10,8 +10,8 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 
-Cluster::Cluster (const Headnode& headnode) {
-    m_headnode = headnode;
+Cluster::Cluster (Headnode& headnode) {
+    m_headnode = &headnode;
 }
 
 void Cluster::setTimezone (std::string timezone) {
@@ -133,7 +133,7 @@ void Cluster::install (void) {
 
     setTimezone(this->timezone);
     setLocale(this->locale);
-    setFQDN(this->m_headnode.fqdn);
+    setFQDN(this->m_headnode->fqdn);
 
     this->firewall ? enableFirewall() : disableFirewall();
     this->selinux ? setSELinuxMode("enabled") : setSELinuxMode("disabled");
@@ -154,3 +154,66 @@ void Cluster::install (void) {
         "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
     setupNetworkFileSystem();
 }
+
+#ifdef _DEBUG_
+void Cluster::printData () {
+    std::cout << "Cluster attributes defined:" << std::endl;
+    std::cout << "Timezone: " << this->m_headnode->timezone << std::endl;
+    std::cout << "Locale: " << this->m_headnode->locale << std::endl;
+    std::cout << "Hostname: " << this->m_headnode->hostname << std::endl;
+    std::cout << "Domainname: " << this->m_headnode->domainname << std::endl;
+    std::cout << "FQDN: " << this->m_headnode->fqdn << std::endl;
+    //std::cout << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
+    //std::cout << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
+    //std::cout << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
+    //std::cout << "interfaceInternalIP: " << cluster.interfaceInternalIP << std::endl;
+    std::cout << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
+    std::cout << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
+
+    std::cout << "Directory Admin Password: " << directoryAdminPassword << std::endl;
+    std::cout << "Directory Manager Password: " << directoryManagerPassword << std::endl;
+    std::cout << "Directory Disable DNSSEC: " << (directoryDisableDNSSEC ? "true" : "false") << std::endl;
+
+    std::cout << "nodePrefix: " << nodePrefix << std::endl;
+    std::cout << "nodePadding: " << nodePadding << std::endl;
+    std::cout << "nodeStartIP: " << nodeStartIP << std::endl;
+    std::cout << "nodeRootPassword: " << nodeRootPassword << std::endl;
+    std::cout << "nodeISOPath: " << nodeISOPath << std::endl;
+
+    std::cout << "ibStack: " << ibStack << std::endl;
+
+    std::cout << "queueSystem: " << queueSystem.name << std::endl;
+    // if (queueSystem.name == "SLURM")
+    //     std::cout << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
+    // if (queueSystem.name == "PBS")
+    //     std::cout << "pbs.defaultPlace: " << queueSystem.pbs.defaultPlace << std::endl;
+
+    // std::cout << "Enable Postfix: " << postfix.enable ? "true" : "false" << std::endl;
+    // if (postfix.enable) {
+    //     std::cout << "\t-> Profile: " << postfixProfiles[cluster.postfix.profileId] << std::endl;
+    //     switch (cluster.postfix.profileId) {
+    //         case 0:
+    //             /* Local */
+    //             break;
+    //         case 1:
+    //             /* Relay */
+    //             std::cout << "\t\t-> Hostname: " << cluster.postfix.relay.hostname << std::endl;
+    //             std::cout << "\t\t-> Port: %u\n", cluster.postfix.relay.port << std::endl;
+    //             break;
+    //         case 2:
+    //             /* SASL */
+    //             std::cout << "\t\t-> Hostname: " << cluster.postfix.sasl.hostname << std::endl;
+    //             std::cout << "\t\t-> Port: %u\n", cluster.postfix.sasl.port << std::endl;
+    //             std::cout << "\t\t-> Username: " << cluster.postfix.sasl.username << std::endl;
+    //             std::cout << "\t\t-> Password: " << cluster.postfix.sasl.password << std::endl;
+    //             break;
+    //     }
+    // }
+
+    std::cout << "Update system: " << (updateSystem ? "true" : "false") << std::endl;
+    std::cout << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
+
+    std::cout << "Firewall: " << (firewall ? "true" : "false") << std::endl;
+    std::cout << "SELinux: " << (selinux ? "true" : "false") << std::endl;
+}
+#endif

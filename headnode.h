@@ -5,12 +5,13 @@
 #include <vector>
 #include <optional>
 
+#include "server.h"
 #include "types.h"
 #include "network.h"
 #include "connection.h"
 #include "os.h"
 
-class Headnode {
+class Headnode : public Server {
 private:
     std::string fetchValue (std::string line);
 

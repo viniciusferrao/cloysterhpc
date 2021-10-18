@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 
 /* Constructor */
 TerminalUI::TerminalUI (Cluster& cluster, Headnode& headnode) {
@@ -321,6 +322,11 @@ void TerminalUI::drawTimeSettings (Headnode& headnode) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported timezones from the OS instead.
      */
+    // std::chrono::tzdb_list& get_tzdb_list();
+    // std::vector<std::string> timezones;
+    // for (auto x : tzdb_list) {
+    //     timezones.push_back(x);
+    // }
     const char* const timezones[] = {
         "America/Sao_Paulo",
         "UTC",
@@ -346,7 +352,7 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
         NULL
     };
 
-    headnode.timezone = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
+    headnode.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
                                       MSG_LOCALE_SETTINGS_LOCALE, locales,
                                       MSG_LOCALE_SETTINGS_LOCALE_HELP);
 }

@@ -43,8 +43,8 @@ struct Postfix {
 };
 
 class Cluster {
-protected:
-    Headnode m_headnode;
+private:
+    Headnode* m_headnode;
 
 private:
     void setTimezone (std::string);
@@ -93,8 +93,11 @@ public:
     bool updateSystem;
     bool remoteAccess;
 
-    Cluster (const Headnode&);
+    Cluster (Headnode&);
     void install (void);
+#ifdef _DEBUG_
+    void printData ();
+#endif
 };
 
 #endif /* CLUSTER_H */
