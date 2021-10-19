@@ -414,16 +414,12 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
         nullptr
     };
 
-    /* This is totally wrong, it should set the interface name and not the IP
-     * address of the interface
-     */
     Network network;
     network.setProfile(Network::Profile::External);
     network.setType(Network::Type::Ethernet);
-    //network.setIPAddress(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-    drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+    network.setInterfacename(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
                      MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
-                     MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
+                     MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP));
 
     headnode.externalNetwork.push_back(network);
 }
@@ -446,10 +442,9 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
     Network network;
     network.setProfile(Network::Profile::Management);
     network.setType(Network::Type::Ethernet);
-    //network.setIPAddress(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-    drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+    network.setInterfacename(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
                     MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
-                    MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP);
+                    MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP));
 
     headnode.managementNetwork.push_back(network);
 }
@@ -771,4 +766,46 @@ void TerminalUI::drawRemoteAccess (Cluster& cluster) {
     remoteAccess ? 
         cluster.remoteAccess = true : 
         cluster.remoteAccess = false;
+}
+
+/* Refactoring to MVC */
+TerminalUI::TerminalUI () {
+}
+
+TerminalUI::TerminalUI (Cluster& cluster) {
+    newtInit();
+    newtCls();
+
+    /* Push the title to the top left corner */
+    newtDrawRootText(0, 0, MSG_INSTALL_TITLE);
+
+    /* Add the default help line in the bottom */
+    newtPushHelpLine(MSG_INSTALL_HELP_LINE);
+    newtRefresh();
+
+    //beginInstall(cluster);
+    // drawWelcomeMessage();
+    // drawTimeSettings(headnode);
+    // drawLocaleSettings(headnode);
+    // drawNetworkSettings(cluster, headnode);
+    // drawInfinibandSettings(cluster);
+    // drawDirectoryServicesSettings(cluster);
+    // drawNodeSettings(cluster);
+    // drawQueueSystemSettings(cluster);
+    // drawPostfixSettings(cluster);
+    // drawUpdateSystem(cluster);
+    // drawRemoteAccess(cluster);
+    
+}
+
+std::string TerminalUI::drawTimezoneSelection (const char* const* timezones) {
+    return drawListMenu(MSG_TITLE_TIME_SETTINGS,
+                        MSG_TIME_SETTINGS_TIMEZONE, timezones,
+                        MSG_TIME_SETTINGS_TIMEZONE_HELP);
+}
+
+std::string TerminalUI::drawLocaleSelection (const char* const* locales) {
+    return drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
+                        MSG_LOCALE_SETTINGS_LOCALE, locales,
+                        MSG_LOCALE_SETTINGS_LOCALE_HELP);
 }

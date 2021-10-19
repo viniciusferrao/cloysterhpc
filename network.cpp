@@ -19,9 +19,10 @@ Network::Type Network::getType () {
 }
 
 int Network::setInterfaceName () {
-    if (getifaddrs(&this->m_ifaddr) == -1) {
-        return -1;
-    }
+    // if (getifaddrs(&this->m_ifaddr) == -1) {
+    //     return -1;
+    // }
+    m_interfacename = "eth0";
     return 0;
 }
 
@@ -40,4 +41,16 @@ int Network::setIPAddress (const std::string& address, const std::string& subnet
 
 std::string Network::getIPAddress () {
     return inet_ntoa(m_address);
+}
+
+const std::string &Network::getInterfacename() const {
+    return m_interfacename;
+}
+
+void Network::setInterfacename(const std::string &interfacename) {
+    if (interfacename == "lo") {
+        //throw renameThisError;
+        return;
+    }
+    this->m_interfacename = interfacename;
 }

@@ -58,6 +58,12 @@ public:
     TerminalUI (Cluster&, Headnode&);
     ~TerminalUI ();
 
+    /* Refactoring to MVC */
+    TerminalUI ();
+    TerminalUI (Cluster&);
+    std::string drawTimezoneSelection (const char* const*);
+    std::string drawLocaleSelection (const char* const*);
+
 #ifdef _DEBUG_
     void debugInfo (void);
 #endif /* _DEBUG_ */

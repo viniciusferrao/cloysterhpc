@@ -16,6 +16,7 @@
 #include "cluster.h"
 #include "connection.h"
 #include "terminalui.h"
+#include "controller.h"
 
 int main(int argc, char **argv) {
     int rc; /* return code */
@@ -23,9 +24,10 @@ int main(int argc, char **argv) {
     /* TerminalUI entrypoint */
     Headnode headnode;
     Cluster cluster(headnode);
-    TerminalUI terminalui(cluster, headnode);
-    terminalui.~TerminalUI();
-    std::cout << "End of TerminalUI execution" << std::endl;
+    TerminalUI terminalui(cluster);
+    // terminalui.~TerminalUI();
+    // std::cout << "End of TerminalUI execution" << std::endl;
+    Controller controller(cluster, headnode, terminalui);
 
 #ifdef _DEBUG_
     cluster.printData();

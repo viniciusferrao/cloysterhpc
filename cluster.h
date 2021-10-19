@@ -71,9 +71,9 @@ public:
     std::string locale; // Default locale cluster wide.
     std::string domainname;
 
-
-    Network service;
+    Network external;
     Network management;
+    Network service;
     Network application;
 
 
@@ -93,7 +93,8 @@ public:
     bool updateSystem;
     bool remoteAccess;
 
-    explicit Cluster (Headnode&);
+    Cluster ();
+    Cluster (Headnode&);
     void install ();
 #ifdef _DEBUG_
     void printData ();

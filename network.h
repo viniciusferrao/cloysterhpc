@@ -19,7 +19,8 @@ public:
 private:
     Profile m_profile;
     Type m_type;
-    struct ifaddrs *m_ifaddr;
+    //struct ifaddrs *m_ifaddr;
+    std::string m_interfacename;
     struct in_addr m_address;
     struct in_addr m_subnetmask;
     struct in_addr m_gateway;
@@ -34,6 +35,9 @@ public:
 
     int setInterfaceName ();
     void printInterfaceName ();
+
+    const std::string &getInterfacename() const;
+    void setInterfacename(const std::string &interfacename);
 
     int setIPAddress (const std::string&, const std::string&);
     std::string getIPAddress ();

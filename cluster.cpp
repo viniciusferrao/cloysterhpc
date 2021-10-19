@@ -10,6 +10,10 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 
+Cluster::Cluster () {
+    
+}
+
 Cluster::Cluster (Headnode& headnode) {
     m_headnode = &headnode;
 }
