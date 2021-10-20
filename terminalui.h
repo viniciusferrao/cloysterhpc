@@ -63,6 +63,9 @@ public:
     TerminalUI (Cluster&);
     std::string drawTimezoneSelection (const char* const*);
     std::string drawLocaleSelection (const char* const*);
+    std::vector<std::string> drawNetworkHostnameSelection
+                                              (const std::vector<std::string>&);
+    std::string drawNetworkInterfaceSelection (const char* const*);
 
 #ifdef _DEBUG_
     void debugInfo (void);

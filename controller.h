@@ -15,7 +15,8 @@ class Controller {
     void startView ();
     std::string requestTimezone ();
     std::string requestLocale ();
-
+    std::vector<std::string> requestHostname ();
+    std::string requestNetworkInterface ();
 
 public:
     Controller (Cluster&, Headnode&, TerminalUI&);

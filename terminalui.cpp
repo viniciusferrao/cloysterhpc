@@ -783,18 +783,32 @@ TerminalUI::TerminalUI (Cluster& cluster) {
     newtPushHelpLine(MSG_INSTALL_HELP_LINE);
     newtRefresh();
 
-    //beginInstall(cluster);
-    // drawWelcomeMessage();
-    // drawTimeSettings(headnode);
-    // drawLocaleSettings(headnode);
-    // drawNetworkSettings(cluster, headnode);
-    // drawInfinibandSettings(cluster);
-    // drawDirectoryServicesSettings(cluster);
-    // drawNodeSettings(cluster);
-    // drawQueueSystemSettings(cluster);
-    // drawPostfixSettings(cluster);
-    // drawUpdateSystem(cluster);
-    // drawRemoteAccess(cluster);
+//    beginInstall(cluster);
+//    void drawHelpMessage (const char *);
+//    void drawWelcomeMessage ();
+//    void drawTimeSettings (Headnode&);
+//    void drawLocaleSettings (Headnode&);
+//    void drawNetworkSettings (Cluster&, Headnode&);
+//    void drawNetworkHostnameSettings (Headnode&);
+//    void drawNetworkExternalInterfaceSelection (Headnode&);
+//    void drawNetworkManagementInterfaceSelection (Headnode&);
+//    void drawNetworkManagementAddress (Headnode&);
+//    void drawNetworkManagementXCATRange (Cluster&);
+//    void drawInfinibandSettings(Cluster&);
+//    void drawDirectoryServicesSettings (Cluster&);
+//    void drawDirectoryServicesPassword (Cluster&);
+//    void drawDirectoryServicesDisableDNSSEC (Cluster&);
+//    void drawNodeSettings (Cluster&);
+//    void drawQueueSystemSettings (Cluster&);
+//    void drawSLURMSettings (Cluster&);
+//    void drawPBSSettings (Cluster&);
+//    void drawPostfixSettings (Cluster&);
+//    void drawPostfixEnable (Cluster&);
+//    void drawPostfixProfile (Cluster&);
+//    void drawPostfixRelaySettings (Cluster&);
+//    void drawPostfixSASLSettings (Cluster&);
+//    void drawUpdateSystem (Cluster&);
+//    void drawRemoteAccess (Cluster&);
     
 }
 
@@ -808,4 +822,35 @@ std::string TerminalUI::drawLocaleSelection (const char* const* locales) {
     return drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
                         MSG_LOCALE_SETTINGS_LOCALE, locales,
                         MSG_LOCALE_SETTINGS_LOCALE_HELP);
+}
+
+std::vector<std::string> TerminalUI::drawNetworkHostnameSelection (
+                                    const std::vector<std::string>& entries) {
+
+    char** hostIdEntries;
+    struct newtWinEntry* hostId;
+    unsigned vectorSize = entries.size();
+
+    hostId = new struct newtWinEntry[vectorSize + 1]();
+    hostIdEntries = new char*[vectorSize + 1]();
+
+    for (unsigned i = 0 ; i < vectorSize ; i++) {
+        hostId[i].text = const_cast<char*>(entries[i].c_str());
+        hostId[i].value = hostIdEntries + i;
+        hostId[i].flags = 0;
+    }
+    hostId[vectorSize].text = nullptr;
+    hostId[vectorSize].value = nullptr;
+    hostId[vectorSize].flags = 0;
+
+    return drawFieldMenu(MSG_TITLE_NETWORK_SETTINGS,
+                         MSG_NETWORK_SETTINGS_HOSTID, hostId,
+                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
+}
+
+/* TODO: Fix Internal/External interface mess */
+std::string TerminalUI::drawNetworkInterfaceSelection (const char* const* ifa) {
+    return drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+                        MSG_NETWORK_SETTINGS_EXTERNAL_IF, ifa,
+                        MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
 }
