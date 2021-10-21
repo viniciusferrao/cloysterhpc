@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <newt.h>
+#include "view.h"
 #include "cluster.h"
 #include "headnode.h"
 
@@ -20,10 +21,11 @@ private:
 
     /* Interface helpers */
     bool drawYesNoQuestion (const char *, const char *, const char *);
-    std::string drawListMenu (const char *, const char *, const char * const *,
-                              const char *);
-    std::vector<std::string> drawFieldMenu (const char *, const char *, 
-                               struct newtWinEntry *, const char *);
+    std::string drawListMenu (const char *, const char *,
+                              const std::vector<std::string>&, const char *);
+    std::vector<std::string> drawFieldMenu (const char *, const char *,
+                                            const std::vector<std::string>&,
+                                            const char *);
     std::vector<std::string> drawIPSettings (const char *, const char *, 
                                              const char */*, Network **/);
 
@@ -61,11 +63,13 @@ public:
     /* Refactoring to MVC */
     TerminalUI ();
     TerminalUI (Cluster&);
-    std::string drawTimezoneSelection (const char* const*);
-    std::string drawLocaleSelection (const char* const*);
+    std::string drawTimezoneSelection (const std::vector<std::string>&);
+    std::string drawLocaleSelection (const std::vector<std::string>&);
     std::vector<std::string> drawNetworkHostnameSelection
                                               (const std::vector<std::string>&);
-    std::string drawNetworkInterfaceSelection (const char* const*);
+    std::string drawNetworkInterfaceSelection (const std::vector<std::string>&);
+    std::vector<std::string> drawNetworkAddress (
+                                            const std::vector<std::string>&);
 
 #ifdef _DEBUG_
     void debugInfo (void);

@@ -17,6 +17,7 @@ class Controller {
     std::string requestLocale ();
     std::vector<std::string> requestHostname ();
     std::string requestNetworkInterface ();
+    std::vector<std::string> requestNetworkAddress ();
 
 public:
     Controller (Cluster&, Headnode&, TerminalUI&);

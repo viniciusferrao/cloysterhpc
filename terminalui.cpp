@@ -115,7 +115,7 @@ bool TerminalUI::drawYesNoQuestion (const char * title, const char * message,
 }
 
 std::string TerminalUI::drawListMenu (const char * title, const char * message,
-                                      const char * const * items,
+                                      const std::vector<std::string>& items,
                                       const char * helpMessage) {
 
     int returnValue;
@@ -124,14 +124,24 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
     int suggestedWidth = 50;
     int flexUp = 5;
     int flexDown = 5;
-    int maxHeightList = 3; 
+    int maxHeightList = 3;
+
+    /* Newt expects a NULL terminated array of C style strings */
+    std::vector<const char*> cStrings;
+    cStrings.reserve(items.size() + 1);
+
+    for (const auto& item : items) {
+        cStrings.push_back(item.c_str());
+    }
+    cStrings.push_back(nullptr);
+
 #if 1
     /* Goto implementation */
     question:
     returnValue = newtWinMenu(const_cast<char *>(title),
                               const_cast<char *>(message),
                               suggestedWidth, flexDown, flexUp, maxHeightList,
-                              const_cast<char **>(items), &selector,
+                              const_cast<char **>(cStrings.data()), &selector,
                               const_cast<char *>(MSG_BUTTON_OK),
                               const_cast<char *>(MSG_BUTTON_CANCEL), 
                               const_cast<char *>(MSG_BUTTON_HELP), NULL);
@@ -177,23 +187,44 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
 }
 
 std::vector<std::string> TerminalUI::drawFieldMenu (
-    const char * title, const char * message, struct newtWinEntry * items, 
-    const char * helpMessage) {
+    const char * title, const char * message,
+    const std::vector<std::string>& items, const char * helpMessage) {
 
     int returnValue;
 
     int suggestedWidth = 50;
     int flexUp = 5;
     int flexDown = 5;
-    int maxHeightList = 20; 
+    int maxHeightList = 20;
 
-    std::vector<std::string> fields;
+    char** fieldEntries;
+    struct newtWinEntry* field;
+    unsigned vectorSize = items.size();
+
+    field = new struct newtWinEntry[vectorSize + 1]();
+    fieldEntries = new char*[vectorSize + 1]();
+
+    for (unsigned i = 0 ; i < vectorSize ; i++) {
+        field[i].text = const_cast<char*>(items[i].c_str());
+        field[i].value = fieldEntries + i;
+        /* TODO: Fix this hack to enable password fields */
+        if (items[i].find("Password") != std::string::npos ||
+            items[i].find("password") != std::string::npos)
+            field[i].flags = NEWT_FLAG_PASSWORD;
+        else
+            field[i].flags = 0;
+    }
+    field[vectorSize].text = nullptr;
+    field[vectorSize].value = nullptr;
+    field[vectorSize].flags = 0;
+
+    std::vector<std::string> entries;
 
     question: 
     returnValue = newtWinEntries(const_cast<char *>(title), 
                                  const_cast<char *>(message),
                                  suggestedWidth, flexDown, flexUp,
-                                 maxHeightList, items, 
+                                 maxHeightList, field,
                                  const_cast<char *>(MSG_BUTTON_OK), 
                                  MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL);
 
@@ -201,29 +232,27 @@ std::vector<std::string> TerminalUI::drawFieldMenu (
         case 0:
             /* F12 is pressed, and we don't care; continue to case 1 */
         case 1:
-            if (hasEmptyField(items))
+            if (hasEmptyField(field))
                 goto question;      
 #ifdef _DEBUG_
-            drawDebugEntries(items);
+            drawDebugEntries(field);
 #endif
-            /* Cleanup the memory for items: that's a funny thing here, our
-             * friend newtWinEntries() it's not really here to free hostId but 
-             * to populate it with data. So we need to clean this data after
-             * using it.
-             */
-            for (unsigned i = 0 ; items[i].value ; i++) {
-                fields.push_back(*items[i].value);
-                free(*(items[i].value));
+            for (unsigned i = 0 ; field[i].value ; i++) {
+                entries.push_back(*field[i].value);
             }
 
-            return fields;
+            delete[] fieldEntries;
+            delete[] field;
+
+            return entries;
         case 2:
             abortInstall();
         case 3:
             drawHelpMessage(helpMessage);
             goto question;
+        default:
+            throw;
     }
-    return fields; /* We should never reach here */
 }
 
 /* This is just an ideia, but here we should do the following:
@@ -327,13 +356,12 @@ void TerminalUI::drawTimeSettings (Headnode& headnode) {
     // for (auto x : tzdb_list) {
     //     timezones.push_back(x);
     // }
-    const char* const timezones[] = {
+    std::vector<std::string> timezones = {
         "America/Sao_Paulo",
         "UTC",
         "Gadific Mean Bolsotime",
         "Chronus",
-        "Two blocks ahead",
-        nullptr
+        "Two blocks ahead"
     };
 
     headnode.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
@@ -345,11 +373,10 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported locales from the OS instead.
      */
-    const char* const locales[] = {
+    std::vector<std::string> locales = {
         "en.US_UTF-8",
         "pt.BR_UTF-8",
-        "C",
-        nullptr
+        "C"
     };
 
     headnode.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
@@ -376,16 +403,14 @@ void TerminalUI::drawNetworkSettings (Cluster& cluster,
 
 void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
     /* Request hostname and domain name */
-    char *hostIdEntries[2];
-    struct newtWinEntry hostId[] = {
-        { const_cast<char *>("Hostname"), hostIdEntries + 0, 0 },
-        { const_cast<char *>("Domain name"), hostIdEntries + 1, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(hostIdEntries, 0, sizeof(hostIdEntries));
+    const std::vector<std::string> entries = {
+            "Hostname",
+            "Domain Name"
+    };;
 
     std::vector<std::string> fields = drawFieldMenu(
                                         MSG_TITLE_NETWORK_SETTINGS,
-                                        MSG_NETWORK_SETTINGS_HOSTID, hostId,
+                                        MSG_NETWORK_SETTINGS_HOSTID, entries,
                                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
 
     headnode.hostname = fields[0];
@@ -405,13 +430,12 @@ void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
 void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
     //char **netInterfaces;
     /* Implement with https://linux.die.net/man/3/getifaddrs */
-    const char* const netInterfaces[] = {
+    std::vector<std::string> netInterfaces = {
         "eth0",
         "eth1",
         "enp4s0f0",
         "lo",
         "ib0",
-        nullptr
     };
 
     Network network;
@@ -427,13 +451,12 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
 void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
     //char **netInterfaces;
     /* Implement with https://linux.die.net/man/3/getifaddrs */
-    const char* const netInterfaces[] = {
+    std::vector<std::string> netInterfaces = {
         "eth0",
         "eth1",
         "enp4s0f0",
         "lo",
-        "ib0",
-        nullptr
+        "ib0"
     };
 
     /* This is totally wrong, it should set the interface name and not the IP
@@ -450,12 +473,10 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
 }
 
 void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
-    char *entries[10];
-    struct newtWinEntry managementNetworkEntries[] = {
-        { const_cast<char *>("Headnode IP"), entries + 0, 0 },
-        { const_cast<char *>("Management Network"), entries + 1, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> managementNetworkEntries = {
+            "Headnode IP",
+            "Management Network"
+    };
 
     std::vector<std::string> fields = drawFieldMenu(
                                     MSG_TITLE_NETWORK_SETTINGS,
@@ -475,12 +496,10 @@ void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
 }
 
 void TerminalUI::drawNetworkManagementXCATRange (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry xCATDynamicRange[] = {
-        { const_cast<char *>("Start IP"), entries + 0, 0 },
-        { const_cast<char *>("End IP"), entries + 1, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> xCATDynamicRange = {
+        "Start IP",
+        "End IP"
+    };
 
     std::vector<std::string> fields = drawFieldMenu(
                                     MSG_TITLE_NETWORK_SETTINGS,
@@ -504,11 +523,10 @@ void TerminalUI::drawNetworkManagementXCATRange (Cluster& cluster) {
  * Here is another case where IPv4 settings are required for IPoIB specifically 
  */
 void TerminalUI::drawInfinibandSettings (Cluster& cluster) {
-    const char* const ibStacks[] = {
+    std::vector<std::string> ibStacks = {
         "None",
         "Inbox",
-        "Mellanox",
-        nullptr
+        "Mellanox"
     };
     
     cluster.ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
@@ -525,19 +543,15 @@ void TerminalUI::drawDirectoryServicesSettings (Cluster& cluster) {
 }
 
 void TerminalUI::drawDirectoryServicesPassword (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry autoEntries[] = {
-        { const_cast<char *>("FreeIPA admin password"), 
-            entries + 0, NEWT_FLAG_PASSWORD },
-        { const_cast<char *>("FreeIPA directory manager password"), 
-            entries + 1, NEWT_FLAG_PASSWORD },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> entries = {
+        "FreeIPA admin password",
+        "FreeIPA directory manager password"
+    };
 
     std::vector<std::string> fields = drawFieldMenu(
                                 MSG_TITLE_DIRECTORY_SERVICES_SETTINGS,
                                 MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD,
-                                autoEntries,
+                                entries,
                                 MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD_HELP);
 
     cluster.directoryAdminPassword = fields[0];
@@ -556,29 +570,25 @@ void TerminalUI::drawDirectoryServicesDisableDNSSEC (Cluster& cluster) {
 }
 
 void TerminalUI::drawNodeSettings (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry autoEntries[] = {
-        { const_cast<char *>("Prefix"), entries + 0, 0 },
-        { const_cast<char *>("Padding"), entries + 1, 0 },
-        { const_cast<char *>("Compute node first IP"), entries + 2, 0 },
-        { const_cast<char *>("Compute node root password"), 
-            entries + 3, NEWT_FLAG_PASSWORD},
-        { const_cast<char *>("ISO path of Node OS"), entries + 4, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> entries = {
+        "Prefix",
+        "Padding",
+        "Compute node first IP",
+        "Compute node root password",
+        "ISO path of Node OS"
+    };
 
     retry:
     std::vector<std::string> fields = drawFieldMenu(
                                 MSG_TITLE_NETWORK_SETTINGS,
                                 MSG_NODE_SETTINGS,
-                                autoEntries,
+                                entries,
                                 MSG_NODE_SETTINGS_HELP);
 
-    /* TODO: Better implementation */
+    /* TODO: Better implementation, logic must be outside of the view */
     if (isalpha(fields[0][0]) == false) {
         newtWinMessage(nullptr, const_cast<char *>(MSG_BUTTON_OK),
                        const_cast<char *>("Prefix must start with a letter"));
-        memset(entries, 0, sizeof(entries));
         goto retry;
     }
 
@@ -590,11 +600,10 @@ void TerminalUI::drawNodeSettings (Cluster& cluster) {
 }
 
 void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {
-    const char* const queueSystems[] = {
+    std::vector<std::string> queueSystems = {
         "None",
         "SLURM",
-        "PBS Professional",
-        nullptr
+        "PBS Professional"
     };
 
     std::string queueSystem = drawListMenu(
@@ -615,16 +624,14 @@ void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {
 }
 
 void TerminalUI::drawSLURMSettings (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry autoEntries[] = {
-        { const_cast<char *>("Partition name"), entries + 0, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> entries = {
+        "Partition name"
+    };
 
     const std::vector<std::string> fields = drawFieldMenu(
                                     MSG_TITLE_SLURM_SETTINGS,
                                     MSG_SLURM_SETTINGS,
-                                    autoEntries,
+                                    entries,
                                     MSG_SLURM_SETTINGS_HELP);
 
     cluster.queueSystem.slurm = { fields[0] };
@@ -632,10 +639,9 @@ void TerminalUI::drawSLURMSettings (Cluster& cluster) {
 
 /* This function is broken since we still don't know how to use std::optional */
 void TerminalUI::drawPBSSettings (Cluster& cluster) {
-    const char* const pbsDefaultPlace[] = {
-        const_cast<char *>("Shared"),
-        const_cast<char *>("Scatter"),
-        nullptr
+    std::vector<std::string> pbsDefaultPlace = {
+        "Shared",
+        "Scatter"
     };
 
     const std::string defaultPlace = drawListMenu(MSG_TITLE_PBS_SETTINGS,
@@ -680,11 +686,10 @@ void TerminalUI::drawPostfixEnable (Cluster& cluster) {
 }
 
 void TerminalUI::drawPostfixProfile (Cluster& cluster) {
-    const char* const postfixProfiles[] = {
+    std::vector<std::string> postfixProfiles = {
         "Local",
         "Relay",
-        "SASL",
-        nullptr
+        "SASL"
     };
 
     const std::string postfixProfile = drawListMenu(MSG_TITLE_POSTFIX_SETTINGS,
@@ -701,17 +706,15 @@ void TerminalUI::drawPostfixProfile (Cluster& cluster) {
 }
 
 void TerminalUI::drawPostfixRelaySettings (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry autoEntries[] = {
-        { const_cast<char *>("Hostname of the MTA"), entries + 0, 0 },
-        { const_cast<char *>("Port"), entries + 1, 0 },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> entries = {
+        "Hostname of the MTA",
+        "Port"
+    };
 
     std::vector<std::string> fields = drawFieldMenu(
                             MSG_TITLE_POSTFIX_SETTINGS,
                             MSG_POSTFIX_RELAY_SETTINGS,
-                            autoEntries,
+                            entries,
                             MSG_POSTFIX_RELAY_SETTINGS_HELP);
 
     /* More std::optional shenanigans */
@@ -722,19 +725,18 @@ void TerminalUI::drawPostfixRelaySettings (Cluster& cluster) {
 }
 
 void TerminalUI::drawPostfixSASLSettings (Cluster& cluster) {
-    char *entries[10];
-    struct newtWinEntry autoEntries[] = {
-        { const_cast<char *>("Hostname of the MTA"), entries + 0, 0 },
-        { const_cast<char *>("Port"), entries + 1, 0 },
-        { const_cast<char *>("Username"), entries + 2, 0 },
-        { const_cast<char *>("Password"), entries + 3, NEWT_FLAG_PASSWORD },
-        { nullptr, nullptr, 0 } };
-    memset(entries, 0, sizeof(entries));
+    const std::vector<std::string> entries = {
+        "Hostname of the MTA",
+        "Port",
+        "Username",
+        "Password"
+    };
+
 
     std::vector<std::string> fields = drawFieldMenu(
                             MSG_TITLE_POSTFIX_SETTINGS,
                             MSG_POSTFIX_SASL_SETTINGS,
-                            autoEntries,
+                            entries,
                             MSG_POSTFIX_SASL_SETTINGS_HELP);
 
     /* More std::optional shenanigans */
@@ -812,13 +814,17 @@ TerminalUI::TerminalUI (Cluster& cluster) {
     
 }
 
-std::string TerminalUI::drawTimezoneSelection (const char* const* timezones) {
+std::string TerminalUI::drawTimezoneSelection
+                                (const std::vector<std::string>& timezones) {
+
     return drawListMenu(MSG_TITLE_TIME_SETTINGS,
                         MSG_TIME_SETTINGS_TIMEZONE, timezones,
                         MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
-std::string TerminalUI::drawLocaleSelection (const char* const* locales) {
+std::string TerminalUI::drawLocaleSelection
+                                    (const std::vector<std::string>& locales) {
+
     return drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
                         MSG_LOCALE_SETTINGS_LOCALE, locales,
                         MSG_LOCALE_SETTINGS_LOCALE_HELP);
@@ -827,30 +833,29 @@ std::string TerminalUI::drawLocaleSelection (const char* const* locales) {
 std::vector<std::string> TerminalUI::drawNetworkHostnameSelection (
                                     const std::vector<std::string>& entries) {
 
-    char** hostIdEntries;
-    struct newtWinEntry* hostId;
-    unsigned vectorSize = entries.size();
-
-    hostId = new struct newtWinEntry[vectorSize + 1]();
-    hostIdEntries = new char*[vectorSize + 1]();
-
-    for (unsigned i = 0 ; i < vectorSize ; i++) {
-        hostId[i].text = const_cast<char*>(entries[i].c_str());
-        hostId[i].value = hostIdEntries + i;
-        hostId[i].flags = 0;
-    }
-    hostId[vectorSize].text = nullptr;
-    hostId[vectorSize].value = nullptr;
-    hostId[vectorSize].flags = 0;
-
     return drawFieldMenu(MSG_TITLE_NETWORK_SETTINGS,
-                         MSG_NETWORK_SETTINGS_HOSTID, hostId,
+                         MSG_NETWORK_SETTINGS_HOSTID, entries,
                          MSG_NETWORK_SETTINGS_HOSTID_HELP);
 }
 
-/* TODO: Fix Internal/External interface mess */
-std::string TerminalUI::drawNetworkInterfaceSelection (const char* const* ifa) {
+/* TODO: Fix Internal/External interface mess, this method should be generic */
+std::string TerminalUI::drawNetworkInterfaceSelection
+                        (const std::vector<std::string>& interface) {
+
     return drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-                        MSG_NETWORK_SETTINGS_EXTERNAL_IF, ifa,
+                        MSG_NETWORK_SETTINGS_EXTERNAL_IF, interface,
                         MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
 }
+
+//std::string drawNetworkExternalInterfaceSelection (Headnode&);
+//std::string drawNetworkManagementInterfaceSelection (Headnode&);
+
+std::vector<std::string> TerminalUI::drawNetworkAddress (
+                                const std::vector<std::string>& addresses) {
+
+    return drawFieldMenu(MSG_TITLE_NETWORK_SETTINGS,
+                         MSG_NETWORK_SETTINGS_INTERNAL_IPV4,
+                         addresses,
+                         MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
+}
+

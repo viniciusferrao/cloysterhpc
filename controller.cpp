@@ -33,43 +33,38 @@ void Controller::startView() {
 
     /* External Network Interface */
     //Connection connection;
-    Network network;
-    network.setProfile(Network::Profile::External);
-    network.setType(Network::Type::Ethernet);
-    network.setInterfacename(requestNetworkInterface());
+//    Network network;
+//    network.setProfile(Network::Profile::External);
+//    network.setType(Network::Type::Ethernet);
+//    network.setInterfacename(requestNetworkInterface());
     //connection.setInterfaceName();
     //headnode->externalConnection.push_back(connection);
-    headnode->externalNetwork.push_back(network);
+//    headnode->externalNetwork.push_back(network);
+
+    /* Get IP addresses */
+    std::vector<std::string> fields = requestNetworkAddress();
+    headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
 
 }
 
 std::string Controller::requestTimezone () {
-    const char* const timezones[] = {
-        "America/Sao_Paulo",
-        "UTC",
-        "Gadific Mean Bolsotime",
-        "Chronus",
-        "Two blocks ahead",
-        nullptr
-    };
     /* TODO: Fetch timezones from OS and remove placeholder text */
-    // std::vector<std::string> timezones = {
-    //     "America/Sao_Paulo",
-    //     "UTC",
-    //     "Gadific Mean Bolsotime",
-    //     "Chronus",
-    //     "Two blocks ahead"
-    // };
+     const std::vector<std::string> timezones = {
+         "America/Sao_Paulo",
+         "UTC",
+         "Gadific Mean Bolsotime",
+         "Chronus",
+         "Two blocks ahead"
+     };
 
     return terminalui->drawTimezoneSelection(timezones);
 }
 
 std::string Controller::requestLocale () {
-    const char* const locales[] = {
+    const std::vector<std::string> locales = {
         "en.US_UTF-8",
         "pt.BR_UTF-8",
-        "C",
-        nullptr
+        "C"
     };
 
     return terminalui->drawLocaleSelection(locales);
@@ -90,14 +85,22 @@ std::vector<std::string> Controller::requestHostname () {
  * interfaces
  */
 std::string Controller::requestNetworkInterface () {
-    const char* const netInterfaces[] = {
-            "eth0",
-            "eth1",
-            "enp4s0f0",
-            "lo",
-            "ib0",
-            nullptr
+    const std::vector<std::string> netInterfaces = {
+        "eth0",
+        "eth1",
+        "enp4s0f0",
+        "lo",
+        "ib0",
     };
 
     return terminalui->drawNetworkInterfaceSelection(netInterfaces);
+}
+
+std::vector<std::string> Controller::requestNetworkAddress () {
+    const std::vector<std::string> networkAddresses = {
+            "Headnode IP",
+            "Management Network"
+    };
+
+    return terminalui->drawNetworkAddress(networkAddresses);
 }

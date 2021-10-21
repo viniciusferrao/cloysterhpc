@@ -6,7 +6,7 @@
 class Server {
 public:
     std::string vendor;
-    unsigned cpu;
+    unsigned processors;
     unsigned memory;
 };
 
