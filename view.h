@@ -7,6 +7,8 @@
  */
 class View {
 public:
+    virtual ~View() = default;
+
     virtual std::string drawTimezoneSelection
         (const std::vector<std::string>&) = 0;
     virtual std::string drawLocaleSelection

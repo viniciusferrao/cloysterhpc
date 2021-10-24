@@ -11,11 +11,15 @@
 #include <boost/algorithm/string.hpp>
 
 Cluster::Cluster () {
-    
+    m_headnode = new Headnode();
 }
 
 Cluster::Cluster (Headnode& headnode) {
     m_headnode = &headnode;
+}
+
+Cluster::~Cluster () {
+    delete m_headnode;
 }
 
 void Cluster::setTimezone (std::string timezone) {

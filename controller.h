@@ -8,9 +8,10 @@
 #include "terminalui.h"
 
 class Controller {
-    Cluster* cluster;
-    Headnode* headnode;
-    TerminalUI* terminalui;
+private:
+    Cluster* m_cluster;
+    Headnode* m_headnode;
+    TerminalUI* m_terminalui;
 
     void startView ();
     std::string requestTimezone ();
@@ -20,7 +21,7 @@ class Controller {
     std::vector<std::string> requestNetworkAddress ();
 
 public:
-    Controller (Cluster&, Headnode&, TerminalUI&);
+    Controller (Cluster&);
     //~Controller ();
 };
 

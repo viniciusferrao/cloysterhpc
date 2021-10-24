@@ -6,14 +6,21 @@
 #include <string>
 #include <iostream>
 
-Controller::Controller (Cluster& cluster, Headnode& headnode, 
-                        TerminalUI& terminalui) {
-    this->cluster = &cluster;
-    this->headnode = &headnode;
-    this->terminalui = &terminalui;
+Controller::Controller (Cluster& cluster) {
+    //this->m_cluster = &cluster;
 
-    startView();
-    terminalui.~TerminalUI();
+    /* TODO: Better names for TerminalUI; newt instead? View as TUI? */
+    View* tui = new TerminalUI();
+    const std::vector<std::string> garbage = { "LOL", "KEK" };
+    cluster.locale = tui->drawLocaleSelection(garbage);
+    cluster.m_headnode->locale = cluster.locale;
+
+    delete tui;
+
+    std::cout << cluster.locale << std::endl;
+
+//    startView();
+//    terminalui.~TerminalUI();
 }
 
 void Controller::startView() {
@@ -43,7 +50,7 @@ void Controller::startView() {
 
     /* Get IP addresses */
     std::vector<std::string> fields = requestNetworkAddress();
-    headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
+    m_headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
 
 }
 
@@ -57,7 +64,7 @@ std::string Controller::requestTimezone () {
          "Two blocks ahead"
      };
 
-    return terminalui->drawTimezoneSelection(timezones);
+    return m_terminalui->drawTimezoneSelection(timezones);
 }
 
 std::string Controller::requestLocale () {
@@ -67,7 +74,7 @@ std::string Controller::requestLocale () {
         "C"
     };
 
-    return terminalui->drawLocaleSelection(locales);
+    return m_terminalui->drawLocaleSelection(locales);
 }
 
 /* This method should be renamed or ask just for hostname */
@@ -77,7 +84,7 @@ std::vector<std::string> Controller::requestHostname () {
         "Domain Name"
     };
 
-    return terminalui->drawNetworkHostnameSelection(entries);
+    return m_terminalui->drawNetworkHostnameSelection(entries);
 }
 
 /* TODO: Data model is strange, needs fixing. requestNetworkInterface() should
@@ -93,14 +100,14 @@ std::string Controller::requestNetworkInterface () {
         "ib0",
     };
 
-    return terminalui->drawNetworkInterfaceSelection(netInterfaces);
+    return m_terminalui->drawNetworkInterfaceSelection(netInterfaces);
 }
 
 std::vector<std::string> Controller::requestNetworkAddress () {
     const std::vector<std::string> networkAddresses = {
-            "Headnode IP",
-            "Management Network"
+        "Headnode IP",
+        "Management Network"
     };
 
-    return terminalui->drawNetworkAddress(networkAddresses);
+    return m_terminalui->drawNetworkAddress(networkAddresses);
 }

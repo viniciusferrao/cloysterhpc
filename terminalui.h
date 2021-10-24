@@ -9,7 +9,7 @@
 #include "cluster.h"
 #include "headnode.h"
 
-class TerminalUI {
+class TerminalUI : public View {
 private:
     /* Ancillary private methods */
     void abortInstall ();

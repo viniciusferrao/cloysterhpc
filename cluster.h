@@ -43,7 +43,7 @@ struct Postfix {
 };
 
 class Cluster {
-private:
+public: /* Must be private */
     Headnode* m_headnode;
 
 private:
@@ -95,6 +95,7 @@ public:
 
     Cluster ();
     Cluster (Headnode&);
+    ~Cluster ();
     void install ();
 #ifdef _DEBUG_
     void printData ();

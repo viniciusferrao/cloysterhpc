@@ -772,6 +772,15 @@ void TerminalUI::drawRemoteAccess (Cluster& cluster) {
 
 /* Refactoring to MVC */
 TerminalUI::TerminalUI () {
+    newtInit();
+    newtCls();
+
+    /* Push the title to the top left corner */
+    newtDrawRootText(0, 0, MSG_INSTALL_TITLE);
+
+    /* Add the default help line in the bottom */
+    newtPushHelpLine(MSG_INSTALL_HELP_LINE);
+    newtRefresh();
 }
 
 TerminalUI::TerminalUI (Cluster& cluster) {

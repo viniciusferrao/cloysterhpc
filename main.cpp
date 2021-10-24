@@ -22,12 +22,8 @@ int main(int argc, char **argv) {
     int rc; /* return code */
 
     /* TerminalUI entrypoint */
-    Headnode headnode;
-    Cluster cluster(headnode);
-    TerminalUI terminalui(cluster);
-    // terminalui.~TerminalUI();
-    // std::cout << "End of TerminalUI execution" << std::endl;
-    Controller controller(cluster, headnode, terminalui);
+    Cluster cluster;
+    Controller controller(cluster);
 
 #ifdef _DEBUG_
     cluster.printData();
