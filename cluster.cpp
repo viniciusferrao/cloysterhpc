@@ -166,10 +166,10 @@ void Cluster::install () {
 #ifdef _DEBUG_
 void Cluster::printData () {
     std::cout << "Cluster attributes defined:" << std::endl;
-    std::cout << "Timezone: " << this->m_headnode->timezone << std::endl;
-    std::cout << "Locale: " << this->m_headnode->locale << std::endl;
+    std::cout << "Timezone: " << timezone << std::endl;
+    std::cout << "Locale: " << locale << std::endl;
     std::cout << "Hostname: " << this->m_headnode->hostname << std::endl;
-    std::cout << "Domainname: " << this->m_headnode->domainname << std::endl;
+    std::cout << "Domainname: " << domainname << std::endl;
     std::cout << "FQDN: " << this->m_headnode->fqdn << std::endl;
     //std::cout << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
     //std::cout << "interfaceInternal: " << cluster.interfaceInternal << std::endl;

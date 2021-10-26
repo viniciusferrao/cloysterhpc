@@ -76,7 +76,6 @@ public:
     Network service;
     Network application;
 
-
     std::string xCATDynamicRangeStart;
     std::string xCATDynamicRangeEnd;
     std::string directoryAdminPassword;

@@ -17,24 +17,11 @@ private:
 
 public:
     OS os;
-    /* To be removed */
-    std::vector<Network> externalNetwork;
-    std::vector<Network> managementNetwork;
-    std::optional<std::vector<Network>> serviceNetwork;
-    std::optional<std::vector<Network>> applicationNetwork;
-    std::optional<std::vector<Network>> otherNetwork;
-    std::string domainname;
-    /* End of removal */
 
+    std::vector<Connection> external;
 
-
-    std::vector<Connection> externalConnection;
-
-    std::string timezone;
-    std::string locale;
     std::string hostname;
     std::string fqdn;
-    std::vector<std::string> nameserver;
 
     int setOS ();
     void printOS ();

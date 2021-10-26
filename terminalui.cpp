@@ -31,8 +31,8 @@ TerminalUI::~TerminalUI () {
 void TerminalUI::beginInstall (Cluster& cluster, Headnode& headnode) {
 #if 1
     drawWelcomeMessage();
-    drawTimeSettings(headnode);
-    drawLocaleSettings(headnode);
+    drawTimeSettings(cluster);
+    drawLocaleSettings(cluster);
     drawNetworkSettings(cluster, headnode);
     drawInfinibandSettings(cluster);
     drawDirectoryServicesSettings(cluster);
@@ -347,7 +347,7 @@ void TerminalUI::drawWelcomeMessage () {
     }
 }
 
-void TerminalUI::drawTimeSettings (Headnode& headnode) {
+void TerminalUI::drawTimeSettings (Cluster& cluster) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported timezones from the OS instead.
      */
@@ -364,12 +364,12 @@ void TerminalUI::drawTimeSettings (Headnode& headnode) {
         "Two blocks ahead"
     };
 
-    headnode.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
+    cluster.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
                                       MSG_TIME_SETTINGS_TIMEZONE, timezones,
                                       MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
-void TerminalUI::drawLocaleSettings (Headnode& headnode) {
+void TerminalUI::drawLocaleSettings (Cluster& cluster) {
     /* This is a placeholder const until we figure out how to fetch the list of
      * supported locales from the OS instead.
      */
@@ -379,7 +379,7 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
         "C"
     };
 
-    headnode.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
+    cluster.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
                                       MSG_LOCALE_SETTINGS_LOCALE, locales,
                                       MSG_LOCALE_SETTINGS_LOCALE_HELP);
 }
@@ -394,14 +394,14 @@ void TerminalUI::drawLocaleSettings (Headnode& headnode) {
 void TerminalUI::drawNetworkSettings (Cluster& cluster, 
                                       Headnode& headnode) {
 
-    drawNetworkHostnameSettings(headnode);
+    drawNetworkHostnameSettings(cluster);
     drawNetworkExternalInterfaceSelection(headnode);
     drawNetworkManagementInterfaceSelection(headnode);
     drawNetworkManagementAddress(headnode);
     drawNetworkManagementXCATRange(cluster);
 }
 
-void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
+void TerminalUI::drawNetworkHostnameSettings (Cluster& cluster) {
     /* Request hostname and domain name */
     const std::vector<std::string> entries = {
             "Hostname",
@@ -413,9 +413,10 @@ void TerminalUI::drawNetworkHostnameSettings (Headnode& headnode) {
                                         MSG_NETWORK_SETTINGS_HOSTID, entries,
                                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
 
-    headnode.hostname = fields[0];
-    headnode.domainname = fields[1];
-    headnode.fqdn = headnode.hostname + "." + headnode.domainname;
+    cluster.m_headnode->hostname = fields[0];
+    cluster.domainname = fields[1];
+    cluster.m_headnode->fqdn =
+        cluster.m_headnode->hostname + "." + cluster.domainname;
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -445,7 +446,7 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
                      MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
                      MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP));
 
-    headnode.externalNetwork.push_back(network);
+    //headnode.externalNetwork.push_back(network);
 }
 
 void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
@@ -469,7 +470,7 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
                     MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
                     MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP));
 
-    headnode.managementNetwork.push_back(network);
+    //headnode.managementNetwork.push_back(network);
 }
 
 void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
@@ -484,7 +485,7 @@ void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
                                     managementNetworkEntries,
                                     MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
 
-    headnode.managementNetwork[0].setIPAddress(fields[0], fields[1]);
+    //headnode.managementNetwork[0].setIPAddress(fields[0], fields[1]);
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -823,7 +824,7 @@ TerminalUI::TerminalUI (Cluster& cluster) {
     
 }
 
-std::string TerminalUI::drawTimezoneSelection
+std::string TerminalUI::timezoneSelection
                                 (const std::vector<std::string>& timezones) {
 
     return drawListMenu(MSG_TITLE_TIME_SETTINGS,
@@ -831,7 +832,7 @@ std::string TerminalUI::drawTimezoneSelection
                         MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
-std::string TerminalUI::drawLocaleSelection
+std::string TerminalUI::localeSelection
                                     (const std::vector<std::string>& locales) {
 
     return drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
@@ -839,7 +840,7 @@ std::string TerminalUI::drawLocaleSelection
                         MSG_LOCALE_SETTINGS_LOCALE_HELP);
 }
 
-std::vector<std::string> TerminalUI::drawNetworkHostnameSelection (
+std::vector<std::string> TerminalUI::networkHostnameSelection (
                                     const std::vector<std::string>& entries) {
 
     return drawFieldMenu(MSG_TITLE_NETWORK_SETTINGS,
@@ -848,7 +849,7 @@ std::vector<std::string> TerminalUI::drawNetworkHostnameSelection (
 }
 
 /* TODO: Fix Internal/External interface mess, this method should be generic */
-std::string TerminalUI::drawNetworkInterfaceSelection
+std::string TerminalUI::networkInterfaceSelection
                         (const std::vector<std::string>& interface) {
 
     return drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
@@ -859,7 +860,7 @@ std::string TerminalUI::drawNetworkInterfaceSelection
 //std::string drawNetworkExternalInterfaceSelection (Headnode&);
 //std::string drawNetworkManagementInterfaceSelection (Headnode&);
 
-std::vector<std::string> TerminalUI::drawNetworkAddress (
+std::vector<std::string> TerminalUI::networkAddress (
                                 const std::vector<std::string>& addresses) {
 
     return drawFieldMenu(MSG_TITLE_NETWORK_SETTINGS,

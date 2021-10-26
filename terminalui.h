@@ -32,10 +32,10 @@ private:
     /* Interface screens */
     void drawHelpMessage (const char *);
     void drawWelcomeMessage ();
-    void drawTimeSettings (Headnode&);
-    void drawLocaleSettings (Headnode&);
+    void drawTimeSettings (Cluster&);
+    void drawLocaleSettings (Cluster&);
     void drawNetworkSettings (Cluster&, Headnode&);
-        void drawNetworkHostnameSettings (Headnode&);
+        void drawNetworkHostnameSettings (Cluster&);
         void drawNetworkExternalInterfaceSelection (Headnode&);
         void drawNetworkManagementInterfaceSelection (Headnode&);
         void drawNetworkManagementAddress (Headnode&);
@@ -63,13 +63,12 @@ public:
     /* Refactoring to MVC */
     TerminalUI ();
     TerminalUI (Cluster&);
-    std::string drawTimezoneSelection (const std::vector<std::string>&);
-    std::string drawLocaleSelection (const std::vector<std::string>&);
-    std::vector<std::string> drawNetworkHostnameSelection
+    std::string timezoneSelection (const std::vector<std::string>&);
+    std::string localeSelection (const std::vector<std::string>&);
+    std::vector<std::string> networkHostnameSelection
                                               (const std::vector<std::string>&);
-    std::string drawNetworkInterfaceSelection (const std::vector<std::string>&);
-    std::vector<std::string> drawNetworkAddress (
-                                            const std::vector<std::string>&);
+    std::string networkInterfaceSelection (const std::vector<std::string>&);
+    std::vector<std::string> networkAddress (const std::vector<std::string>&);
 
 #ifdef _DEBUG_
     void debugInfo (void);

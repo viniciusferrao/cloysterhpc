@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef PRESENTER_H
+#define PRESENTER_H
 
 #include <string>
 
@@ -7,11 +7,10 @@
 #include "headnode.h"
 #include "terminalui.h"
 
-class Controller {
+class Presenter {
 private:
-    Cluster* m_cluster;
-    Headnode* m_headnode;
-    TerminalUI* m_terminalui;
+    Cluster* m_cluster{};
+    TerminalUI* m_terminalui{};
 
     void startView ();
     std::string requestTimezone ();
@@ -21,9 +20,9 @@ private:
     std::vector<std::string> requestNetworkAddress ();
 
 public:
-    Controller (Cluster&);
-    //~Controller ();
+    explicit Presenter (Cluster&);
+    //~Presenter ();
 };
 
-#endif /* CONTROLLER_H */
+#endif /* PRESENTER_H */
 

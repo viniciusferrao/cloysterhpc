@@ -11,9 +11,7 @@ public:
     enum class Profile { External, Management, Service, Application };
     enum class Type { Ethernet, Infiniband };
 
-    std::string hostname;
     std::string domainname;
-    std::string fqdn;
     std::vector<std::string> nameserver;
 
 private:

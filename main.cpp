@@ -16,14 +16,14 @@
 #include "cluster.h"
 #include "connection.h"
 #include "terminalui.h"
-#include "controller.h"
+#include "presenter.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     int rc; /* return code */
 
     /* TerminalUI entrypoint */
     Cluster cluster;
-    Controller controller(cluster);
+    Presenter presenter(cluster);
 
 #ifdef _DEBUG_
     cluster.printData();

@@ -1,4 +1,4 @@
-#include "controller.h"
+#include "presenter.h"
 #include "terminalui.h"
 #include "connection.h"
 #include "network.h"
@@ -6,24 +6,25 @@
 #include <string>
 #include <iostream>
 
-Controller::Controller (Cluster& cluster) {
+#include "presenterLocaleSelection.h"
+
+Presenter::Presenter (Cluster& cluster) {
     //this->m_cluster = &cluster;
 
-    /* TODO: Better names for TerminalUI; newt instead? View as TUI? */
-    View* tui = new TerminalUI();
-    const std::vector<std::string> garbage = { "LOL", "KEK" };
-    cluster.locale = tui->drawLocaleSelection(garbage);
-    cluster.m_headnode->locale = cluster.locale;
+    /* TODO: Better names for TerminalUI; newt instead? */
+    View* view = new TerminalUI();
 
-    delete tui;
+    auto* locale = new PresenterLocaleSelection(*view);
+    locale->write(cluster);
+    delete locale;
 
-    std::cout << cluster.locale << std::endl;
+    delete view;
 
 //    startView();
 //    terminalui.~TerminalUI();
 }
 
-void Controller::startView() {
+void Presenter::startView() {
     /* Timezone */
 //    headnode->timezone = requestTimezone();
 //    cluster->timezone = headnode->timezone;
@@ -49,12 +50,12 @@ void Controller::startView() {
 //    headnode->externalNetwork.push_back(network);
 
     /* Get IP addresses */
-    std::vector<std::string> fields = requestNetworkAddress();
-    m_headnode->managementNetwork[0].setIPAddress(fields[0], fields[1]);
+//    std::vector<std::string> fields = requestNetworkAddress();
+//    m_headnode->external[0].setIPAddress(fields[0], fields[1]);
 
 }
 
-std::string Controller::requestTimezone () {
+std::string Presenter::requestTimezone () {
     /* TODO: Fetch timezones from OS and remove placeholder text */
      const std::vector<std::string> timezones = {
          "America/Sao_Paulo",
@@ -64,34 +65,34 @@ std::string Controller::requestTimezone () {
          "Two blocks ahead"
      };
 
-    return m_terminalui->drawTimezoneSelection(timezones);
+    return m_terminalui->timezoneSelection(timezones);
 }
 
-std::string Controller::requestLocale () {
+std::string Presenter::requestLocale () {
     const std::vector<std::string> locales = {
         "en.US_UTF-8",
         "pt.BR_UTF-8",
         "C"
     };
 
-    return m_terminalui->drawLocaleSelection(locales);
+    return m_terminalui->localeSelection(locales);
 }
 
 /* This method should be renamed or ask just for hostname */
-std::vector<std::string> Controller::requestHostname () {
+std::vector<std::string> Presenter::requestHostname () {
     const std::vector<std::string> entries = {
         "Hostname",
         "Domain Name"
     };
 
-    return m_terminalui->drawNetworkHostnameSelection(entries);
+    return m_terminalui->networkHostnameSelection(entries);
 }
 
 /* TODO: Data model is strange, needs fixing. requestNetworkInterface() should
  * be more generic than it's now, not being tied for internal or external
  * interfaces
  */
-std::string Controller::requestNetworkInterface () {
+std::string Presenter::requestNetworkInterface () {
     const std::vector<std::string> netInterfaces = {
         "eth0",
         "eth1",
@@ -100,14 +101,14 @@ std::string Controller::requestNetworkInterface () {
         "ib0",
     };
 
-    return m_terminalui->drawNetworkInterfaceSelection(netInterfaces);
+    return m_terminalui->networkInterfaceSelection(netInterfaces);
 }
 
-std::vector<std::string> Controller::requestNetworkAddress () {
+std::vector<std::string> Presenter::requestNetworkAddress () {
     const std::vector<std::string> networkAddresses = {
         "Headnode IP",
         "Management Network"
     };
 
-    return m_terminalui->drawNetworkAddress(networkAddresses);
+    return m_terminalui->networkAddress(networkAddresses);
 }
