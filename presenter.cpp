@@ -8,9 +8,21 @@
 
 #include "presenterLocaleSelection.h"
 
-Presenter::Presenter (Cluster& cluster) {
-    //this->m_cluster = &cluster;
+Presenter::Presenter (std::unique_ptr<viewTerminalUI> view,
+                      std::unique_ptr<Cluster> model) :
+                      m_model(std::move(model)),
+                      m_view(std::move(view)) {
 
+    m_view->subscribe(this);
+}
+
+void Presenter::notifyEvent () {
+    std::string name = m_view->getUserText();
+    std::string text = m_model->generateText(name);
+    m_view->setLabelText(text);
+}
+
+#if 0
     /* TODO: Better names for TerminalUI; newt instead? */
     View* view = new TerminalUI();
 
@@ -23,6 +35,7 @@ Presenter::Presenter (Cluster& cluster) {
 //    startView();
 //    terminalui.~TerminalUI();
 }
+#endif
 
 void Presenter::startView() {
     /* Timezone */

@@ -2,12 +2,15 @@
 #define PRESENTER_H
 
 #include <string>
+#include <memory>
 
 #include "cluster.h"
 #include "headnode.h"
 #include "terminalui.h"
+#include "viewSubscriber.h"
+#include "viewTerminalUI.h"
 
-class Presenter {
+class Presenter : public viewSubscriber {
 private:
     Cluster* m_cluster{};
     TerminalUI* m_terminalui{};
@@ -20,7 +23,18 @@ private:
     std::vector<std::string> requestNetworkAddress ();
 
 public:
-    explicit Presenter (Cluster&);
+    Presenter(std::unique_ptr<viewTerminalUI> view,
+              std::unique_ptr<Cluster> model);
+
+    void notifyEvent() override;
+
+    /* TODO: Move to top to better organize */
+private:
+    std::unique_ptr<Cluster> m_model;
+    std::unique_ptr<viewTerminalUI> m_view;
+
+
+    //explicit Presenter (Cluster&);
     //~Presenter ();
 };
 

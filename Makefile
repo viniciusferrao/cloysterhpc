@@ -28,7 +28,7 @@ LFLAGS = -Wall
 #
 # Project files
 #
-SRCS = main.cpp presenterLocaleSelection.cpp functions.cpp headnode.cpp cluster.cpp presenter.cpp xcat.cpp terminalui.cpp network.cpp connection.cpp os.cpp repos.cpp
+SRCS = main.cpp viewTerminalUI.cpp presenterLocaleSelection.cpp functions.cpp headnode.cpp cluster.cpp presenter.cpp xcat.cpp terminalui.cpp network.cpp connection.cpp os.cpp repos.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main
 
