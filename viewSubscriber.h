@@ -5,11 +5,10 @@
 #ifndef CLOYSTER_VIEWSUBSCRIBER_H
 #define CLOYSTER_VIEWSUBSCRIBER_H
 
-
 class viewSubscriber {
 public:
+    virtual ~viewSubscriber() = default;
     virtual void notifyEvent() = 0;
 };
-
 
 #endif //CLOYSTER_VIEWSUBSCRIBER_H

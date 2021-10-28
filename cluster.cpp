@@ -24,7 +24,7 @@ Cluster::~Cluster () {
 
 /* TODO: Remove after MVP test */
 std::string Cluster::generateText (const std::string& text) {
-    return text;
+    return "Checked by Model: " + text;
 }
 
 void Cluster::setTimezone (std::string timezone) {
@@ -170,63 +170,63 @@ void Cluster::install () {
 
 #ifdef _DEBUG_
 void Cluster::printData () {
-    std::cout << "Cluster attributes defined:" << std::endl;
-    std::cout << "Timezone: " << timezone << std::endl;
-    std::cout << "Locale: " << locale << std::endl;
-    std::cout << "Hostname: " << this->m_headnode->hostname << std::endl;
-    std::cout << "Domainname: " << domainname << std::endl;
-    std::cout << "FQDN: " << this->m_headnode->fqdn << std::endl;
-    //std::cout << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
-    //std::cout << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
-    //std::cout << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
-    //std::cout << "interfaceInternalIP: " << cluster.interfaceInternalIP << std::endl;
-    std::cout << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
-    std::cout << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
+    std::cerr << "Cluster attributes defined:" << std::endl;
+    std::cerr << "Timezone: " << timezone << std::endl;
+    std::cerr << "Locale: " << locale << std::endl;
+    std::cerr << "Hostname: " << this->m_headnode->hostname << std::endl;
+    std::cerr << "Domainname: " << domainname << std::endl;
+    std::cerr << "FQDN: " << this->m_headnode->fqdn << std::endl;
+    //std::cerr << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
+    //std::cerr << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
+    //std::cerr << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
+    //std::cerr << "interfaceInternalIP: " << cluster.interfaceInternalIP << std::endl;
+    std::cerr << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
+    std::cerr << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
 
-    std::cout << "Directory Admin Password: " << directoryAdminPassword << std::endl;
-    std::cout << "Directory Manager Password: " << directoryManagerPassword << std::endl;
-    std::cout << "Directory Disable DNSSEC: " << (directoryDisableDNSSEC ? "true" : "false") << std::endl;
+    std::cerr << "Directory Admin Password: " << directoryAdminPassword << std::endl;
+    std::cerr << "Directory Manager Password: " << directoryManagerPassword << std::endl;
+    std::cerr << "Directory Disable DNSSEC: " << (directoryDisableDNSSEC ? "true" : "false") << std::endl;
 
-    std::cout << "nodePrefix: " << nodePrefix << std::endl;
-    std::cout << "nodePadding: " << nodePadding << std::endl;
-    std::cout << "nodeStartIP: " << nodeStartIP << std::endl;
-    std::cout << "nodeRootPassword: " << nodeRootPassword << std::endl;
-    std::cout << "nodeISOPath: " << nodeISOPath << std::endl;
+    std::cerr << "nodePrefix: " << nodePrefix << std::endl;
+    std::cerr << "nodePadding: " << nodePadding << std::endl;
+    std::cerr << "nodeStartIP: " << nodeStartIP << std::endl;
+    std::cerr << "nodeRootPassword: " << nodeRootPassword << std::endl;
+    std::cerr << "nodeISOPath: " << nodeISOPath << std::endl;
 
-    std::cout << "ibStack: " << ibStack << std::endl;
+    std::cerr << "ibStack: " << ibStack << std::endl;
 
-    std::cout << "queueSystem: " << queueSystem.name << std::endl;
+    std::cerr << "queueSystem: " << queueSystem.name << std::endl;
     // if (queueSystem.name == "SLURM")
-    //     std::cout << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
+    //     std::cerr << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
     // if (queueSystem.name == "PBS")
-    //     std::cout << "pbs.defaultPlace: " << queueSystem.pbs.defaultPlace << std::endl;
+    //     std::cerr << "pbs.defaultPlace: " << queueSystem.pbs.defaultPlace << std::endl;
 
-    // std::cout << "Enable Postfix: " << postfix.enable ? "true" : "false" << std::endl;
+    // std::cerr << "Enable Postfix: " << postfix.enable ? "true" : "false" << std::endl;
     // if (postfix.enable) {
-    //     std::cout << "\t-> Profile: " << postfixProfiles[cluster.postfix.profileId] << std::endl;
+    //     std::cerr << "\t-> Profile: " << postfixProfiles[cluster.postfix.profileId] << std::endl;
     //     switch (cluster.postfix.profileId) {
     //         case 0:
     //             /* Local */
     //             break;
     //         case 1:
     //             /* Relay */
-    //             std::cout << "\t\t-> Hostname: " << cluster.postfix.relay.hostname << std::endl;
-    //             std::cout << "\t\t-> Port: %u\n", cluster.postfix.relay.port << std::endl;
+    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.relay.hostname << std::endl;
+    //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.relay.port << std::endl;
     //             break;
     //         case 2:
     //             /* SASL */
-    //             std::cout << "\t\t-> Hostname: " << cluster.postfix.sasl.hostname << std::endl;
-    //             std::cout << "\t\t-> Port: %u\n", cluster.postfix.sasl.port << std::endl;
-    //             std::cout << "\t\t-> Username: " << cluster.postfix.sasl.username << std::endl;
-    //             std::cout << "\t\t-> Password: " << cluster.postfix.sasl.password << std::endl;
+    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.sasl.hostname << std::endl;
+    //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.sasl.port << std::endl;
+    //             std::cerr << "\t\t-> Username: " << cluster.postfix.sasl.username << std::endl;
+    //             std::cerr << "\t\t-> Password: " << cluster.postfix.sasl.password << std::endl;
     //             break;
     //     }
     // }
 
-    std::cout << "Update system: " << (updateSystem ? "true" : "false") << std::endl;
-    std::cout << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
+    std::cerr << "Update system: " << (updateSystem ? "true" : "false") << std::endl;
+    std::cerr << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
 
-    std::cout << "Firewall: " << (firewall ? "true" : "false") << std::endl;
-    std::cout << "SELinux: " << (selinux ? "true" : "false") << std::endl;
+    std::cerr << "Firewall: " << (firewall ? "true" : "false") << std::endl;
+    std::cerr << "SELinux: " << (selinux ? "true" : "false") << std::endl;
 }
 #endif

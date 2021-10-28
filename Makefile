@@ -88,7 +88,7 @@ all: release
 #
 # Debug rules
 #
-debug: prep $(DBGEXE)
+debug: prep $(DBGEXE) 
 
 $(DBGEXE): $(DBGOBJS)
 	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DYNLIBS) -o $(DBGEXE) $^

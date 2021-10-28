@@ -20,13 +20,14 @@
 
 int main(int argc, char** argv) {
     int rc; /* return code */
-
     auto view = std::make_unique<viewTerminalUI>();
-    auto viewPtr = view.get();
+    //auto viewPtr = view.get();
     auto model = std::make_unique<Cluster>();
     auto presenter = std::make_unique<Presenter>(std::move(view),
                                                  std::move(model));
-
+    //welcomeMessage();
+    //timezoneSelection({"Teste1", "Teste2"});
+    //m_subscriber->notifyEvent();
 
 #if 0
     /* TerminalUI entrypoint */
@@ -35,7 +36,7 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef _DEBUG_
-    //cluster.printData();
+    //model->printData();
 #endif
 
 #if 0 /* Porting TerminalUI */

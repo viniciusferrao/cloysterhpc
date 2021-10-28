@@ -14,11 +14,20 @@ Presenter::Presenter (std::unique_ptr<viewTerminalUI> view,
                       m_view(std::move(view)) {
 
     m_view->subscribe(this);
+
+    m_view->welcomeMessage();
+    m_view->timezoneSelection({"Teste1", "Teste2"});
+    m_view->localeSelection({ "en.US_UTF-8", "pt.BR_UTF-8", "C" });
+
+}
+
+Presenter::~Presenter() {
+
 }
 
 void Presenter::notifyEvent () {
-    std::string name = m_view->getUserText();
-    std::string text = m_model->generateText(name);
+    std::vector<std::string> name = m_view->getAnswers();
+    std::string text = m_model->generateText(name[0]);
     m_view->setLabelText(text);
 }
 
@@ -125,3 +134,4 @@ std::vector<std::string> Presenter::requestNetworkAddress () {
 
     return m_terminalui->networkAddress(networkAddresses);
 }
+

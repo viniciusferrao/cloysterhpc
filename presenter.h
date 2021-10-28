@@ -25,6 +25,7 @@ private:
 public:
     Presenter(std::unique_ptr<viewTerminalUI> view,
               std::unique_ptr<Cluster> model);
+    ~Presenter();
 
     void notifyEvent() override;
 
