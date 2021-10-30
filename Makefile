@@ -19,7 +19,8 @@ endif
 # Compiler flags
 #
 CC = clang
-CFLAGS = -Wall -Wextra -Wno-unused-private-field -Wno-unused-parameter -Wno-unused-variable #-Werror
+CFLAGS = -Wall -Wextra -Wno-unused-private-field -Wno-unused-parameter
+CFLAGS += -Wno-unused-variable #-Werror
 CXX = clang++ --std=$(STDCXX)
 CXXFLAGS = $(CFLAGS)
 LD = clang++
@@ -28,7 +29,11 @@ LFLAGS = -Wall
 #
 # Project files
 #
-SRCS = main.cpp viewTerminalUI.cpp presenterLocaleSelection.cpp functions.cpp headnode.cpp cluster.cpp presenter.cpp xcat.cpp terminalui.cpp network.cpp connection.cpp os.cpp repos.cpp
+SRCS = $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard **/*.cpp)
+#SRCS = src/main.cpp src/viewTerminalUI.cpp src/presenterLocaleSelection.cpp src/functions.cpp
+#SRCS += src/headnode.cpp src/cluster.cpp src/presenter.cpp src/xcat.cpp src/terminalui.cpp
+#SRCS += src/network.cpp src/connection.cpp src/os.cpp src/repos.cpp
+#OBJS = $(notdir $(SRCS:.cpp=.o))
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main
 
@@ -38,6 +43,7 @@ EXE  = main
 DBGDIR = debug
 DBGEXE = $(DBGDIR)/$(EXE)
 DBGOBJS = $(addprefix $(DBGDIR)/, $(OBJS))
+#DBGOBJS = $(OBJS)
 DBGCFLAGS = -fsanitize=address -g -O0 -D_DEBUG_
 DBGCXXFLAGS = $(DBGCFLAGS)
 DBGLFLAGS = -fsanitize=address -g
@@ -91,12 +97,12 @@ all: release
 debug: prep $(DBGEXE) 
 
 $(DBGEXE): $(DBGOBJS)
-	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DYNLIBS) -o $(DBGEXE) $^
+	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DYNLIBS) -o $(DBGEXE) $(addprefix $(DBGDIR)/,$(notdir $^))
 	rm -f $(EXE)
 	ln -s $(DBGEXE)
 
 $(DBGDIR)/%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $(DBGCXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(DBGCXXFLAGS) -o $(addprefix $(DBGDIR)/,$(notdir $@)) $<
 
 #
 # Dummy rules
@@ -104,12 +110,12 @@ $(DBGDIR)/%.o: %.cpp
 dummy: prep $(DUMMYEXE)
 
 $(DUMMYEXE): $(DUMMYOBJS)
-	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DUMMYLFLAGS) $(DYNLIBS) -o $(DUMMYEXE) $^
+	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DUMMYLFLAGS) $(DYNLIBS) -o $(DUMMYEXE) $(addprefix $(DUMMYDIR)/,$(notdir $^))
 	rm -f $(EXE)
 	ln -s $(DUMMYEXE)
 
 $(DUMMYDIR)/%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $(DBGCXXFLAGS) $(DUMMYCXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(DBGCXXFLAGS) $(DUMMYCXXFLAGS) -o $(addprefix $(DUMMYDIR)/,$(notdir $@)) $<
 
 #
 # Release rules
@@ -117,12 +123,12 @@ $(DUMMYDIR)/%.o: %.cpp
 release: prep $(RELEXE)
 
 $(RELEXE): $(RELOBJS)
-	$(LD) $(LFLAGS) $(RELLFLAGS) $(DYNLIBS) -o $(RELEXE) $^
+	$(LD) $(LFLAGS) $(RELLFLAGS) $(DYNLIBS) -o $(RELEXE) $(addprefix $(RELDIR)/,$(notdir $^))
 	rm -f $(EXE)
 	ln -s $(RELEXE)
 
 $(RELDIR)/%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $(RELCFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(RELCFLAGS) -o $(addprefix $(RELDIR)/,$(notdir $@)) $<
 
 #
 # Other rules
@@ -138,6 +144,6 @@ osdetect:
 	@echo $(STDCXX)
 
 clean:
-	rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(DUMMYOBJS) $(EXE)
-	rm -rf $(RELDIR) $(DBGDIR)
+#rm -f $(RELEXE) $(RELOBJS) $(DBGEXE) $(DBGOBJS) $(DUMMYEXE) $(DUMMYOBJS) $(EXE)
+	rm -rf $(RELDIR) $(DBGDIR) $(DUMMYDIR) $(EXE)
 	rm -rf *.dSYM
