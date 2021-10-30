@@ -6,10 +6,10 @@ running as quick as possible. That's Cloyster HPC.
 
 Its goal is to enhance the installation experience, making it user-friendly,
 creating an easy-to-use questionnaire built with a user interface, that can be
-swapped, for gathering and verifying the required data. For experienced users, 
+swapped, for gathering and verifying the required data. For experienced users,
 an unattended mode is available with an .ini style configuration file.
 
-# Documentation 
+# Documentation
 
 Documentation is not yet available, but the software usage should be
 self-explanatory since help information is baked directly into the program.
@@ -37,7 +37,6 @@ asking the user for the data.
 "exit 0" status from the shell.
 * Unattended answer file via .conf file on user homedir.
 * Localization support.
-* Move to CMake
 
 ## Dependencies
 
@@ -82,14 +81,23 @@ issues than C++ in this case._
 
 ## Building
 
-For now compilation is handled on a single Makefile. Just run `make dummy` to
-generate a dummy executable. You can also run `make debug` and `make release`
-for debug and release builds respectively, but those builds will change and
-probably damage the running OS if they run as **root**. Be warned.
+Debug mode:
+
+```
+cmake -DCMAKE_BUILD_TYPE=Debug -B build
+cmake --build build
+```
+
+Release mode:
+
+```
+cmake -B build
+cmake --build build
+```
 
 # Open Source Apache License
 
-Cloyster HPC is made available under the Apache License, Version 2.0: 
+Cloyster HPC is made available under the Apache License, Version 2.0:
 https://www.apache.org/licenses/LICENSE-2.0
 
 # Developers
