@@ -2,6 +2,7 @@
 #define VIEW_H
 
 #include <string>
+#include <vector>
 
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
