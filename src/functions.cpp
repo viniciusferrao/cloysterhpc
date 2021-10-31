@@ -1,10 +1,7 @@
 #include "functions.h"
 
 #include <cstdlib> /* getenv() */
-
-#ifdef _DEBUG_
 #include <iostream>
-#endif
 
 #define ENABLE_GETOPT_H
 #ifdef ENABLE_GETOPT_H

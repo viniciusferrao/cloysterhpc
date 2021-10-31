@@ -1,7 +1,7 @@
 #
-# OS detection to select which C++ version should we use
+# OS detection to select which C++ version should we use.
 # Enterprise Linux 8 does not support C++2a by default, we select C++17 instead,
-# for everything else we default to C++2a
+# for everything else we default to C++2a.
 #
 OS := $(shell uname -s)
 OS_RELEASE := $(shell uname -r)
@@ -29,11 +29,11 @@ LFLAGS = -Wall
 #
 # Project files
 #
-SRCS = $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard **/*.cpp)
-#SRCS = src/main.cpp src/viewTerminalUI.cpp src/presenterLocaleSelection.cpp src/functions.cpp
-#SRCS += src/headnode.cpp src/cluster.cpp src/presenter.cpp src/xcat.cpp src/terminalui.cpp
-#SRCS += src/network.cpp src/connection.cpp src/os.cpp src/repos.cpp
-#OBJS = $(notdir $(SRCS:.cpp=.o))
+SRCS = $(wildcard */*.cpp) $(wildcard */*/*.cpp)
+#SRCS = src/main.cpp src/viewTerminalUI.cpp src/presenterLocaleSelection.cpp
+#SRCS += src/functions.cpp src/terminalui.cpp src/os.cpp src/repos.cpp
+#SRCS += src/headnode.cpp src/cluster.cpp src/presenter.cpp src/xcat.cpp
+#SRCS += src/network.cpp src/connection.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main
 
@@ -43,7 +43,6 @@ EXE  = main
 DBGDIR = debug
 DBGEXE = $(DBGDIR)/$(EXE)
 DBGOBJS = $(addprefix $(DBGDIR)/, $(OBJS))
-#DBGOBJS = $(OBJS)
 DBGCFLAGS = -fsanitize=address -g -O0 -D_DEBUG_
 DBGCXXFLAGS = $(DBGCFLAGS)
 DBGLFLAGS = -fsanitize=address -g
@@ -74,7 +73,7 @@ DUMMYLFLAGS =
 NEWT = -lnewt
 PTHREAD = -lpthread
 
-# Boost
+# Boost C++ libraries
 BOOST = -lboost_system
 ifeq ($(OS),Linux)
 	BOOSTTHREAD = -lboost_thread

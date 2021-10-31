@@ -11,17 +11,6 @@
 #include "viewTerminalUI.h"
 
 class Presenter : public viewSubscriber {
-private:
-    Cluster* m_cluster{};
-    TerminalUI* m_terminalui{};
-
-    void startView ();
-    std::string requestTimezone ();
-    std::string requestLocale ();
-    std::vector<std::string> requestHostname ();
-    std::string requestNetworkInterface ();
-    std::vector<std::string> requestNetworkAddress ();
-
 public:
     Presenter(std::unique_ptr<viewTerminalUI> view,
               std::unique_ptr<Cluster> model);

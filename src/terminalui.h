@@ -5,11 +5,10 @@
 #include <vector>
 
 #include <newt.h>
-#include "view.h"
 #include "cluster.h"
 #include "headnode.h"
 
-class TerminalUI : public View {
+class TerminalUI {
 private:
     /* Ancillary private methods */
     void abortInstall ();

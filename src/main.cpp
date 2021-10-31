@@ -16,21 +16,27 @@
 #include "cluster.h"
 #include "connection.h"
 #include "terminalui.h"
-#include "presenter.h"
+#include "presenter/presenterBase.h"
+#include "presenter/presenterWelcome.h"
+#include "view/newtViewBase.h"
+#include "view/newtViewMessage.h"
 
 int main(int argc, char** argv) {
     int rc; /* return code */
-    auto view = std::make_unique<viewTerminalUI>();
-    //auto viewPtr = view.get();
+
+    //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
-    auto modelPtr = model.get();
 
-    auto presenter = std::make_unique<Presenter>(std::move(view),
-                                                 std::move(model));
+#if 0
+    //View* view = new NewtViewBase();
+    auto view = std::make_unique<NewtViewMessage>();
 
-    //welcomeMessage();
-    //timezoneSelection({"Teste1", "Teste2"});
-    //m_subscriber->notifyEvent();
+    //PresenterBase* presenter = new PresenterBase(std::move(view),
+    //                                             std::move(model));
+    auto presenter = std::make_unique<PresenterWelcome>(std::move(view),
+                                                     std::move(model));
+#endif
+
 
 #if 0
     /* TerminalUI entrypoint */
@@ -39,7 +45,7 @@ int main(int argc, char** argv) {
 #endif
 
 #ifdef _DEBUG_
-    modelPtr->printData();
+    model->printData();
 #endif
 
 #if 0 /* Porting TerminalUI */

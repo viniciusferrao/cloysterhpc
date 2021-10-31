@@ -1,6 +1,7 @@
 #ifndef VIEW_H
 #define VIEW_H
 
+#include <vector>
 #include <string>
 
 /* This is just a prototype about making the View as an Interface to be easily

@@ -22,11 +22,6 @@ Cluster::~Cluster () {
     delete m_headnode;
 }
 
-/* TODO: Remove after MVP test */
-std::string Cluster::generateText (const std::string& text) {
-    return "Checked by Model: " + text;
-}
-
 void Cluster::setTimezone (std::string timezone) {
     runCommand("timedatectl set-timezone " + timezone);
 }

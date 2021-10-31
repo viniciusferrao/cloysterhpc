@@ -97,9 +97,6 @@ public:
     ~Cluster ();
     void install ();
 
-    /* TODO: Remove after MVP test */
-    std::string generateText (const std::string&);
-
 #ifdef _DEBUG_
     void printData ();
 #endif

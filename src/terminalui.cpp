@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <cstring> /* strlen() */
 
 /* Constructor */
 TerminalUI::TerminalUI (Cluster& cluster, Headnode& headnode) {
