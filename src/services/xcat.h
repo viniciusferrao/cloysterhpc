@@ -1,10 +1,21 @@
 #ifndef XCAT_H
 #define XCAT_H
 
-#include <string>
+#include "provisioner.h"
+#include "execution.h"
+#include "shell.h"
 
-class XCAT {
+#include <string>
+#include <memory>
+
+class XCAT : public Provisioner {
+private:
+    Shell& m_executionEngine;
+
 public:
+    XCAT(Shell&);
+    ~XCAT();
+
     void setDHCPInterfaces (std::string);
     void setDomain (std::string);
     void copycds (std::string);

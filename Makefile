@@ -72,6 +72,7 @@ DUMMYLFLAGS =
 #
 NEWT = -lnewt
 PTHREAD = -lpthread
+FMT = -lfmt
 
 # Boost C++ libraries
 BOOST = -lboost_system
@@ -83,7 +84,7 @@ else
 	BOOSTLOG = -DBOOST_LOG_DYN_LINK -lboost_log-mt -lboost_log_setup-mt
 endif
 
-DYNLIBS = $(NEWT) $(LPTHREAD) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
+DYNLIBS = $(NEWT) $(LPTHREAD) $(FMT) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
 
 .PHONY: all osdetect clean debug dummy prep release remake
 

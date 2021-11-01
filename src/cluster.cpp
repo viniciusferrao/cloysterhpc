@@ -5,7 +5,7 @@
 #include "cluster.h"
 #include "functions.h"
 #include "headnode.h"
-#include "xcat.h"
+#include "services/xcat.h"
 
 #include <iostream>
 #include <boost/algorithm/string.hpp>
@@ -20,147 +20,6 @@ Cluster::Cluster (Headnode& headnode) {
 
 Cluster::~Cluster () {
     delete m_headnode;
-}
-
-void Cluster::setTimezone (std::string timezone) {
-    runCommand("timedatectl set-timezone " + timezone);
-}
-
-void Cluster::setLocale (std::string locale) {
-    runCommand("localectl set-locale " + locale);
-}
-
-void Cluster::setFQDN (const std::string& fqdn) {
-    runCommand("hostnamectl set-hostname " + fqdn);
-}
-
-void Cluster::enableFirewall () {
-    runCommand("systemctl enable --now firewalld");
-}
-void Cluster::disableFirewall () {
-    runCommand("systemctl disable --now firewalld");
-}
-
-int Cluster::setSELinuxMode (std::string mode) {
-    boost::to_lower(mode);
-
-    if (mode == "enforcing" || mode == "enabled") {
-        /* Enable SELinux */
-        return 0;
-    }
-
-    if (mode == "permissive") {
-        /* Permissive mode */
-        return 0;
-    }
-
-    if (mode == "disabled") {
-        /* Disable SELinux */
-        return 0;
-    }
-
-    return -1; /* Failed to parse SELinux mode */
-}
-
-void Cluster::systemUpdate () {
-    runCommand("dnf -y update");
-}
-
-void Cluster::installRequiredPackages () {
-    runCommand("dnf -y install wget dnf-plugins-core");
-}
-
-void Cluster::setupRepositories () {
-    runCommand("dnf -y install \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install \
-        https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
-    runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
-    runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
-
-    //if (headnode->os.id == "ol")
-    runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
-}
-
-void Cluster::installProvisioningServices () {
-    runCommand("dnf -y install ohpc-base");
-    runCommand("dnf -y install xCAT");
-}
-
-void Cluster::setupTimeService () {
-    runCommand("rpm -q chrony");
-    //if not installed
-    runCommand("dnf -y install chrony");
-
-    // this should be a parse solution directly on the file instead
-    runCommand("echo \"allow all\" >> /etc/chrony.conf");
-    runCommand("systemctl start --now chronyd");
-}
-
-void Cluster::setupSLURM () {
-    runCommand("dnf -y install ohpc-slurm-server");
-    runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
-    runCommand("perl -pi -e \
-        \"s/ControlMachine=\\S+/ControlMachine={HEADNODE_NAME}/\" \
-        /etc/slurm/slurm.conf");
-}
-
-void Cluster::setupInfiniband () {
-    runCommand("dnf -y groupinstall \"Infiniband Support\"");
-
-    /* TODO: We must call the network method to configure IPoIB here */
-    runCommand("cat /etc/sysconfig/network-scripts/ifcfg-ib0"); // Placeholder
-}
-
-void Cluster::disableNetworkManagerDNSOverride () {
-    runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
-    runCommand("echo \"dns=none\" >> \
-        /etc/NetworkManager/conf.d/90-dns-none.conf");
-
-    runCommand("systemctl restart NetworkManager");
-}
-
-/* TODO: Implement with NetworkManager */
-void Cluster::setupInternalNetwork () {
-    runCommand("nmcli --help"); // Placeholder
-}
-
-void Cluster::setupNetworkFileSystem () {
-    runCommand("echo \"/home *(rw,no_subtree_check,fsid=10,no_root_squash)\" \
-        >> /etc/exports");
-    runCommand("echo \"/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\" \
-        >> /etc/exports");
-    runCommand("exportfs -a");
-    runCommand("systemctl enable --now nfs-server");
-}
-
-void Cluster::install () {
-    XCAT xCAT;
-
-    setTimezone(this->timezone);
-    setLocale(this->locale);
-    setFQDN(this->m_headnode->fqdn);
-
-    this->firewall ? enableFirewall() : disableFirewall();
-    this->selinux ? setSELinuxMode("enabled") : setSELinuxMode("disabled");
-
-    installRequiredPackages();
-    setupRepositories();
-    installProvisioningServices();
-    setupTimeService();
-    setupSLURM();
-    setupInfiniband();
-    disableNetworkManagerDNSOverride();
-    setupInternalNetwork();
-    xCAT.setDHCPInterfaces("eth0");
-    xCAT.setDomain("invalid.tld");
-    xCAT.copycds("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
-    xCAT.genimage("ol8.4.0-x86_64-netboot-compute");
-    xCAT.addOpenHPCComponents(
-        "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
-    setupNetworkFileSystem();
 }
 
 #ifdef _DEBUG_
@@ -224,4 +83,29 @@ void Cluster::printData () {
     std::cerr << "Firewall: " << (firewall ? "true" : "false") << std::endl;
     std::cerr << "SELinux: " << (selinux ? "true" : "false") << std::endl;
 }
+
+void Cluster::fillTestData () {
+    firewall = true;
+    selinux = true;
+    timezone = "America/Sao_Paulo";
+    locale = "en_US.UTF-8";
+    this->m_headnode->hostname = "headnode";
+    domainname = "cluster.example.tld";
+    this->m_headnode->fqdn = this->m_headnode->hostname + "." + domainname;
+    xCATDynamicRangeStart = "192.168.20.1";
+    xCATDynamicRangeEnd = "192.168.20.254";
+    directoryAdminPassword = "pwdAdmin";
+    directoryManagerPassword = "pwdManager";
+    directoryDisableDNSSEC = true;
+    nodePrefix = "n";
+    nodePadding = "2";
+    nodeStartIP = "172.26.0.1";
+    nodeRootPassword = "pwdNodeRoot";
+    nodeISOPath = "/mnt/iso/rhel-8.4-dvd.iso";
+    ibStack = "MLNX";
+    queueSystem.name = "SLURM";
+    updateSystem = true;
+    remoteAccess = true;
+}
+
 #endif

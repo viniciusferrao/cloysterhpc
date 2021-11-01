@@ -46,25 +46,6 @@ class Cluster {
 public: /* Must be private */
     Headnode* m_headnode;
 
-private:
-    void setTimezone (std::string);
-    void setLocale (std::string);
-    void setFQDN (const std::string&);
-    void enableFirewall ();
-    void disableFirewall ();
-    int setSELinuxMode (std::string);
-    void systemUpdate ();
-    void installRequiredPackages ();
-    void setupRepositories ();
-    void installProvisioningServices ();
-    void setupTimeService ();
-    void setupSLURM ();
-    void setupInfiniband ();
-    void disableNetworkManagerDNSOverride (); // This should be on Network
-    void setupInternalNetwork (); // This should be on Network
-    void setupNetworkFileSystem ();
-
-public:
     bool firewall; // Cluster-wide firewall settings
     bool selinux; // Cluster-wide SELinux settings
     std::string timezone;
@@ -95,10 +76,10 @@ public:
     Cluster ();
     Cluster (Headnode&);
     ~Cluster ();
-    void install ();
 
 #ifdef _DEBUG_
     void printData ();
+    void fillTestData ();
 #endif
 };
 

@@ -20,6 +20,7 @@
 #include "presenter/presenterWelcome.h"
 #include "view/newtViewBase.h"
 #include "view/newtViewMessage.h"
+#include "services/shell.h"
 
 int main(int argc, char** argv) {
     int rc; /* return code */
@@ -37,16 +38,16 @@ int main(int argc, char** argv) {
                                                      std::move(model));
 #endif
 
-
-#if 0
-    /* TerminalUI entrypoint */
-    Cluster cluster;
-    Presenter presenter(cluster);
-#endif
-
 #ifdef _DEBUG_
+    model->fillTestData();
     model->printData();
 #endif
+
+    //Execution* engine = new Shell();
+    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
+
+    executionEngine->runCommand("ls");
+    //delete engine;
 
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */
