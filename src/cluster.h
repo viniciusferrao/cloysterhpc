@@ -44,24 +44,42 @@ struct Postfix {
 
 class Cluster {
 public: /* Must be private */
-    Headnode* m_headnode;
+    std::unique_ptr<Headnode> m_headnode;
 
-    bool firewall; // Cluster-wide firewall settings
-    bool selinux; // Cluster-wide SELinux settings
-    std::string timezone;
-    std::string locale; // Default locale cluster wide.
-    std::string domainname;
+    // Cluster-wide m_firewall settings
+private:
+    bool m_firewall{};
+    bool m_selinux{}; // Cluster-wide SELinux settings
+    std::string m_timezone;
+    std::string m_locale; // Default m_locale cluster wide.
+    std::string m_domainName;
 
-    Network external;
-    Network management;
-    Network service;
-    Network application;
+public:
+    bool isFirewall() const;
+    void setFirewall(bool firewall);
+    bool isSELinux() const;
+    void setSELinux(bool selinux);
+    const std::string& getTimezone() const;
+    void setTimezone(const std::string &timezone);
+    const std::string& getLocale() const;
+    void setLocale(const std::string &locale);
+    const std::string& getDomainName() const;
+    void setDomainName(const std::string &domainName);
 
+    /* TODO: Better networking, this is just bad */
+    struct network {
+        Network external;
+        Network management;
+        Network service;
+        Network application;
+    };
+
+    /* TODO: Refactor all those leftovers from legacy C version */
     std::string xCATDynamicRangeStart;
     std::string xCATDynamicRangeEnd;
     std::string directoryAdminPassword;
     std::string directoryManagerPassword;
-    bool directoryDisableDNSSEC;
+    bool directoryDisableDNSSEC{};
     std::string nodePrefix;
     std::string nodePadding;
     std::string nodeStartIP;
@@ -70,11 +88,10 @@ public: /* Must be private */
     std::string ibStack; /* Refactor */
     QueueSystem queueSystem;
     Postfix postfix;
-    bool updateSystem;
-    bool remoteAccess;
+    bool updateSystem{};
+    bool remoteAccess{};
 
     Cluster ();
-    Cluster (Headnode&);
     ~Cluster ();
 
 #ifdef _DEBUG_

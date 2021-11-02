@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm> /* std::remove */
 #include <map> /* std::map */
+#include <regex>
 
 #include <sys/utsname.h>
 
@@ -18,7 +19,7 @@ std::string Headnode::fetchValue (const std::string& line) {
     std::string value;
 
     /* Get values from keys */
-    size_t pos = line.find_first_of("=");
+    size_t pos = line.find_first_of('=');
     value = line.substr(pos + 1);
 
     /* Remove double quotes (") if found */
@@ -37,31 +38,31 @@ int Headnode::setOS () {
         return -1;
     }
 
-    this->os.arch = OS::Arch::x86_64;
+    this->m_os.arch = OS::Arch::x86_64;
 
     /* A map would be a better ideia:
      * std::map<std::string, Family> osFamily
      */
     if (std::string{system.sysname} == "Linux")
-        this->os.family = OS::Family::Linux;
+        this->m_os.family = OS::Family::Linux;
     if (std::string{system.sysname} == "Darwin")
-        this->os.family = OS::Family::Darwin;
+        this->m_os.family = OS::Family::Darwin;
 
     /* Store kernel release in string format */
-    this->os.kernel = std::string{system.release};
+    this->m_os.kernel = std::string{system.release};
 
 #ifdef _DEBUG_
-    std::cout << "Architecture: " << (int)this->os.arch << std::endl;
-    std::cout << "Family: " << (int)this->os.family << std::endl;
-    std::cout << "Kernel Release: " << this->os.kernel << std::endl;
+    std::cout << "Architecture: " << (int)this->m_os.arch << std::endl;
+    std::cout << "Family: " << (int)this->m_os.family << std::endl;
+    std::cout << "Kernel Release: " << this->m_os.kernel << std::endl;
 #endif
 
 #ifdef _DUMMY_
     if (std::string{system.sysname} == "Darwin") {
-        std::string filename = "chroot/etc/os-release";
+        std::string filename = "chroot/etc/m_os-release";
 #else
     if (std::string{system.sysname} == "Linux") {
-        std::string filename = "/etc/os-release";
+        std::string filename = "/etc/m_os-release";
 #endif
         std::ifstream file(filename);
 
@@ -70,7 +71,7 @@ int Headnode::setOS () {
             return -2;
         }
 
-        /* Fetches OS information from /etc/os-release. The file is writen in a
+        /* Fetches OS information from /etc/m_os-release. The file is writen in a
          * key=value style.
          */
         std::string line;
@@ -84,7 +85,7 @@ int Headnode::setOS () {
 
                 std::string parser = fetchValue(line);
                 if (parser.substr(parser.find(":") + 1) == "el8")
-                    this->os.platform = OS::Platform::el8;
+                    this->m_os.platform = OS::Platform::el8;
             }
 
 #if __cplusplus >= 202002L
@@ -94,9 +95,9 @@ int Headnode::setOS () {
 #endif
 
                 if (fetchValue(line) == "rhel")
-                    this->os.distro = OS::Distro::RHEL;
+                    this->m_os.distro = OS::Distro::RHEL;
                 if (fetchValue(line) == "ol")
-                    this->os.distro = OS::Distro::OL;
+                    this->m_os.distro = OS::Distro::OL;
             }
 
 #if __cplusplus >= 202002L
@@ -107,10 +108,10 @@ int Headnode::setOS () {
 
                 std::string parser = fetchValue(line);
 
-                this->os.majorVersion = stoi(
+                this->m_os.majorVersion = stoi(
                     parser.substr(0, parser.find(".")));
                 
-                this->os.minorVersion = stoi(
+                this->m_os.minorVersion = stoi(
                     parser.substr(parser.find(".") + 1));
             }
         }
@@ -124,23 +125,23 @@ int Headnode::setOS () {
     }
 
 #ifdef _DEBUG_
-    std::cout << "Platform: " << (int)this->os.platform << std::endl;
-    std::cout << "Distribution: " << (int)this->os.distro << std::endl;
-    std::cout << "Major Version: " << this->os.majorVersion << std::endl;
-    std::cout << "Minor Version: " << this->os.minorVersion << std::endl;
+    std::cout << "Platform: " << (int)this->m_os.platform << std::endl;
+    std::cout << "Distribution: " << (int)this->m_os.distro << std::endl;
+    std::cout << "Major Version: " << this->m_os.majorVersion << std::endl;
+    std::cout << "Minor Version: " << this->m_os.minorVersion << std::endl;
 #endif
 
     return 0;
 }
 
 void Headnode::printOS () {
-    std::cout << "Architecture: " << (int)this->os.arch << std::endl;
-    std::cout << "Family: " << (int)this->os.family << std::endl;
-    std::cout << "Kernel Release: " << this->os.kernel << std::endl;
-    std::cout << "Platform: " << (int)this->os.platform << std::endl;
-    std::cout << "Distribution: " << (int)this->os.distro << std::endl;
-    std::cout << "Major Version: " << this->os.majorVersion << std::endl;
-    std::cout << "Minor Version: " << this->os.minorVersion << std::endl;
+    std::cout << "Architecture: " << (int)this->m_os.arch << std::endl;
+    std::cout << "Family: " << (int)this->m_os.family << std::endl;
+    std::cout << "Kernel Release: " << this->m_os.kernel << std::endl;
+    std::cout << "Platform: " << (int)this->m_os.platform << std::endl;
+    std::cout << "Distribution: " << (int)this->m_os.distro << std::endl;
+    std::cout << "Major Version: " << this->m_os.majorVersion << std::endl;
+    std::cout << "Minor Version: " << this->m_os.minorVersion << std::endl;
 }
 
 /* Supported releases must be a constexpr defined elsewhere and not hardcoded as
@@ -149,40 +150,40 @@ void Headnode::printOS () {
  * written directly on the method. Also, they might need to be a bitmap or enum
  */
 int Headnode::checkSupportedOS () {
-    if (this->os.arch != OS::Arch::x86_64) {
+    if (this->m_os.arch != OS::Arch::x86_64) {
 #ifdef _DEBUG_
-        std::cout << (int)this->os.arch 
+        std::cout << (int)this->m_os.arch 
             << " is not a supported architecture" << std::endl;
 #endif
         return -1;
     }
 
-    if (this->os.family != OS::Family::Linux) {
+    if (this->m_os.family != OS::Family::Linux) {
 #ifdef _DEBUG_
-        std::cout << (int)this->os.family 
+        std::cout << (int)this->m_os.family 
             << " is not a supported operating system" << std::endl;
 #endif
         return -2;
     }
 
-    if (this->os.platform != OS::Platform::el8) {
+    if (this->m_os.platform != OS::Platform::el8) {
 #ifdef _DEBUG_
-        std::cout << (int)this->os.platform 
+        std::cout << (int)this->m_os.platform 
             << " is not a supported Linux platform" << std::endl;
 #endif
         return -3;
     }
 
-    if ((this->os.distro != OS::Distro::RHEL) && 
-        (this->os.distro != OS::Distro::OL)) {
+    if ((this->m_os.distro != OS::Distro::RHEL) &&
+        (this->m_os.distro != OS::Distro::OL)) {
 #ifdef _DEBUG_
-        std::cout << (int)this->os.distro 
+        std::cout << (int)this->m_os.distro 
             << " is not a supported Linux distribution" << std::endl;
 #endif
         return -4;
     }
 
-    if (this->os.majorVersion < 8) {
+    if (this->m_os.majorVersion < 8) {
 #ifdef _DEBUG_
         std::cout << "This software is only supported on EL8" << std::endl;
 #endif
@@ -190,4 +191,49 @@ int Headnode::checkSupportedOS () {
     }
 
     return 0;
+}
+
+const std::string &Headnode::getHostname() const {
+    return m_hostname;
+}
+
+void Headnode::setHostname(const std::string &hostname) {
+    if (hostname.size() > 63)
+        throw;
+
+#if __cplusplus >= 202002L
+    if (hostname.starts_with('-') or hostname.ends_with('-'))
+#else
+    if (boost::algorithm::starts_with(hostname, '-') or
+        boost::algorithm::ends_with(hostname, '-'));
+#endif
+        throw;
+
+    /* Check if string has only digits */
+    if (std::regex_match(hostname, std::regex("^[0-9]+$")))
+        throw;
+    /* Check if string is not only alphanumerics and - */
+    if (!(std::regex_match(hostname, std::regex("^[A-Za-z0-9-]+$"))))
+        throw;
+    
+    m_hostname = hostname;
+}
+
+const std::string &Headnode::getFQDN() const {
+    return m_fqdn;
+}
+
+void Headnode::setFQDN(const std::string &fqdn) {
+    if (fqdn.size() > 255)
+        throw;
+
+    m_fqdn = fqdn;
+}
+
+const OS &Headnode::getOS() const {
+    return m_os;
+}
+
+void Headnode::setOS(const OS &os) {
+    m_os = os;
 }

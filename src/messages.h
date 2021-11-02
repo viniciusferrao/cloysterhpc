@@ -66,17 +66,17 @@ constexpr const char * MSG_DEFAULT_HELP_NOT_AVAILABLE = \
     "We're sorry, but there's no help available for this screen :(\n";
 
 constexpr const char * MSG_TIME_SETTINGS_TIMEZONE = \
-    "Choose you local timezone\n";
+    "Choose you local m_timezone\n";
 constexpr const char * MSG_TIME_SETTINGS_TIMEZONE_HELP = \
     MSG_DEFAULT_HELP_NOT_AVAILABLE;
 
 constexpr const char * MSG_LOCALE_SETTINGS_LOCALE = \
-    "Pick your default locale\n";
+    "Pick your default m_locale\n";
 constexpr const char * MSG_LOCALE_SETTINGS_LOCALE_HELP = \
     MSG_DEFAULT_HELP_NOT_AVAILABLE;
 
 constexpr const char * MSG_NETWORK_SETTINGS_HOSTID = \
-    "Enter the desired hostname and domain name for this machine\n";
+    "Enter the desired m_hostname and domain name for this machine\n";
 constexpr const char * MSG_NETWORK_SETTINGS_HOSTID_HELP = \
     MSG_DEFAULT_HELP_NOT_AVAILABLE;
 constexpr const char * MSG_NETWORK_SETTINGS_EXTERNAL_IF = \

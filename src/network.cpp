@@ -1,56 +1,109 @@
 #include "network.h"
 
+#include <vector>
+#include <string>
+#include <regex>
+#include <arpa/inet.h> /* inet_*() functions */
 #include <ifaddrs.h> /* getifaddrs() */
 
-void Network::setProfile (Network::Profile profile) {
-    this->m_profile = profile;
+Network::Network()
+    : Network(Profile::External, Type::Ethernet) {}
+
+Network::Network(Profile profile)
+    : Network(profile, Type::Ethernet) {}
+
+Network::Network(Profile profile, Type type)
+    : m_profile(profile),
+      m_type(type) {}
+
+Network::~Network() = default;
+
+Network::Profile Network::getProfile () const {
+    return m_profile;
 }
 
-Network::Profile Network::getProfile () {
-    return this->m_profile;
+Network::Type Network::getType () const {
+    return m_type;
 }
 
-void Network::setType (Network::Type type) {
-    this->m_type = type;
-}
-
-Network::Type Network::getType () {
-    return this->m_type;
-}
-
-int Network::setInterfaceName () {
-    // if (getifaddrs(&this->m_ifaddr) == -1) {
-    //     return -1;
-    // }
-    m_interfacename = "eth0";
-    return 0;
-}
-
-void Network::printInterfaceName () {
-
-}
-
-/* TODO: Check against /xx declaration on subnetMask */
-int Network::setIPAddress (const std::string& address, const std::string& subnetMask) {
-    if (inet_aton(address.c_str(), &this->m_address) == 0)
-        return -1; /* Invalid IP Address */
-    if (inet_aton(subnetMask.c_str(), &this->m_subnetmask) == 0)
-        return -2; /* Invalid Subnet Mask */
-    return 0;
-}
-
-std::string Network::getIPAddress () {
+/* TODO: Implement checks
+ *  - Subnet correct size
+ *  - Check if network address and gateway are inside the mask
+ */
+const std::string Network::getAddress() const {
+    if (inet_ntoa(m_address) == nullptr)
+        throw;
     return inet_ntoa(m_address);
 }
 
-const std::string &Network::getInterfacename() const {
-    return m_interfacename;
+void Network::setAddress(const std::string& address) {
+    if (inet_aton(address.c_str(), &this->m_address) == 0)
+        throw; //return -1; /* Invalid IP Address */
 }
 
-void Network::setInterfacename(const std::string &interfacename) {
-    if (interfacename == "lo") {
-        //throw renameThisError;
-        return;
+const std::string Network::getSubnetMask() const {
+    if (inet_ntoa(m_subnetMask) == nullptr)
+        throw;
+    return inet_ntoa(m_subnetMask);
+}
+
+void Network::setSubnetMask(const std::string& subnetMask) {
+    if (inet_aton(subnetMask.c_str(), &this->m_subnetMask) == 0)
+        throw; //return -1; /* Invalid IP Address */
+}
+
+const std::string Network::getGateway() const {
+    if (inet_ntoa(m_gateway) == nullptr)
+        throw;
+    return inet_ntoa(m_gateway);
+}
+
+void Network::setGateway(const std::string& gateway) {
+    if (inet_aton(gateway.c_str(), &this->m_gateway) == 0)
+        throw; //return -1; /* Invalid IP Address */
+}
+/* End of TODO */
+
+const std::string &Network::getDomainName() const {
+    return m_domainName;
+}
+
+void Network::setDomainName(const std::string& domainName) {
+    if (domainName.size() > 255)
+        throw;
+
+#if __cplusplus >= 202002L
+    if (domainName.starts_with('-') or domainName.ends_with('-'))
+        throw;
+#else
+    if (boost::algorithm::starts_with(domainName, '-') or
+        boost::algorithm::ends_with(domainName, '-'));
+#endif
+
+    /* Check if string has only digits */
+    if (std::regex_match(domainName, std::regex("^[0-9]+$")))
+        throw;
+
+    /* Check if it's not only alphanumerics and - */
+    if (!(std::regex_match(domainName, std::regex("^[A-Za-z0-9-.]+$"))))
+        throw;
+
+    m_domainName = domainName;
+}
+
+/* TODO: Check return types for const correctness. */
+const std::vector<std::string>& Network::getNameserver() const {
+    std::vector<std::string> returnVector;
+    for (auto const& e : std::as_const(m_nameserver))
+        returnVector.emplace_back(inet_ntoa(e));
+
+    return returnVector;
+}
+
+/* TODO: Test this */
+void Network::setNameserver(const std::vector<std::string>& nameserver) {
+    for (auto const& e : std::as_const(nameserver)) {
+        if (inet_aton(e.c_str(), &this->m_nameserver[0]) == 0)
+            throw;
     }
-    this->m_interfacename = interfacename;
 }

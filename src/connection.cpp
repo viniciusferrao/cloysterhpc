@@ -4,6 +4,10 @@
 
 #include <ifaddrs.h> /* getifaddrs() */
 
+Connection::Connection() = default;
+
+Connection::~Connection() = default;
+
 int Connection::setInterfaceName () {
     if (getifaddrs(&this->m_ifaddr) == -1) {
         return -1;

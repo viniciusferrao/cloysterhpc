@@ -9,6 +9,8 @@
 #include <chrono>
 #include <cstring> /* strlen() */
 
+#include <fmt/format.h>
+
 /* Constructor */
 TerminalUI::TerminalUI (Cluster& cluster, Headnode& headnode) {
     newtInit();
@@ -365,9 +367,9 @@ void TerminalUI::drawTimeSettings (Cluster& cluster) {
         "Two blocks ahead"
     };
 
-    cluster.timezone = drawListMenu(MSG_TITLE_TIME_SETTINGS,
-                                      MSG_TIME_SETTINGS_TIMEZONE, timezones,
-                                      MSG_TIME_SETTINGS_TIMEZONE_HELP);
+    cluster.setTimezone(drawListMenu(MSG_TITLE_TIME_SETTINGS,
+                                     MSG_TIME_SETTINGS_TIMEZONE, timezones,
+                                     MSG_TIME_SETTINGS_TIMEZONE_HELP));
 }
 
 void TerminalUI::drawLocaleSettings (Cluster& cluster) {
@@ -380,9 +382,9 @@ void TerminalUI::drawLocaleSettings (Cluster& cluster) {
         "C"
     };
 
-    cluster.locale = drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
-                                      MSG_LOCALE_SETTINGS_LOCALE, locales,
-                                      MSG_LOCALE_SETTINGS_LOCALE_HELP);
+    cluster.setLocale(drawListMenu(MSG_TITLE_LOCALE_SETTINGS,
+                                   MSG_LOCALE_SETTINGS_LOCALE, locales,
+                                   MSG_LOCALE_SETTINGS_LOCALE_HELP));
 }
 
 /* We ask the required networking info to provide the cluster
@@ -403,7 +405,7 @@ void TerminalUI::drawNetworkSettings (Cluster& cluster,
 }
 
 void TerminalUI::drawNetworkHostnameSettings (Cluster& cluster) {
-    /* Request hostname and domain name */
+    /* Request m_hostname and domain name */
     const std::vector<std::string> entries = {
             "Hostname",
             "Domain Name"
@@ -414,10 +416,11 @@ void TerminalUI::drawNetworkHostnameSettings (Cluster& cluster) {
                                         MSG_NETWORK_SETTINGS_HOSTID, entries,
                                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
 
-    cluster.m_headnode->hostname = fields[0];
-    cluster.domainname = fields[1];
-    cluster.m_headnode->fqdn =
-        cluster.m_headnode->hostname + "." + cluster.domainname;
+    cluster.m_headnode->setHostname(fields[0]);
+    cluster.setDomainName(fields[1]);
+    cluster.m_headnode->setFQDN(fmt::format("{0}.{1}",
+                                cluster.m_headnode->getHostname(),
+                                cluster.getDomainName()));
 
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
@@ -440,14 +443,14 @@ void TerminalUI::drawNetworkExternalInterfaceSelection (Headnode& headnode) {
         "ib0",
     };
 
-    Network network;
-    network.setProfile(Network::Profile::External);
-    network.setType(Network::Type::Ethernet);
-    network.setInterfacename(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-                     MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
-                     MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP));
-
-    //headnode.externalNetwork.push_back(network);
+    Network network(Network::Profile::External,
+                    Network::Type::Ethernet);
+//    Connection connection;
+//    connection.setInterfaceName(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+//                     MSG_NETWORK_SETTINGS_EXTERNAL_IF, netInterfaces,
+//                     MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP));
+//
+//    headnode.externalNetwork.push_back(network);
 }
 
 void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
@@ -464,14 +467,14 @@ void TerminalUI::drawNetworkManagementInterfaceSelection (Headnode& headnode) {
     /* This is totally wrong, it should set the interface name and not the IP
      * address of the interface
      */
-    Network network;
-    network.setProfile(Network::Profile::Management);
-    network.setType(Network::Type::Ethernet);
-    network.setInterfacename(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
-                    MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
-                    MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP));
-
-    //headnode.managementNetwork.push_back(network);
+    Network network(Network::Profile::Management,
+                    Network::Type::Ethernet);
+//    Connection connection;
+//    connection.setInterfaceName(drawListMenu(MSG_TITLE_NETWORK_SETTINGS,
+//                    MSG_NETWORK_SETTINGS_INTERNAL_IF, netInterfaces,
+//                    MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP));
+//
+//    headnode.managementNetwork.push_back(network);
 }
 
 void TerminalUI::drawNetworkManagementAddress (Headnode& headnode) {
@@ -721,7 +724,7 @@ void TerminalUI::drawPostfixRelaySettings (Cluster& cluster) {
 
     /* More std::optional shenanigans */
 #if 0
-    cluster.postfix.relay.hostname = fields[0];
+    cluster.postfix.relay.m_hostname = fields[0];
     cluster.postfix.relay.port = fields[1];
 #endif
 }
@@ -743,7 +746,7 @@ void TerminalUI::drawPostfixSASLSettings (Cluster& cluster) {
 
     /* More std::optional shenanigans */
 #if 0
-    cluster.postfix.sasl.hostname = fields[0];
+    cluster.postfix.sasl.m_hostname = fields[0];
     cluster.postfix.sasl.port = fields[1];
     cluster.postfix.sasl.username = fields[2];
     cluster.postfix.sasl.password = fields[3];

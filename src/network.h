@@ -6,39 +6,54 @@
 #include <utility> /* std::pair */
 #include <arpa/inet.h>
 
+/* TODO: Refactoring is necessary
+ *  Profile and Type must be const, they cannot change after being set.
+ *  By default Profile and Type should be External and Ethernet; this must be
+ *  done within the constructor.
+ *  m_domainName is also available here since non-default networks may
+ *  exist on the entire cluster and they should have their own domain.
+ */
 class Network {
 public:
     enum class Profile { External, Management, Service, Application };
     enum class Type { Ethernet, Infiniband };
 
-    std::string domainname;
-    std::vector<std::string> nameserver;
-
 private:
-    Profile m_profile;
-    Type m_type;
-    //struct ifaddrs *m_ifaddr;
-    std::string m_interfacename;
-    struct in_addr m_address;
-    struct in_addr m_subnetmask;
-    struct in_addr m_gateway;
+    const Profile m_profile{};
+    const Type m_type{};
+    struct in_addr m_address{};
+    struct in_addr m_subnetMask{};
+    struct in_addr m_gateway{};
     std::pair<bool, unsigned> vlan;
 
+    std::string m_domainName;
+    std::vector<struct in_addr> m_nameserver;
+
 public:
-    void setProfile (Profile);
-    Profile getProfile ();
+    Network();
+    explicit Network(Profile);
+    Network(Profile, Type);
+    ~Network();
 
-    void setType (Type);
-    Type getType ();
+    /* We cannot set or change Profile/Type after instantiation */
+    Profile getProfile () const;
+    Type getType () const;
 
-    int setInterfaceName ();
-    void printInterfaceName ();
+    const std::string getAddress() const;
+    void setAddress(const std::string&);
 
-    const std::string &getInterfacename() const;
-    void setInterfacename(const std::string &interfacename);
+    const std::string getSubnetMask() const;
+    void setSubnetMask(const std::string&);
 
-    int setIPAddress (const std::string&, const std::string&);
-    std::string getIPAddress ();
+    const std::string getGateway() const;
+    void setGateway(const std::string&);
+
+    const std::string& getDomainName() const;
+    void setDomainName(const std::string&);
+
+    const std::vector<std::string>& getNameserver() const;
+    void setNameserver(const std::vector<std::string>&);
+
 };
 
 #endif /* NETWORK_H */

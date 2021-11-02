@@ -14,13 +14,14 @@ private:
     struct in_addr m_address;
 
 public:
-    Connection ();
+    Connection();
+    ~Connection();
 
-    int setInterfaceName ();
-    auto getInterfaceName ();
+    int setInterfaceName();
+    auto getInterfaceName();
 
     int setIPAddress (const std::string&);
-    std::string getIPAddress ();
+    std::string getIPAddress();
 };
 
 #endif /* CONNECTION_H */

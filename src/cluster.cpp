@@ -8,28 +8,92 @@
 #include "services/xcat.h"
 
 #include <iostream>
+#include <regex>
+
+#if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
+#endif
+
+#ifdef _DEBUG_
+#include <fmt/format.h>
+#endif
 
 Cluster::Cluster () {
-    m_headnode = new Headnode();
+    m_headnode = std::make_unique<Headnode>();
 }
 
-Cluster::Cluster (Headnode& headnode) {
-    m_headnode = &headnode;
+Cluster::~Cluster () = default;
+
+bool Cluster::isFirewall() const {
+    return m_firewall;
 }
 
-Cluster::~Cluster () {
-    delete m_headnode;
+void Cluster::setFirewall(bool firewall) {
+    m_firewall = firewall;
+}
+
+bool Cluster::isSELinux() const {
+    return m_selinux;
+}
+
+void Cluster::setSELinux(bool selinux) {
+    m_selinux = selinux;
+}
+
+const std::string& Cluster::getTimezone() const {
+    return m_timezone;
+}
+
+void Cluster::setTimezone(const std::string& timezone) {
+    m_timezone = timezone;
+}
+
+const std::string& Cluster::getLocale() const {
+    return m_locale;
+}
+
+void Cluster::setLocale(const std::string &locale) {
+    m_locale = locale;
+}
+
+const std::string& Cluster::getDomainName() const {
+    return m_domainName;
+}
+
+/* TODO: Fix logic, split domain to a vector after each dot (.) to check for
+ * correctness
+ */
+void Cluster::setDomainName(const std::string& domainName) {
+    if (domainName.size() > 255)
+        throw;
+
+#if __cplusplus >= 202002L
+    if (domainName.starts_with('-') or domainName.ends_with('-'))
+        throw;
+#else
+    if (boost::algorithm::starts_with(domainName, '-') or
+        boost::algorithm::ends_with(domainName, '-'));
+#endif
+
+    /* Check if string has only digits */
+    if (std::regex_match(domainName, std::regex("^[0-9]+$")))
+        throw;
+
+    /* Check if it's not only alphanumerics and - */
+    if (!(std::regex_match(domainName, std::regex("^[A-Za-z0-9-.]+$"))))
+        throw;
+
+    m_domainName = domainName;
 }
 
 #ifdef _DEBUG_
 void Cluster::printData () {
     std::cerr << "Cluster attributes defined:" << std::endl;
-    std::cerr << "Timezone: " << timezone << std::endl;
-    std::cerr << "Locale: " << locale << std::endl;
-    std::cerr << "Hostname: " << this->m_headnode->hostname << std::endl;
-    std::cerr << "Domainname: " << domainname << std::endl;
-    std::cerr << "FQDN: " << this->m_headnode->fqdn << std::endl;
+    std::cerr << "Timezone: " << getTimezone() << std::endl;
+    std::cerr << "Locale: " << getLocale() << std::endl;
+    std::cerr << "Hostname: " << this->m_headnode->getHostname() << std::endl;
+    std::cerr << "Domainname: " << getDomainName() << std::endl;
+    std::cerr << "FQDN: " << this->m_headnode->getFQDN() << std::endl;
     //std::cerr << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
     //std::cerr << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
     //std::cerr << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
@@ -64,12 +128,12 @@ void Cluster::printData () {
     //             break;
     //         case 1:
     //             /* Relay */
-    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.relay.hostname << std::endl;
+    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.relay.m_hostname << std::endl;
     //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.relay.port << std::endl;
     //             break;
     //         case 2:
     //             /* SASL */
-    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.sasl.hostname << std::endl;
+    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.sasl.m_hostname << std::endl;
     //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.sasl.port << std::endl;
     //             std::cerr << "\t\t-> Username: " << cluster.postfix.sasl.username << std::endl;
     //             std::cerr << "\t\t-> Password: " << cluster.postfix.sasl.password << std::endl;
@@ -80,18 +144,21 @@ void Cluster::printData () {
     std::cerr << "Update system: " << (updateSystem ? "true" : "false") << std::endl;
     std::cerr << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
 
-    std::cerr << "Firewall: " << (firewall ? "true" : "false") << std::endl;
-    std::cerr << "SELinux: " << (selinux ? "true" : "false") << std::endl;
+    std::cerr << "Firewall: " << (isFirewall() ? "true" : "false") << std::endl;
+    std::cerr << "SELinux: " << (isSELinux() ? "true" : "false") << std::endl;
 }
 
 void Cluster::fillTestData () {
-    firewall = true;
-    selinux = true;
-    timezone = "America/Sao_Paulo";
-    locale = "en_US.UTF-8";
-    this->m_headnode->hostname = "headnode";
-    domainname = "cluster.example.tld";
-    this->m_headnode->fqdn = this->m_headnode->hostname + "." + domainname;
+    setFirewall(true);
+    setSELinux(true);
+    setTimezone("America/Sao_Paulo");
+    setLocale("en_US.UTF-8");
+    this->m_headnode->setHostname("headnode");
+    setDomainName("cluster.example.tld");
+    this->m_headnode->setFQDN(
+        fmt::format("{0}.{1}", this->m_headnode->getHostname(),
+                    getDomainName()));
+
     xCATDynamicRangeStart = "192.168.20.1";
     xCATDynamicRangeEnd = "192.168.20.254";
     directoryAdminPassword = "pwdAdmin";

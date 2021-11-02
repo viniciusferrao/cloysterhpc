@@ -32,15 +32,15 @@ void Shell::runCommand(const std::string& command) {
 }
 
 void Shell::configureTimezone (std::string timezone) {
-    runCommand("timedatectl set-timezone " + timezone);
+    runCommand("timedatectl set-m_timezone " + timezone);
 }
 
 void Shell::configureLocale (std::string locale) {
-    runCommand("localectl set-locale " + locale);
+    runCommand("localectl set-m_locale " + locale);
 }
 
 void Shell::configureFQDN (const std::string& fqdn) {
-    runCommand("hostnamectl set-hostname " + fqdn);
+    runCommand("hostnamectl set-m_hostname " + fqdn);
 }
 
 void Shell::enableFirewall () {
@@ -89,7 +89,7 @@ void Shell::configureRepositories () {
     runCommand("wget -P /etc/yum.repos.d \
         https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 
-    //if (headnode->os.id == "ol")
+    //if (headnode->m_os.id == "ol")
     runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
 }
 
@@ -149,12 +149,12 @@ void Shell::install () {
     /* TODO: Find a better way to pass the interface as a reference to prov */
     XCAT* xCAT = new XCAT(*this);
 
-//    configureTimezone(this->timezone);
-//    configureLocale(this->locale);
-//    configureFQDN(this->m_headnode->fqdn);
+//    configureTimezone(this->m_timezone);
+//    configureLocale(this->m_locale);
+//    configureFQDN(this->m_headnode->m_fqdn);
 //
-//    this->firewall ? enableFirewall() : disableFirewall();
-//    this->selinux ? configureSELinuxMode("enabled") :
+//    this->m_firewall ? enableFirewall() : disableFirewall();
+//    this->m_selinux ? configureSELinuxMode("enabled") :
 //                    configureSELinuxMode("disabled");
 
     installRequiredPackages();

@@ -88,14 +88,14 @@ int main(int argc, char** argv) {
     Cluster cluster;
 
     /* Trash initialization */
-    cluster.timezone = "America/Sao_Paulo";
-    cluster.locale = "en_US.utf8";
-    cluster.fqdn = "headnode.cloyster.invalid";
-    cluster.firewall = false;
-    cluster.selinux = false;
+    cluster.m_timezone = "America/Sao_Paulo";
+    cluster.m_locale = "en_US.utf8";
+    cluster.m_fqdn = "headnode.cloyster.invalid";
+    cluster.m_firewall = false;
+    cluster.m_selinux = false;
 
 #ifndef _DUMMY_
-    if (headnode.os.family == OS::Family::Darwin) {
+    if (headnode.m_os.family == OS::Family::Darwin) {
         std::cerr << "ERROR: Cowardly refusing to run commands on macOS!" <<
                                                                     std::endl;
         exit(-1);
