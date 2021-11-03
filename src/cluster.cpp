@@ -86,6 +86,35 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
+/* TODO: Fix this implementation of network; this is just dumb */
+const Network Cluster::getNetwork(Network::Profile profile) const {
+    switch (profile) {
+        case Network::Profile::External:
+            return m_network.external;
+        case Network::Profile::Management:
+            return m_network.management;
+        case Network::Profile::Service:
+            return m_network.service;
+        case Network::Profile::Application:
+            return m_network.application;
+    }
+}
+
+void Cluster::setNetwork(Network::Profile profile, Network::Type type,
+                         std::string address, std::string subnetMask,
+                         std::string gateway, uint16_t vlan,
+                         std::string domainName,
+                         std::vector<std::string> nameserver) {
+
+    Network network(profile, type);
+    network.setAddress(address);
+    network.setSubnetMask(subnetMask);
+    network.setGateway(gateway);
+    network.setVLAN(vlan);
+    network.setDomainName(domainName);
+    network.setNameserver(nameserver);
+}
+
 #ifdef _DEBUG_
 void Cluster::printData () {
     std::cerr << "Cluster attributes defined:" << std::endl;

@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "headnode.h"
+#include "network.h"
 #include "types.h"
 
 struct SLURM {
@@ -53,6 +54,13 @@ private:
     std::string m_timezone;
     std::string m_locale; // Default m_locale cluster wide.
     std::string m_domainName;
+    /* TODO: Better networking, this is just bad */
+    struct {
+        Network external;
+        Network management;
+        Network service;
+        Network application;
+    } m_network;
 
 public:
     bool isFirewall() const;
@@ -65,14 +73,10 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-
-    /* TODO: Better networking, this is just bad */
-    struct network {
-        Network external;
-        Network management;
-        Network service;
-        Network application;
-    };
+    const Network getNetwork(Network::Profile) const;
+    void setNetwork(Network::Profile, Network::Type, std::string,
+                    std::string, std::string, uint16_t, std::string,
+                    std::vector<std::string>);
 
     /* TODO: Refactor all those leftovers from legacy C version */
     std::string xCATDynamicRangeStart;

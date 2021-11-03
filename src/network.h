@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <utility> /* std::pair */
 #include <arpa/inet.h>
 
 /* TODO: Refactoring is necessary
@@ -24,8 +23,7 @@ private:
     struct in_addr m_address{};
     struct in_addr m_subnetMask{};
     struct in_addr m_gateway{};
-    std::pair<bool, unsigned> vlan;
-
+    uint16_t m_vlan{};
     std::string m_domainName;
     std::vector<struct in_addr> m_nameserver;
 
@@ -48,12 +46,14 @@ public:
     const std::string getGateway() const;
     void setGateway(const std::string&);
 
+    const uint16_t& getVLAN() const;
+    void setVLAN(const uint16_t& vlan);
+
     const std::string& getDomainName() const;
     void setDomainName(const std::string&);
 
     const std::vector<std::string>& getNameserver() const;
     void setNameserver(const std::vector<std::string>&);
-
 };
 
 #endif /* NETWORK_H */

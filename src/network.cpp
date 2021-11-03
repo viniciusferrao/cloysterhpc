@@ -4,7 +4,6 @@
 #include <string>
 #include <regex>
 #include <arpa/inet.h> /* inet_*() functions */
-#include <ifaddrs.h> /* getifaddrs() */
 
 Network::Network()
     : Network(Profile::External, Type::Ethernet) {}
@@ -28,6 +27,7 @@ Network::Type Network::getType () const {
 
 /* TODO: Implement checks
  *  - Subnet correct size
+ *  - Overload for different inputs (string and int)
  *  - Check if network address and gateway are inside the mask
  */
 const std::string Network::getAddress() const {
@@ -64,6 +64,16 @@ void Network::setGateway(const std::string& gateway) {
 }
 /* End of TODO */
 
+const uint16_t& Network::getVLAN() const {
+    return m_vlan;
+}
+
+void Network::setVLAN(const uint16_t& vlan) {
+    if (vlan >= 4096)
+        throw;
+    m_vlan = vlan;
+}
+
 const std::string &Network::getDomainName() const {
     return m_domainName;
 }
@@ -94,16 +104,16 @@ void Network::setDomainName(const std::string& domainName) {
 /* TODO: Check return types for const correctness. */
 const std::vector<std::string>& Network::getNameserver() const {
     std::vector<std::string> returnVector;
-    for (auto const& e : std::as_const(m_nameserver))
-        returnVector.emplace_back(inet_ntoa(e));
+    for (auto const& ns : std::as_const(m_nameserver))
+        returnVector.emplace_back(inet_ntoa(ns));
 
     return returnVector;
 }
 
 /* TODO: Test this */
 void Network::setNameserver(const std::vector<std::string>& nameserver) {
-    for (auto const& e : std::as_const(nameserver)) {
-        if (inet_aton(e.c_str(), &this->m_nameserver[0]) == 0)
+    for (size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
+        if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
             throw;
     }
 }
