@@ -54,12 +54,16 @@ private:
     std::string m_timezone;
     std::string m_locale; // Default m_locale cluster wide.
     std::string m_domainName;
-    /* TODO: Better networking, this is just bad */
+    /* TODO: Better networking, this is just bad
+     *  - Dynamic allocation?
+     *  - std::vector<>?
+     *  - Make public?
+     */
     struct {
-        Network external;
-        Network management;
-        Network service;
-        Network application;
+        std::vector<std::unique_ptr<Network>> external;
+        std::vector<std::unique_ptr<Network>> management;
+        std::vector<std::unique_ptr<Network>> service;
+        std::vector<std::unique_ptr<Network>> application;
     } m_network;
 
 public:
@@ -73,10 +77,11 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-    const Network getNetwork(Network::Profile) const;
-    void setNetwork(Network::Profile, Network::Type, std::string,
-                    std::string, std::string, uint16_t, std::string,
-                    std::vector<std::string>);
+    const std::vector<std::unique_ptr<Network>>& getNetwork(
+                                                    Network::Profile) const;
+    void addNetwork(Network::Profile, Network::Type, const std::string&,
+                    const std::string&, const std::string&, const uint16_t&,
+                    const std::string&, const std::vector<std::string>&);
 
     /* TODO: Refactor all those leftovers from legacy C version */
     std::string xCATDynamicRangeStart;

@@ -31,6 +31,9 @@ public:
     Network();
     explicit Network(Profile);
     Network(Profile, Type);
+    Network(Profile, Type, const std::string&, const std::string&,
+            const std::string&, const uint16_t&, const std::string&,
+            const std::vector<std::string>& nameserver);
     ~Network();
 
     /* We cannot set or change Profile/Type after instantiation */

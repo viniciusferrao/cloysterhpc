@@ -2,6 +2,10 @@
  * Everything here must be (re)factored.
  */
 
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include "cluster.h"
 #include "functions.h"
 #include "headnode.h"
@@ -9,6 +13,7 @@
 
 #include <iostream>
 #include <regex>
+#include <memory>
 
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
@@ -86,8 +91,10 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
-/* TODO: Fix this implementation of network; this is just dumb */
-const Network Cluster::getNetwork(Network::Profile profile) const {
+/* TODO: This implementation of network is not that great */
+const std::vector<std::unique_ptr<Network>>& Cluster::getNetwork(
+                                        Network::Profile profile) const {
+
     switch (profile) {
         case Network::Profile::External:
             return m_network.external;
@@ -100,19 +107,48 @@ const Network Cluster::getNetwork(Network::Profile profile) const {
     }
 }
 
-void Cluster::setNetwork(Network::Profile profile, Network::Type type,
-                         std::string address, std::string subnetMask,
-                         std::string gateway, uint16_t vlan,
-                         std::string domainName,
-                         std::vector<std::string> nameserver) {
+const std::vector<Network> Cluster::getNet(Network::Profile profile) {
+    std::vector<Network> network;
 
-    Network network(profile, type);
-    network.setAddress(address);
-    network.setSubnetMask(subnetMask);
-    network.setGateway(gateway);
-    network.setVLAN(vlan);
-    network.setDomainName(domainName);
-    network.setNameserver(nameserver);
+    switch (profile) {
+        case Network::Profile::External:
+            network = *m_network.external;
+            return m_network.external;
+        case Network::Profile::Management:
+            return m_network.management;
+        case Network::Profile::Service:
+            return m_network.service;
+        case Network::Profile::Application:
+            return m_network.application;
+    }
+}
+
+void Cluster::addNetwork(Network::Profile profile, Network::Type type,
+                             const std::string& address,
+                             const std::string& subnetMask,
+                             const std::string& gateway,
+                             const uint16_t& vlan,
+                             const std::string& domainName,
+                             const std::vector<std::string>& nameserver) {
+
+    switch (profile) {
+        case Network::Profile::External:
+            m_network.external.push_back(std::make_unique<Network>(
+                profile, type, address, subnetMask, gateway, vlan, domainName,
+                nameserver));
+        case Network::Profile::Management:
+            m_network.management.push_back(std::make_unique<Network>(
+                profile, type, address, subnetMask, gateway, vlan, domainName,
+                nameserver));
+        case Network::Profile::Service:
+            m_network.service.push_back(std::make_unique<Network>(
+                profile, type, address, subnetMask, gateway, vlan, domainName,
+                nameserver));
+        case Network::Profile::Application:
+            m_network.application.push_back(std::make_unique<Network>(
+                profile, type, address, subnetMask, gateway, vlan, domainName,
+                nameserver));
+    }
 }
 
 #ifdef _DEBUG_
@@ -121,8 +157,16 @@ void Cluster::printData () {
     std::cerr << "Timezone: " << getTimezone() << std::endl;
     std::cerr << "Locale: " << getLocale() << std::endl;
     std::cerr << "Hostname: " << this->m_headnode->getHostname() << std::endl;
-    std::cerr << "Domainname: " << getDomainName() << std::endl;
+    std::cerr << "DomainName: " << getDomainName() << std::endl;
     std::cerr << "FQDN: " << this->m_headnode->getFQDN() << std::endl;
+
+    std::cerr << "External Net: ";
+
+    auto networks = getNetwork(Network::Profile::External).get();
+
+        std::cerr << networks[0]->getAddress();
+        << networks[0]->getSubnetMask(); << std::endl;
+
     //std::cerr << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
     //std::cerr << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
     //std::cerr << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
@@ -188,6 +232,20 @@ void Cluster::fillTestData () {
         fmt::format("{0}.{1}", this->m_headnode->getHostname(),
                     getDomainName()));
 
+    addNetwork(Network::Profile::External, Network::Type::Ethernet,
+               "192.2.0.0", "255.255.255.192", "192.2.0.1", 0, "example.com",
+               { "1.1.1.1", "208.67.222.222" });
+    addNetwork(Network::Profile::Management, Network::Type::Ethernet,
+               "10.0.0.0", "255.0.0.0", "0.0.0.0", 0, "cluster.example.com",
+               { "10.255.255.254" });
+    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
+               "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
+               "srv.cluster.example.com", { "172.16.255.254" });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+               "192.168.0.0", "255.255.255.0", "0.0.0.0", 0,
+               "ib.cluster.example.com", { "0.0.0.0" });
+
+    /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";
     xCATDynamicRangeEnd = "192.168.20.254";
     directoryAdminPassword = "pwdAdmin";
@@ -203,5 +261,4 @@ void Cluster::fillTestData () {
     updateSystem = true;
     remoteAccess = true;
 }
-
 #endif

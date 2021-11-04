@@ -15,6 +15,20 @@ Network::Network(Profile profile, Type type)
     : m_profile(profile),
       m_type(type) {}
 
+Network::Network(Profile profile, Type type, const std::string& address,
+                 const std::string& subnetMask, const std::string& gateway,
+                 const uint16_t& vlan, const std::string& domainName,
+                 const std::vector<std::string>& nameserver)
+    : Network(profile, type) {
+
+    setAddress(address);
+    setSubnetMask(subnetMask);
+    setGateway(gateway);
+    setVLAN(vlan);
+    setDomainName(domainName);
+    setNameserver(nameserver);
+}
+
 Network::~Network() = default;
 
 Network::Profile Network::getProfile () const {
@@ -112,7 +126,14 @@ const std::vector<std::string>& Network::getNameserver() const {
 
 /* TODO: Test this */
 void Network::setNameserver(const std::vector<std::string>& nameserver) {
+    if (nameserver.empty())
+        return;
+
+    m_nameserver.reserve(nameserver.size());
+    struct in_addr aux {};
+
     for (size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
+        m_nameserver.push_back(aux);
         if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
             throw;
     }
