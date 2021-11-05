@@ -415,13 +415,13 @@ void TerminalUI::drawNetworkHostnameSettings (Cluster& cluster) {
                                         MSG_TITLE_NETWORK_SETTINGS,
                                         MSG_NETWORK_SETTINGS_HOSTID, entries,
                                         MSG_NETWORK_SETTINGS_HOSTID_HELP);
-
+#if 0
     cluster.m_headnode->setHostname(fields[0]);
     cluster.setDomainName(fields[1]);
     cluster.m_headnode->setFQDN(fmt::format("{0}.{1}",
                                 cluster.m_headnode->getHostname(),
                                 cluster.getDomainName()));
-
+#endif
 #ifdef _DEBUG_
     std::cerr << "Strings on Vector: ";
     for (std::string i : fields) {

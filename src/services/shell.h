@@ -6,10 +6,11 @@
 #define CLOYSTER_SHELL_H
 
 #include "execution.h"
+#include "../cluster.h"
 
 class Shell : public Execution {
 public: /* TODO: Make it private, only here to run xCAT provisioner class */
-    void runCommand(const std::string&) override;
+    void runCommand(const std::string&);
 
 private:
     void configureTimezone (std::string);
@@ -30,8 +31,11 @@ private:
     void configureNetworkFileSystem ();
 
 public:
-    void install();
+    Shell();
+    ~Shell();
 
+    void testInstall(const std::unique_ptr<Cluster>&) override;
+    void install();
 };
 
 #endif //CLOYSTER_SHELL_H

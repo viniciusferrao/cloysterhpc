@@ -29,6 +29,10 @@ Cluster::Cluster () {
 
 Cluster::~Cluster () = default;
 
+const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
+    return m_headnode;
+}
+
 bool Cluster::isFirewall() const {
     return m_firewall;
 }
@@ -107,12 +111,12 @@ const std::vector<std::unique_ptr<Network>>& Cluster::getNetwork(
     }
 }
 
+#if 0
 const std::vector<Network> Cluster::getNet(Network::Profile profile) {
     std::vector<Network> network;
 
     switch (profile) {
         case Network::Profile::External:
-            network = *m_network.external;
             return m_network.external;
         case Network::Profile::Management:
             return m_network.management;
@@ -122,6 +126,7 @@ const std::vector<Network> Cluster::getNet(Network::Profile profile) {
             return m_network.application;
     }
 }
+#endif
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& address,
@@ -133,23 +138,90 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
 
     switch (profile) {
         case Network::Profile::External:
-            m_network.external.push_back(std::make_unique<Network>(
+            m_network.external.emplace_back(std::make_unique<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
+            break;
+
         case Network::Profile::Management:
-            m_network.management.push_back(std::make_unique<Network>(
+            m_network.management.emplace_back(std::make_unique<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
+            break;
+
         case Network::Profile::Service:
-            m_network.service.push_back(std::make_unique<Network>(
+            m_network.service.emplace_back(std::make_unique<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
+            break;
+
         case Network::Profile::Application:
-            m_network.application.push_back(std::make_unique<Network>(
+            m_network.application.emplace_back(std::make_unique<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
+            break;
     }
 }
+
+#ifdef _DEBUG_
+/* TODO: This debug function must be made as a template */
+void Cluster::printNetworks() {
+    for (size_t i = 0 ; auto const& network : m_network.external) {
+        std::cerr << fmt::format("External Network [{}]", i++) << std::endl;
+        std::cerr << "Address: " << network->getAddress() << std::endl;
+        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
+        std::cerr << "Gateway " << network->getGateway() << std::endl;
+        std::cerr << "VLAN " << network->getVLAN() << std::endl;
+        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
+        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
+            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
+        }
+    }
+    std::cerr << std::endl;
+
+    for (size_t i = 0 ; auto const& network : m_network.management) {
+        std::cerr << fmt::format("Management Network [{}]", i++) << std::endl;
+        std::cerr << "Address: " << network->getAddress() << std::endl;
+        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
+        std::cerr << "Gateway " << network->getGateway() << std::endl;
+        std::cerr << "VLAN " << network->getVLAN() << std::endl;
+        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
+        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
+            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
+        }
+    }
+    std::cerr << std::endl;
+
+
+    for (size_t i = 0 ; auto const& network : m_network.service) {
+        std::cerr << fmt::format("Service Network [{}]", i++) << std::endl;
+        std::cerr << "Address: " << network->getAddress() << std::endl;
+        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
+        std::cerr << "Gateway " << network->getGateway() << std::endl;
+        std::cerr << "VLAN " << network->getVLAN() << std::endl;
+        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
+        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
+            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
+        }
+    }
+    std::cerr << std::endl;
+
+
+    for (size_t i = 0 ; auto const& network : m_network.application) {
+        std::cerr << fmt::format("Application Network [{}]", i++) << std::endl;
+        std::cerr << "Address: " << network->getAddress() << std::endl;
+        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
+        std::cerr << "Gateway " << network->getGateway() << std::endl;
+        std::cerr << "VLAN " << network->getVLAN() << std::endl;
+        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
+        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
+            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
+        }
+    }
+    std::cerr << std::endl;
+
+}
+#endif
 
 #ifdef _DEBUG_
 void Cluster::printData () {
@@ -160,17 +232,8 @@ void Cluster::printData () {
     std::cerr << "DomainName: " << getDomainName() << std::endl;
     std::cerr << "FQDN: " << this->m_headnode->getFQDN() << std::endl;
 
-    std::cerr << "External Net: ";
+    printNetworks();
 
-    auto networks = getNetwork(Network::Profile::External).get();
-
-        std::cerr << networks[0]->getAddress();
-        << networks[0]->getSubnetMask(); << std::endl;
-
-    //std::cerr << "interfaceExternal: " << cluster.interfaceExternal << std::endl;
-    //std::cerr << "interfaceInternal: " << cluster.interfaceInternal << std::endl;
-    //std::cerr << "interfaceInternalNetwork: " << cluster.interfaceInternalNetwork << std::endl;
-    //std::cerr << "interfaceInternalIP: " << cluster.interfaceInternalIP << std::endl;
     std::cerr << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
     std::cerr << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
 
@@ -241,9 +304,15 @@ void Cluster::fillTestData () {
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
                "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
                "srv.cluster.example.com", { "172.16.255.254" });
+    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
+               "172.24.0.0", "255.255.0.0", "0.0.0.0", 0,
+               "srv2.cluster.example.com", { "1.1.1.1", "172.24.0.1" });
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
                "192.168.0.0", "255.255.255.0", "0.0.0.0", 0,
                "ib.cluster.example.com", { "0.0.0.0" });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+               "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
+               "ib2.cluster.example.com", { "0.0.0.0" });
 
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";

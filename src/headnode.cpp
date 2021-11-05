@@ -12,6 +12,12 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
+/* The constructor should discover everything we need from the machine that is
+ * running the software. We always consider that the software runs for what will
+ * become the cluster headnode.
+ */
+Headnode::Headnode () = default;
+
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS(); an those methods should really be on OS class and not here.
  */
@@ -28,9 +34,9 @@ std::string Headnode::fetchValue (const std::string& line) {
     return value;    
 }
 
-/* TODO: Better error return codes */
-int Headnode::setOS () {
-    struct utsname system;
+/* TODO: Throw exceptions on errors */
+int Headnode::discoverOS () {
+    struct utsname system {};
 
     uname(&system);
 
@@ -62,7 +68,7 @@ int Headnode::setOS () {
         std::string filename = "chroot/etc/m_os-release";
 #else
     if (std::string{system.sysname} == "Linux") {
-        std::string filename = "/etc/m_os-release";
+        std::string filename = "/etc/os-release";
 #endif
         std::ifstream file(filename);
 
@@ -84,7 +90,7 @@ int Headnode::setOS () {
 #endif
 
                 std::string parser = fetchValue(line);
-                if (parser.substr(parser.find(":") + 1) == "el8")
+                if (parser.substr(parser.find(':') + 1) == "el8")
                     this->m_os.platform = OS::Platform::el8;
             }
 
@@ -109,10 +115,10 @@ int Headnode::setOS () {
                 std::string parser = fetchValue(line);
 
                 this->m_os.majorVersion = stoi(
-                    parser.substr(0, parser.find(".")));
+                    parser.substr(0, parser.find('.')));
                 
                 this->m_os.minorVersion = stoi(
-                    parser.substr(parser.find(".") + 1));
+                    parser.substr(parser.find('.') + 1));
             }
         }
 
@@ -217,6 +223,16 @@ void Headnode::setHostname(const std::string &hostname) {
         throw;
     
     m_hostname = hostname;
+}
+
+const std::string Headnode::discoverHostname() {
+    struct utsname system {};
+
+    uname(&system);
+    std::string_view hostname = system.nodename;
+    m_hostname = hostname.substr(0, hostname.find('.'));
+
+    return m_hostname;
 }
 
 const std::string &Headnode::getFQDN() const {

@@ -44,8 +44,9 @@ struct Postfix {
 };
 
 class Cluster {
-public: /* Must be private */
+private: /* Must be private */
     std::unique_ptr<Headnode> m_headnode;
+    //Headnode m_headnode;
 
     // Cluster-wide m_firewall settings
 private:
@@ -54,11 +55,6 @@ private:
     std::string m_timezone;
     std::string m_locale; // Default m_locale cluster wide.
     std::string m_domainName;
-    /* TODO: Better networking, this is just bad
-     *  - Dynamic allocation?
-     *  - std::vector<>?
-     *  - Make public?
-     */
     struct {
         std::vector<std::unique_ptr<Network>> external;
         std::vector<std::unique_ptr<Network>> management;
@@ -67,6 +63,7 @@ private:
     } m_network;
 
 public:
+    const std::unique_ptr<Headnode>& getHeadnode() const;
     bool isFirewall() const;
     void setFirewall(bool firewall);
     bool isSELinux() const;
@@ -82,6 +79,9 @@ public:
     void addNetwork(Network::Profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
+#ifdef _DEBUG_
+    void printNetworks();
+#endif
 
     /* TODO: Refactor all those leftovers from legacy C version */
     std::string xCATDynamicRangeStart;

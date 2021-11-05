@@ -7,11 +7,14 @@
 
 #include <string>
 
+#include "../cluster.h"
+
 class Execution {
 public:
     virtual ~Execution() = default;
 
-    virtual void runCommand(const std::string&) = 0;
+    //virtual void runCommand(const std::string&) = 0;
+    virtual void testInstall(const std::unique_ptr<Cluster>&) = 0;
 };
 
 #endif //CLOYSTER_EXECUTION_H

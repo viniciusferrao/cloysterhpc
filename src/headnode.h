@@ -15,11 +15,12 @@ class Headnode : public Server {
 private:
     std::string m_hostname;
 public:
-    const std::string &getHostname() const;
+    const std::string& getHostname() const;
     void setHostname(const std::string &hostname);
-    const std::string &getFQDN() const;
+    const std::string discoverHostname();
+    const std::string& getFQDN() const;
     void setFQDN(const std::string &fqdn);
-    const OS &getOS() const;
+    const OS& getOS() const;
     void setOS(const OS &os);
 
 private:
@@ -31,7 +32,9 @@ private:
     std::string fetchValue (const std::string& line);
 
 public:
-    int setOS ();
+    Headnode();
+
+    int discoverOS ();
     void printOS ();
     int checkSupportedOS ();
 };

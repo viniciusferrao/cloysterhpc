@@ -55,7 +55,7 @@ public:
     const std::string& getDomainName() const;
     void setDomainName(const std::string&);
 
-    const std::vector<std::string>& getNameserver() const;
+    std::vector<std::string> getNameserver() const;
     void setNameserver(const std::vector<std::string>&);
 };
 

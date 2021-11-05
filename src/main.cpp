@@ -1,4 +1,7 @@
-/* C++ includes */
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include <iostream>
 #include <cstdlib>
 
@@ -45,9 +48,10 @@ int main(int argc, char** argv) {
 
     //Execution* engine = new Shell();
     std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
-
-    executionEngine->runCommand("ls");
+    executionEngine->testInstall(model);
     //delete engine;
+
+
 
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */

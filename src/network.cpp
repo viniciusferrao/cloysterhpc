@@ -115,8 +115,10 @@ void Network::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
-/* TODO: Check return types for const correctness. */
-const std::vector<std::string>& Network::getNameserver() const {
+/* TODO: Check return type
+ *  - We can't return const (don't know exactly why)
+ */
+std::vector<std::string> Network::getNameserver() const {
     std::vector<std::string> returnVector;
     for (auto const& ns : std::as_const(m_nameserver))
         returnVector.emplace_back(inet_ntoa(ns));
@@ -133,7 +135,7 @@ void Network::setNameserver(const std::vector<std::string>& nameserver) {
     struct in_addr aux {};
 
     for (size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
-        m_nameserver.push_back(aux);
+        m_nameserver.push_back(aux); /* aux may have garbage on it */
         if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
             throw;
     }

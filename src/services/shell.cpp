@@ -1,6 +1,9 @@
 //
 // Created by Vinícius Ferrão on 31/10/21.
 //
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
 
 #include "shell.h"
 #include "xcat.h"
@@ -9,9 +12,16 @@
 #include <iostream>
 #endif
 #include <memory>
+#include <fmt/format.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>
+
+#include "../cluster.h"
+
+Shell::Shell() = default;
+
+Shell::~Shell() = default;
 
 void Shell::runCommand(const std::string& command) {
 #ifndef _DUMMY_
@@ -32,15 +42,15 @@ void Shell::runCommand(const std::string& command) {
 }
 
 void Shell::configureTimezone (std::string timezone) {
-    runCommand("timedatectl set-m_timezone " + timezone);
+    runCommand(fmt::format("timedatectl set timezone {}", timezone));
 }
 
 void Shell::configureLocale (std::string locale) {
-    runCommand("localectl set-m_locale " + locale);
+    runCommand("localectl set locale " + locale);
 }
 
 void Shell::configureFQDN (const std::string& fqdn) {
-    runCommand("hostnamectl set-m_hostname " + fqdn);
+    runCommand("hostnamectl set hostname " + fqdn);
 }
 
 void Shell::enableFirewall () {
@@ -175,3 +185,11 @@ void Shell::install () {
 
     delete xCAT;
 }
+
+void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
+    configureTimezone(cluster->getTimezone());
+    configureLocale(cluster->getLocale());
+    configureFQDN(cluster->getHeadnode()->getFQDN());
+    runCommand(cluster->getHeadnode()->discoverHostname());
+}
+
