@@ -41,12 +41,12 @@ void Cluster::setFirewall(bool firewall) {
     m_firewall = firewall;
 }
 
-bool Cluster::isSELinux() const {
+Cluster::SELinuxMode Cluster::getSELinux() const {
     return m_selinux;
 }
 
-void Cluster::setSELinux(bool selinux) {
-    m_selinux = selinux;
+void Cluster::setSELinux(Cluster::SELinuxMode mode) {
+    m_selinux = mode;
 }
 
 const std::string& Cluster::getTimezone() const {
@@ -281,12 +281,12 @@ void Cluster::printData () {
     std::cerr << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
 
     std::cerr << "Firewall: " << (isFirewall() ? "true" : "false") << std::endl;
-    std::cerr << "SELinux: " << (isSELinux() ? "true" : "false") << std::endl;
+    std::cerr << "SELinux: " << static_cast<int>(getSELinux()) << std::endl;
 }
 
 void Cluster::fillTestData () {
     setFirewall(true);
-    setSELinux(true);
+    setSELinux(SELinuxMode::Permissive);
     setTimezone("America/Sao_Paulo");
     setLocale("en_US.UTF-8");
     this->m_headnode->setHostname("headnode");
@@ -330,4 +330,5 @@ void Cluster::fillTestData () {
     updateSystem = true;
     remoteAccess = true;
 }
+
 #endif

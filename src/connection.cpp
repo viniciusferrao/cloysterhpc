@@ -14,6 +14,19 @@ Connection::Connection() = default;
 
 Connection::~Connection() = default;
 
+Connection::Connection(const std::string& interface, const std::string& address,
+                       const std::string& hostname, const std::string& fqdn) {
+
+    setInterface(interface);
+    setAddress(address);
+    setHostname(hostname);
+    setFQDN(fqdn);
+}
+
+const std::string Connection::getInterface() const {
+    return m_interface;
+}
+
 void Connection::setInterface (const std::string& interface) {
     if (interface == "lo")
         throw; /* Cannot use the loopback interface */
@@ -31,7 +44,8 @@ void Connection::setInterface (const std::string& interface) {
 
         if (interface == ifa->ifa_name) {
             m_interface = interface;
-            return; /* TODO: memory leak; freeifaddrs() never called */
+            freeifaddrs(ifaddr);
+            return;
         }
     }
 
@@ -39,19 +53,15 @@ void Connection::setInterface (const std::string& interface) {
     throw; /* Interface not found */
 }
 
-const std::string Connection::getInterface() const {
-    return m_interface;
+const std::string Connection::getAddress () const {
+    if (inet_ntoa(m_address) == nullptr)
+        throw;
+    return inet_ntoa(m_address);
 }
 
 void Connection::setAddress (const std::string& address) {
     if (inet_aton(address.c_str(), &this->m_address) == 0)
         throw; //return -1; /* Invalid IP Address */
-}
-
-const std::string Connection::getAddress () const {
-    if (inet_ntoa(m_address) == nullptr)
-        throw;
-    return inet_ntoa(m_address);
 }
 
 const std::string& Connection::getHostname() const {

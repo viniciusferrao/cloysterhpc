@@ -12,25 +12,27 @@ private:
     std::string m_interface;
     /* TODO: Use std::vector to support more than one IP address */
     //std::vector<struct in_addr> m_address;
-    struct in_addr m_address{};
+    struct in_addr m_address {};
     std::string m_hostname;
     std::string m_fqdn;
 
 public:
     Connection();
+    Connection(const std::string&, const std::string&, const std::string&,
+               const std::string&);
     ~Connection();
 
-    void setInterface(const std::string&);
     const std::string getInterface() const;
+    void setInterface(const std::string&);
 
-    void setAddress(const std::string&);
     const std::string getAddress() const;
+    void setAddress(const std::string&);
 
     const std::string& getHostname() const;
-    void setHostname(const std::string& hostname);
+    void setHostname(const std::string&);
 
     const std::string& getFQDN() const;
-    void setFQDN(const std::string& fqdn);
+    void setFQDN(const std::string&);
 };
 
 #endif /* CONNECTION_H */

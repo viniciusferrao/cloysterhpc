@@ -16,7 +16,15 @@
  * running the software. We always consider that the software runs for what will
  * become the cluster headnode.
  */
-Headnode::Headnode () = default;
+//Headnode::Headnode () = default;
+
+Headnode::Headnode()
+    : m_hostname(discoverHostname()) {
+
+    m_externalConnection.emplace_back(Connection("en0", "172.21.1.22",
+                                                 "headnode",
+                                                 "headnode.example.com"));
+}
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS(); an those methods should really be on OS class and not here.
@@ -252,4 +260,12 @@ const OS &Headnode::getOS() const {
 
 void Headnode::setOS(const OS &os) {
     m_os = os;
+}
+
+//const std::unique_ptr<Connection>& Headnode::getConnection() const {
+//    return m_externalConnection;
+//}
+
+const std::vector<Connection>& Headnode::getConnection() const {
+    return m_externalConnection;
 }

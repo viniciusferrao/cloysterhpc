@@ -44,16 +44,16 @@ struct Postfix {
 };
 
 class Cluster {
-private: /* Must be private */
-    std::unique_ptr<Headnode> m_headnode;
-    //Headnode m_headnode;
+public:
+    enum class SELinuxMode { Permissive, Enforcing, Disabled };
 
-    // Cluster-wide m_firewall settings
 private:
-    bool m_firewall{};
-    bool m_selinux{}; // Cluster-wide SELinux settings
+    std::unique_ptr<Headnode> m_headnode; /* Headnode m_headnode; */
+
+    bool m_firewall {};
+    SELinuxMode m_selinux; /* Control nodes SELinux settings */
     std::string m_timezone;
-    std::string m_locale; // Default m_locale cluster wide.
+    std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
     struct {
         std::vector<std::unique_ptr<Network>> external;
@@ -66,8 +66,8 @@ public:
     const std::unique_ptr<Headnode>& getHeadnode() const;
     bool isFirewall() const;
     void setFirewall(bool firewall);
-    bool isSELinux() const;
-    void setSELinux(bool selinux);
+    SELinuxMode getSELinux() const;
+    void setSELinux(SELinuxMode);
     const std::string& getTimezone() const;
     void setTimezone(const std::string &timezone);
     const std::string& getLocale() const;
@@ -88,7 +88,7 @@ public:
     std::string xCATDynamicRangeEnd;
     std::string directoryAdminPassword;
     std::string directoryManagerPassword;
-    bool directoryDisableDNSSEC{};
+    bool directoryDisableDNSSEC {};
     std::string nodePrefix;
     std::string nodePadding;
     std::string nodeStartIP;
@@ -97,8 +97,8 @@ public:
     std::string ibStack; /* Refactor */
     QueueSystem queueSystem;
     Postfix postfix;
-    bool updateSystem{};
-    bool remoteAccess{};
+    bool updateSystem {};
+    bool remoteAccess {};
 
     Cluster ();
     ~Cluster ();

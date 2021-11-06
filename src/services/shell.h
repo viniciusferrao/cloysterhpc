@@ -13,12 +13,13 @@ public: /* TODO: Make it private, only here to run xCAT provisioner class */
     void runCommand(const std::string&);
 
 private:
+    void configureHostsFile (std::string_view, std::string_view,
+                             std::string_view);
     void configureTimezone (std::string);
     void configureLocale (std::string);
     void configureFQDN (const std::string&);
-    void enableFirewall ();
-    void disableFirewall ();
-    int configureSELinuxMode (std::string);
+    void configureFirewall (bool);
+    void configureSELinuxMode (Cluster::SELinuxMode);
     void systemUpdate ();
     void installRequiredPackages ();
     void configureRepositories ();

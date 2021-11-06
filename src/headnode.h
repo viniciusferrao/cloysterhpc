@@ -14,25 +14,27 @@
 class Headnode : public Server {
 private:
     std::string m_hostname;
+    std::string m_fqdn;
+    OS m_os;
+    std::vector<Connection> m_externalConnection;
+
 public:
     const std::string& getHostname() const;
     void setHostname(const std::string &hostname);
-    const std::string discoverHostname();
     const std::string& getFQDN() const;
     void setFQDN(const std::string &fqdn);
     const OS& getOS() const;
     void setOS(const OS &os);
 
 private:
-    std::string m_fqdn;
-    OS m_os;
-    std::vector<Connection> m_externalConnection;
-
-private:
     std::string fetchValue (const std::string& line);
+    const std::string discoverHostname();
 
 public:
     Headnode();
+
+    //const std::unique_ptr<Connection>& getConnection() const;
+    const std::vector<Connection>& getConnection() const;
 
     int discoverOS ();
     void printOS ();

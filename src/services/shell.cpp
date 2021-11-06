@@ -41,44 +41,53 @@ void Shell::runCommand(const std::string& command) {
 #endif
 }
 
+/* TODO: Proper file parsing */
+void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
+                                std::string_view hostname) {
+    runCommand(fmt::format("echo {}\t{} {} >> /etc/hosts", ip, fqdn, hostname));
+}
+
 void Shell::configureTimezone (std::string timezone) {
     runCommand(fmt::format("timedatectl set timezone {}", timezone));
 }
 
 void Shell::configureLocale (std::string locale) {
-    runCommand("localectl set locale " + locale);
+    runCommand(fmt::format("localectl set locale {}", locale));
 }
 
 void Shell::configureFQDN (const std::string& fqdn) {
-    runCommand("hostnamectl set hostname " + fqdn);
+    runCommand(fmt::format("hostnamectl set hostname {}", fqdn));
 }
 
-void Shell::enableFirewall () {
-    runCommand("systemctl enable --now firewalld");
+/* TODO: Better implementation */
+void Shell::configureFirewall(bool enabled) {
+    if (enabled)
+        runCommand("systemctl enable --now firewalld");
+    else
+        runCommand("systemctl disable --now firewalld");
 }
-void Shell::disableFirewall () {
-    runCommand("systemctl disable --now firewalld");
-}
 
-int Shell::configureSELinuxMode (std::string mode) {
-    boost::to_lower(mode);
+void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
 
-    if (mode == "enforcing" || mode == "enabled") {
-        /* Enable SELinux */
-        return 0;
+    switch (mode) {
+        case Cluster::SELinuxMode::Permissive:
+            runCommand("setenforce 0");
+            /* Permissive mode */
+        break;
+
+        case Cluster::SELinuxMode::Enforcing:
+            /* Enforcing mode */
+            runCommand("setenforce 1");
+        break;
+
+        case Cluster::SELinuxMode::Disabled:
+            /* Disable SELinux */
+            runCommand("setenforce 0"); /* This is wrong */
+        break;
+
+        default:
+            throw; /* Invalid mode */
     }
-
-    if (mode == "permissive") {
-        /* Permissive mode */
-        return 0;
-    }
-
-    if (mode == "disabled") {
-        /* Disable SELinux */
-        return 0;
-    }
-
-    return -1; /* Failed to parse SELinux mode */
 }
 
 void Shell::systemUpdate () {
@@ -187,9 +196,16 @@ void Shell::install () {
 }
 
 void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
+    configureHostsFile(cluster->getHeadnode()->getConnection()
+                                                    .front()
+                                                    .getAddress(),
+                       cluster->getHeadnode()->getFQDN(),
+                       cluster->getHeadnode()->getHostname());
     configureTimezone(cluster->getTimezone());
     configureLocale(cluster->getLocale());
     configureFQDN(cluster->getHeadnode()->getFQDN());
-    runCommand(cluster->getHeadnode()->discoverHostname());
+    configureFirewall(cluster->isFirewall());
+    configureSELinuxMode(cluster->getSELinux());
+
 }
 
