@@ -12,6 +12,13 @@ XCAT::XCAT(Shell& executionEngine) : m_executionEngine(executionEngine) {}
 
 XCAT::~XCAT() = default;
 
+void XCAT::configureRepositories() {
+    m_executionEngine.runCommand("wget -P /etc/yum.repos.d \
+        https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
+    m_executionEngine.runCommand("wget -P /etc/yum.repos.d \
+        https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
+}
+
 void XCAT::setDHCPInterfaces (std::string interface) {
     auto command = fmt::format(
             "chdef -t site dhcpinterfaces=\"xcatmn|{0}\"", interface);

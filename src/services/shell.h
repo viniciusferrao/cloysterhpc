@@ -13,19 +13,23 @@ public: /* TODO: Make it private, only here to run xCAT provisioner class */
     void runCommand(const std::string&);
 
 private:
+    void configureSELinuxMode (Cluster::SELinuxMode);
+    void configureFirewall (bool);
+    void configureFQDN (const std::string&);
     void configureHostsFile (std::string_view, std::string_view,
                              std::string_view);
     void configureTimezone (std::string);
     void configureLocale (std::string);
-    void configureFQDN (const std::string&);
-    void configureFirewall (bool);
-    void configureSELinuxMode (Cluster::SELinuxMode);
-    void systemUpdate ();
+    void runSystemUpdate (bool);
     void installRequiredPackages ();
-    void configureRepositories ();
+
+
+
+
+    void configureRepositories (const std::unique_ptr<Cluster>&);
     void installProvisioningServices ();
     void configureTimeService ();
-    void configureSLURM ();
+    void configureSLURM (const std::unique_ptr<Cluster>&);
     void configureInfiniband ();
     void disableNetworkManagerDNSOverride (); // This should be on Network
     void configureInternalNetwork (); // This should be on Network

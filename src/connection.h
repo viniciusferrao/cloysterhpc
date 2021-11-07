@@ -13,11 +13,14 @@ private:
     /* TODO: Use std::vector to support more than one IP address */
     //std::vector<struct in_addr> m_address;
     struct in_addr m_address {};
-    std::string m_hostname;
-    std::string m_fqdn;
+
+    /* TODO: This may not be here */
+    std::string m_hostname; // Remove
+    std::string m_fqdn; // Remove
 
 public:
     Connection();
+    Connection(const std::string&, const std::string&);
     Connection(const std::string&, const std::string&, const std::string&,
                const std::string&);
     ~Connection();

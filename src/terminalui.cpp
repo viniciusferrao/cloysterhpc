@@ -760,8 +760,8 @@ void TerminalUI::drawUpdateSystem (Cluster& cluster) {
                             MSG_UPDATE_SYSTEM_HELP);
 
     updateSystem ? 
-        cluster.updateSystem = true : 
-        cluster.updateSystem = false;
+        cluster.setUpdateSystem(true) :
+        cluster.setUpdateSystem(false);
 }
 
 void TerminalUI::drawRemoteAccess (Cluster& cluster) {

@@ -24,12 +24,13 @@
 #endif
 
 Cluster::Cluster () {
-    m_headnode = std::make_unique<Headnode>();
+    //m_headnode = std::make_unique<Headnode>();
 }
 
 Cluster::~Cluster () = default;
 
-const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
+const Headnode& Cluster::getHeadnode() const {
+//const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
     return m_headnode;
 }
 
@@ -163,6 +164,23 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
     }
 }
 
+bool Cluster::isUpdateSystem() const {
+    return m_updateSystem;
+}
+
+void Cluster::setUpdateSystem(bool updateSystem) {
+    m_updateSystem = updateSystem;
+}
+
+Cluster::Provisioner Cluster::getProvisioner() const {
+    return m_provisioner;
+}
+
+void Cluster::setProvisioner(Cluster::Provisioner provisioner) {
+    m_provisioner = provisioner;
+}
+
+
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
 void Cluster::printNetworks() {
@@ -192,7 +210,6 @@ void Cluster::printNetworks() {
     }
     std::cerr << std::endl;
 
-
     for (size_t i = 0 ; auto const& network : m_network.service) {
         std::cerr << fmt::format("Service Network [{}]", i++) << std::endl;
         std::cerr << "Address: " << network->getAddress() << std::endl;
@@ -205,7 +222,6 @@ void Cluster::printNetworks() {
         }
     }
     std::cerr << std::endl;
-
 
     for (size_t i = 0 ; auto const& network : m_network.application) {
         std::cerr << fmt::format("Application Network [{}]", i++) << std::endl;
@@ -228,11 +244,13 @@ void Cluster::printData () {
     std::cerr << "Cluster attributes defined:" << std::endl;
     std::cerr << "Timezone: " << getTimezone() << std::endl;
     std::cerr << "Locale: " << getLocale() << std::endl;
-    std::cerr << "Hostname: " << this->m_headnode->getHostname() << std::endl;
+    std::cerr << "Hostname: " << this->m_headnode.getHostname() << std::endl;
     std::cerr << "DomainName: " << getDomainName() << std::endl;
-    std::cerr << "FQDN: " << this->m_headnode->getFQDN() << std::endl;
+    std::cerr << "FQDN: " << this->m_headnode.getFQDN() << std::endl;
 
     printNetworks();
+
+    std::cerr << "Provisioner: " << (int)getProvisioner() << std::endl;
 
     std::cerr << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
     std::cerr << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
@@ -277,7 +295,7 @@ void Cluster::printData () {
     //     }
     // }
 
-    std::cerr << "Update system: " << (updateSystem ? "true" : "false") << std::endl;
+    std::cerr << "Update system: " << (isUpdateSystem() ? "true" : "false") << std::endl;
     std::cerr << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
 
     std::cerr << "Firewall: " << (isFirewall() ? "true" : "false") << std::endl;
@@ -289,10 +307,10 @@ void Cluster::fillTestData () {
     setSELinux(SELinuxMode::Permissive);
     setTimezone("America/Sao_Paulo");
     setLocale("en_US.UTF-8");
-    this->m_headnode->setHostname("headnode");
+    this->m_headnode.setHostname("headnode");
     setDomainName("cluster.example.tld");
-    this->m_headnode->setFQDN(
-        fmt::format("{0}.{1}", this->m_headnode->getHostname(),
+    this->m_headnode.setFQDN(
+        fmt::format("{0}.{1}", this->m_headnode.getHostname(),
                     getDomainName()));
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
@@ -314,6 +332,9 @@ void Cluster::fillTestData () {
                "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
                "ib2.cluster.example.com", { "0.0.0.0" });
 
+    setUpdateSystem(true);
+    setProvisioner(Provisioner::xCAT);
+
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";
     xCATDynamicRangeEnd = "192.168.20.254";
@@ -327,7 +348,6 @@ void Cluster::fillTestData () {
     nodeISOPath = "/mnt/iso/rhel-8.4-dvd.iso";
     ibStack = "MLNX";
     queueSystem.name = "SLURM";
-    updateSystem = true;
     remoteAccess = true;
 }
 

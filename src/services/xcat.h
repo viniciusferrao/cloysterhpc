@@ -16,6 +16,7 @@ public:
     XCAT(Shell&);
     ~XCAT();
 
+    void configureRepositories ();
     void setDHCPInterfaces (std::string);
     void setDomain (std::string);
     void copycds (std::string);

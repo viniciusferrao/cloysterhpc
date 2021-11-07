@@ -41,6 +41,41 @@ void Shell::runCommand(const std::string& command) {
 #endif
 }
 
+void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
+
+    switch (mode) {
+        case Cluster::SELinuxMode::Permissive:
+            runCommand("setenforce 0");
+            /* Permissive mode */
+            break;
+
+        case Cluster::SELinuxMode::Enforcing:
+            /* Enforcing mode */
+            runCommand("setenforce 1");
+            break;
+
+        case Cluster::SELinuxMode::Disabled:
+            /* Disable SELinux */
+            runCommand("setenforce 0"); /* This is wrong */
+            break;
+
+        default:
+            throw; /* Invalid mode */
+    }
+}
+
+/* TODO: Better implementation */
+void Shell::configureFirewall(bool enabled) {
+    if (enabled)
+        runCommand("systemctl enable --now firewalld");
+    else
+        runCommand("systemctl disable --now firewalld");
+}
+
+void Shell::configureFQDN (const std::string& fqdn) {
+    runCommand(fmt::format("hostnamectl set hostname {}", fqdn));
+}
+
 /* TODO: Proper file parsing */
 void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
                                 std::string_view hostname) {
@@ -55,63 +90,26 @@ void Shell::configureLocale (std::string locale) {
     runCommand(fmt::format("localectl set locale {}", locale));
 }
 
-void Shell::configureFQDN (const std::string& fqdn) {
-    runCommand(fmt::format("hostnamectl set hostname {}", fqdn));
-}
-
-/* TODO: Better implementation */
-void Shell::configureFirewall(bool enabled) {
-    if (enabled)
-        runCommand("systemctl enable --now firewalld");
-    else
-        runCommand("systemctl disable --now firewalld");
-}
-
-void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
-
-    switch (mode) {
-        case Cluster::SELinuxMode::Permissive:
-            runCommand("setenforce 0");
-            /* Permissive mode */
-        break;
-
-        case Cluster::SELinuxMode::Enforcing:
-            /* Enforcing mode */
-            runCommand("setenforce 1");
-        break;
-
-        case Cluster::SELinuxMode::Disabled:
-            /* Disable SELinux */
-            runCommand("setenforce 0"); /* This is wrong */
-        break;
-
-        default:
-            throw; /* Invalid mode */
-    }
-}
-
-void Shell::systemUpdate () {
-    runCommand("dnf -y update");
+void Shell::runSystemUpdate (bool run) {
+    if (run)
+        runCommand("dnf -y update");
 }
 
 void Shell::installRequiredPackages () {
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Shell::configureRepositories () {
+void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
     runCommand("dnf -y install \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install \
         https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
-    runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
-    runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 
-    //if (headnode->m_os.id == "ol")
+    //if (cluster->getHeadnode().m_os.id == "ol")
     runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
 }
 
+/* TODO: Break into two separate functions: OpenHPC and Provision */
 void Shell::installProvisioningServices () {
     runCommand("dnf -y install ohpc-base");
     runCommand("dnf -y install xCAT");
@@ -127,12 +125,12 @@ void Shell::configureTimeService () {
     runCommand("systemctl start --now chronyd");
 }
 
-void Shell::configureSLURM () {
+void Shell::configureSLURM (const std::unique_ptr<Cluster>& cluster) {
     runCommand("dnf -y install ohpc-slurm-server");
     runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
-    runCommand("perl -pi -e \
-        \"s/ControlMachine=\\S+/ControlMachine={HEADNODE_NAME}/\" \
-        /etc/slurm/slurm.conf");
+    runCommand(fmt::format("perl -pi -e \
+        \"s/ControlMachine=\\S+/ControlMachine={}/\" \
+        /etc/slurm/slurm.conf", cluster->getHeadnode().getFQDN()));
 }
 
 void Shell::configureInfiniband () {
@@ -176,11 +174,6 @@ void Shell::install () {
 //    this->m_selinux ? configureSELinuxMode("enabled") :
 //                    configureSELinuxMode("disabled");
 
-    installRequiredPackages();
-    configureRepositories();
-    installProvisioningServices();
-    configureTimeService();
-    configureSLURM();
     configureInfiniband();
     disableNetworkManagerDNSOverride();
     configureInternalNetwork();
@@ -196,16 +189,33 @@ void Shell::install () {
 }
 
 void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
-    configureHostsFile(cluster->getHeadnode()->getConnection()
+    configureSELinuxMode(cluster->getSELinux());
+    configureFirewall(cluster->isFirewall());
+    configureFQDN(cluster->getHeadnode().getFQDN());
+    configureHostsFile(cluster->getHeadnode().getConnection()
                                                     .front()
                                                     .getAddress(),
-                       cluster->getHeadnode()->getFQDN(),
-                       cluster->getHeadnode()->getHostname());
+                       cluster->getHeadnode().getFQDN(),
+                       cluster->getHeadnode().getHostname());
     configureTimezone(cluster->getTimezone());
     configureLocale(cluster->getLocale());
-    configureFQDN(cluster->getHeadnode()->getFQDN());
-    configureFirewall(cluster->isFirewall());
-    configureSELinuxMode(cluster->getSELinux());
+    runSystemUpdate(cluster->isUpdateSystem());
 
+    configureRepositories(cluster);
+    installRequiredPackages();
+
+    //std::unique_ptr<Provisioner> provisioner;
+    std::unique_ptr<XCAT> provisioner;
+    switch (cluster->getProvisioner()) {
+        case Cluster::Provisioner::xCAT:
+            provisioner = std::make_unique<XCAT>(*this);
+            break;
+    }
+
+    provisioner->configureRepositories();
+
+    installProvisioningServices(); // New Implementation
+    configureTimeService();
+    configureSLURM(cluster);
 }
 

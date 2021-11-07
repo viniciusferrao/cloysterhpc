@@ -46,12 +46,16 @@ struct Postfix {
 class Cluster {
 public:
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
+    enum class Provisioner { xCAT };
+    enum class Directory { None, FreeIPA };
 
 private:
-    std::unique_ptr<Headnode> m_headnode; /* Headnode m_headnode; */
+    //std::unique_ptr<Headnode> m_headnode;
+    Headnode m_headnode;
+    Provisioner m_provisioner;
 
     bool m_firewall {};
-    SELinuxMode m_selinux; /* Control nodes SELinux settings */
+    SELinuxMode m_selinux {}; /* Control nodes SELinux settings */
     std::string m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
@@ -61,9 +65,11 @@ private:
         std::vector<std::unique_ptr<Network>> service;
         std::vector<std::unique_ptr<Network>> application;
     } m_network;
+    bool m_updateSystem {};
 
 public:
-    const std::unique_ptr<Headnode>& getHeadnode() const;
+    //const std::unique_ptr<Headnode>& getHeadnode() const;
+    const Headnode& getHeadnode() const;
     bool isFirewall() const;
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;
@@ -79,6 +85,13 @@ public:
     void addNetwork(Network::Profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
+
+    bool isUpdateSystem() const;
+    void setUpdateSystem(bool);
+
+    Provisioner getProvisioner() const;
+    void setProvisioner(Provisioner);
+
 #ifdef _DEBUG_
     void printNetworks();
 #endif
@@ -97,7 +110,6 @@ public:
     std::string ibStack; /* Refactor */
     QueueSystem queueSystem;
     Postfix postfix;
-    bool updateSystem {};
     bool remoteAccess {};
 
     Cluster ();

@@ -14,6 +14,12 @@ Connection::Connection() = default;
 
 Connection::~Connection() = default;
 
+Connection::Connection(const std::string& interface,
+                       const std::string& address) {
+    setInterface(interface);
+    setAddress(address);
+}
+
 Connection::Connection(const std::string& interface, const std::string& address,
                        const std::string& hostname, const std::string& fqdn) {
 

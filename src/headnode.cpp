@@ -21,9 +21,7 @@
 Headnode::Headnode()
     : m_hostname(discoverHostname()) {
 
-    m_externalConnection.emplace_back(Connection("en0", "172.21.1.22",
-                                                 "headnode",
-                                                 "headnode.example.com"));
+    m_externalConnection.emplace_back(Connection("en0", "172.21.1.22"));
 }
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
