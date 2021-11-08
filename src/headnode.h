@@ -35,6 +35,8 @@ public:
 
     //const std::unique_ptr<Connection>& getConnection() const;
     const std::vector<Connection>& getConnection() const;
+    void addConnection(const std::shared_ptr<Network>&, const std::string&,
+                       const std::string&);
 
     int discoverOS ();
     void printOS ();

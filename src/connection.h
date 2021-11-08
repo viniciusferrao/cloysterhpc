@@ -45,7 +45,7 @@ public:
     void setFQDN(const std::string&);
 
     const std::shared_ptr<Network>& getNetwork() const;
-    void setNetwork(const std::shared_ptr<Network>&);
+    void setNetwork(std::shared_ptr<Network>);
 };
 
 #endif /* CONNECTION_H */

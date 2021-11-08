@@ -21,15 +21,6 @@
 Headnode::Headnode()
     : m_hostname(discoverHostname()) {}
 
-//Headnode::Headnode(Cluster& cluster)
-//    : Headnode() {
-//
-//    m_externalConnection.emplace_back(
-//        cluster.getNetwork(Network::Profile::External).front(),
-//        "en0", "172.21.1.22");
-//}
-
-
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS(); an those methods should really be on OS class and not here.
  */
@@ -272,4 +263,10 @@ void Headnode::setOS(const OS &os) {
 
 const std::vector<Connection>& Headnode::getConnection() const {
     return m_externalConnection;
+}
+
+void Headnode::addConnection(const std::shared_ptr<Network>& network,
+                             const std::string& interface,
+                             const std::string& address) {
+    m_externalConnection.emplace_back(network, interface, address);
 }

@@ -245,7 +245,7 @@ void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
                 connection.getNetwork()->getProfile(),
                 interface,
                 connection.getNetwork()->getType(),
-                connection.getNetwork()->getAddress(),
+                connection.getAddress(),
                 connection.getNetwork()->getGateway(),
                 connection.getNetwork()->getDomainName()));
 

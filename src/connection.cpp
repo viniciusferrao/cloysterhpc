@@ -121,6 +121,6 @@ const std::shared_ptr<Network>& Connection::getNetwork() const {
     return m_network;
 }
 
-void Connection::setNetwork(const std::shared_ptr<Network>& network) {
+void Connection::setNetwork(std::shared_ptr<Network> network) {
     m_network = network;
 }
