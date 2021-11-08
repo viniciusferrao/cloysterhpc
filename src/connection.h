@@ -1,6 +1,8 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "network.h"
+
 #include <string>
 #include <arpa/inet.h>
 
@@ -9,6 +11,7 @@
  */
 class Connection {
 private:
+    std::shared_ptr<Network> m_network;
     std::string m_interface;
     /* TODO: Use std::vector to support more than one IP address */
     //std::vector<struct in_addr> m_address;
@@ -21,6 +24,10 @@ private:
 public:
     Connection();
     Connection(const std::string&, const std::string&);
+    Connection(std::shared_ptr<Network>,
+               const std::string&, const std::string&);
+
+    /* TODO: Remove this constructor */
     Connection(const std::string&, const std::string&, const std::string&,
                const std::string&);
     ~Connection();
@@ -36,6 +43,9 @@ public:
 
     const std::string& getFQDN() const;
     void setFQDN(const std::string&);
+
+    const std::shared_ptr<Network>& getNetwork() const;
+    void setNetwork(const std::shared_ptr<Network>&);
 };
 
 #endif /* CONNECTION_H */

@@ -60,10 +60,10 @@ private:
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
     struct {
-        std::vector<std::unique_ptr<Network>> external;
-        std::vector<std::unique_ptr<Network>> management;
-        std::vector<std::unique_ptr<Network>> service;
-        std::vector<std::unique_ptr<Network>> application;
+        std::vector<std::shared_ptr<Network>> external;
+        std::vector<std::shared_ptr<Network>> management;
+        std::vector<std::shared_ptr<Network>> service;
+        std::vector<std::shared_ptr<Network>> application;
     } m_network;
     bool m_updateSystem {};
 
@@ -80,8 +80,7 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-    const std::vector<std::unique_ptr<Network>>& getNetwork(
-                                                    Network::Profile) const;
+    const std::vector<std::shared_ptr<Network>>& getNetwork(Network::Profile) const;
     void addNetwork(Network::Profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);

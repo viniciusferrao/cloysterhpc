@@ -199,9 +199,14 @@ void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
                        cluster->getHeadnode().getHostname());
     configureTimezone(cluster->getTimezone());
     configureLocale(cluster->getLocale());
+
+    configureNetworks(cluster);
+
     runSystemUpdate(cluster->isUpdateSystem());
 
     configureRepositories(cluster);
+    runSystemUpdate(cluster->isUpdateSystem());
+
     installRequiredPackages();
 
     //std::unique_ptr<Provisioner> provisioner;
@@ -219,3 +224,30 @@ void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
     configureSLURM(cluster);
 }
 
+void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
+    const std::vector<Connection> connections =
+            cluster->getHeadnode().getConnection();
+
+    for (size_t i = 0 ; auto const& connection : std::as_const(connections)) {
+        auto interface = connection.getInterface();
+
+        runCommand(fmt::format(
+                "nmcli device set {} managed yes", interface));
+        runCommand(fmt::format(
+                "nmcli device set {} autoconnect yes", interface));
+        runCommand(fmt::format(
+                "nmcli device connect {}", interface));
+        runCommand(fmt::format(
+                "nmcli connection add con-name {} ifname {} type {} \
+                mtu 1500 ipv4.method manual ipv4.address {}/24 \
+                ipv4.gateway {} ipv4.dns \"192.168.200.1 1.1.1.1\" \
+                ipv4.dns-search {} ipv6.method disabled",
+                connection.getNetwork()->getProfile(),
+                interface,
+                connection.getNetwork()->getType(),
+                connection.getNetwork()->getAddress(),
+                connection.getNetwork()->getGateway(),
+                connection.getNetwork()->getDomainName()));
+
+    }
+}

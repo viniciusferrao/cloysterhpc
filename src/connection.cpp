@@ -1,4 +1,5 @@
 #include "connection.h"
+#include "network.h"
 
 #include <string>
 #include <regex>
@@ -16,6 +17,15 @@ Connection::~Connection() = default;
 
 Connection::Connection(const std::string& interface,
                        const std::string& address) {
+    setInterface(interface);
+    setAddress(address);
+}
+
+Connection::Connection(std::shared_ptr<Network> network,
+                       const std::string& interface,
+                       const std::string& address)
+                       : m_network(network) {
+
     setInterface(interface);
     setAddress(address);
 }
@@ -107,3 +117,10 @@ void Connection::setFQDN(const std::string& fqdn) {
     m_fqdn = fqdn;
 }
 
+const std::shared_ptr<Network>& Connection::getNetwork() const {
+    return m_network;
+}
+
+void Connection::setNetwork(const std::shared_ptr<Network>& network) {
+    m_network = network;
+}

@@ -97,7 +97,7 @@ void Cluster::setDomainName(const std::string& domainName) {
 }
 
 /* TODO: This implementation of network is not that great */
-const std::vector<std::unique_ptr<Network>>& Cluster::getNetwork(
+const std::vector<std::shared_ptr<Network>>& Cluster::getNetwork(
                                         Network::Profile profile) const {
 
     switch (profile) {
@@ -139,25 +139,25 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
 
     switch (profile) {
         case Network::Profile::External:
-            m_network.external.emplace_back(std::make_unique<Network>(
+            m_network.external.emplace_back(make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Management:
-            m_network.management.emplace_back(std::make_unique<Network>(
+            m_network.management.emplace_back(make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Service:
-            m_network.service.emplace_back(std::make_unique<Network>(
+            m_network.service.emplace_back(make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Application:
-            m_network.application.emplace_back(std::make_unique<Network>(
+            m_network.application.emplace_back(make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
@@ -331,6 +331,10 @@ void Cluster::fillTestData () {
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
                "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
                "ib2.cluster.example.com", { "0.0.0.0" });
+
+//    m_headnode.getConnection().front().setNetwork(
+//            getNetwork(Network::Profile::External).front());
+    m_headnode.getConnection().front().setNetwork(m_network.external.front());
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);

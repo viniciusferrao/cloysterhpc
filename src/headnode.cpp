@@ -19,10 +19,16 @@
 //Headnode::Headnode () = default;
 
 Headnode::Headnode()
-    : m_hostname(discoverHostname()) {
+    : m_hostname(discoverHostname()) {}
 
-    m_externalConnection.emplace_back(Connection("en0", "172.21.1.22"));
-}
+//Headnode::Headnode(Cluster& cluster)
+//    : Headnode() {
+//
+//    m_externalConnection.emplace_back(
+//        cluster.getNetwork(Network::Profile::External).front(),
+//        "en0", "172.21.1.22");
+//}
+
 
 /* We should refactor to boost::property_tree on both methods: fetchValue() and
  * setOS(); an those methods should really be on OS class and not here.

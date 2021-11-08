@@ -35,6 +35,10 @@ private:
     void configureInternalNetwork (); // This should be on Network
     void configureNetworkFileSystem ();
 
+
+
+    void configureNetworks(const std::unique_ptr<Cluster>&);
+
 public:
     Shell();
     ~Shell();
