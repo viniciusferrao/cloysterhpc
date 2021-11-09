@@ -261,12 +261,13 @@ void Headnode::setOS(const OS &os) {
 //    return m_externalConnection;
 //}
 
-const std::vector<Connection>& Headnode::getConnection() const {
-    return m_externalConnection;
+const std::vector<Connection>& Headnode::getConnections() const {
+    return m_connection;
 }
 
 void Headnode::addConnection(const std::shared_ptr<Network>& network,
                              const std::string& interface,
                              const std::string& address) {
-    m_externalConnection.emplace_back(network, interface, address);
+
+    m_connection.emplace_back(network, interface, address);
 }

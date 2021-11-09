@@ -12,16 +12,26 @@ class XCAT : public Provisioner {
 private:
     Shell& m_executionEngine;
 
+private:
+    void copycds (std::string_view);
+    void genimage (std::string_view);
+    void packimage (std::string_view);
+    void generateOtherPkgListFile ();
+    void generatePostinstallFile ();
+    void generateSynclistsFile ();
+    void configureOSImageDefinition (std::string_view);
+    void customizeImage ();
+
 public:
     XCAT(Shell&);
     ~XCAT();
 
     void configureRepositories ();
-    void setDHCPInterfaces (std::string);
-    void setDomain (std::string);
-    void copycds (std::string);
-    void genimage (std::string);
-    void addOpenHPCComponents (std::string);
+    void setDHCPInterfaces (std::string_view);
+    void setDomain (std::string_view);
+    void createImage (std::string_view);
+
+    void addOpenHPCComponents (std::string_view);
 };
 
 #endif /* XCAT_H */

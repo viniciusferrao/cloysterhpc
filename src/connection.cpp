@@ -66,7 +66,7 @@ void Connection::setInterface (const std::string& interface) {
     }
 
     freeifaddrs(ifaddr);
-    throw; /* Interface not found */
+    throw "Cannot find network interface"; /* Interface not found, bugged */
 }
 
 const std::string Connection::getAddress () const {

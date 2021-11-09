@@ -180,6 +180,13 @@ void Cluster::setProvisioner(Cluster::Provisioner provisioner) {
     m_provisioner = provisioner;
 }
 
+Cluster::OFED Cluster::getOFED() const {
+    return m_ofed;
+}
+
+void Cluster::setOFED(Cluster::OFED ofed) {
+    m_ofed = ofed;
+}
 
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
@@ -265,9 +272,6 @@ void Cluster::printData () {
     std::cerr << "nodeRootPassword: " << nodeRootPassword << std::endl;
     std::cerr << "nodeISOPath: " << nodeISOPath << std::endl;
 
-    std::cerr << "ibStack: " << ibStack << std::endl;
-
-    std::cerr << "queueSystem: " << queueSystem.name << std::endl;
     // if (queueSystem.name == "SLURM")
     //     std::cerr << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
     // if (queueSystem.name == "PBS")
@@ -312,6 +316,7 @@ void Cluster::fillTestData () {
     this->m_headnode.setFQDN(
         fmt::format("{0}.{1}", this->m_headnode.getHostname(),
                     getDomainName()));
+    setOFED(OFED::Inbox);
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
                "192.2.0.0", "255.255.255.192", "192.2.0.1", 0, "example.com",
@@ -336,6 +341,7 @@ void Cluster::fillTestData () {
 //            getNetwork(Network::Profile::External).front());
 //    m_headnode.getConnection().front().setNetwork(m_network.external.front());
     m_headnode.addConnection(m_network.external.front(), "en0", "172.26.1.22");
+    m_headnode.addConnection(m_network.management.front(), "en1", "10.1.1.7");
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
@@ -351,8 +357,6 @@ void Cluster::fillTestData () {
     nodeStartIP = "172.26.0.1";
     nodeRootPassword = "pwdNodeRoot";
     nodeISOPath = "/mnt/iso/rhel-8.4-dvd.iso";
-    ibStack = "MLNX";
-    queueSystem.name = "SLURM";
     remoteAccess = true;
 }
 

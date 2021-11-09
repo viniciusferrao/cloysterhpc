@@ -48,11 +48,14 @@ public:
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
     enum class Provisioner { xCAT };
     enum class Directory { None, FreeIPA };
+    enum class OFED { None, Inbox, Mellanox, Oracle };
+    enum class QueueSystem { None, SLURM, PBS };
 
 private:
     //std::unique_ptr<Headnode> m_headnode;
     Headnode m_headnode;
     Provisioner m_provisioner;
+    OFED m_ofed;
 
     bool m_firewall {};
     SELinuxMode m_selinux {}; /* Control nodes SELinux settings */
@@ -91,6 +94,9 @@ public:
     Provisioner getProvisioner() const;
     void setProvisioner(Provisioner);
 
+    OFED getOFED() const;
+    void setOFED(OFED);
+
 #ifdef _DEBUG_
     void printNetworks();
 #endif
@@ -106,7 +112,6 @@ public:
     std::string nodeStartIP;
     std::string nodeRootPassword;
     std::string nodeISOPath;
-    std::string ibStack; /* Refactor */
     QueueSystem queueSystem;
     Postfix postfix;
     bool remoteAccess {};

@@ -16,7 +16,7 @@ private:
     std::string m_hostname;
     std::string m_fqdn;
     OS m_os;
-    std::vector<Connection> m_externalConnection;
+    std::vector<Connection> m_connection;
 
 public:
     const std::string& getHostname() const;
@@ -34,7 +34,7 @@ public:
     Headnode();
 
     //const std::unique_ptr<Connection>& getConnection() const;
-    const std::vector<Connection>& getConnection() const;
+    const std::vector<Connection>& getConnections() const;
     void addConnection(const std::shared_ptr<Network>&, const std::string&,
                        const std::string&);
 

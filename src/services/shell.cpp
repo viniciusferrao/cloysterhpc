@@ -82,12 +82,64 @@ void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
     runCommand(fmt::format("echo {}\t{} {} >> /etc/hosts", ip, fqdn, hostname));
 }
 
-void Shell::configureTimezone (std::string timezone) {
+void Shell::configureTimezone (const std::string& timezone) {
     runCommand(fmt::format("timedatectl set timezone {}", timezone));
 }
 
-void Shell::configureLocale (std::string locale) {
+void Shell::configureLocale (const std::string& locale) {
     runCommand(fmt::format("localectl set locale {}", locale));
+}
+
+void Shell::disableNetworkManagerDNSOverride () {
+    runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
+    runCommand("echo \"dns=none\" >> \
+        /etc/NetworkManager/conf.d/90-dns-none.conf");
+
+    runCommand("systemctl restart NetworkManager");
+}
+
+/* This function configure host networks at once with NetworkManager.
+ * We enforce that NM is running enabling it with --now and then set default
+ * settings and addresses based on data available on the model.
+ * At the end of execution we disable DNS override since the headnode machine
+ * will be providing the service.
+ */
+void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
+    runCommand("systemctl enable --now NetworkManager");
+
+    const std::vector<Connection> connections =
+            cluster->getHeadnode().getConnections();
+
+    for (auto const& connection : std::as_const(connections)) {
+        /* For now, we just skip the external network to avoid disconnects */
+        if (connection.getNetwork()->getProfile() == Network::Profile::External)
+            continue;
+
+        auto interface = connection.getInterface();
+
+        runCommand(fmt::format(
+                "nmcli device set {} managed yes", interface));
+        runCommand(fmt::format(
+                "nmcli device set {} autoconnect yes", interface));
+        runCommand(fmt::format(
+                "nmcli device connect {}", interface));
+        runCommand(fmt::format(
+                "nmcli connection add con-name {} ifname {} type {} \
+                mtu 1500 ipv4.method manual ipv4.address {}/{} \
+                ipv4.gateway {} ipv4.dns \"{}\" \
+                ipv4.dns-search {} ipv6.method disabled",
+                connection.getNetwork()->getProfile(),
+                interface,
+                connection.getNetwork()->getType(),
+                connection.getAddress(),
+                connection.getNetwork()->cidr.at(
+                        connection.getNetwork()->getSubnetMask()),
+                connection.getNetwork()->getGateway(),
+                fmt::join(connection.getNetwork()->getNameserver(), " "),
+                connection.getNetwork()->getDomainName()));
+    }
+
+    disableNetworkManagerDNSOverride();
 }
 
 void Shell::runSystemUpdate (bool run) {
@@ -109,12 +161,15 @@ void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
     runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
 }
 
-/* TODO: Break into two separate functions: OpenHPC and Provision */
-void Shell::installProvisioningServices () {
+void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
+}
+
+void Shell::installProvisioningServices () {
     runCommand("dnf -y install xCAT");
 }
 
+/* TODO: Fix logic for RPM */
 void Shell::configureTimeService () {
     runCommand("rpm -q chrony");
     //if not installed
@@ -125,32 +180,31 @@ void Shell::configureTimeService () {
     runCommand("systemctl start --now chronyd");
 }
 
-void Shell::configureSLURM (const std::unique_ptr<Cluster>& cluster) {
+void Shell::configureQueueSystem (const std::unique_ptr<Cluster>& cluster) {
+    // if (Cluster::QueueSystem::SLURM)
     runCommand("dnf -y install ohpc-slurm-server");
     runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
     runCommand(fmt::format("perl -pi -e \
         \"s/ControlMachine=\\S+/ControlMachine={}/\" \
         /etc/slurm/slurm.conf", cluster->getHeadnode().getFQDN()));
+    runCommand("systemctl enable --now munge");
+    runCommand("systemctl enable --now slurmctld");
 }
 
-void Shell::configureInfiniband () {
-    runCommand("dnf -y groupinstall \"Infiniband Support\"");
-
-    /* TODO: We must call the network method to configure IPoIB here */
-    runCommand("cat /etc/sysconfig/network-scripts/ifcfg-ib0"); // Placeholder
-}
-
-void Shell::disableNetworkManagerDNSOverride () {
-    runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
-    runCommand("echo \"dns=none\" >> \
-        /etc/NetworkManager/conf.d/90-dns-none.conf");
-
-    runCommand("systemctl restart NetworkManager");
-}
-
-/* TODO: Implement with NetworkManager */
-void Shell::configureInternalNetwork () {
-    runCommand("nmcli --help"); // Placeholder
+void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
+    switch (cluster->getOFED()) {
+        case Cluster::OFED::None:
+            return;
+        case Cluster::OFED::Inbox:
+            runCommand("dnf -y groupinstall \"Infiniband Support\"");
+            break;
+        case Cluster::OFED::Mellanox:
+            /* TODO: Implemented MLNX OFED support */
+            runCommand("dnf -y groupinstall \"Infiniband Support\"");
+            break;
+        default:
+            throw;
+    }
 }
 
 void Shell::configureNetworkFileSystem () {
@@ -162,52 +216,66 @@ void Shell::configureNetworkFileSystem () {
     runCommand("systemctl enable --now nfs-server");
 }
 
-void Shell::install () {
-    /* TODO: Find a better way to pass the interface as a reference to prov */
-    XCAT* xCAT = new XCAT(*this);
-
-//    configureTimezone(this->m_timezone);
-//    configureLocale(this->m_locale);
-//    configureFQDN(this->m_headnode->m_fqdn);
-//
-//    this->m_firewall ? enableFirewall() : disableFirewall();
-//    this->m_selinux ? configureSELinuxMode("enabled") :
-//                    configureSELinuxMode("disabled");
-
-    configureInfiniband();
-    disableNetworkManagerDNSOverride();
-    configureInternalNetwork();
-    xCAT->setDHCPInterfaces("eth0");
-    xCAT->setDomain("invalid.tld");
-    xCAT->copycds("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
-    xCAT->genimage("ol8.4.0-x86_64-netboot-compute");
-    xCAT->addOpenHPCComponents(
-            "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
-    configureNetworkFileSystem();
-
-    delete xCAT;
+void Shell::removeMemlockLimits () {
+    runCommand(
+            "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' \
+            /etc/security/limits.conf");
+    runCommand(
+            "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' \
+            etc/security/limits.conf");
 }
 
-void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
+/* TODO: Third party libraries and some logic to install stacks according to
+ *  specifics of the system: Infiniband, PSM, etc.
+ */
+void Shell::installDevelopmentComponents () {
+    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc \
+                valgrind-ohpc");
+
+    /* Compiler and MPI stacks */
+    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc \
+                mpich-ucx-gnu9-ohpc mvapich2-gnu9-ohpc");
+
+    /* Default OpenHPC environment */
+    runCommand("dnf -y install lmod-defaults-gnu9-openmpi4-ohpc");
+}
+
+/* This method is the entrypoint of shell based cluster install
+ * The first session of the method will configure and install services on the
+ * headnode. The last part will do provisioner related settings and image
+ * creation for network booting
+ */
+void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     configureSELinuxMode(cluster->getSELinux());
     configureFirewall(cluster->isFirewall());
     configureFQDN(cluster->getHeadnode().getFQDN());
-    configureHostsFile(cluster->getHeadnode().getConnection()
-                                                    .front()
-                                                    .getAddress(),
-                       cluster->getHeadnode().getFQDN(),
-                       cluster->getHeadnode().getHostname());
+
+    /* TODO: Fix getConnections().front() */
+    configureHostsFile(
+            cluster->getHeadnode().getConnections().front().getAddress(),
+            cluster->getHeadnode().getFQDN(),
+            cluster->getHeadnode().getHostname());
     configureTimezone(cluster->getTimezone());
     configureLocale(cluster->getLocale());
 
     configureNetworks(cluster);
-
     runSystemUpdate(cluster->isUpdateSystem());
+
+    configureTimeService();
 
     configureRepositories(cluster);
     runSystemUpdate(cluster->isUpdateSystem());
 
     installRequiredPackages();
+    installOpenHPCBase();
+
+    configureInfiniband(cluster);
+    configureNetworkFileSystem();
+
+    configureQueueSystem(cluster);
+    removeMemlockLimits();
+
+    installDevelopmentComponents();
 
     //std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
@@ -218,36 +286,15 @@ void Shell::testInstall(const std::unique_ptr<Cluster>& cluster) {
     }
 
     provisioner->configureRepositories();
+    installProvisioningServices();
 
-    installProvisioningServices(); // New Implementation
-    configureTimeService();
-    configureSLURM(cluster);
-}
+    /* TODO: Fix getConnections()[1] */
+    provisioner->setDHCPInterfaces(
+            cluster->getHeadnode().getConnections()[1].getInterface());
+    provisioner->setDomain(cluster->getDomainName());
+    provisioner->createImage("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
+    /* TODO: Remove this call */
+    provisioner->addOpenHPCComponents(
+            "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
 
-void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
-    const std::vector<Connection> connections =
-            cluster->getHeadnode().getConnection();
-
-    for (size_t i = 0 ; auto const& connection : std::as_const(connections)) {
-        auto interface = connection.getInterface();
-
-        runCommand(fmt::format(
-                "nmcli device set {} managed yes", interface));
-        runCommand(fmt::format(
-                "nmcli device set {} autoconnect yes", interface));
-        runCommand(fmt::format(
-                "nmcli device connect {}", interface));
-        runCommand(fmt::format(
-                "nmcli connection add con-name {} ifname {} type {} \
-                mtu 1500 ipv4.method manual ipv4.address {}/24 \
-                ipv4.gateway {} ipv4.dns \"192.168.200.1 1.1.1.1\" \
-                ipv4.dns-search {} ipv6.method disabled",
-                connection.getNetwork()->getProfile(),
-                interface,
-                connection.getNetwork()->getType(),
-                connection.getAddress(),
-                connection.getNetwork()->getGateway(),
-                connection.getNetwork()->getDomainName()));
-
-    }
 }

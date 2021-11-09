@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     //Execution* engine = new Shell();
     std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
-    executionEngine->testInstall(model);
+    executionEngine->install(model);
     //delete engine;
 
 

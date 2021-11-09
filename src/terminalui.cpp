@@ -534,9 +534,9 @@ void TerminalUI::drawInfinibandSettings (Cluster& cluster) {
         "Mellanox"
     };
     
-    cluster.ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
-                                      MSG_INFINIBAND_SETTINGS, ibStacks,
-                                      MSG_INFINIBAND_SETTINGS_HELP);
+//    cluster.ibStack = drawListMenu(MSG_TITLE_INFINIBAND_SETTINGS,
+//                                      MSG_INFINIBAND_SETTINGS, ibStacks,
+//                                      MSG_INFINIBAND_SETTINGS_HELP);
 
     /* We should ask for IPoIB over here or in another function */
     //drawIPSettings(application);
@@ -615,7 +615,7 @@ void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {
         MSG_TITLE_QUEUE_SYSTEM_SETTINGS, MSG_QUEUE_SYSTEM_SETTINGS,
         queueSystems, MSG_QUEUE_SYSTEM_SETTINGS_HELP);
 
-    cluster.queueSystem.name = queueSystem;
+    //cluster.queueSystem.name = queueSystem;
 
     if (queueSystem == "SLURM") {
         drawSLURMSettings(cluster);
@@ -639,7 +639,7 @@ void TerminalUI::drawSLURMSettings (Cluster& cluster) {
                                     entries,
                                     MSG_SLURM_SETTINGS_HELP);
 
-    cluster.queueSystem.slurm = { fields[0] };
+    //cluster.queueSystem.slurm = { fields[0] };
 }
 
 /* This function is broken since we still don't know how to use std::optional */

@@ -14,7 +14,7 @@ public:
     virtual ~Execution() = default;
 
     //virtual void runCommand(const std::string&) = 0;
-    virtual void testInstall(const std::unique_ptr<Cluster>&) = 0;
+    virtual void install(const std::unique_ptr<Cluster>&) = 0;
 };
 
 #endif //CLOYSTER_EXECUTION_H

@@ -18,33 +18,34 @@ private:
     void configureFQDN (const std::string&);
     void configureHostsFile (std::string_view, std::string_view,
                              std::string_view);
-    void configureTimezone (std::string);
-    void configureLocale (std::string);
+    void configureTimezone (const std::string&);
+    void configureLocale (const std::string&);
+
+    void disableNetworkManagerDNSOverride (); // This should be on Network
+    void configureNetworks(const std::unique_ptr<Cluster>&);
+
     void runSystemUpdate (bool);
     void installRequiredPackages ();
 
-
-
-
     void configureRepositories (const std::unique_ptr<Cluster>&);
+    void installOpenHPCBase ();
     void installProvisioningServices ();
     void configureTimeService ();
-    void configureSLURM (const std::unique_ptr<Cluster>&);
-    void configureInfiniband ();
-    void disableNetworkManagerDNSOverride (); // This should be on Network
-    void configureInternalNetwork (); // This should be on Network
+    void configureQueueSystem (const std::unique_ptr<Cluster>&);
+    void configureInfiniband (const std::unique_ptr<Cluster>&);
     void configureNetworkFileSystem ();
 
+    void removeMemlockLimits ();
+    void installDevelopmentComponents ();
 
 
-    void configureNetworks(const std::unique_ptr<Cluster>&);
+
 
 public:
     Shell();
     ~Shell();
 
-    void testInstall(const std::unique_ptr<Cluster>&) override;
-    void install();
+    void install(const std::unique_ptr<Cluster>&) override;
 };
 
 #endif //CLOYSTER_SHELL_H
