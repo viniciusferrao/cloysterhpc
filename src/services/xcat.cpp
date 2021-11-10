@@ -16,10 +16,10 @@ XCAT::XCAT(Shell& executionEngine)
 XCAT::~XCAT() = default;
 
 void XCAT::configureRepositories() {
-    m_executionEngine.runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
-    m_executionEngine.runCommand("wget -P /etc/yum.repos.d \
-        https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
+    m_executionEngine.runCommand("wget -P /etc/yum.repos.d "
+                                 "https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
+    m_executionEngine.runCommand("wget -P /etc/yum.repos.d "
+                                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 }
 
 void XCAT::installPackages () {
@@ -142,15 +142,21 @@ void XCAT::configureOSImageDefinition (std::string_view osimage) {
             "/install/custom/netboot/compute.synclists", osimage));
 
     /* Add external repositories to otherpkgdir */
-    /* TODO: Fix repos to EL8 */
+    /* TODO: Fix repos to EL8
+     *  - Repos URL may be generated with OS class methods
+     *     OS.getArch(); OS.getVersion();
+     *  - Missing distro detection
+     */
     m_executionEngine.runCommand(fmt::format(
         "chdef -t osimage {} --plus otherpkgdir="
-        "http://build.openhpc.community/OpenHPC:/1.3/CentOS_7,"
-        "http://build.openhpc.community/OpenHPC:/1.3/updates/CentOS_7,"
-        "http://mirror.centos.org/centos/7/os/x86_64/,"
-        "http://mirror.centos.org/centos/7/updates/x86_64/,"
-        "http://mirror.centos.org/centos/7/extras/x86_64/,"
-        "http://mirror.uepg.br/fedora-epel//7/x86_64/", osimage));
+        "http://repos.openhpc.community/OpenHPC/2/CentOS_8,"
+        "http://repos.openhpc.community/OpenHPC/2/updates/CentOS_8,"
+        "https://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64,"
+        "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64,"
+        "https://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64,"
+        "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64,"
+        "https://download.fedoraproject.org/pub/epel/8/Everything/x86_64",
+        osimage));
 }
 
 /* This should be on Postinstall instead */

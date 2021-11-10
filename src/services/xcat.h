@@ -1,6 +1,10 @@
 #ifndef XCAT_H
 #define XCAT_H
 
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include "provisioner.h"
 #include "execution.h"
 #include "shell.h"

@@ -18,14 +18,19 @@
  */
 //Headnode::Headnode () = default;
 
-Headnode::Headnode()
-    : m_hostname(discoverHostname()) {}
+Headnode::Headnode() {
+    discoverNames();
+}
 
-const std::string &Headnode::getHostname() const {
+const OS& Headnode::getOS() const {
+    return m_os;
+}
+
+const std::string& Headnode::getHostname() const {
     return m_hostname;
 }
 
-void Headnode::setHostname(const std::string &hostname) {
+void Headnode::setHostname(const std::string& hostname) {
     if (hostname.size() > 63)
         throw;
 
@@ -47,33 +52,25 @@ void Headnode::setHostname(const std::string &hostname) {
     m_hostname = hostname;
 }
 
-const std::string Headnode::discoverHostname() {
+void Headnode::discoverNames() {
     struct utsname system {};
-
     uname(&system);
-    std::string_view hostname = system.nodename;
-    m_hostname = hostname.substr(0, hostname.find('.'));
 
-    return m_hostname;
+    std::string hostname = system.nodename;
+    setHostname(hostname.substr(0, hostname.find('.')));
+    setFQDN(hostname);
 }
 
-const std::string &Headnode::getFQDN() const {
+const std::string& Headnode::getFQDN() const {
     return m_fqdn;
 }
 
-void Headnode::setFQDN(const std::string &fqdn) {
+/* TODO: Validate is FQDN is in right format */
+void Headnode::setFQDN(const std::string& fqdn) {
     if (fqdn.size() > 255)
         throw;
 
     m_fqdn = fqdn;
-}
-
-const OS &Headnode::getOS() const {
-    return m_os;
-}
-
-void Headnode::setOS(const OS &os) {
-    m_os = os;
 }
 
 //const std::unique_ptr<Connection>& Headnode::getConnection() const {

@@ -1,6 +1,10 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include <string> /* std::string */
 
 #include "types.h"

@@ -1,10 +1,6 @@
 //
 // Created by Vinícius Ferrão on 31/10/21.
 //
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include "shell.h"
 #include "xcat.h"
 #include "../functions.h"
@@ -21,25 +17,41 @@
 #include "../cluster.h"
 
 Shell::Shell() = default;
-
 Shell::~Shell() = default;
 
-void Shell::runCommand(const std::string& command) {
+int Shell::runCommand(const std::string& command) {
 #ifndef _DUMMY_
     boost::process::ipstream pipe_stream;
     boost::process::child c(command, boost::process::std_out > pipe_stream);
 
     std::string line;
 
-    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty())
+    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
 #ifdef _DEBUG_
         std::cerr << line << std::endl;
 #endif
-
         c.wait();
+    }
+
+    return c.exit_code();
+
 #else
     std::cout << "exec: " << command << std::endl;
+    return 0;
 #endif
+}
+
+void Shell::disableSELinux () {
+    runCommand("setenforce 0");
+
+#ifdef _DUMMY_
+    const std::string filename = "chroot/etc/sysconfig/selinux";
+#else
+    const std::string filename = "/etc/sysconfig/selinux";
+#endif
+
+    cloyster::backupFile(filename);
+    cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 }
 
 void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
@@ -61,19 +73,6 @@ void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
         default:
             throw; /* Invalid mode */
     }
-}
-
-void Shell::disableSELinux () {
-    runCommand("setenforce 0");
-
-#ifdef _DUMMY_
-    const std::string filename = "chroot/etc/sysconfig/selinux";
-#else
-    const std::string filename = "/etc/sysconfig/selinux";
-#endif
-
-    cloyster::backupFile(filename);
-    cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 }
 
 /* TODO: Better implementation */
@@ -130,6 +129,7 @@ void Shell::disableNetworkManagerDNSOverride () {
  * settings and addresses based on data available on the model.
  * At the end of execution we disable DNS override since the headnode machine
  * will be providing the service.
+ * TODO: Get profile and type as string
  */
 void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
     runCommand("systemctl enable --now NetworkManager");
@@ -151,10 +151,10 @@ void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
         runCommand(fmt::format(
                 "nmcli device connect {}", interface));
         runCommand(fmt::format(
-                "nmcli connection add con-name {} ifname {} type {} \
-                mtu 1500 ipv4.method manual ipv4.address {}/{} \
-                ipv4.gateway {} ipv4.dns \"{}\" \
-                ipv4.dns-search {} ipv6.method disabled",
+                "nmcli connection add con-name {} ifname {} type {} "
+                "mtu 1500 ipv4.method manual ipv4.address {}/{} "
+                "ipv4.gateway {} ipv4.dns \"{}\" "
+                "ipv4.dns-search {} ipv6.method disabled",
                 connection.getNetwork()->getProfile(),
                 interface,
                 connection.getNetwork()->getType(),
@@ -179,24 +179,34 @@ void Shell::installRequiredPackages () {
 }
 
 void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
-    runCommand("dnf -y install \
-        https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install \
-        https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
+    runCommand("dnf -y install "
+               "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
+    runCommand("dnf -y install "
+               "https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
 
-    //if (cluster->getHeadnode().m_os.id == "ol")
-    runCommand("dnf config-manager --set-enabled ol8_codeready_builder");
+    switch (cluster->getHeadnode().getOS().getDistro()) {
+        case OS::Distro::RHEL:
+            runCommand("dnf config-manager --set-enabled "
+                       "codeready-builder-for-rhel-8-x86_64-rpms");
+            break;
+
+        case OS::Distro::OL:
+            runCommand("dnf config-manager --set-enabled "
+                       "ol8_codeready_builder");
+            break;
+
+        default:
+            throw; /* Unsupported OS */
+    }
 }
 
 void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
 }
 
-/* TODO: Fix logic for RPM */
 void Shell::configureTimeService () {
-    runCommand("rpm -q chrony");
-    //if not installed
-    runCommand("dnf -y install chrony");
+    if (runCommand("rpm -q chrony"))
+        runCommand("dnf -y install chrony");
 
 #ifdef _DUMMY_
     std::string_view filename = "chroot/etc/chrony.conf";
@@ -214,9 +224,10 @@ void Shell::configureQueueSystem (const std::unique_ptr<Cluster>& cluster) {
     // if (Cluster::QueueSystem::SLURM)
     runCommand("dnf -y install ohpc-slurm-server");
     runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
-    runCommand(fmt::format("perl -pi -e \
-        \"s/ControlMachine=\\S+/ControlMachine={}/\" \
-        /etc/slurm/slurm.conf", cluster->getHeadnode().getFQDN()));
+    runCommand(fmt::format("perl -pi -e "
+                           "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
+                           "/etc/slurm/slurm.conf",
+                           cluster->getHeadnode().getFQDN()));
     runCommand("systemctl enable --now munge");
     runCommand("systemctl enable --now slurmctld");
 }
@@ -233,7 +244,7 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
             runCommand("dnf -y groupinstall \"Infiniband Support\"");
             break;
         default:
-            throw;
+            throw; /* Unsupported OFED stack */
     }
 }
 
@@ -267,12 +278,12 @@ void Shell::removeMemlockLimits () {
  *  specifics of the system: Infiniband, PSM, etc.
  */
 void Shell::installDevelopmentComponents () {
-    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc \
-                valgrind-ohpc");
+    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc"
+               "valgrind-ohpc");
 
     /* Compiler and MPI stacks */
-    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc \
-                mpich-ucx-gnu9-ohpc mvapich2-gnu9-ohpc");
+    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc"
+               "mpich-ucx-gnu9-ohpc mvapich2-gnu9-ohpc");
 
     /* Default OpenHPC environment */
     runCommand("dnf -y install lmod-defaults-gnu9-openmpi4-ohpc");
@@ -333,6 +344,6 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     provisioner->createImage("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
     /* TODO: Remove this call */
     provisioner->addOpenHPCComponents(
-            "/install/netboot/ol8.4.0/x86_64/compute/rootimg/");
+            "/install/netboot/ol8.4.0/x86_64/compute/rootimg");
 
 }

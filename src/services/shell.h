@@ -1,16 +1,19 @@
 //
 // Created by Vinícius Ferrão on 31/10/21.
 //
-
 #ifndef CLOYSTER_SHELL_H
 #define CLOYSTER_SHELL_H
+
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
 
 #include "execution.h"
 #include "../cluster.h"
 
 class Shell : public Execution {
 public: /* TODO: Make it private, only here to run xCAT provisioner class */
-    void runCommand(const std::string&);
+    int runCommand(const std::string&);
 
 private:
     void configureSELinuxMode (Cluster::SELinuxMode);
@@ -39,9 +42,6 @@ private:
 
     /* Ancillary functions */
     void disableSELinux ();
-
-
-
 
 public:
     Shell();

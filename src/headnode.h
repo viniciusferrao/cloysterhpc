@@ -1,6 +1,10 @@
 #ifndef HEADNODE_H
 #define HEADNODE_H
 
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include <string> /* std::string */
 #include <vector>
 #include <optional>
@@ -13,33 +17,29 @@
 
 class Headnode : public Server {
 private:
+    OS m_os;
     std::string m_hostname;
     std::string m_fqdn;
-    OS m_os;
     std::vector<Connection> m_connection;
 
-public:
-    const std::string& getHostname() const;
-    void setHostname(const std::string &hostname);
-    const std::string& getFQDN() const;
-    void setFQDN(const std::string &fqdn);
-    const OS& getOS() const;
-    void setOS(const OS &os);
-
 private:
-    const std::string discoverHostname();
+    void discoverNames();
 
 public:
     Headnode();
 
+    [[nodiscard]] const OS& getOS() const;
+
+    [[nodiscard]] const std::string& getHostname() const;
+    void setHostname(const std::string& hostname);
+
+    [[nodiscard]] const std::string& getFQDN() const;
+    void setFQDN(const std::string& fqdn);
+
     //const std::unique_ptr<Connection>& getConnection() const;
-    const std::vector<Connection>& getConnections() const;
+    [[nodiscard]] const std::vector<Connection>& getConnections() const;
     void addConnection(const std::shared_ptr<Network>&, const std::string&,
                        const std::string&);
-
-    int discoverOS ();
-    void printOS ();
-    int checkSupportedOS ();
 };
 
 #endif /* HEADNODE_H */
