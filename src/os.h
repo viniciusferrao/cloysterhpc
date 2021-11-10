@@ -27,23 +27,38 @@ private:
     unsigned int getMinorVersion() const;
     void setMinorVersion(unsigned int minorVersion);
 
+    std::string getValueFromKey (const std::string& line);
+
 public:
     Arch getArch() const;
-    void setArch(Arch arch);
+    //void setArch(Arch arch);
+    void setArch(std::string_view);
 
     Family getFamily() const;
     void setFamily(Family family);
+    void setFamily(std::string_view);
 
     Platform getPlatform() const;
     void setPlatform(Platform platform);
+    void setPlatform(std::string_view);
 
     Distro getDistro() const;
     void setDistro(Distro distro);
+    void setDistro(std::string_view);
 
-    const std::string &getKernel() const;
-    void setKernel(const std::string &kernel);
+    std::string_view getKernel() const;
+    void setKernel(std::string_view);
 
     std::string getVersion() const;
+    void setVersion(const std::string&);
+
+    void discover();
+    void checkSupported() const;
+
+    /* DEBUG functions */
+#ifdef _DEBUG_
+    void print() const;
+#endif
 };
 
 #endif /* OS_H */

@@ -27,7 +27,6 @@ public:
     void setOS(const OS &os);
 
 private:
-    std::string fetchValueFromKey (const std::string& line);
     const std::string discoverHostname();
 
 public:
