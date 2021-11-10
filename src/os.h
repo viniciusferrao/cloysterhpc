@@ -1,6 +1,10 @@
 #ifndef OS_H
 #define OS_H
 
+#ifdef __JETBRAINS_IDE__
+#define _DEBUG_
+#endif
+
 #include <string>
 
 /* Darwin added for development reasons, not really supported. */
@@ -17,43 +21,43 @@ private:
     Platform m_platform;
     Distro m_distro;
     std::string m_kernel;
-    unsigned m_majorVersion;
-    unsigned m_minorVersion;
+    unsigned m_majorVersion {};
+    unsigned m_minorVersion {};
 
 private:
-    unsigned int getMajorVersion() const;
+    [[nodiscard]] unsigned int getMajorVersion() const;
     void setMajorVersion(unsigned int majorVersion);
 
-    unsigned int getMinorVersion() const;
+    [[nodiscard]] unsigned int getMinorVersion() const;
     void setMinorVersion(unsigned int minorVersion);
 
     std::string getValueFromKey (const std::string& line);
+    void discover();
 
 public:
-    Arch getArch() const;
-    //void setArch(Arch arch);
+    OS();
+
+    [[nodiscard]] Arch getArch() const;
+    void setArch(Arch arch);
     void setArch(std::string_view);
 
-    Family getFamily() const;
+    [[nodiscard]] Family getFamily() const;
     void setFamily(Family family);
     void setFamily(std::string_view);
 
-    Platform getPlatform() const;
+    [[nodiscard]] Platform getPlatform() const;
     void setPlatform(Platform platform);
     void setPlatform(std::string_view);
 
-    Distro getDistro() const;
+    [[nodiscard]] Distro getDistro() const;
     void setDistro(Distro distro);
     void setDistro(std::string_view);
 
-    std::string_view getKernel() const;
+    [[nodiscard]] std::string_view getKernel() const;
     void setKernel(std::string_view);
 
-    std::string getVersion() const;
+    [[nodiscard]] std::string getVersion() const;
     void setVersion(const std::string&);
-
-    void discover();
-    void checkSupported() const;
 
     /* DEBUG functions */
 #ifdef _DEBUG_

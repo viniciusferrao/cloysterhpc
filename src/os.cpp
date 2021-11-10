@@ -10,8 +10,16 @@
 #include <fmt/format.h>
 #include <sys/utsname.h>
 
+OS::OS() {
+    discover();
+}
+
 OS::Arch OS::getArch() const {
     return m_arch;
+}
+
+void OS::setArch(Arch arch) {
+    m_arch = arch;
 }
 
 void OS::setArch(std::string_view arch) {
@@ -24,6 +32,10 @@ void OS::setArch(std::string_view arch) {
 
 OS::Family OS::getFamily() const {
     return m_family;
+}
+
+void OS::setFamily(Family family) {
+    m_family = family;
 }
 
 void OS::setFamily(std::string_view family) {
@@ -152,12 +164,10 @@ void OS::discover () {
 
     setArch(system.machine);
     setFamily(system.sysname);
-
-    /* Store kernel release in string format */
     setKernel(system.release);
 
 #ifdef _DUMMY_
-    if (getFamily() == OS::Family::Darwin) {
+    if (true) {
         std::string filename = "chroot/etc/os-release";
 #else
     if (getFamily() == OS::Family::Linux) {
@@ -167,7 +177,7 @@ void OS::discover () {
 
         if (!file.is_open()) {
             perror(("Error while opening file " + filename).c_str());
-            return -2;
+            throw; /* Error opening file */
         }
 
         /* Fetches OS information from /etc/os-release. The file is writen in a
@@ -204,15 +214,13 @@ void OS::discover () {
 
         if (file.bad()) {
             perror(("Error while reading file " + filename).c_str());
-            return -3;
+            throw; /* Error while reading file */
         }
-
-        file.close();
     }
 }
 
 #ifdef _DEBUG_
-void OS::print () {
+void OS::print() const {
     std::cout << "Architecture: " << (int)m_arch << std::endl;
     std::cout << "Family: " << (int)m_family << std::endl;
     std::cout << "Kernel Release: " << m_kernel << std::endl;
@@ -222,49 +230,3 @@ void OS::print () {
     std::cout << "Minor Version: " << m_minorVersion << std::endl;
 }
 #endif
-
-/* Supported releases must be a constexpr defined elsewhere and not hardcoded as
- * a value on the code. Exceptions must be implemented matching the failure.
- */
-void OS::checkSupported () {
-    if (m_arch != OS::Arch::x86_64) {
-#ifdef _DEBUG_
-        std::cout << (int)m_arch 
-            << " is not a supported architecture" << std::endl;
-#endif
-        throw; /* Architecture not supported */
-    }
-
-    if (m_family != OS::Family::Linux) {
-#ifdef _DEBUG_
-        std::cout << (int)m_family 
-            << " is not a supported operating system" << std::endl;
-#endif
-        throw; /* Only Linux is supported right now */
-    }
-
-    if (m_platform != OS::Platform::el8) {
-#ifdef _DEBUG_
-        std::cout << (int)m_platform 
-            << " is not a supported Linux platform" << std::endl;
-#endif
-        throw; /* Not a supported Linux platform */
-    }
-
-    if ((m_distro != OS::Distro::RHEL) &&
-        (m_distro != OS::Distro::OL)) {
-#ifdef _DEBUG_
-        std::cout << (int)m_distro 
-            << " is not a supported Linux distribution" << std::endl;
-#endif
-        throw; /* Not a supported Linux distribution */
-    }
-
-    if (m_majorVersion < 8) {
-#ifdef _DEBUG_
-        std::cout << "This software is only supported on EL8" << std::endl;
-#endif
-        throw; /* Version is too old */
-    }
-
-}
