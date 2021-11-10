@@ -29,7 +29,6 @@ private:
 
     void configureRepositories (const std::unique_ptr<Cluster>&);
     void installOpenHPCBase ();
-    void installProvisioningServices ();
     void configureTimeService ();
     void configureQueueSystem (const std::unique_ptr<Cluster>&);
     void configureInfiniband (const std::unique_ptr<Cluster>&);
@@ -37,6 +36,9 @@ private:
 
     void removeMemlockLimits ();
     void installDevelopmentComponents ();
+
+    /* Ancillary functions */
+    void disableSELinux ();
 
 
 

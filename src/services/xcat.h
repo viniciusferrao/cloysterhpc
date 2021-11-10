@@ -16,6 +16,7 @@ private:
     void copycds (std::string_view);
     void genimage (std::string_view);
     void packimage (std::string_view);
+    void createDirectoryTree ();
     void generateOtherPkgListFile ();
     void generatePostinstallFile ();
     void generateSynclistsFile ();
@@ -27,6 +28,7 @@ public:
     ~XCAT();
 
     void configureRepositories ();
+    void installPackages ();
     void setDHCPInterfaces (std::string_view);
     void setDomain (std::string_view);
     void createImage (std::string_view);

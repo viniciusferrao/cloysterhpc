@@ -5,7 +5,9 @@
 #include "xcat.h"
 #include "execution.h"
 #include "shell.h"
+#include "../functions.h"
 
+#include <filesystem>
 #include <fmt/format.h>
 
 XCAT::XCAT(Shell& executionEngine)
@@ -20,9 +22,13 @@ void XCAT::configureRepositories() {
         https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 }
 
+void XCAT::installPackages () {
+    m_executionEngine.runCommand("dnf -y install xCAT");
+}
+
 void XCAT::setDHCPInterfaces (std::string_view interface) {
     auto command = fmt::format(
-            "chdef -t site dhcpinterfaces=\"xcatmn|{0}\"", interface);
+            "chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface);
     
     m_executionEngine.runCommand(command);
 }
@@ -51,47 +57,75 @@ void XCAT::packimage (std::string_view osimage) {
     m_executionEngine.runCommand(command);
 }
 
-void XCAT::generateOtherPkgListFile () {
-    auto packages = {
-            "ohpc-base-compute", "ohpc-slurm-client", "kernel", "chrony",
-            "lmod-ohpc", "lua"
-    };
-
-    m_executionEngine.runCommand("mkdir -p /install/custom/netboot");
-
-    auto command = fmt::format("echo >> /install/custom/netboot << EOF \n{}\n"
-                               "EOF", fmt::join(packages, "\n"));
-    m_executionEngine.runCommand(command);
+void XCAT::createDirectoryTree () {
+#ifdef _DUMMY_
+    std::filesystem::create_directories("chroot/install/custom/netboot");
+#else
+    std::filesystem::create_directories("/install/custom/netboot");
+#endif
 }
 
-/* TODO: No comments */
+void XCAT::generateOtherPkgListFile () {
+    auto packages = {
+        "ohpc-base-compute",
+        "ohpc-slurm-client",
+        "kernel",
+        "chrony",
+        "lmod-ohpc",
+        "lua"
+    };
+
+#ifdef _DUMMY_
+    std::string_view filename =
+            "chroot/install/custom/netboot/compute.otherpkglist";
+#else
+    std::string_view filename = "/install/custom/netboot/compute.otherpkglist";
+#endif
+
+    cloyster::addStringToFile(filename,
+                  fmt::format("{}", fmt::join(packages, "\n")));
+}
+
+/* TODO: Replace hardcoded IP addresses at end of fmt::format(); */
 void XCAT::generatePostinstallFile () {
-    m_executionEngine.runCommand(fmt::format(
-            "echo >> /install/custom/netboot/compute.postinstall << EOF\n"
-            "#!/bin/sh\n\n"
-            "cat << END >> $installroot/etc/fstab\n"
-            "{}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
-            "{}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
-            "END\n\n"
-            "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
-            "$installroot/etc/security/limits.conf\n"
-            "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' "
-            "$installroot/etc/security/limits.conf\n\n"
-            "echo \"account required pam_slurm.so\" >> "
-            "$installroot/etc/pam.d/sshd\n"
-            "EOF",
-            "10.20.0.1", "10.20.0.1"));
+#ifdef _DUMMY_
+    std::string_view filename =
+            "chroot/install/custom/netboot/compute.postinstall";
+#else
+    std::string_view filename = "/install/custom/netboot/compute.postinstall";
+#endif
+
+    cloyster::addStringToFile(filename, fmt::format(
+        "#!/bin/sh\n"
+        "\n"
+        "cat << END >> $installroot/etc/fstab\n"
+        "{}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
+        "{}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
+        "END\n"
+        "\n"
+        "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
+        "$installroot/etc/security/limits.conf\n"
+        "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' "
+        "$installroot/etc/security/limits.conf\n"
+        "\n"
+        "echo \"account required pam_slurm.so\" >> "
+        "$installroot/etc/pam.d/sshd\n",
+        "10.20.0.1", "10.20.0.1"));
 }
 
 void XCAT::generateSynclistsFile () {
-    m_executionEngine.runCommand(fmt::format(
-        "echo >> /install/custom/netboot/compute.synclists << EOF\n"
+#ifdef _DUMMY_
+    std::string_view filename =
+            "chroot/install/custom/netboot/compute.synclists";
+#else
+    std::string_view filename = "/install/custom/netboot/compute.synclists";
+#endif
+    cloyster::addStringToFile(filename,
         "/etc/passwd -> /etc/passwd\n"
         "/etc/group -> /etc/group\n"
         "/etc/shadow -> /etc/shadow\n"
         "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf \n"
-        "/etc/munge/munge.key -> /etc/munge/munge.key\n"
-        "EOF"));
+        "/etc/munge/munge.key -> /etc/munge/munge.key\n");
 }
 
 void XCAT::configureOSImageDefinition (std::string_view osimage) {
@@ -138,6 +172,7 @@ void XCAT::customizeImage () {
  */
 void XCAT::createImage (std::string_view isopath) {
     copycds(isopath);
+    createDirectoryTree();
     generateOtherPkgListFile();
     generatePostinstallFile();
     generateSynclistsFile();

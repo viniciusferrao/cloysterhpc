@@ -13,18 +13,19 @@
 #endif
 
 /* The constructor should discover everything we need from the machine that is
- * running the software. We always consider that the software runs for what will
- * become the cluster headnode.
+ * running the software. We always consider that the software runs from the
+ * server that will become the cluster headnode.
  */
 //Headnode::Headnode () = default;
 
 Headnode::Headnode()
     : m_hostname(discoverHostname()) {}
 
-/* We should refactor to boost::property_tree on both methods: fetchValue() and
- * setOS(); an those methods should really be on OS class and not here.
+/* We should refactor to boost::property_tree on both methods:
+ * fetchValueFromKey() and setOS(); an those methods should really be on OS
+ * class and not here.
  */
-std::string Headnode::fetchValue (const std::string& line) {
+std::string Headnode::fetchValueFromKey (const std::string& line) {
     std::string value;
 
     /* Get values from keys */
@@ -80,7 +81,7 @@ int Headnode::discoverOS () {
             return -2;
         }
 
-        /* Fetches OS information from /etc/m_os-release. The file is writen in a
+        /* Fetches OS information from /etc/os-release. The file is writen in a
          * key=value style.
          */
         std::string line;
@@ -92,7 +93,7 @@ int Headnode::discoverOS () {
             if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
 #endif
 
-                std::string parser = fetchValue(line);
+                std::string parser = fetchValueFromKey(line);
                 if (parser.substr(parser.find(':') + 1) == "el8")
                     this->m_os.platform = OS::Platform::el8;
             }
@@ -103,9 +104,9 @@ int Headnode::discoverOS () {
             if (boost::algorithm::starts_with(line, "ID=")) {
 #endif
 
-                if (fetchValue(line) == "rhel")
+                if (fetchValueFromKey(line) == "rhel")
                     this->m_os.distro = OS::Distro::RHEL;
-                if (fetchValue(line) == "ol")
+                if (fetchValueFromKey(line) == "ol")
                     this->m_os.distro = OS::Distro::OL;
             }
 
@@ -115,7 +116,7 @@ int Headnode::discoverOS () {
             if (boost::algorithm::starts_with(line, "VERSION=")) {
 #endif
 
-                std::string parser = fetchValue(line);
+                std::string parser = fetchValueFromKey(line);
 
                 this->m_os.majorVersion = stoi(
                     parser.substr(0, parser.find('.')));

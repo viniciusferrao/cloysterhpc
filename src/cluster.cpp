@@ -308,7 +308,7 @@ void Cluster::printData () {
 
 void Cluster::fillTestData () {
     setFirewall(true);
-    setSELinux(SELinuxMode::Permissive);
+    setSELinux(SELinuxMode::Disabled);
     setTimezone("America/Sao_Paulo");
     setLocale("en_US.UTF-8");
     this->m_headnode.setHostname("headnode");

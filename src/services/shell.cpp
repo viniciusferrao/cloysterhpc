@@ -7,6 +7,7 @@
 
 #include "shell.h"
 #include "xcat.h"
+#include "../functions.h"
 
 #ifdef _DEBUG_
 #include <iostream>
@@ -42,7 +43,6 @@ void Shell::runCommand(const std::string& command) {
 }
 
 void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
-
     switch (mode) {
         case Cluster::SELinuxMode::Permissive:
             runCommand("setenforce 0");
@@ -55,13 +55,25 @@ void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
             break;
 
         case Cluster::SELinuxMode::Disabled:
-            /* Disable SELinux */
-            runCommand("setenforce 0"); /* This is wrong */
+            disableSELinux();
             break;
 
         default:
             throw; /* Invalid mode */
     }
+}
+
+void Shell::disableSELinux () {
+    runCommand("setenforce 0");
+
+#ifdef _DUMMY_
+    const std::string filename = "chroot/etc/sysconfig/selinux";
+#else
+    const std::string filename = "/etc/sysconfig/selinux";
+#endif
+
+    cloyster::backupFile(filename);
+    cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 }
 
 /* TODO: Better implementation */
@@ -79,7 +91,15 @@ void Shell::configureFQDN (const std::string& fqdn) {
 /* TODO: Proper file parsing */
 void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
                                 std::string_view hostname) {
-    runCommand(fmt::format("echo {}\t{} {} >> /etc/hosts", ip, fqdn, hostname));
+
+#ifdef _DUMMY_
+    std::string_view filename = "chroot/etc/hosts";
+#else
+    std::string_view filename = "/etc/hosts";
+#endif
+
+    cloyster::addStringToFile(filename,
+                            fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
 void Shell::configureTimezone (const std::string& timezone) {
@@ -91,9 +111,16 @@ void Shell::configureLocale (const std::string& locale) {
 }
 
 void Shell::disableNetworkManagerDNSOverride () {
-    runCommand("echo \"[main]\" > /etc/NetworkManager/conf.d/90-dns-none.conf");
-    runCommand("echo \"dns=none\" >> \
-        /etc/NetworkManager/conf.d/90-dns-none.conf");
+#ifdef _DUMMY_
+    std::string_view filename =
+            "chroot/etc/NetworkManager/conf.d/90-dns-none.conf";
+#else
+    std::string_view filename = "/etc/NetworkManager/conf.d/90-dns-none.conf";
+#endif
+
+    /* TODO: Would be better handled with a .conf function */
+    cloyster::addStringToFile(filename, "[main]\n"
+                                        "dns=none\n");
 
     runCommand("systemctl restart NetworkManager");
 }
@@ -165,19 +192,22 @@ void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
 }
 
-void Shell::installProvisioningServices () {
-    runCommand("dnf -y install xCAT");
-}
-
 /* TODO: Fix logic for RPM */
 void Shell::configureTimeService () {
     runCommand("rpm -q chrony");
     //if not installed
     runCommand("dnf -y install chrony");
 
-    // this should be a parse solution directly on the file instead
-    runCommand("echo \"allow all\" >> /etc/chrony.conf");
-    runCommand("systemctl start --now chronyd");
+#ifdef _DUMMY_
+    std::string_view filename = "chroot/etc/chrony.conf";
+#else
+    std::string_view filename = "/etc/chrony.conf";
+#endif
+
+    /* TODO: Restrict by networks */
+    cloyster::addStringToFile(filename, "allow all");
+
+    runCommand("systemctl enable --now chronyd");
 }
 
 void Shell::configureQueueSystem (const std::unique_ptr<Cluster>& cluster) {
@@ -208,21 +238,29 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
 }
 
 void Shell::configureNetworkFileSystem () {
-    runCommand("echo \"/home *(rw,no_subtree_check,fsid=10,no_root_squash)\" \
-        >> /etc/exports");
-    runCommand("echo \"/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\" \
-        >> /etc/exports");
+#ifdef _DUMMY_
+    std::string_view filename = "chroot/etc/exports";
+#else
+    std::string_view filename = "/etc/exports";
+#endif
+
+    cloyster::addStringToFile(filename,
+                      "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
+                      "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\n");
+
     runCommand("exportfs -a");
     runCommand("systemctl enable --now nfs-server");
 }
 
 void Shell::removeMemlockLimits () {
-    runCommand(
-            "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' \
-            /etc/security/limits.conf");
-    runCommand(
-            "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' \
-            etc/security/limits.conf");
+#ifdef _DUMMY_
+    std::string_view filename = "chroot/etc/security/limits.conf";
+#else
+    std::string_view filename = "/etc/security/limits.conf";
+#endif
+
+    cloyster::addStringToFile(filename, "* soft memlock unlimited\n"
+                                        "* hard memlock unlimited\n");
 }
 
 /* TODO: Third party libraries and some logic to install stacks according to
@@ -286,7 +324,7 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     }
 
     provisioner->configureRepositories();
-    installProvisioningServices();
+    provisioner->installPackages();
 
     /* TODO: Fix getConnections()[1] */
     provisioner->setDHCPInterfaces(
