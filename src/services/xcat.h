@@ -14,9 +14,6 @@
 
 class XCAT : public Provisioner {
 private:
-    Shell& m_executionEngine;
-
-private:
     void copycds (std::string_view);
     void genimage (std::string_view);
     void packimage (std::string_view);
@@ -28,9 +25,6 @@ private:
     void customizeImage ();
 
 public:
-    XCAT(Shell&);
-    ~XCAT();
-
     void configureRepositories ();
     void installPackages ();
     void setDHCPInterfaces (std::string_view);

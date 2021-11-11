@@ -16,9 +16,6 @@
 
 #include "../cluster.h"
 
-Shell::Shell() = default;
-Shell::~Shell() = default;
-
 int Shell::runCommand(const std::string& command) {
 #ifndef _DUMMY_
     boost::process::ipstream pipe_stream;
@@ -330,7 +327,7 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     std::unique_ptr<XCAT> provisioner;
     switch (cluster->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
-            provisioner = std::make_unique<XCAT>(*this);
+            provisioner = std::make_unique<XCAT>();
             break;
     }
 

@@ -10,10 +10,18 @@
 
 #include "execution.h"
 #include "../cluster.h"
+#include "provisioner.h"
 
+/* Adding XCAT (Provisioner) as a friend class of Shell will block the usage of
+ * the static function runCommand outside of Shell (and it's friends). The only
+ * drawback is that we now enabled friend classes full access to contents of
+ * Shell class, which may not be desirable.
+ */
 class Shell : public Execution {
-public: /* TODO: Make it private, only here to run xCAT provisioner class */
-    int runCommand(const std::string&);
+    friend class XCAT;
+
+private:
+    static int runCommand(const std::string&);
 
 private:
     void configureSELinuxMode (Cluster::SELinuxMode);
@@ -44,9 +52,6 @@ private:
     void disableSELinux ();
 
 public:
-    Shell();
-    ~Shell();
-
     void install(const std::unique_ptr<Cluster>&) override;
 };
 
