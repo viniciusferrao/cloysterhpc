@@ -237,7 +237,7 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
             runCommand("dnf -y groupinstall \"Infiniband Support\"");
             break;
         case Cluster::OFED::Mellanox:
-            /* TODO: Implemented MLNX OFED support */
+            /* TODO: Implement MLNX OFED support */
             runCommand("dnf -y groupinstall \"Infiniband Support\"");
             break;
         default:
@@ -245,6 +245,7 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
     }
 }
 
+/* TODO: Restrict by networks */
 void Shell::configureNetworkFileSystem () {
 #ifdef _DUMMY_
     std::string_view filename = "chroot/etc/exports";
@@ -296,9 +297,10 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     configureFirewall(cluster->isFirewall());
     configureFQDN(cluster->getHeadnode().getFQDN());
 
-    /* TODO: Fix getConnections().front() */
     configureHostsFile(
-            cluster->getHeadnode().getConnections().front().getAddress(),
+            cluster->getHeadnode()
+                        .getConnection(Network::Profile::External)
+                        .getAddress(),
             cluster->getHeadnode().getFQDN(),
             cluster->getHeadnode().getHostname());
     configureTimezone(cluster->getTimezone());
@@ -333,14 +335,7 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
 
     provisioner->configureRepositories();
     provisioner->installPackages();
-
-    /* TODO: Fix getConnections()[1] */
-    provisioner->setDHCPInterfaces(
-            cluster->getHeadnode().getConnections()[1].getInterface());
-    provisioner->setDomain(cluster->getDomainName());
-    provisioner->createImage("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
-    /* TODO: Remove this call */
-    provisioner->addOpenHPCComponents(
-            "/install/netboot/ol8.4.0/x86_64/compute/rootimg");
+    provisioner->setup(cluster);
+    provisioner->createImage(cluster, "/root/OracleLinux-R8-U4-x86_64-dvd.iso");
 
 }

@@ -65,7 +65,7 @@ const std::string& Headnode::getFQDN() const {
     return m_fqdn;
 }
 
-/* TODO: Validate is FQDN is in right format */
+/* TODO: Validate if FQDN is in right format */
 void Headnode::setFQDN(const std::string& fqdn) {
     if (fqdn.size() > 255)
         throw;
@@ -86,4 +86,12 @@ void Headnode::addConnection(const std::shared_ptr<Network>& network,
                              const std::string& address) {
 
     m_connection.emplace_back(network, interface, address);
+}
+
+const Connection& Headnode::getConnection(Network::Profile profile) const {
+    for (auto const& connection : std::as_const(m_connection)) {
+        if (connection.getNetwork()->getProfile() == profile)
+            return connection;
+    }
+    throw; /* Cannot find a connection with profile */
 }

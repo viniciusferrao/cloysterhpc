@@ -72,7 +72,7 @@ private:
 
 public:
     //const std::unique_ptr<Headnode>& getHeadnode() const;
-    const Headnode& getHeadnode() const;
+    const Headnode getHeadnode() const;
     bool isFirewall() const;
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;
