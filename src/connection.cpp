@@ -60,6 +60,10 @@ void Connection::setInterface (const std::string& interface) {
 
         if (interface == ifa->ifa_name) {
             m_interface = interface;
+
+            // TODO: Fetch MAC address from ifa
+            //setMAC(LLADDR((struct sockaddr_dl *)&ifa->ifa_addr));
+
             freeifaddrs(ifaddr);
             return;
         }
@@ -69,15 +73,23 @@ void Connection::setInterface (const std::string& interface) {
     throw "Cannot find network interface"; /* Interface not found, bugged */
 }
 
+const std::string& Connection::getMAC() const {
+    return m_mac;
+}
+
+void Connection::setMAC(const std::string& mac) {
+    m_mac = mac;
+}
+
 const std::string Connection::getAddress () const {
     if (inet_ntoa(m_address) == nullptr)
-        throw;
+        throw; // Invalid IP
     return inet_ntoa(m_address);
 }
 
 void Connection::setAddress (const std::string& address) {
     if (inet_aton(address.c_str(), &this->m_address) == 0)
-        throw; //return -1; /* Invalid IP Address */
+        throw "XXX"; //return -1; /* Invalid IP Address */
 }
 
 const std::string& Connection::getHostname() const {

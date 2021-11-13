@@ -29,6 +29,7 @@ private:
     void copycds (std::string_view);
     void genimage ();
     void packimage ();
+    void nodeset();
     void createDirectoryTree ();
     void configureOpenHPC();
     void configureTimeService(const std::unique_ptr<Cluster>& cluster);
@@ -36,8 +37,11 @@ private:
     void generateOtherPkgListFile ();
     void generatePostinstallFile (const std::unique_ptr<Cluster>&);
     void generateSynclistsFile ();
-    void configureOSImageDefinition ();
+    void configureOSImageDefinition (const std::unique_ptr<Cluster>& cluster);
     void customizeImage ();
+    void addNode(std::string_view, std::string_view, std::string_view,
+                 std::string_view, std::string_view, std::string_view,
+                 std::string_view);
 
 public:
     void configureRepositories ();
@@ -45,6 +49,8 @@ public:
     void setup(const std::unique_ptr<Cluster>&);
 
     void createImage (const std::unique_ptr<Cluster>&, std::string_view);
+    void addNodes(const std::unique_ptr<Cluster>&);
+    void setNodesImage();
 };
 
 #endif /* XCAT_H */

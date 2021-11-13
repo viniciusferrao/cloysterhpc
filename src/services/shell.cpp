@@ -337,5 +337,6 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     provisioner->installPackages();
     provisioner->setup(cluster);
     provisioner->createImage(cluster, "/root/OracleLinux-R8-U4-x86_64-dvd.iso");
-
+    provisioner->addNodes(cluster);
+    provisioner->setNodesImage();
 }

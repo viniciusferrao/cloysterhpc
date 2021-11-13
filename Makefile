@@ -19,8 +19,8 @@ endif
 # Compiler flags
 #
 CC = clang
-CFLAGS = -Wall -Wextra -Wno-unused-private-field -Wno-unused-parameter
-CFLAGS += -Wno-unused-variable #-Werror
+CFLAGS = -Wall -Wextra -Wall -Wextra #-Wshadow -Wnon-virtual-dtor -pedantic -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wpedantic -Wconversion -Wsign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wlifetime -Weffc++
+CFLAGS += -Wno-unused-variable -Wno-unused-private-field -Wno-unused-parameter #-Werror
 CXX = clang++ --std=$(STDCXX)
 CXXFLAGS = $(CFLAGS)
 LD = clang++

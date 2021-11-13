@@ -5,9 +5,8 @@
 #define _DEBUG_
 #endif
 
-#include <string> /* std::string */
+#include <string>
 #include <vector>
-#include <optional>
 
 #include "server.h"
 #include "types.h"
@@ -28,12 +27,12 @@ private:
 public:
     Headnode();
 
-    [[nodiscard]] const OS& getOS() const;
+    [[nodiscard]] const OS& getOS() const noexcept;
 
-    [[nodiscard]] const std::string& getHostname() const;
+    [[nodiscard]] const std::string& getHostname() const noexcept;
     void setHostname(const std::string& hostname);
 
-    [[nodiscard]] const std::string& getFQDN() const;
+    [[nodiscard]] const std::string& getFQDN() const noexcept;
     void setFQDN(const std::string& fqdn);
 
     //const std::unique_ptr<Connection>& getConnection() const;

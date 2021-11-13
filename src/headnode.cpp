@@ -22,11 +22,11 @@ Headnode::Headnode() {
     discoverNames();
 }
 
-const OS& Headnode::getOS() const {
+const OS& Headnode::getOS() const noexcept {
     return m_os;
 }
 
-const std::string& Headnode::getHostname() const {
+const std::string& Headnode::getHostname() const noexcept {
     return m_hostname;
 }
 
@@ -61,7 +61,7 @@ void Headnode::discoverNames() {
     setFQDN(hostname);
 }
 
-const std::string& Headnode::getFQDN() const {
+const std::string& Headnode::getFQDN() const noexcept {
     return m_fqdn;
 }
 

@@ -13,6 +13,7 @@ class Connection {
 private:
     std::shared_ptr<Network> m_network;
     std::string m_interface;
+    std::string m_mac;
     /* TODO: Use std::vector to support more than one IP address */
     //std::vector<struct in_addr> m_address;
     struct in_addr m_address {};
@@ -34,6 +35,9 @@ public:
 
     const std::string getInterface() const;
     void setInterface(const std::string&);
+
+    const std::string &getMAC() const;
+    void setMAC(const std::string&);
 
     const std::string getAddress() const;
     void setAddress(const std::string&);

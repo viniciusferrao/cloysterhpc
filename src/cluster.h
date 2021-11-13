@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "headnode.h"
+#include "node.h"
 #include "network.h"
 #include "types.h"
 
@@ -56,6 +57,7 @@ private:
     Headnode m_headnode;
     Provisioner m_provisioner;
     OFED m_ofed;
+    std::vector<Node> m_nodes;
 
     bool m_firewall {};
     SELinuxMode m_selinux {}; /* Control nodes SELinux settings */
@@ -96,6 +98,10 @@ public:
 
     OFED getOFED() const;
     void setOFED(OFED);
+
+    const std::vector<Node>& getNodes() const;
+    void addNode(std::string_view, const std::string&, const std::string&,
+                 std::string_view, std::string_view, std::string_view);
 
 #ifdef _DEBUG_
     void printNetworks();

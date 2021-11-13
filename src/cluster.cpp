@@ -188,6 +188,18 @@ void Cluster::setOFED(Cluster::OFED ofed) {
     m_ofed = ofed;
 }
 
+const std::vector<Node>& Cluster::getNodes() const {
+    return m_nodes;
+}
+
+void Cluster::addNode(std::string_view t_name, const std::string& t_address,
+                      const std::string& t_mac, std::string_view t_bmcAddress,
+                      std::string_view t_bmcUsername,
+                      std::string_view t_bmcPassword) {
+    m_nodes.emplace_back(t_name, t_address, t_mac, t_bmcAddress, t_bmcUsername,
+                         t_bmcPassword);
+}
+
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
 void Cluster::printNetworks() {
@@ -345,6 +357,11 @@ void Cluster::fillTestData () {
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
+
+    addNode("n01", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
+            "ADMIN", "ADMIN");
+    addNode("n02", "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
+            "root", "calvin");
 
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";

@@ -11,7 +11,7 @@
 
 namespace cloyster {
 /* getopt */
-int parseArguments(int, char **);
+int parseArguments(int, char**);
 
 /* environment variables helper functions */
 std::string getEnvironmentVariable(const std::string&);

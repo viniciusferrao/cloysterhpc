@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 
+/* TODO: Implement a repos class to properly do this */
 void XCAT::configureRepositories() {
     Shell::runCommand("wget -P /etc/yum.repos.d "
                       "https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
@@ -29,35 +30,30 @@ void XCAT::setup(const std::unique_ptr<Cluster>& cluster) {
     setDomain(cluster->getDomainName());
 }
 
+/* TODO: Maybe create a chdef method to do it cleaner? */
 void XCAT::setDHCPInterfaces (std::string_view interface) {
-    auto command = fmt::format(
-            "chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface);
-    
-    Shell::runCommand(command);
+    Shell::runCommand(fmt::format(
+            "chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface));
 }
 
 void XCAT::setDomain (std::string_view domain) {
-    auto command = fmt::format("chdef -t site domain={}", domain);
-
-    Shell::runCommand(command);
+    Shell::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
 void XCAT::copycds (std::string_view isopath) {
-    auto command = fmt::format("copycds {}", isopath);
-
-    Shell::runCommand(command);
+    Shell::runCommand(fmt::format("copycds {}", isopath));
 }
 
 void XCAT::genimage () {
-    auto command = fmt::format("genimage {}", m_stateless.osimage);
-
-    Shell::runCommand(command);
+    Shell::runCommand(fmt::format("genimage {}", m_stateless.osimage));
 }
 
 void XCAT::packimage () {
-    auto command = fmt::format("packimage {}", m_stateless.osimage);
+    Shell::runCommand(fmt::format("packimage {}", m_stateless.osimage));
+}
 
-    Shell::runCommand(command);
+void XCAT::nodeset() {
+    Shell::runCommand(fmt::format("nodeset compute osimage={}", m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree () {
@@ -79,6 +75,13 @@ void XCAT::configureOpenHPC() {
     for (const auto& package : std::as_const(packages)) {
         m_stateless.otherpkgs.emplace_back(package);
     }
+
+    // We always sync local Unix files to keep services consistent, even with
+    // external directory services
+    m_stateless.synclists.emplace_back(
+            "/etc/passwd -> /etc/passwd\n"
+            "/etc/group -> /etc/group\n"
+            "/etc/shadow -> /etc/shadow\n");
 }
 
 void XCAT::configureTimeService(const std::unique_ptr<Cluster>& cluster) {
@@ -101,9 +104,15 @@ void XCAT::configureSLURM (const std::unique_ptr<Cluster>& cluster) {
                     .getConnection(Network::Profile::Management)
                     .getAddress()));
 
+    /* TODO: Enable "if" disallow login on compute nodes */
     m_stateless.postinstall.emplace_back(
             "echo \"account required pam_slurm.so\" >> "
             "$installroot/etc/pam.d/sshd\n"
+            "\n");
+
+    m_stateless.synclists.emplace_back(
+            "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
+            "/etc/munge/munge.key -> /etc/munge/munge.key\n"
             "\n");
 }
 
@@ -160,11 +169,11 @@ void XCAT::generateSynclistsFile () {
                               "/etc/passwd -> /etc/passwd\n"
                               "/etc/group -> /etc/group\n"
                               "/etc/shadow -> /etc/shadow\n"
-                              "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf \n"
+                              "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
                               "/etc/munge/munge.key -> /etc/munge/munge.key\n");
 }
 
-void XCAT::configureOSImageDefinition () {
+void XCAT::configureOSImageDefinition (const std::unique_ptr<Cluster>& cluster) {
     Shell::runCommand(fmt::format(
             "chdef -t osimage {} --plus otherpkglist="
             "/install/custom/netboot/compute.pkglist", m_stateless.osimage));
@@ -181,22 +190,48 @@ void XCAT::configureOSImageDefinition () {
     /* TODO: Fix repos to EL8
      *  - Repos URL may be generated with OS class methods
      *     OS.getArch(); OS.getVersion();
-     *  - Missing distro detection
      */
+    std::vector<std::string_view> repos;
+
+    switch (cluster->getHeadnode().getOS().getDistro()) {
+        case OS::Distro::RHEL:
+            repos.emplace_back(
+                    "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
+            repos.emplace_back(
+                    "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os");
+            repos.emplace_back(
+                    "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/codeready-builder/os");
+            break;
+        case OS::Distro::OL:
+            repos.emplace_back(
+                    "https://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64");
+            repos.emplace_back(
+                    "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64");
+            repos.emplace_back(
+                    "https://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64");
+            repos.emplace_back(
+                    "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64");
+            break;
+    }
+
+    repos.emplace_back("https://download.fedoraproject.org/pub/epel/8/Everything/x86_64");
+
+    /* TODO: if OpenHPC statement */
+    repos.emplace_back("https://repos.openhpc.community/OpenHPC/2/CentOS_8");
+    repos.emplace_back("https://repos.openhpc.community/OpenHPC/2/updates/CentOS_8");
+
+
     Shell::runCommand(fmt::format(
-            "chdef -t osimage {} --plus otherpkgdir="
-            "http://repos.openhpc.community/OpenHPC/2/CentOS_8,"
-            "http://repos.openhpc.community/OpenHPC/2/updates/CentOS_8,"
-            "https://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64,"
-            "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64,"
-            "https://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64,"
-            "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64,"
-            "https://download.fedoraproject.org/pub/epel/8/Everything/x86_64",
-            m_stateless.osimage));
+            "chdef -t osimage {} --plus otherpkgdir={}",
+            m_stateless.osimage, fmt::join(repos, ",")));
 }
 
-/* This should be on Postinstall instead */
 void XCAT::customizeImage () {
+    // Bugfixes for Munge
+    Shell::runCommand(fmt::format(
+            "chroot {} chown munge:munge /var/lib/munge", m_stateless.chroot));
+    Shell::runCommand(fmt::format(
+            "chroot {} chown munge:munge /etc/munge", m_stateless.chroot));
 }
 
 /* This method will create an image for compute nodes, by default it will be a
@@ -205,15 +240,55 @@ void XCAT::customizeImage () {
 void XCAT::createImage (const std::unique_ptr<Cluster>& cluster,
                         std::string_view isopath) {
     copycds(isopath);
+
     createDirectoryTree();
     configureOpenHPC();
     configureTimeService(cluster);
     configureSLURM(cluster);
+
     generateOtherPkgListFile();
     generatePostinstallFile(cluster);
     generateSynclistsFile();
-    configureOSImageDefinition();
+
+    configureOSImageDefinition(cluster);
+
     genimage();
     customizeImage();
     packimage();
+}
+
+void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
+                   std::string_view t_address, std::string_view t_macaddress,
+                   std::string_view t_bmcaddress,
+                   std::string_view t_bmcusername,
+                   std::string_view t_bmcpassword) {
+
+    Shell::runCommand(fmt::format(
+            "mkdef -f -t node {} arch={} ip={} mac={} bmc={} bmcusername={} "
+            "bmcpassword={} mgt=ipmi cons=ipmi serialport=0 serialspeed=115200 "
+            "groups=compute,all netboot=xnba", t_name, t_arch, t_address,
+            t_macaddress, t_bmcaddress, t_bmcusername, t_bmcpassword));
+}
+
+void XCAT::addNodes(const std::unique_ptr<Cluster>& cluster) {
+    for (const auto& node : cluster->getNodes())
+        addNode(node.getHostname(), "x86_64",
+                node.getConnection().front().getAddress(),
+                node.getConnection().front().getMAC(),
+                node.getBMCAddress(), node.getBMCUsername(),
+                node.getBMCPassword());
+
+    // Placeholder
+    //addNode("n01", "x86_64", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
+    //        "ADMIN", "ADMIN");
+
+    // TODO: Create separate functions
+    Shell::runCommand("makehosts");
+    Shell::runCommand("makedhcp -n");
+    Shell::runCommand("makedns -n");
+    Shell::runCommand("makegocons");
+}
+
+void XCAT::setNodesImage() {
+    nodeset();
 }
