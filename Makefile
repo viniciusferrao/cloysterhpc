@@ -33,7 +33,7 @@ SRCS = $(wildcard */*.cpp) $(wildcard */*/*.cpp)
 #SRCS = src/main.cpp src/viewTerminalUI.cpp src/presenterLocaleSelection.cpp
 #SRCS += src/functions.cpp src/terminalui.cpp src/os.cpp src/repos.cpp
 #SRCS += src/headnode.cpp src/cluster.cpp src/presenter.cpp src/xcat.cpp
-#SRCS += src/network.cpp src/connection.cpp
+#SRCS += src/network.cpp src/connection.cpp src/node.cpp
 OBJS = $(SRCS:.cpp=.o)
 EXE  = main
 

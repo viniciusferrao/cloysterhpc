@@ -17,6 +17,7 @@ Connection::~Connection() = default;
 
 Connection::Connection(const std::string& interface,
                        const std::string& address) {
+
     setInterface(interface);
     setAddress(address);
 }
@@ -58,11 +59,9 @@ void Connection::setInterface (const std::string& interface) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
+        // TODO: Since we are already here, get the MAC Address from sa_data
         if (interface == ifa->ifa_name) {
             m_interface = interface;
-
-            // TODO: Fetch MAC address from ifa
-            //setMAC(LLADDR((struct sockaddr_dl *)&ifa->ifa_addr));
 
             freeifaddrs(ifaddr);
             return;
@@ -78,7 +77,20 @@ const std::string& Connection::getMAC() const {
 }
 
 void Connection::setMAC(const std::string& mac) {
-    m_mac = mac;
+    if ((mac.size() != 12) && (mac.size() != 17))
+        throw 1;
+
+    // TODO: Make it easier to read
+    const std::regex pattern(
+            "^([0-9A-Fa-f]{2}[:-]){5}"
+            "([0-9A-Fa-f]{2})|([0-9a-"
+            "fA-F]{4}\\.[0-9a-fA-F]"
+            "{4}\\.[0-9a-fA-F]{4})$");
+
+    if (regex_match(mac, pattern))
+        m_mac = mac;
+    else
+        throw "invalid";
 }
 
 const std::string Connection::getAddress () const {
