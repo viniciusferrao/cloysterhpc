@@ -238,8 +238,10 @@ void XCAT::customizeImage () {
  * stateless image with default services.
  */
 void XCAT::createImage (const std::unique_ptr<Cluster>& cluster,
-                        std::string_view isopath) {
+                        std::string_view isopath,
+                        ImageType imageType, NodeType nodeType) {
     copycds(isopath);
+    generateOSImageName(cluster, imageType, nodeType);
 
     createDirectoryTree();
     configureOpenHPC();
@@ -287,8 +289,58 @@ void XCAT::addNodes(const std::unique_ptr<Cluster>& cluster) {
     Shell::runCommand("makedhcp -n");
     Shell::runCommand("makedns -n");
     Shell::runCommand("makegocons");
+    nodeset();
 }
 
 void XCAT::setNodesImage() {
     nodeset();
+}
+
+void XCAT::generateOSImageName(const std::unique_ptr<Cluster>& cluster,
+                               ImageType imageType, NodeType nodeType) {
+    std::string osimage;
+
+    switch(cluster->getHeadnode().getOS().getDistro()) {
+        case OS::Distro::RHEL:
+            osimage += "rhels";
+            osimage += cluster->getHeadnode().getOS().getVersion();
+            break;
+        case OS::Distro::OL:
+            osimage += "ol";
+            osimage += cluster->getHeadnode().getOS().getVersion();
+            osimage += ".0";
+            break;
+    }
+    osimage += "-";
+
+    switch (cluster->getHeadnode().getOS().getArch()) {
+        case OS::Arch::x86_64:
+            osimage += "x86_64";
+            break;
+        case OS::Arch::ppc64le:
+            osimage += "ppc64le";
+            break;
+    }
+    osimage += "-";
+
+    switch (imageType) {
+        case ImageType::Install:
+            osimage += "install";
+            break;
+        case ImageType::Netboot:
+            osimage += "netboot";
+            break;
+    }
+    osimage += "-";
+
+    switch (nodeType) {
+        case NodeType::Compute:
+            osimage += "compute";
+            break;
+        case NodeType::Service:
+            osimage += "service";
+            break;
+    }
+
+    m_stateless.osimage = osimage;
 }

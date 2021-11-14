@@ -4,6 +4,8 @@
 #include <string>
 #include <regex>
 
+#include <boost/algorithm/string.hpp>
+
 #include <arpa/inet.h> /* inet_*() functions */
 #include <ifaddrs.h> /* getifaddrs() */
 
@@ -77,10 +79,10 @@ const std::string& Connection::getMAC() const {
 }
 
 void Connection::setMAC(const std::string& mac) {
-    if ((mac.size() != 12) && (mac.size() != 17))
+    if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw 1;
 
-    // TODO: Make it easier to read
+    // TODO: Make it easier to read and consider the Cisco MAC identifier
     const std::regex pattern(
             "^([0-9A-Fa-f]{2}[:-]){5}"
             "([0-9A-Fa-f]{2})|([0-9a-"
@@ -88,7 +90,7 @@ void Connection::setMAC(const std::string& mac) {
             "{4}\\.[0-9a-fA-F]{4})$");
 
     if (regex_match(mac, pattern))
-        m_mac = mac;
+        m_mac = boost::algorithm::to_lower_copy(mac);
     else
         throw "invalid";
 }
