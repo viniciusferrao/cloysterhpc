@@ -8,8 +8,8 @@ dummy/
 release/
 main
 
-# Created by https://www.toptal.com/developers/gitignore/api/c,c++,macos,linux,executable,visualstudiocode,vim,clion
-# Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,macos,linux,executable,visualstudiocode,vim,clion
+# Created by https://www.toptal.com/developers/gitignore/api/c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
+# Edit at https://www.toptal.com/developers/gitignore?templates=c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
 
 ### C ###
 # Prerequisites
@@ -190,6 +190,23 @@ fabric.properties
 # https://plugins.jetbrains.com/plugin/12206-codestream
 .idea/codestream.xml
 
+### CMake ###
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+### CMake Patch ###
+# External projects
+*-prefix/
+
 ### Executable ###
 *.bat
 *.cgi
@@ -280,4 +297,8 @@ tags
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/c,c++,macos,linux,executable,visualstudiocode,vim,clion
+# Support for Project snippet scope
+!.vscode/*.code-snippets
+
+# End of https://www.toptal.com/developers/gitignore/api/c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
+
