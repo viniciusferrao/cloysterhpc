@@ -28,7 +28,11 @@ option(DEBUG "Create a debug executable" ON)
 
 function(configureProject)
     if (DUMMY)
-        add_compile_options(-D_DUMMY_)
+        add_compile_options(-D_DUMMY_ -D_DEBUG_)
+    endif()
+
+    if (DEBUG)
+        add_compile_options(-D_DEBUG_)
     endif()
 endfunction()
 
@@ -66,12 +70,4 @@ target_link_libraries(main
         ${LibNewt_LIBRARIES}
         Boost::headers Boost::system Boost::thread Boost::log Boost::log_setup
         fmt::fmt
-)
-
-# Add this compile definition for debug builds, this same logic works for
-# target_compile_options, target_link_options, etc.
-target_compile_definitions(main PRIVATE
-    $<$<CONFIG:Debug>:
-        _DEBUG_=1
-    >
 )

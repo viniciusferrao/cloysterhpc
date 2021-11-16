@@ -11,6 +11,7 @@
 
 #include <string>
 #include <memory>
+#include <filesystem>
 
 class XCAT : public Provisioner {
 private:
@@ -20,9 +21,8 @@ private:
 private:
     struct {
         std::vector<std::string_view> otherpkgs = {};
-        /* TODO: Discover chroot path */
         std::string osimage;
-        const std::string chroot = "/install/netboot/ol8.4.0/x86_64/compute/rootimg";
+        std::filesystem::path chroot;
         std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
         std::vector<std::string> synclists = {};
     } m_stateless;
@@ -30,7 +30,7 @@ private:
 private:
     void setDHCPInterfaces (std::string_view);
     void setDomain (std::string_view);
-    void copycds (std::string_view);
+    void copycds (const std::filesystem::path&);
     void genimage ();
     void packimage ();
     void nodeset();
@@ -48,13 +48,16 @@ private:
                  std::string_view);
     void generateOSImageName(const std::unique_ptr<Cluster>&,
                              ImageType, NodeType);
+    void generateOSImagePath(const std::unique_ptr<Cluster>& cluster,
+                             ImageType, NodeType);
+
 
 public:
     void configureRepositories ();
     void installPackages ();
     void setup(const std::unique_ptr<Cluster>&);
 
-    void createImage (const std::unique_ptr<Cluster>&, std::string_view,
+    void createImage (const std::unique_ptr<Cluster>&,
                       ImageType = ImageType::Netboot,
                       NodeType = NodeType::Compute);
     void addNodes(const std::unique_ptr<Cluster>&);

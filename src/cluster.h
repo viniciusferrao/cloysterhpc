@@ -3,6 +3,7 @@
 
 #include <string> /* std::string */
 #include <optional>
+#include <filesystem>
 
 #include "headnode.h"
 #include "node.h"
@@ -71,6 +72,7 @@ private:
         std::vector<std::shared_ptr<Network>> application;
     } m_network;
     bool m_updateSystem {};
+    std::filesystem::path m_isoPath;
 
 public:
     //const std::unique_ptr<Headnode>& getHeadnode() const;
@@ -99,6 +101,9 @@ public:
     OFED getOFED() const;
     void setOFED(OFED);
 
+    const std::filesystem::path &getISOPath() const;
+    void setISOPath(const std::filesystem::path &isoPath);
+
     const std::vector<Node>& getNodes() const;
     void addNode(std::string_view, const std::string&, const std::string&,
                  std::string_view, std::string_view, std::string_view);
@@ -117,7 +122,6 @@ public:
     std::string nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
-    std::string nodeISOPath;
     QueueSystem queueSystem;
     Postfix postfix;
     bool remoteAccess {};

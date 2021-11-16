@@ -601,7 +601,7 @@ void TerminalUI::drawNodeSettings (Cluster& cluster) {
     cluster.nodePadding = fields[1];
     cluster.nodeStartIP = fields[2];
     cluster.nodeRootPassword = fields[3];
-    cluster.nodeISOPath = fields[4];
+    //cluster.iso = fields[4];
 }
 
 void TerminalUI::drawQueueSystemSettings (Cluster& cluster) {

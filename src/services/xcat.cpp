@@ -7,7 +7,6 @@
 #include "shell.h"
 #include "../functions.h"
 
-#include <filesystem>
 #include <fmt/format.h>
 
 /* TODO: Implement a repos class to properly do this */
@@ -40,8 +39,8 @@ void XCAT::setDomain (std::string_view domain) {
     Shell::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-void XCAT::copycds (std::string_view isopath) {
-    Shell::runCommand(fmt::format("copycds {}", isopath));
+void XCAT::copycds (const std::filesystem::path& isopath) {
+    Shell::runCommand(fmt::format("copycds {}", isopath.string()));
 }
 
 void XCAT::genimage () {
@@ -53,7 +52,8 @@ void XCAT::packimage () {
 }
 
 void XCAT::nodeset() {
-    Shell::runCommand(fmt::format("nodeset compute osimage={}", m_stateless.osimage));
+    Shell::runCommand(fmt::format(
+            "nodeset compute osimage={}", m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree () {
@@ -229,19 +229,21 @@ void XCAT::configureOSImageDefinition (const std::unique_ptr<Cluster>& cluster) 
 void XCAT::customizeImage () {
     // Bugfixes for Munge
     Shell::runCommand(fmt::format(
-            "chroot {} chown munge:munge /var/lib/munge", m_stateless.chroot));
+            "chroot {} chown munge:munge /var/lib/munge",
+            m_stateless.chroot.string()));
     Shell::runCommand(fmt::format(
-            "chroot {} chown munge:munge /etc/munge", m_stateless.chroot));
+            "chroot {} chown munge:munge /etc/munge",
+            m_stateless.chroot.string()));
 }
 
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
 void XCAT::createImage (const std::unique_ptr<Cluster>& cluster,
-                        std::string_view isopath,
                         ImageType imageType, NodeType nodeType) {
-    copycds(isopath);
+    copycds(cluster->getISOPath());
     generateOSImageName(cluster, imageType, nodeType);
+    generateOSImagePath(cluster, imageType, nodeType);
 
     createDirectoryTree();
     configureOpenHPC();
@@ -279,10 +281,6 @@ void XCAT::addNodes(const std::unique_ptr<Cluster>& cluster) {
                 node.getConnection().front().getMAC(),
                 node.getBMCAddress(), node.getBMCUsername(),
                 node.getBMCPassword());
-
-    // Placeholder
-    //addNode("n01", "x86_64", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
-    //        "ADMIN", "ADMIN");
 
     // TODO: Create separate functions
     Shell::runCommand("makehosts");
@@ -343,4 +341,29 @@ void XCAT::generateOSImageName(const std::unique_ptr<Cluster>& cluster,
     }
 
     m_stateless.osimage = osimage;
+}
+
+void XCAT::generateOSImagePath(const std::unique_ptr<Cluster>& cluster,
+                               ImageType imageType, NodeType nodeType) {
+
+    if (imageType != XCAT::ImageType::Netboot)
+        throw std::logic_error(
+                "Image path is only available on Netboot (Stateless) images");
+
+    std::filesystem::path chroot = "/install/netboot/";
+
+    switch(cluster->getHeadnode().getOS().getDistro()) {
+        case OS::Distro::RHEL:
+            chroot += "rhels";
+            chroot += cluster->getHeadnode().getOS().getVersion();
+            break;
+        case OS::Distro::OL:
+            chroot += "ol";
+            chroot += cluster->getHeadnode().getOS().getVersion();
+            chroot += ".0";
+            break;
+    }
+
+    chroot += "/x86_64/compute/rootimg";
+    m_stateless.chroot = chroot;
 }

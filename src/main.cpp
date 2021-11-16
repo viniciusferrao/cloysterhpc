@@ -70,34 +70,6 @@ int main(int argc, char** argv) {
     headnode.printOS();
 #endif
 
-    if ((rc = headnode.checkSupportedOS())) {
-        std::cerr << "Unsupported OS: return code " << rc << std::endl;
-    }
-
-    /* Testing */
-    std::string CSIIPAddress = "146.164.36.16";
-    if (headnode.network.setIPAddress(CSIIPAddress) != 0)
-        std::cerr << "Invalid IPv4,5 address" << std::endl;
-    std::cout << headnode.network.getIPAddress() << std::endl;
-
-    //headnode.network.setProfile(Network::Profile::Application);
-    if (headnode.network.getProfile() == Network::Profile::External)
-        std::cout << "External" << std::endl;
-
-    //headnode.network.setType(Network::Type::Infiniband);
-    if (headnode.network.getType() == Network::Type::Ethernet)
-        std::cout << "Ethernet" << std::endl;
-
-    /* At this point we can start the installation */
-    Cluster cluster;
-
-    /* Trash initialization */
-    cluster.m_timezone = "America/Sao_Paulo";
-    cluster.m_locale = "en_US.utf8";
-    cluster.m_fqdn = "headnode.cloyster.invalid";
-    cluster.m_firewall = false;
-    cluster.m_selinux = false;
-
 #ifndef _DUMMY_
     if (headnode.m_os.family == OS::Family::Darwin) {
         std::cerr << "ERROR: Cowardly refusing to run commands on macOS!" <<

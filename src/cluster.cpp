@@ -188,6 +188,14 @@ void Cluster::setOFED(Cluster::OFED ofed) {
     m_ofed = ofed;
 }
 
+const std::filesystem::path& Cluster::getISOPath() const {
+    return m_isoPath;
+}
+
+void Cluster::setISOPath(const std::filesystem::path& isoPath) {
+    m_isoPath = isoPath;
+}
+
 const std::vector<Node>& Cluster::getNodes() const {
     return m_nodes;
 }
@@ -282,7 +290,7 @@ void Cluster::printData () {
     std::cerr << "nodePadding: " << nodePadding << std::endl;
     std::cerr << "nodeStartIP: " << nodeStartIP << std::endl;
     std::cerr << "nodeRootPassword: " << nodeRootPassword << std::endl;
-    std::cerr << "nodeISOPath: " << nodeISOPath << std::endl;
+    std::cerr << "nodeISOPath: " << getISOPath() << std::endl;
 
     // if (queueSystem.name == "SLURM")
     //     std::cerr << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
@@ -358,6 +366,8 @@ void Cluster::fillTestData () {
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
+    setISOPath("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
+
     addNode("n01", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
             "ADMIN", "ADMIN");
     addNode("n02", "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
@@ -373,7 +383,6 @@ void Cluster::fillTestData () {
     nodePadding = "2";
     nodeStartIP = "172.26.0.1";
     nodeRootPassword = "pwdNodeRoot";
-    nodeISOPath = "/mnt/iso/rhel-8.4-dvd.iso";
     remoteAccess = true;
 }
 

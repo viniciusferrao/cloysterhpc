@@ -112,7 +112,8 @@ const std::string& Connection::getHostname() const {
 
 void Connection::setHostname(const std::string& hostname) {
     if (hostname.size() > 63)
-        throw;
+        throw std::range_error(
+                "Hostname cannot be bigger than 64 characters");
 
 #if __cplusplus >= 202002L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
@@ -148,5 +149,5 @@ const std::shared_ptr<Network>& Connection::getNetwork() const {
 }
 
 void Connection::setNetwork(std::shared_ptr<Network> network) {
-    m_network = network;
+    m_network = std::move(network);
 }
