@@ -23,6 +23,7 @@ void NewtViewMessage::draw () {
             break;
         case 2:
             abortInstall();
+            break;
         default:
             throw;
     }

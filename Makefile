@@ -70,8 +70,8 @@ DUMMYLFLAGS =
 #
 # Libraries needed during dynamic linking
 #
+PTHREAD = -pthread
 NEWT = -lnewt
-PTHREAD = -lpthread
 FMT = -lfmt
 ifeq ($(OS),Linux)
 	ifeq ($(filter el8%,$(OS_RELEASE)),)
@@ -89,7 +89,7 @@ else
 	BOOSTLOG = -DBOOST_LOG_DYN_LINK -lboost_log-mt -lboost_log_setup-mt
 endif
 
-DYNLIBS = $(NEWT) $(LPTHREAD) $(FMT) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
+DYNLIBS = $(PTHREAD) $(NEWT) $(FMT) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
 STATICLIBS = $(STDCPPFS)
 
 .PHONY: all osdetect clean debug dummy prep release remake

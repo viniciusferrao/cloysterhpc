@@ -109,6 +109,8 @@ const std::vector<std::shared_ptr<Network>>& Cluster::getNetwork(
             return m_network.service;
         case Network::Profile::Application:
             return m_network.application;
+        default:
+            throw std::runtime_error("BUG: Invalid network profile reached");
     }
 }
 

@@ -25,7 +25,7 @@ NewtViewBase::~NewtViewBase() {
 }
 
 void NewtViewBase::abortInstall () {
-    NewtViewBase::~NewtViewBase();
+    this->~NewtViewBase();
     std::cout << MSG_INSTALL_ABORT;
     exit(EXIT_SUCCESS);
 }

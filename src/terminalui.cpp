@@ -48,7 +48,7 @@ void TerminalUI::beginInstall (Cluster& cluster, Headnode& headnode) {
 }
 
 void TerminalUI::abortInstall () {
-    TerminalUI::~TerminalUI();
+    this->~TerminalUI();
     std::cout << MSG_INSTALL_ABORT;
     exit(EXIT_SUCCESS);
 }
@@ -156,6 +156,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
             return items[selector];
         case 2:
             abortInstall();
+            break;
         case 3:
             drawHelpMessage(helpMessage);
             goto question;
@@ -179,6 +180,7 @@ std::string TerminalUI::drawListMenu (const char * title, const char * message,
                 return items[selector];
             case 2:
                 abortInstall();
+                break;
             case 3:
                 drawHelpMessage(helpMessage);
                 continue;
@@ -250,12 +252,15 @@ std::vector<std::string> TerminalUI::drawFieldMenu (
             return entries;
         case 2:
             abortInstall();
+            break;
         case 3:
             drawHelpMessage(helpMessage);
             goto question;
         default:
-            throw;
+            throw std::runtime_error("newt field invalid option returned");
     }
+
+    throw std::runtime_error("Invalid return option from newt interface");
 }
 
 /* This is just an ideia, but here we should do the following:
@@ -308,6 +313,7 @@ std::vector<std::string> TerminalUI::drawIPSettings (const char * title,
             return fields;
         case 2:
             abortInstall();
+            break;
         case 3:
             drawHelpMessage(helpMessage);
             goto question;
@@ -347,6 +353,7 @@ void TerminalUI::drawWelcomeMessage () {
             break;
         case 2:
             abortInstall();
+            break;
     }
 }
 

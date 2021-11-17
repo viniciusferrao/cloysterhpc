@@ -43,6 +43,7 @@ std::string NewtViewListMenu::draw (const char * title, const char * message,
             return items[selector];
         case 2:
             abortInstall();
+            break;
         case 3:
             this->helpMessage(helpMessage);
             goto question;

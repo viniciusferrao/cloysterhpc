@@ -65,10 +65,14 @@ std::vector<std::string> NewtViewFieldMenu::draw (
             return entries;
         case 2:
             abortInstall();
+            break;
         case 3:
             this->helpMessage(helpMessage);
             goto question;
         default:
-            throw;
+            throw std::runtime_error(
+                    "Invalid return value from fields on newt library");
     }
+
+    throw std::runtime_error("Invalid return path on newt library");
 }

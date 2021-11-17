@@ -110,10 +110,8 @@ std::string readConfig(const std::string &filename) {
         boost::property_tree::ini_parser::read_ini(filename, tree);
     }
 
-    catch (boost::property_tree::ini_parser_error) {
-#ifdef _DEBUG_
-        std::cerr << filename << " not found" << std::endl;
-#endif
+    catch (boost::property_tree::ini_parser_error& ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
     }
 
     std::string value = tree.get<std::string>("headnode.LANG",
@@ -160,10 +158,8 @@ void changeValueInConfigurationFile(const std::string& filename,
         boost::property_tree::ini_parser::read_ini(filename, tree);
     }
 
-    catch(boost::property_tree::ini_parser_error) {
-#ifdef _DEBUG_
-        std::cerr << filename << " not found" << std::endl;
-#endif
+    catch(boost::property_tree::ini_parser_error& ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
     }
 
     tree.put(key, value);
