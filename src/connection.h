@@ -4,6 +4,7 @@
 #include "network.h"
 
 #include <string>
+#include <memory>
 #include <arpa/inet.h>
 
 /* Each server can have one and only one connection to a given network, although

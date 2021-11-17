@@ -3,6 +3,7 @@
 
 #include <string> /* std::string */
 #include <optional>
+#include <memory>
 #include <filesystem>
 
 #include "headnode.h"
@@ -109,6 +110,7 @@ public:
                  std::string_view, std::string_view, std::string_view);
 
 #ifdef _DEBUG_
+    void printNetwork(const std::vector<std::shared_ptr<Network>>&);
     void printNetworks();
 #endif
 

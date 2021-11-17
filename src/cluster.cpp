@@ -71,7 +71,7 @@ const std::string& Cluster::getDomainName() const {
 }
 
 /* TODO: Fix logic, split domain to a vector after each dot (.) to check for
- * correctness
+ *  correctness
  */
 void Cluster::setDomainName(const std::string& domainName) {
     if (domainName.size() > 255)
@@ -79,11 +79,11 @@ void Cluster::setDomainName(const std::string& domainName) {
 
 #if __cplusplus >= 202002L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
-        throw;
 #else
-    if (boost::algorithm::starts_with(domainName, '-') or
-        boost::algorithm::ends_with(domainName, '-'));
+    if (boost::algorithm::starts_with(domainName, "-") or
+        boost::algorithm::ends_with(domainName, "-"))
 #endif
+        throw std::runtime_error("Invalid domain name");
 
     /* Check if string has only digits */
     if (std::regex_match(domainName, std::regex("^[0-9]+$")))
@@ -139,25 +139,25 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
 
     switch (profile) {
         case Network::Profile::External:
-            m_network.external.emplace_back(make_shared<Network>(
+            m_network.external.emplace_back(std::make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Management:
-            m_network.management.emplace_back(make_shared<Network>(
+            m_network.management.emplace_back(std::make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Service:
-            m_network.service.emplace_back(make_shared<Network>(
+            m_network.service.emplace_back(std::make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
 
         case Network::Profile::Application:
-            m_network.application.emplace_back(make_shared<Network>(
+            m_network.application.emplace_back(std::make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
             break;
@@ -210,59 +210,39 @@ void Cluster::addNode(std::string_view t_name, const std::string& t_address,
 
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
-void Cluster::printNetworks() {
-    for (size_t i = 0 ; auto const& network : m_network.external) {
-        std::cerr << fmt::format("External Network [{}]", i++) << std::endl;
-        std::cerr << "Address: " << network->getAddress() << std::endl;
-        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
-        std::cerr << "Gateway " << network->getGateway() << std::endl;
-        std::cerr << "VLAN " << network->getVLAN() << std::endl;
-        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
-        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
-            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
-        }
-    }
-    std::cerr << std::endl;
+void Cluster::printNetwork(
+        const std::vector<std::shared_ptr<Network>>& networkType) {
 
-    for (size_t i = 0 ; auto const& network : m_network.management) {
+#if __cplusplus < 202002L
+    size_t i, j;
+    for (auto const &network: networkType) {
+        i = 0;
+#else
+    for (size_t i = 0; auto const &network: networkType) {
+#endif
         std::cerr << fmt::format("Management Network [{}]", i++) << std::endl;
         std::cerr << "Address: " << network->getAddress() << std::endl;
         std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
         std::cerr << "Gateway " << network->getGateway() << std::endl;
         std::cerr << "VLAN " << network->getVLAN() << std::endl;
         std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
-        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
+#if __cplusplus < 202002L
+        j = 0;
+        for (auto const &nameserver: network->getNameserver()) {
+#else
+        for (size_t j = 0; auto const &nameserver: network->getNameserver()) {
+#endif
             std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
         }
     }
     std::cerr << std::endl;
+}
 
-    for (size_t i = 0 ; auto const& network : m_network.service) {
-        std::cerr << fmt::format("Service Network [{}]", i++) << std::endl;
-        std::cerr << "Address: " << network->getAddress() << std::endl;
-        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
-        std::cerr << "Gateway " << network->getGateway() << std::endl;
-        std::cerr << "VLAN " << network->getVLAN() << std::endl;
-        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
-        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
-            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
-        }
-    }
-    std::cerr << std::endl;
-
-    for (size_t i = 0 ; auto const& network : m_network.application) {
-        std::cerr << fmt::format("Application Network [{}]", i++) << std::endl;
-        std::cerr << "Address: " << network->getAddress() << std::endl;
-        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
-        std::cerr << "Gateway " << network->getGateway() << std::endl;
-        std::cerr << "VLAN " << network->getVLAN() << std::endl;
-        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
-        for (size_t j = 0 ; auto const& nameserver : network->getNameserver()) {
-            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
-        }
-    }
-    std::cerr << std::endl;
-
+void Cluster::printNetworks() {
+    printNetwork(m_network.external);
+    printNetwork(m_network.management);
+    printNetwork(m_network.service);
+    printNetwork(m_network.application);
 }
 #endif
 

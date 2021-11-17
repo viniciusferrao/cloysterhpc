@@ -73,6 +73,11 @@ DUMMYLFLAGS =
 NEWT = -lnewt
 PTHREAD = -lpthread
 FMT = -lfmt
+ifeq ($(OS),Linux)
+	ifeq ($(filter el8%,$(OS_RELEASE)),)
+		STDCPPFS = -lstdc++fs
+	endif
+endif
 
 # Boost C++ libraries
 BOOST = -lboost_system
@@ -85,6 +90,7 @@ else
 endif
 
 DYNLIBS = $(NEWT) $(LPTHREAD) $(FMT) $(BOOST) $(BOOSTTHREAD) $(BOOSTLOG)
+STATICLIBS = $(STDCPPFS)
 
 .PHONY: all osdetect clean debug dummy prep release remake
 
@@ -97,7 +103,7 @@ all: release
 debug: prep $(DBGEXE) 
 
 $(DBGEXE): $(DBGOBJS)
-	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DYNLIBS) -o $(DBGEXE) $(addprefix $(DBGDIR)/,$(notdir $^))
+	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DYNLIBS) -o $(DBGEXE) $(addprefix $(DBGDIR)/,$(notdir $^)) $(STATICLIBS)
 	rm -f $(EXE)
 	ln -s $(DBGEXE)
 
@@ -110,7 +116,7 @@ $(DBGDIR)/%.o: %.cpp
 dummy: prep $(DUMMYEXE)
 
 $(DUMMYEXE): $(DUMMYOBJS)
-	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DUMMYLFLAGS) $(DYNLIBS) -o $(DUMMYEXE) $(addprefix $(DUMMYDIR)/,$(notdir $^))
+	$(LD) $(LFLAGS) $(DBGLFLAGS) $(DUMMYLFLAGS) $(DYNLIBS) -o $(DUMMYEXE) $(addprefix $(DUMMYDIR)/,$(notdir $^)) $(STATICLIBS)
 	rm -f $(EXE)
 	ln -s $(DUMMYEXE)
 
@@ -123,7 +129,7 @@ $(DUMMYDIR)/%.o: %.cpp
 release: prep $(RELEXE)
 
 $(RELEXE): $(RELOBJS)
-	$(LD) $(LFLAGS) $(RELLFLAGS) $(DYNLIBS) -o $(RELEXE) $(addprefix $(RELDIR)/,$(notdir $^))
+	$(LD) $(LFLAGS) $(RELLFLAGS) $(DYNLIBS) -o $(RELEXE) $(addprefix $(RELDIR)/,$(notdir $^)) $(STATICLIBS)
 	rm -f $(EXE)
 	ln -s $(RELEXE)
 

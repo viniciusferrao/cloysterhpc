@@ -10,6 +10,10 @@
 #include <fmt/format.h>
 #include <sys/utsname.h>
 
+#if __cplusplus < 202002L
+#include <boost/algorithm/string.hpp>
+#endif
+
 OS::OS() {
     discover();
 }

@@ -788,6 +788,7 @@ TerminalUI::TerminalUI () {
     newtRefresh();
 }
 
+#if 0
 TerminalUI::TerminalUI (Cluster& cluster) {
     newtInit();
     newtCls();
@@ -827,6 +828,7 @@ TerminalUI::TerminalUI (Cluster& cluster) {
 //    void drawRemoteAccess (Cluster&);
     
 }
+#endif
 
 std::string TerminalUI::timezoneSelection
                                 (const std::vector<std::string>& timezones) {

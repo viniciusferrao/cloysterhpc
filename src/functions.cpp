@@ -2,6 +2,7 @@
 
 #include <cstdlib> /* getenv() */
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 
 #define ENABLE_GETOPT_H
@@ -170,7 +171,11 @@ void changeValueInConfigurationFile(const std::string& filename,
 }
 
 void addStringToFile(std::string_view filename, std::string_view line) {
+#if __cplusplus >= 202002L
     std::ofstream file(filename, std::ios_base::app);
+#else
+    std::ofstream file(std::string{filename}, std::ios_base::app);
+#endif
 
     if (!file.is_open()) {
         /* TODO: Change perror(); */

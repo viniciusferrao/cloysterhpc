@@ -37,10 +37,10 @@ void Headnode::setHostname(const std::string& hostname) {
 #if __cplusplus >= 202002L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
 #else
-    if (boost::algorithm::starts_with(hostname, '-') or
-        boost::algorithm::ends_with(hostname, '-'));
+    if (boost::algorithm::starts_with(hostname, "-") or
+        boost::algorithm::ends_with(hostname, "-"))
 #endif
-        throw;
+        throw std::runtime_error("Invalid hostname");
 
     /* Check if string has only digits */
     if (std::regex_match(hostname, std::regex("^[0-9]+$")))

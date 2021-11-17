@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.18.2)
 
 project(CloysterHPC
         DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer"

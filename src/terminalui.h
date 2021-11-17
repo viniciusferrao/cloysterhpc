@@ -61,7 +61,6 @@ public:
 
     /* Refactoring to MVC */
     TerminalUI ();
-    TerminalUI (Cluster&);
     std::string timezoneSelection (const std::vector<std::string>&);
     std::string localeSelection (const std::vector<std::string>&);
     std::vector<std::string> networkHostnameSelection

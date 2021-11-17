@@ -5,6 +5,10 @@
 #include <regex>
 #include <arpa/inet.h> /* inet_*() functions */
 
+#if __cplusplus < 202002L
+#include <boost/algorithm/string.hpp>
+#endif
+
 Network::Network()
     : Network(Profile::External, Type::Ethernet) {}
 
@@ -98,11 +102,11 @@ void Network::setDomainName(const std::string& domainName) {
 
 #if __cplusplus >= 202002L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
-        throw;
 #else
-    if (boost::algorithm::starts_with(domainName, '-') or
-        boost::algorithm::ends_with(domainName, '-'));
+    if (boost::algorithm::starts_with(domainName, "-") or
+        boost::algorithm::ends_with(domainName, "-"))
 #endif
+        throw std::runtime_error("Invalid hostname");
 
     /* Check if string has only digits */
     if (std::regex_match(domainName, std::regex("^[0-9]+$")))
@@ -134,9 +138,15 @@ void Network::setNameserver(const std::vector<std::string>& nameserver) {
     m_nameserver.reserve(nameserver.size());
     struct in_addr aux {};
 
+#if __cplusplus < 202002L
+    size_t i = 0;
+    for (auto const& ns : std::as_const(nameserver)) {
+#else
     for (size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
+#endif
         m_nameserver.push_back(aux); /* aux may have garbage on it */
         if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
             throw;
     }
 }
+
