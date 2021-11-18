@@ -21,14 +21,12 @@ int Shell::runCommand(const std::string& command) {
     boost::process::ipstream pipe_stream;
     boost::process::child c(command, boost::process::std_out > pipe_stream);
 
-    m_commandOutput.erase();
     std::string line;
 
     while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
 #ifdef _DEBUG_
         std::cerr << line << std::endl;
 #endif
-        m_commandOutput += line;
         c.wait();
     }
 

@@ -1,73 +1,116 @@
 cmake_minimum_required(VERSION 3.18.2)
 
 project(CloysterHPC
+        VERSION 0.1
         DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer"
         HOMEPAGE_URL "https://github.com/viniciusferrao/cloysterhpc"
         LANGUAGES CXX
 )
 
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# OS Detection code
+#message("-- CMAKE_SYSTEM_INFO_FILE: ${CMAKE_SYSTEM_INFO_FILE}")
+#message("-- CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}")
+#message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+#message("-- CMAKE_SYSTEM:           ${CMAKE_SYSTEM}")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    string (REGEX MATCH "\\el[2-9]" os_version_suffix ${CMAKE_SYSTEM})
+    #message("-- os_version_suffix:      ${os_version_suffix}")
+endif()
 
-set(CMAKE_CXX_FLAGS                "-Wall")
-set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -D_DEBUG_")
-set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os")
-set(CMAKE_CXX_FLAGS_RELEASE        "-O2")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+include(cmake/StandardProjectSettings.cmake)
+include(cmake/PreventInSourceBuilds.cmake)
 
-include(cmake/disableBuildsOnSourceDir.cmake)
-include(cmake/cache.cmake)
+# Link this 'library' to set the c++ standard / compile-time options requested
+add_library(project_options INTERFACE)
+target_compile_features(project_options INTERFACE cxx_std_20)
 
-#add_subdirectory(src)
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp)
-add_executable(main ${SOURCE_FILES})
-
-option(DUMMY "Create a dummy executable" ON)
-option(DEBUG "Create a debug executable" ON)
-
-function(configureProject)
-    if (DUMMY)
-        add_compile_options(-D_DUMMY_ -D_DEBUG_)
+if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+    option(ENABLE_BUILD_WITH_TIME_TRACE "Enable -ftime-trace to generate time tracing .json files on clang" OFF)
+    if(ENABLE_BUILD_WITH_TIME_TRACE)
+        target_compile_options(project_options INTERFACE -ftime-trace)
     endif()
+endif()
 
-    if (DEBUG)
-        add_compile_options(-D_DEBUG_)
-    endif()
-endfunction()
+# Link this 'library' to use the warnings specified in CompilerWarnings.cmake
+add_library(project_warnings INTERFACE)
 
-configureProject()
+# enable cache system
+include(cmake/Cache.cmake)
 
-# newt
-if (LibNewt_LIBRARIES AND LibNewt_INCLUDE_DIRS)
-    set (LibNewt_FIND_QUIETLY TRUE)
-endif (LibNewt_LIBRARIES AND LibNewt_INCLUDE_DIRS)
+# Add linker configuration
+include(cmake/Linker.cmake)
+configure_linker(project_options)
 
-find_path (LibNewt_INCLUDE_DIRS NAMES newt.h)
-find_library (LibNewt_LIBRARIES NAMES newt)
+# standard compiler warnings
+include(cmake/CompilerWarnings.cmake)
+set_project_warnings(project_warnings)
 
-include (FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibNewt DEFAULT_MSG
-        LibNewt_LIBRARIES
-        LibNewt_INCLUDE_DIRS)
+# sanitizer options if supported by compiler
+include(cmake/Sanitizers.cmake)
+enable_sanitizers(project_options)
 
-mark_as_advanced(LibNewt_INCLUDE_DIRS LibNewt_LIBRARIES)
+# enable doxygen
+include(cmake/Doxygen.cmake)
+enable_doxygen()
 
-#find_package(LibNewt REQUIRED)
-# end of newt
+# allow for static analysis options
+include(cmake/StaticAnalyzers.cmake)
 
-# fmt
-find_package(fmt REQUIRED)
-include_directories(${fmt_INCLUDE_DIRS})
+option(BUILD_SHARED_LIBS "Enable compilation of shared libraries" OFF)
+option(ENABLE_PCH "Enable Precompiled Headers" OFF)
+option(ENABLE_CONAN "Use Conan for dependency management" OFF)
+option(ENABLE_TESTING "Enable Test Builds" OFF)
+option(ENABLE_FUZZING "Enable Fuzzing Builds" OFF)
+option(ENABLE_UNITY "Enable Unity builds of projects" OFF)
 
-# Boost
-find_package(Boost REQUIRED
-        COMPONENTS system thread log log_setup)
+# Very basic PCH example
+if(ENABLE_PCH)
+    # This sets a global PCH parameter, each project will build its own PCH, which is a good idea if any #define's change
+    #
+    # consider breaking this out per project as necessary
+    target_precompile_headers(
+            project_options
+            INTERFACE
+            <vector>
+            <string>
+            <map>
+            <utility>)
+endif()
 
-# -l flags for linking prog target
-#include_directories(${LibNewt_INCLUDE_DIRS})
-target_link_libraries(main
-        ${LibNewt_LIBRARIES}
-        Boost::headers Boost::system Boost::thread Boost::log Boost::log_setup
-        fmt::fmt
-)
+if(ENABLE_CONAN)
+    include(cmake/Conan.cmake)
+    run_conan()
+endif()
+
+if(ENABLE_TESTING)
+    enable_testing()
+    message("Building Tests. Be sure to check out test/constexpr_tests for constexpr testing")
+    add_subdirectory(test)
+endif()
+
+if(ENABLE_FUZZING)
+    message("Building Fuzz Tests, using fuzzing sanitizer https://www.llvm.org/docs/LibFuzzer.html")
+    add_subdirectory(fuzz_test)
+endif()
+
+if(ENABLE_UNITY)
+    # Add for any project you want to apply unity builds for
+    set_target_properties(project_options PROPERTIES UNITY_BUILD ON)
+endif()
+
+add_subdirectory(src)
+
+# Debugging:
+#message(${CMAKE_CXX_FLAGS})
+#message(${CMAKE_CXX_FLAGS_DEBUG})
+#message(${CMAKE_CXX_FLAGS_MINSIZEREL})
+#message(${CMAKE_CXX_FLAGS_RELEASE})
+#message(${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+#message(${CMAKE_EXE_LINKER_FLAGS})
+
+#set(CMAKE_CXX_FLAGS                "-Wall -Wextra -Wall -Wextra -Wno-unused-variable -Wno-unused-private-field -Wno-unused-parameter")
+#set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -D_DEBUG_ -fsanitize=address")
+#set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os")
+#set(CMAKE_CXX_FLAGS_RELEASE        "-Ofast")
+#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+#set(CMAKE_EXE_LINKER_FLAGS         "-Wall")

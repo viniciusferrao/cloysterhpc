@@ -21,9 +21,6 @@ class Shell : public Execution {
     friend class XCAT;
 
 private:
-    static std::string m_commandOutput;
-
-private:
     static int runCommand(const std::string&);
     void configureSELinuxMode (Cluster::SELinuxMode);
     void configureFirewall (bool);
