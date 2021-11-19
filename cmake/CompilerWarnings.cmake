@@ -4,6 +4,7 @@
 
 function(set_project_warnings project_name)
   option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+  option(DISABLE_ANNOYING_WARNINGS "Disable warning that are annoying during development" ON)
 
   set(MSVC_WARNINGS
       /W4 # Baseline reasonable warnings
@@ -64,7 +65,23 @@ function(set_project_warnings project_name)
       -Wuseless-cast # warn if you perform a cast to the same type
   )
 
-  if(MSVC)
+  # Those warning are just annoying during the development of the software
+  if(DISABLE_ANNOYING_WARNINGS)
+    set(ANNOYING_WARNINGS
+        -Wno-unused-variable
+        -Wno-unused-parameter
+    )
+
+    set(CLANG_ANNOYING_WARNINGS
+        -Wno-unused-private-field
+    )
+
+    # No implementation for MSVC
+    set(CLANG_WARNINGS ${CLANG_WARNINGS} ${ANNOYING_WARNINGS} ${CLANG_ANNOYING_WARNINGS})
+    set(GCC_WARNINGS ${GCC_WARNINGS} ${ANNOYING_WARNINGS})
+  endif()
+
+    if(MSVC)
     set(PROJECT_WARNINGS ${MSVC_WARNINGS})
   elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     set(PROJECT_WARNINGS ${CLANG_WARNINGS})

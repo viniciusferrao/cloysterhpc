@@ -37,14 +37,13 @@ asking the user for the data.
 "exit 0" status from the shell.
 * Unattended answer file via .conf file on user homedir.
 * Localization support.
-* Move to CMake
 
 ## Dependencies
 
 * Cloyster HPC requires [boost](https://www.boost.org) C++ libraries to be
 installed for compilation.
-* [fmt](https://fmt.dev/latest/index.html) is required when running on
-C++17 standard (Enterprise Linux 8).
+* External [fmt](https://fmt.dev/latest/index.html) library is required while
+std::format isn't available in major compilers.
 
 ## Decisions
 
@@ -82,10 +81,27 @@ issues than C++ in this case._
 
 ## Building
 
-For now compilation is handled on a single Makefile. Just run `make dummy` to
-generate a dummy executable. You can also run `make debug` and `make release`
-for debug and release builds respectively, but those builds will change and
-probably damage the running OS if they run as **root**. Be warned.
+We use CMake as building system for CloysterHPC. The CMake infrastructure was
+heavily based on 
+[cpp_starter_project](https://github.com/cpp-best-practices/cpp_starter_project)
+with some modifications.
+
+All default CMake targets are supported. We default to **Debug** target with
+**DUMMY** option enabled to generate a dummy binary that does not modifies the
+running OS.
+
+To build the software just run the commands:
+
+```
+ cmake -S . -B ./build
+ cmake --build ./build
+```
+
+Resulting binary will be available on `bin` directory in the root directory of
+the project.
+
+As a final warning: running the software without **DUMMY** option will probably
+damage the running OS if they run as **root**. Be advised.
 
 # Open Source Apache License
 
@@ -94,8 +110,8 @@ https://www.apache.org/licenses/LICENSE-2.0
 
 # Developers
 
-Want to help? Feel free to open a discussion thread so we can discuss about
-features and enhacements. After the first release we will start accepting pull
-requests (PR) so you can get your code merged.
+Want to help? Feel free to open a discussion thread, so we can discuss features
+and enhancements. After the first release we will start accepting pull requests
+(PR) so you can get your code merged.
 
 If you catch a bug please let us know! You know, malloc() isn't our friend...

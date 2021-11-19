@@ -1,3 +1,6 @@
+# CMake infrastructure heavily based on:
+# https://github.com/cpp-best-practices/cpp_starter_project
+
 cmake_minimum_required(VERSION 3.18.2)
 
 project(CloysterHPC
@@ -7,22 +10,31 @@ project(CloysterHPC
         LANGUAGES CXX
 )
 
-# OS Detection code
-#message("-- CMAKE_SYSTEM_INFO_FILE: ${CMAKE_SYSTEM_INFO_FILE}")
-#message("-- CMAKE_SYSTEM_NAME:      ${CMAKE_SYSTEM_NAME}")
-#message("-- CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
-#message("-- CMAKE_SYSTEM:           ${CMAKE_SYSTEM}")
+# Enterprise Linux (EL) detection code, we may find el2 to el9 kernels.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     string (REGEX MATCH "\\el[2-9]" os_version_suffix ${CMAKE_SYSTEM})
-    #message("-- os_version_suffix:      ${os_version_suffix}")
 endif()
 
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 
+# There is a bug on CMake that using cxx_std_20 always defaults to --std=gnu++20
+# instead of --std=c++20:
+# https://gitlab.kitware.com/cmake/cmake/-/issues/22224
+# https://stackoverflow.com/questions/67641124/gcc-11-how-to-tell-cmake-i-dont-want-the-default-c-gnu-extensions
 # Link this 'library' to set the c++ standard / compile-time options requested
 add_library(project_options INTERFACE)
-target_compile_features(project_options INTERFACE cxx_std_20)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if(${os_version_suffix} MATCHES "el8")
+        # If we match Enterprise Linux 8 just compile with C++17
+        target_compile_features(project_options INTERFACE cxx_std_17)
+    endif()
+else()
+    target_compile_features(project_options INTERFACE cxx_std_20)
+endif()
+# TODO: Find a way to set those features as project_options
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     option(ENABLE_BUILD_WITH_TIME_TRACE "Enable -ftime-trace to generate time tracing .json files on clang" OFF)
@@ -99,18 +111,3 @@ if(ENABLE_UNITY)
 endif()
 
 add_subdirectory(src)
-
-# Debugging:
-#message(${CMAKE_CXX_FLAGS})
-#message(${CMAKE_CXX_FLAGS_DEBUG})
-#message(${CMAKE_CXX_FLAGS_MINSIZEREL})
-#message(${CMAKE_CXX_FLAGS_RELEASE})
-#message(${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-#message(${CMAKE_EXE_LINKER_FLAGS})
-
-#set(CMAKE_CXX_FLAGS                "-Wall -Wextra -Wall -Wextra -Wno-unused-variable -Wno-unused-private-field -Wno-unused-parameter")
-#set(CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -D_DEBUG_ -fsanitize=address")
-#set(CMAKE_CXX_FLAGS_MINSIZEREL     "-Os")
-#set(CMAKE_CXX_FLAGS_RELEASE        "-Ofast")
-#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
-#set(CMAKE_EXE_LINKER_FLAGS         "-Wall")
