@@ -38,7 +38,7 @@ private:
 
     void configureRepositories (const std::unique_ptr<Cluster>&);
     void installOpenHPCBase ();
-    void configureTimeService ();
+    void configureTimeService (const std::unique_ptr<Cluster>&);
     void configureQueueSystem (const std::unique_ptr<Cluster>&);
     void configureInfiniband (const std::unique_ptr<Cluster>&);
     void configureNetworkFileSystem ();

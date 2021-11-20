@@ -51,8 +51,6 @@ int main(int argc, char** argv) {
     executionEngine->install(model);
     //delete engine;
 
-
-
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */
     std::string homeDirectory = getEnvironmentVariable("HOME");

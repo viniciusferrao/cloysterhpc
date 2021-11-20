@@ -344,6 +344,7 @@ void Cluster::fillTestData () {
 //    m_headnode.getConnection().front().setNetwork(m_network.external.front());
     m_headnode.addConnection(m_network.external.front(), "en0", "172.26.1.22");
     m_headnode.addConnection(m_network.management.front(), "en1", "10.1.1.7");
+    m_headnode.addConnection(m_network.service.front(), "en1", "192.168.22.8");
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);

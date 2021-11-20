@@ -126,7 +126,7 @@ void Shell::disableNetworkManagerDNSOverride () {
  * settings and addresses based on data available on the model.
  * At the end of execution we disable DNS override since the headnode machine
  * will be providing the service.
- * TODO: Get profile and type as string
+ * TODO: Get profile and type as string (std::unordered_map)
  */
 void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
     runCommand("systemctl enable --now NetworkManager");
@@ -201,7 +201,7 @@ void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
 }
 
-void Shell::configureTimeService () {
+void Shell::configureTimeService (const std::unique_ptr<Cluster>& cluster) {
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 
@@ -211,8 +211,24 @@ void Shell::configureTimeService () {
     std::string_view filename = "/etc/chrony.conf";
 #endif
 
-    /* TODO: Restrict by networks */
-    cloyster::addStringToFile(filename, "allow all");
+    // TODO: Check if this code may be a repetition from configureNetworks()
+    const std::vector<Connection> connections =
+            cluster->getHeadnode().getConnections();
+
+    for (const auto& connection : std::as_const(connections)) {
+        if ((connection.getNetwork()->getProfile() ==
+             Network::Profile::Management) ||
+            (connection.getNetwork()->getProfile() ==
+             Network::Profile::Service)) {
+
+            cloyster::addStringToFile(
+                    filename,
+                    fmt::format("allow {}/{}\n",
+                              connection.getAddress(),
+                              connection.getNetwork()->cidr.at(
+                                  connection.getNetwork()->getSubnetMask())));
+        }
+    }
 
     runCommand("systemctl enable --now chronyd");
 }
@@ -309,7 +325,8 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     configureNetworks(cluster);
     runSystemUpdate(cluster->isUpdateSystem());
 
-    configureTimeService();
+    // TODO: Pass headnode instead of cluster to reduce complexity
+    configureTimeService(cluster);
 
     configureRepositories(cluster);
     runSystemUpdate(cluster->isUpdateSystem());

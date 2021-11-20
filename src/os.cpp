@@ -28,7 +28,7 @@ void OS::setArch(Arch arch) {
 
 void OS::setArch(std::string_view arch) {
     if (arch != "x86_64") {
-        throw; /* Unsupported architecture */
+        throw std::runtime_error("Unsupported architecture");
     }
 
     m_arch = OS::Arch::x86_64;
@@ -188,7 +188,7 @@ void OS::discover () {
          * key=value style.
          */
         std::string line;
-        while (getline(file, line)) {
+        while (std::getline(file, line)) {
 
             /* TODO: Refactor the next three conditions */
 #if __cplusplus >= 202002L
