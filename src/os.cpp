@@ -133,11 +133,11 @@ std::string OS::getVersion() const {
 }
 
 void OS::setVersion(const std::string& version) {
-    setMajorVersion(stoi(
-            version.substr(0, version.find('.'))));
+    setMajorVersion(static_cast<unsigned>(std::stoul(
+            version.substr(0, version.find('.')))));
 
-    setMinorVersion(stoi(
-            version.substr(version.find('.') + 1)));
+    setMinorVersion(static_cast<unsigned>(stoul(
+            version.substr(version.find('.') + 1))));
 }
 
 /* We should refactor to boost::property_tree on both methods:
@@ -225,11 +225,11 @@ void OS::discover () {
 
 #ifdef _DEBUG_
 void OS::print() const {
-    std::cout << "Architecture: " << (int)m_arch << std::endl;
-    std::cout << "Family: " << (int)m_family << std::endl;
+    std::cout << "Architecture: " << static_cast<int>(m_arch) << std::endl;
+    std::cout << "Family: " << static_cast<int>(m_family) << std::endl;
     std::cout << "Kernel Release: " << m_kernel << std::endl;
-    std::cout << "Platform: " << (int)m_platform << std::endl;
-    std::cout << "Distribution: " << (int)m_distro << std::endl;
+    std::cout << "Platform: " << static_cast<int>(m_platform) << std::endl;
+    std::cout << "Distribution: " << static_cast<int>(m_distro) << std::endl;
     std::cout << "Major Version: " << m_majorVersion << std::endl;
     std::cout << "Minor Version: " << m_minorVersion << std::endl;
 }

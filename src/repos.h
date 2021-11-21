@@ -83,15 +83,15 @@ namespace ol {
 
 class Repos {
 private:
-    std::string filename;
-    std::string id;
-    bool enabled;
-    std::string name;
-    std::string baseurl;
-    std::string metalink;
-    bool gpgcheck;
-    std::string gpgkey;
-    std::string gpgkeyPath; /* Location of the keyfile on filesystem */
+    std::string m_filename;
+    std::string m_id;
+    bool m_enabled;
+    std::string m_name;
+    std::string m_baseurl;
+    std::string m_metalink;
+    bool m_gpgcheck;
+    std::string m_gpgkey;
+    std::string m_gpgkeyPath; /* Location of the keyfile on filesystem */
 
 public:
     void createConfigurationFile (const std::string&, bool, const std::string&, const std::string&,

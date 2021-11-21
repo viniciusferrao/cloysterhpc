@@ -17,7 +17,7 @@ std::vector<std::string> NewtViewFieldMenu::draw (
 
     char** fieldEntries;
     struct newtWinEntry* field;
-    unsigned vectorSize = items.size();
+    size_t vectorSize = items.size();
 
     field = new struct newtWinEntry[vectorSize + 1]();
     fieldEntries = new char*[vectorSize + 1]();

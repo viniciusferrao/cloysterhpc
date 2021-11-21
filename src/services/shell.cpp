@@ -98,8 +98,9 @@ void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
                             fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
-void Shell::configureTimezone (const std::string& timezone) {
-    runCommand(fmt::format("timedatectl set timezone {}", timezone));
+// We use tz instead of timezone to avoid shadowing time.h
+void Shell::configureTimezone (const std::string& tz) {
+    runCommand(fmt::format("timedatectl set timezone {}", tz));
 }
 
 void Shell::configureLocale (const std::string& locale) {
@@ -152,9 +153,11 @@ void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
                 "mtu 1500 ipv4.method manual ipv4.address {}/{} "
                 "ipv4.gateway {} ipv4.dns \"{}\" "
                 "ipv4.dns-search {} ipv6.method disabled",
-                connection.getNetwork()->getProfile(),
+                connection.getNetwork()->getProfileString.at(
+                        connection.getNetwork()->getProfile()),
                 interface,
-                connection.getNetwork()->getType(),
+                connection.getNetwork()->getTypeString.at(
+                        connection.getNetwork()->getType()),
                 connection.getAddress(),
                 connection.getNetwork()->cidr.at(
                         connection.getNetwork()->getSubnetMask()),
@@ -236,6 +239,8 @@ void Shell::configureTimeService (const std::unique_ptr<Cluster>& cluster) {
 void Shell::configureQueueSystem (const std::unique_ptr<Cluster>& cluster) {
     // if (Cluster::QueueSystem::SLURM)
     runCommand("dnf -y install ohpc-slurm-server");
+//    std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
+//                               "/etc/slurm/slurm.conf");
     runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
     runCommand(fmt::format("perl -pi -e "
                            "\"s/ControlMachine=\\S+/ControlMachine={}/\" "

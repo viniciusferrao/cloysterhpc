@@ -5,6 +5,7 @@
 #include <regex>
 
 #include <boost/algorithm/string.hpp>
+#include <utility>
 
 #include <arpa/inet.h> /* inet_*() functions */
 #include <ifaddrs.h> /* getifaddrs() */

@@ -54,8 +54,8 @@ const std::string& Cluster::getTimezone() const {
     return m_timezone;
 }
 
-void Cluster::setTimezone(const std::string& timezone) {
-    m_timezone = timezone;
+void Cluster::setTimezone(const std::string& tz) {
+    m_timezone = tz;
 }
 
 const std::string& Cluster::getLocale() const {
@@ -259,7 +259,7 @@ void Cluster::printData () {
 
     printNetworks();
 
-    std::cerr << "Provisioner: " << (int)getProvisioner() << std::endl;
+    std::cerr << "Provisioner: " << static_cast<int>(getProvisioner()) << std::endl;
 
     std::cerr << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
     std::cerr << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;

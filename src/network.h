@@ -16,7 +16,19 @@
 class Network {
 public:
     enum class Profile { External, Management, Service, Application };
+    const std::unordered_map<Profile, std::string> getProfileString = {
+        {Profile::External,    "External"},
+        {Profile::Management,  "Management"},
+        {Profile::Service,     "Service"},
+        {Profile::Application, "Application" }
+    };
+
     enum class Type { Ethernet, Infiniband };
+    const std::unordered_map<Type, std::string> getTypeString = {
+        {Type::Ethernet,   "Ethernet"},
+        {Type::Infiniband, "Infiniband"}
+    };
+
     const std::unordered_map<std::string, uint8_t> cidr = {
         {"0.0.0.0",          0},
         {"128.0.0.0",        1},

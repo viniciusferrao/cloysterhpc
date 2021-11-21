@@ -40,7 +40,7 @@ std::string NewtViewListMenu::draw (const char * title, const char * message,
         case 0:
             /* F12 is pressed, and we don't care; continue to case 1 */
         case 1:
-            return items[selector];
+            return items[static_cast<unsigned long>(selector)];
         case 2:
             abortInstall();
             break;
