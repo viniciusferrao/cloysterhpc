@@ -34,6 +34,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     endif()
 endif()
 
+# Library: spdlog
+find_package(spdlog)
+
 # Generate a dummy binary
 # TODO: Create a custom build target
 option(DUMMY "Create a dummy executable" ON)
@@ -55,6 +58,7 @@ target_link_libraries(main
     ${newt_LIBRARIES}
     Boost::headers Boost::system Boost::thread Boost::log Boost::log_setup
     fmt::fmt
+    spdlog::spdlog
     ${STDC++FS}
 )
 

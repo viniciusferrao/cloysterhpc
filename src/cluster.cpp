@@ -10,6 +10,7 @@
 #include "functions.h"
 #include "headnode.h"
 #include "services/xcat.h"
+#include "services/log.h"
 
 #include <iostream>
 #include <regex>
@@ -241,6 +242,7 @@ void Cluster::printNetwork(
 }
 
 void Cluster::printNetworks() {
+    LOG_TRACE("Dump network data:")
     printNetwork(m_network.external);
     printNetwork(m_network.management);
     printNetwork(m_network.service);
@@ -250,6 +252,7 @@ void Cluster::printNetworks() {
 
 #ifdef _DEBUG_
 void Cluster::printData () {
+    LOG_TRACE("Dump cluster data:");
     std::cerr << "Cluster attributes defined:" << std::endl;
     std::cerr << "Timezone: " << getTimezone() << std::endl;
     std::cerr << "Locale: " << getLocale() << std::endl;

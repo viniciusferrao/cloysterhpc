@@ -6,4 +6,6 @@
 #ifndef CONST_H
 #define CONST_H
 
+constexpr const char* productName = "CloysterHPC";
+
 #endif /* CONST_H */

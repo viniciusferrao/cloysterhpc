@@ -44,6 +44,7 @@ asking the user for the data.
 installed for compilation.
 * External [fmt](https://fmt.dev/latest/index.html) library is required while
 std::format isn't available in major compilers.
+* Logging is available through [spdlog](https://github.com/gabime/spdlog).
 
 ## Decisions
 

@@ -10,6 +10,7 @@
 #include <getopt.h>
 #endif
 
+#include "services/log.h"
 #include "error.h"
 #include "const.h"
 #include "types.h"
@@ -26,6 +27,9 @@
 #include "services/shell.h"
 
 int main(int argc, char** argv) {
+    // TODO: Parse command line options for log levels
+    Log::init();
+    LOG_INFO("{} Started", productName);
     int rc; /* return code */
 
     //Cluster* model = new Cluster();
@@ -78,5 +82,7 @@ int main(int argc, char** argv) {
         cluster.install();
 #endif
 
+    LOG_INFO("{} is ending", productName);
+    Log::shutdown();
     return EXIT_SUCCESS;
 }
