@@ -76,8 +76,9 @@ private:
     std::filesystem::path m_isoPath;
 
 public:
-    //const std::unique_ptr<Headnode>& getHeadnode() const;
-    Headnode getHeadnode() const;
+    // If we want to change things inside the headnode it must be passed as a
+    // reference, or else a simple setter will fail.
+    Headnode& getHeadnode();
     bool isFirewall() const;
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;

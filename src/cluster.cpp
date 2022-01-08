@@ -28,7 +28,7 @@
 //Cluster::Cluster() = default;
 //Cluster::~Cluster() = default;
 
-Headnode Cluster::getHeadnode() const {
+Headnode& Cluster::getHeadnode() {
 //const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
     return m_headnode;
 }

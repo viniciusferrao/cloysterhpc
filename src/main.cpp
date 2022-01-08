@@ -33,6 +33,10 @@ int main(int argc, char** argv) {
     //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
 
+#ifdef _DEBUG_
+    model->fillTestData();
+#endif
+
     //View* view = new Newt();
     auto view = std::make_unique<Newt>();
 
@@ -40,7 +44,6 @@ int main(int argc, char** argv) {
     auto presenter = std::make_unique<Presenter>(view, model);
 
 #ifdef _DEBUG_
-    model->fillTestData();
     model->printData();
 #endif
 

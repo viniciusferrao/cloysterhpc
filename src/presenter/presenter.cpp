@@ -3,16 +3,44 @@
 //
 
 #include "presenter.h"
+#include "../services/log.h"
 
 Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
     welcomeMessage();
+    LOG_TRACE("Welcome message displayed\n");
+
     installInstructions();
+    LOG_TRACE("Install instructions displayed\n");
+
     m_model->setTimezone(timezoneSelection({"UTC", "GMT-3"}));
+    LOG_TRACE("Timezone set to: {}\n", m_model->getTimezone());
+
     m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
-    networkHostnameSelection({"Hostname", "Domain name"});
+    LOG_TRACE("Locale set to: {}\n", m_model->getLocale());
+
+    // TODO: Get rid of aux
+    std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
+    m_model->getHeadnode().setHostname(aux[0]);
+    LOG_TRACE("Returned hostname: {}\n", aux[0]);
+    LOG_ASSERT(aux[0] == m_model->getHeadnode().getHostname(),
+               "Failed setting hostname\n");
+
+    m_model->setDomainName(aux[1]);
+    LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
+    LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
+    LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
+
+#if 0
+    [this](std::vector<std::string> aux) -> void {
+        aux = networkHostnameSelection({"Hostname", "Domain name"});
+        m_model->getHeadnode().setHostname(aux[0]);
+        m_model->setDomainName(aux[1]);
+    };
+#endif
+
     networkInterfaceSelection({"eth0", "eth1", "enp4s0f0"});
     networkAddress({"Headnode IP", "Management network"});
 
