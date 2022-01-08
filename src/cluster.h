@@ -77,7 +77,7 @@ private:
 
 public:
     //const std::unique_ptr<Headnode>& getHeadnode() const;
-    const Headnode getHeadnode() const;
+    Headnode getHeadnode() const;
     bool isFirewall() const;
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;
@@ -128,8 +128,8 @@ public:
     Postfix postfix;
     bool remoteAccess {};
 
-    Cluster ();
-    ~Cluster ();
+    //Cluster();
+    //~Cluster();
 
 #ifdef _DEBUG_
     void printData ();

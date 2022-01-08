@@ -20,11 +20,9 @@
 #include "cluster.h"
 #include "connection.h"
 #include "terminalui.h"
-#include "presenter/presenterBase.h"
-#include "presenter/presenterWelcome.h"
-#include "view/newtViewBase.h"
-#include "view/newtViewMessage.h"
+#include "view/newt.h"
 #include "services/shell.h"
+#include "presenter/presenter.h"
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
@@ -35,15 +33,11 @@ int main(int argc, char** argv) {
     //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
 
-#if 0
-    //View* view = new NewtViewBase();
-    auto view = std::make_unique<NewtViewMessage>();
+    //View* view = new Newt();
+    auto view = std::make_unique<Newt>();
 
-    //PresenterBase* presenter = new PresenterBase(std::move(view),
-    //                                             std::move(model));
-    auto presenter = std::make_unique<PresenterWelcome>(std::move(view),
-                                                     std::move(model));
-#endif
+    //Presenter* presenter = new Presenter(view, model);
+    auto presenter = std::make_unique<Presenter>(view, model);
 
 #ifdef _DEBUG_
     model->fillTestData();

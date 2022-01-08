@@ -24,13 +24,11 @@
 #include <fmt/format.h>
 #endif
 
-Cluster::Cluster () {
-    //m_headnode = std::make_unique<Headnode>();
-}
+// The rule of zero
+//Cluster::Cluster() = default;
+//Cluster::~Cluster() = default;
 
-Cluster::~Cluster () = default;
-
-const Headnode Cluster::getHeadnode() const {
+Headnode Cluster::getHeadnode() const {
 //const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
     return m_headnode;
 }
@@ -352,7 +350,7 @@ void Cluster::fillTestData () {
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
-    setISOPath("/root/OracleLinux-R8-U4-x86_64-dvd.iso");
+    setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
     addNode("n01", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
             "ADMIN", "ADMIN");

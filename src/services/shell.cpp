@@ -4,6 +4,7 @@
 #include "shell.h"
 #include "xcat.h"
 #include "../functions.h"
+#include "log.h"
 
 #ifdef _DEBUG_
 #include <iostream>
@@ -18,6 +19,7 @@
 
 int Shell::runCommand(const std::string& command) {
 #ifndef _DUMMY_
+    LOG_TRACE("Running command: {}", command);
     boost::process::ipstream pipe_stream;
     boost::process::child c(command, boost::process::std_out > pipe_stream);
 
@@ -30,10 +32,11 @@ int Shell::runCommand(const std::string& command) {
         c.wait();
     }
 
+    LOG_DEBUG("Exit code: {}", c.exit_code);
     return c.exit_code();
 
 #else
-    std::cout << "exec: " << command << std::endl;
+    LOG_TRACE("exec: {}", command);
     return 0;
 #endif
 }
@@ -66,9 +69,6 @@ void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
         case Cluster::SELinuxMode::Disabled:
             disableSELinux();
             break;
-
-        default:
-            throw; /* Invalid mode */
     }
 }
 
@@ -127,13 +127,9 @@ void Shell::disableNetworkManagerDNSOverride () {
  * settings and addresses based on data available on the model.
  * At the end of execution we disable DNS override since the headnode machine
  * will be providing the service.
- * TODO: Get profile and type as string (std::unordered_map)
  */
-void Shell::configureNetworks(const std::unique_ptr<Cluster>& cluster) {
+void Shell::configureNetworks(const std::vector<Connection>& connections) {
     runCommand("systemctl enable --now NetworkManager");
-
-    const std::vector<Connection> connections =
-            cluster->getHeadnode().getConnections();
 
     for (auto const& connection : std::as_const(connections)) {
         /* For now, we just skip the external network to avoid disconnects */
@@ -194,9 +190,6 @@ void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
             runCommand("dnf config-manager --set-enabled "
                        "ol8_codeready_builder");
             break;
-
-        default:
-            throw; /* Unsupported OS */
     }
 }
 
@@ -204,7 +197,7 @@ void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
 }
 
-void Shell::configureTimeService (const std::unique_ptr<Cluster>& cluster) {
+void Shell::configureTimeService (const std::vector<Connection>& connections) {
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 
@@ -213,10 +206,6 @@ void Shell::configureTimeService (const std::unique_ptr<Cluster>& cluster) {
 #else
     std::string_view filename = "/etc/chrony.conf";
 #endif
-
-    // TODO: Check if this code may be a repetition from configureNetworks()
-    const std::vector<Connection> connections =
-            cluster->getHeadnode().getConnections();
 
     for (const auto& connection : std::as_const(connections)) {
         if ((connection.getNetwork()->getProfile() ==
@@ -259,10 +248,10 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
             break;
         case Cluster::OFED::Mellanox:
             /* TODO: Implement MLNX OFED support */
-            runCommand("dnf -y groupinstall \"Infiniband Support\"");
-            break;
-        default:
-            throw; /* Unsupported OFED stack */
+            throw std::logic_error("MLNX OFED is not supported");
+        case Cluster::OFED::Oracle:
+            /* TODO: Implement Oracle RDMA release */
+            throw std::logic_error("Oracle RDMA release is not supported");
     }
 }
 
@@ -327,11 +316,11 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
     configureTimezone(cluster->getTimezone());
     configureLocale(cluster->getLocale());
 
-    configureNetworks(cluster);
+    configureNetworks(cluster->getHeadnode().getConnections());
     runSystemUpdate(cluster->isUpdateSystem());
 
     // TODO: Pass headnode instead of cluster to reduce complexity
-    configureTimeService(cluster);
+    configureTimeService(cluster->getHeadnode().getConnections());
 
     configureRepositories(cluster);
     runSystemUpdate(cluster->isUpdateSystem());

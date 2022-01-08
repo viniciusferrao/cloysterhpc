@@ -2,11 +2,14 @@
 // Created by Vinícius Ferrão on 30/10/21.
 //
 
-#include "newtViewFieldMenu.h"
+#include "newt.h"
 
-std::vector<std::string> NewtViewFieldMenu::draw (
-        const char * title, const char * message,
-        const std::vector<std::string>& items, const char * helpMessage) {
+std::vector<std::string> Newt::fieldMenu (
+        const char* title,
+        const char* message,
+        const std::vector<std::string>& items,
+        const char* helpMessage)
+{
 
     int returnValue;
 
@@ -56,7 +59,7 @@ std::vector<std::string> NewtViewFieldMenu::draw (
             debugEntries(field);
 #endif
             for (unsigned i = 0 ; field[i].value ; i++) {
-                entries.push_back(*field[i].value);
+                entries.emplace_back(*field[i].value);
             }
 
             delete[] fieldEntries;

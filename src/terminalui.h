@@ -61,12 +61,6 @@ public:
 
     /* Refactoring to MVC */
     TerminalUI ();
-    std::string timezoneSelection (const std::vector<std::string>&);
-    std::string localeSelection (const std::vector<std::string>&);
-    std::vector<std::string> networkHostnameSelection
-                                              (const std::vector<std::string>&);
-    std::string networkInterfaceSelection (const std::vector<std::string>&);
-    std::vector<std::string> networkAddress (const std::vector<std::string>&);
 
 #ifdef _DEBUG_
     void debugInfo (void);

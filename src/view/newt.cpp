@@ -2,13 +2,13 @@
 // Created by Vinícius Ferrão on 30/10/21.
 //
 
-#include "newtViewBase.h"
+#include "newt.h"
 
 #include <cstring> /* strlen() */
 #include <cstdio> /* sprintf() */
 #include <newt.h>
 
-NewtViewBase::NewtViewBase() {
+Newt::Newt() {
     newtInit();
     newtCls();
 
@@ -20,18 +20,18 @@ NewtViewBase::NewtViewBase() {
     newtRefresh();
 }
 
-NewtViewBase::~NewtViewBase() {
+Newt::~Newt() {
     newtFinished();
 }
 
-void NewtViewBase::abortInstall () {
-    this->~NewtViewBase();
+void Newt::abortInstall () {
+    this->~Newt();
     std::cout << MSG_INSTALL_ABORT;
     exit(EXIT_SUCCESS);
 }
 
 /* TODO: Refactor this with a C++ dialect */
-bool NewtViewBase::hasEmptyField (const struct newtWinEntry *entries) {
+bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
     /* This may result in a buffer overflow if the string is > 63 chars */
     char message[63] = {};
 
@@ -50,7 +50,7 @@ bool NewtViewBase::hasEmptyField (const struct newtWinEntry *entries) {
     return false;
 }
 
-void NewtViewBase::helpMessage (const char* message) {
+void Newt::helpMessage (const char* message) {
     newtBell();
     newtWinMessage(const_cast<char *>(MSG_TITLE_HELP),
                    const_cast<char *>(MSG_BUTTON_OK),
@@ -59,7 +59,7 @@ void NewtViewBase::helpMessage (const char* message) {
 
 /* TODO: Refactor this with a C++ dialect */
 #ifdef _DEBUG_
-void NewtViewBase::debugEntries(const struct newtWinEntry *entries) {
+void Newt::debugEntries(const struct newtWinEntry *entries) {
     /* This may result in a buffer overflow if the string is > 255 chars */
     char message[255] = {};
 

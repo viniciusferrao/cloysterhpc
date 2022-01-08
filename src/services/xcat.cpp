@@ -173,7 +173,7 @@ void XCAT::generateSynclistsFile () {
                               "/etc/munge/munge.key -> /etc/munge/munge.key\n");
 }
 
-void XCAT::configureOSImageDefinition (const std::unique_ptr<Cluster>& cluster) {
+void XCAT::configureOSImageDefinition(const std::unique_ptr<Cluster>& cluster) {
     Shell::runCommand(fmt::format(
             "chdef -t osimage {} --plus otherpkglist="
             "/install/custom/netboot/compute.pkglist", m_stateless.osimage));

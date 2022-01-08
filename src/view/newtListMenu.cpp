@@ -2,11 +2,13 @@
 // Created by Vinícius Ferrão on 30/10/21.
 //
 
-#include "newtViewListMenu.h"
+//#include "newtListMenu.h"
+#include "newt.h"
 
-std::string NewtViewListMenu::draw (const char * title, const char * message,
-                                      const std::vector<std::string>& items,
-                                      const char * helpMessage) {
+//std::string NewtListMenu::draw (const char * title, const char * message,
+std::string Newt::listMenu (const char* title, const char* message,
+                            const std::vector<std::string>& items,
+                            const char* helpMessage) {
 
     int returnValue;
     int selector = 0;
