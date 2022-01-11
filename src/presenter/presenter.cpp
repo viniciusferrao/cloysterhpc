@@ -41,8 +41,12 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-    networkInterfaceSelection({"eth0", "eth1", "enp4s0f0"});
-    networkAddress({"Headnode IP", "Management network"});
+    // Network questions
+    m_model->getHeadnode().addConnection(
+            (m_model->getNetwork(Network::Profile::External)).front(),
+            networkInterfaceSelection({"eth0", "eth1", "enp4s0f0"}),
+            "192.168.10.10");
+            //networkAddress({"Headnode IP", "Management network"}));
 
     // Destroy the view since we don't need it anymore
     m_view.reset();
