@@ -12,7 +12,7 @@
  */
 class Connection {
 private:
-    std::shared_ptr<Network> m_network;
+    Network m_network;
 
     std::string m_interface;
     std::string m_mac;
@@ -27,7 +27,7 @@ private:
 public:
     Connection();
     Connection(const std::string&, const std::string&);
-    Connection(std::shared_ptr<Network>,
+    Connection(const Network&,
                const std::string&, const std::string&);
 
     /* TODO: Remove this constructor */
@@ -50,8 +50,8 @@ public:
     const std::string& getFQDN() const;
     void setFQDN(const std::string&);
 
-    const std::shared_ptr<Network>& getNetwork() const;
-    void setNetwork(std::shared_ptr<Network>);
+    const Network& getNetwork() const;
+//    void setNetwork(const Network&);
 };
 
 #endif /* CONNECTION_H */

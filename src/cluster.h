@@ -67,8 +67,7 @@ private:
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
-    // TODO: Better networking abstraction
-    std::vector<std::shared_ptr<Network>> m_network;
+    std::vector<Network> m_network;
 
     bool m_updateSystem {};
     std::filesystem::path m_isoPath;
@@ -87,7 +86,7 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-    const std::vector<std::shared_ptr<Network>>& getNetwork(Network::Profile) const;
+    const std::vector<Network>& getNetwork(Network::Profile) const;
     void addNetwork(Network::Profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
@@ -109,7 +108,7 @@ public:
                  std::string_view, std::string_view, std::string_view);
 
 #ifdef _DEBUG_
-    void printNetworks(const std::vector<std::shared_ptr<Network>>&);
+    void printNetworks(const std::vector<Network>&);
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */

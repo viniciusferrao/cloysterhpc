@@ -38,7 +38,7 @@ public:
 
     //const std::unique_ptr<Connection>& getConnection() const;
     [[nodiscard]] const std::vector<Connection>& getConnections() const;
-    void addConnection(const std::shared_ptr<Network>&, const std::string&,
+    void addConnection(const Network&, const std::string&,
                        const std::string&);
 
     [[nodiscard]] const Connection& getConnection(Network::Profile) const;

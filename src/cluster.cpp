@@ -96,7 +96,7 @@ void Cluster::setDomainName(const std::string& domainName) {
 }
 
 /* TODO: This implementation of network is not that great */
-const std::vector<std::shared_ptr<Network>>& Cluster::getNetwork(
+const std::vector<Network>& Cluster::getNetwork(
                                         Network::Profile profile) const {
     return m_network;
 }
@@ -126,7 +126,7 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& domainName,
                              const std::vector<std::string>& nameserver) {
 
-    m_network.emplace_back(std::make_shared<Network>(
+    m_network.emplace_back(Network(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
 }
@@ -178,7 +178,7 @@ void Cluster::addNode(std::string_view t_name, const std::string& t_address,
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
 void Cluster::printNetworks(
-        const std::vector<std::shared_ptr<Network>>& networkType) {
+        const std::vector<Network>& networkType) {
 
     LOG_TRACE("Dump network data:");
 
@@ -190,16 +190,16 @@ void Cluster::printNetworks(
     for (size_t i = 0; auto const &network: networkType) {
 #endif
         std::cerr << fmt::format("Management Network [{}]", i++) << std::endl;
-        std::cerr << "Address: " << network->getAddress() << std::endl;
-        std::cerr << "Subnet Mask: " << network->getSubnetMask() << std::endl;
-        std::cerr << "Gateway " << network->getGateway() << std::endl;
-        std::cerr << "VLAN " << network->getVLAN() << std::endl;
-        std::cerr << "Domain Name: " << network->getDomainName() << std::endl;
+        std::cerr << "Address: " << network.getAddress() << std::endl;
+        std::cerr << "Subnet Mask: " << network.getSubnetMask() << std::endl;
+        std::cerr << "Gateway " << network.getGateway() << std::endl;
+        std::cerr << "VLAN " << network.getVLAN() << std::endl;
+        std::cerr << "Domain Name: " << network.getDomainName() << std::endl;
 #if __cplusplus < 202002L
         j = 0;
         for (auto const &nameserver: network->getNameserver()) {
 #else
-        for (size_t j = 0; auto const &nameserver: network->getNameserver()) {
+        for (size_t j = 0; auto const &nameserver: network.getNameserver()) {
 #endif
             std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
         }

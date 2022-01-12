@@ -133,7 +133,7 @@ void Shell::configureNetworks(const std::vector<Connection>& connections) {
 
     for (auto const& connection : std::as_const(connections)) {
         /* For now, we just skip the external network to avoid disconnects */
-        if (connection.getNetwork()->getProfile() == Network::Profile::External)
+        if (connection.getNetwork().getProfile() == Network::Profile::External)
             continue;
 
         auto interface = connection.getInterface();
@@ -149,17 +149,17 @@ void Shell::configureNetworks(const std::vector<Connection>& connections) {
                 "mtu 1500 ipv4.method manual ipv4.address {}/{} "
                 "ipv4.gateway {} ipv4.dns \"{}\" "
                 "ipv4.dns-search {} ipv6.method disabled",
-                connection.getNetwork()->getProfileString.at(
-                        connection.getNetwork()->getProfile()),
+                connection.getNetwork().getProfileString.at(
+                        connection.getNetwork().getProfile()),
                 interface,
-                connection.getNetwork()->getTypeString.at(
-                        connection.getNetwork()->getType()),
+                connection.getNetwork().getTypeString.at(
+                        connection.getNetwork().getType()),
                 connection.getAddress(),
-                connection.getNetwork()->cidr.at(
-                        connection.getNetwork()->getSubnetMask()),
-                connection.getNetwork()->getGateway(),
-                fmt::join(connection.getNetwork()->getNameserver(), " "),
-                connection.getNetwork()->getDomainName()));
+                connection.getNetwork().cidr.at(
+                        connection.getNetwork().getSubnetMask()),
+                connection.getNetwork().getGateway(),
+                fmt::join(connection.getNetwork().getNameserver(), " "),
+                connection.getNetwork().getDomainName()));
     }
 
     disableNetworkManagerDNSOverride();
@@ -208,17 +208,17 @@ void Shell::configureTimeService (const std::vector<Connection>& connections) {
 #endif
 
     for (const auto& connection : std::as_const(connections)) {
-        if ((connection.getNetwork()->getProfile() ==
+        if ((connection.getNetwork().getProfile() ==
              Network::Profile::Management) ||
-            (connection.getNetwork()->getProfile() ==
+            (connection.getNetwork().getProfile() ==
              Network::Profile::Service)) {
 
             cloyster::addStringToFile(
                     filename,
                     fmt::format("allow {}/{}\n",
                               connection.getAddress(),
-                              connection.getNetwork()->cidr.at(
-                                  connection.getNetwork()->getSubnetMask())));
+                              connection.getNetwork().cidr.at(
+                                  connection.getNetwork().getSubnetMask())));
         }
     }
 
