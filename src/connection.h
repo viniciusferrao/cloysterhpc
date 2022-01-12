@@ -13,6 +13,7 @@
 class Connection {
 private:
     std::shared_ptr<Network> m_network;
+
     std::string m_interface;
     std::string m_mac;
     /* TODO: Use std::vector to support more than one IP address */

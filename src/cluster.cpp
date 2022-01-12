@@ -98,19 +98,7 @@ void Cluster::setDomainName(const std::string& domainName) {
 /* TODO: This implementation of network is not that great */
 const std::vector<std::shared_ptr<Network>>& Cluster::getNetwork(
                                         Network::Profile profile) const {
-
-    switch (profile) {
-        case Network::Profile::External:
-            return m_network.external;
-        case Network::Profile::Management:
-            return m_network.management;
-        case Network::Profile::Service:
-            return m_network.service;
-        case Network::Profile::Application:
-            return m_network.application;
-        default:
-            throw std::runtime_error("BUG: Invalid network profile reached");
-    }
+    return m_network;
 }
 
 #if 0
@@ -138,31 +126,9 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& domainName,
                              const std::vector<std::string>& nameserver) {
 
-    switch (profile) {
-        case Network::Profile::External:
-            m_network.external.emplace_back(std::make_shared<Network>(
+    m_network.emplace_back(std::make_shared<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
-            break;
-
-        case Network::Profile::Management:
-            m_network.management.emplace_back(std::make_shared<Network>(
-                profile, type, address, subnetMask, gateway, vlan, domainName,
-                nameserver));
-            break;
-
-        case Network::Profile::Service:
-            m_network.service.emplace_back(std::make_shared<Network>(
-                profile, type, address, subnetMask, gateway, vlan, domainName,
-                nameserver));
-            break;
-
-        case Network::Profile::Application:
-            m_network.application.emplace_back(std::make_shared<Network>(
-                profile, type, address, subnetMask, gateway, vlan, domainName,
-                nameserver));
-            break;
-    }
 }
 
 bool Cluster::isUpdateSystem() const {
@@ -211,8 +177,10 @@ void Cluster::addNode(std::string_view t_name, const std::string& t_address,
 
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
-void Cluster::printNetwork(
+void Cluster::printNetworks(
         const std::vector<std::shared_ptr<Network>>& networkType) {
+
+    LOG_TRACE("Dump network data:");
 
 #if __cplusplus < 202002L
     size_t i, j;
@@ -238,14 +206,6 @@ void Cluster::printNetwork(
     }
     std::cerr << std::endl;
 }
-
-void Cluster::printNetworks() {
-    LOG_TRACE("Dump network data:")
-    printNetwork(m_network.external);
-    printNetwork(m_network.management);
-    printNetwork(m_network.service);
-    printNetwork(m_network.application);
-}
 #endif
 
 #ifdef _DEBUG_
@@ -258,7 +218,7 @@ void Cluster::printData () {
     std::cerr << "DomainName: " << getDomainName() << std::endl;
     std::cerr << "FQDN: " << this->m_headnode.getFQDN() << std::endl;
 
-    printNetworks();
+    printNetworks(m_network);
 
     std::cerr << "Provisioner: " << static_cast<int>(getProvisioner()) << std::endl;
 
@@ -343,9 +303,9 @@ void Cluster::fillTestData () {
 //    m_headnode.getConnection().front().setNetwork(
 //            getNetwork(Network::Profile::External).front());
 //    m_headnode.getConnection().front().setNetwork(m_network.external.front());
-    m_headnode.addConnection(m_network.external.front(), "en0", "172.26.1.22");
-    m_headnode.addConnection(m_network.management.front(), "en1", "10.1.1.7");
-    m_headnode.addConnection(m_network.service.front(), "en1", "192.168.22.8");
+    m_headnode.addConnection(m_network[0], "en0", "172.26.1.22");
+    m_headnode.addConnection(m_network[1], "en1", "10.1.1.7");
+    m_headnode.addConnection(m_network[2], "en1", "192.168.22.8");
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);

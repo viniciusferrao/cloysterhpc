@@ -49,7 +49,7 @@ const std::string Connection::getInterface() const {
 
 void Connection::setInterface (const std::string& interface) {
     if (interface == "lo")
-        throw; /* Cannot use the loopback interface */
+        throw std::runtime_error("Cannot use the loopback interface");
 
     /* TODO: Use smart pointers */
     /* Code based on getifaddrs(3) man page */
@@ -72,7 +72,9 @@ void Connection::setInterface (const std::string& interface) {
     }
 
     freeifaddrs(ifaddr);
-    throw "Cannot find network interface"; /* Interface not found, bugged */
+
+    /* Interface not found, bugged */
+    throw std::runtime_error("Cannot find network interface");
 }
 
 const std::string& Connection::getMAC() const {

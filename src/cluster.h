@@ -66,12 +66,10 @@ private:
     std::string m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
-    struct {
-        std::vector<std::shared_ptr<Network>> external;
-        std::vector<std::shared_ptr<Network>> management;
-        std::vector<std::shared_ptr<Network>> service;
-        std::vector<std::shared_ptr<Network>> application;
-    } m_network;
+
+    // TODO: Better networking abstraction
+    std::vector<std::shared_ptr<Network>> m_network;
+
     bool m_updateSystem {};
     std::filesystem::path m_isoPath;
 
@@ -111,8 +109,7 @@ public:
                  std::string_view, std::string_view, std::string_view);
 
 #ifdef _DEBUG_
-    void printNetwork(const std::vector<std::shared_ptr<Network>>&);
-    void printNetworks();
+    void printNetworks(const std::vector<std::shared_ptr<Network>>&);
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */

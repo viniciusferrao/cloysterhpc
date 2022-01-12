@@ -85,8 +85,8 @@ public:
     ~Network();
 
     /* We cannot set or change Profile/Type after instantiation */
-    Profile getProfile () const;
-    Type getType () const;
+    [[nodiscard]] Profile getProfile () const;
+    [[nodiscard]] Type getType () const;
 
     const std::string getAddress() const;
     void setAddress(const std::string&);
