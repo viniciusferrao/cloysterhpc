@@ -38,10 +38,10 @@ int main(int argc, char** argv) {
 #endif
 
     //View* view = new Newt();
-    //auto view = std::make_unique<Newt>();
+    auto view = std::make_unique<Newt>();
 
     //Presenter* presenter = new Presenter(view, model);
-    //auto presenter = std::make_unique<Presenter>(view, model);
+    auto presenter = std::make_unique<Presenter>(view, model);
 
 #ifdef _DEBUG_
     model->printData();

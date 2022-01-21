@@ -16,6 +16,8 @@
 #include <boost/process.hpp>
 #include <fmt/format.h>
 
+#include "services/log.h"
+
 namespace cloyster {
 
 /* getopt code:
@@ -91,6 +93,36 @@ int parseArguments(int argc, char **argv) {
 #else
     return 0;
 #endif
+}
+
+int runCommand(const std::string& command,
+               const std::optional<std::vector<std::string>>& output) {
+#ifndef _DUMMY_
+    LOG_TRACE("Running command: {}", command);
+    boost::process::ipstream pipe_stream;
+    boost::process::child c(command, boost::process::std_out > pipe_stream);
+
+    std::string line;
+
+    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
+#ifdef _DEBUG_
+        std::cerr << line << std::endl;
+#endif
+        output = emplace_back(line);
+        c.wait();
+    }
+
+    LOG_DEBUG("Exit code: {}", c.exit_code);
+    return c.exit_code();
+
+#else
+    LOG_TRACE("exec: {}", command);
+    return 0;
+#endif
+}
+
+int runCommand(const std::string& command) {
+    return runCommand(command, std::nullopt);
 }
 
 /* Returns a specific environment varible when requested.

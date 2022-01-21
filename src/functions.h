@@ -5,13 +5,19 @@
 #define _DEBUG_
 #endif
 
-#include <string> /* std::string */
+#include <string>
+#include <optional>
 
 #include "types.h"
 
 namespace cloyster {
 /* getopt */
 int parseArguments(int, char**);
+
+/* shell execution */
+int runCommand(const std::string& command,
+               const std::optional<std::vector<std::string>>& output);
+int runCommand(const std::string& command);
 
 /* environment variables helper functions */
 std::string getEnvironmentVariable(const std::string&);

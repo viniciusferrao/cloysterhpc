@@ -215,6 +215,7 @@ void XCAT::configureOSImageDefinition(const std::unique_ptr<Cluster>& cluster) {
     }
 
     repos.emplace_back("https://download.fedoraproject.org/pub/epel/8/Everything/x86_64");
+    repos.emplace_back("https://download.fedoraproject.org/pub/epel/8/Modular/x86_64");
 
     /* TODO: if OpenHPC statement */
     repos.emplace_back("https://repos.openhpc.community/OpenHPC/2/CentOS_8");

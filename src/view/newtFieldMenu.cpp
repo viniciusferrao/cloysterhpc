@@ -3,10 +3,14 @@
 //
 
 #include "newt.h"
+#include <optional>
+#include <memory>
 
 std::vector<std::string> Newt::fieldMenu (
         const char* title,
         const char* message,
+        // TODO: std::pair and std::optional for already set variables
+        //const std::vector<std::pair<std::string,std::optional<std::string>>>& items,
         const std::vector<std::string>& items,
         const char* helpMessage)
 {
@@ -18,12 +22,15 @@ std::vector<std::string> Newt::fieldMenu (
     int flexDown = 5;
     int maxHeightList = 20;
 
-    char** fieldEntries;
-    struct newtWinEntry* field;
+//    char** fieldEntries;
+//    struct newtWinEntry* field;
     size_t vectorSize = items.size();
+//
+//    field = new struct newtWinEntry[vectorSize + 1]();
+//    fieldEntries = new char*[vectorSize + 1]();
 
-    field = new struct newtWinEntry[vectorSize + 1]();
-    fieldEntries = new char*[vectorSize + 1]();
+    auto fieldEntries = std::make_unique<char*[vectorSize + 1]>();
+    auto field = std::make_unique<newtWinEntry[vectorSize + 1]>();
 
     for (unsigned i = 0 ; i < vectorSize ; i++) {
         field[i].text = const_cast<char*>(items[i].c_str());
@@ -62,6 +69,7 @@ std::vector<std::string> Newt::fieldMenu (
                 entries.emplace_back(*field[i].value);
             }
 
+            // TODO: Remove delete[];
             delete[] fieldEntries;
             delete[] field;
 
