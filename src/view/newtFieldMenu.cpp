@@ -22,19 +22,14 @@ std::vector<std::string> Newt::fieldMenu (
     int flexDown = 5;
     int maxHeightList = 20;
 
-//    char** fieldEntries;
-//    struct newtWinEntry* field;
     size_t vectorSize = items.size();
-//
-//    field = new struct newtWinEntry[vectorSize + 1]();
-//    fieldEntries = new char*[vectorSize + 1]();
-
-    auto fieldEntries = std::make_unique<char*[vectorSize + 1]>();
-    auto field = std::make_unique<newtWinEntry[vectorSize + 1]>();
+    auto fieldEntries = std::make_unique<char*[]>(vectorSize + 1);
+    auto field = std::make_unique<newtWinEntry[]>(vectorSize + 1);
 
     for (unsigned i = 0 ; i < vectorSize ; i++) {
         field[i].text = const_cast<char*>(items[i].c_str());
-        field[i].value = fieldEntries + i;
+        //field[i].value = fieldEntries.get() + i;
+        field[i].value = &fieldEntries[i];
         /* TODO: Fix this hack to enable password fields */
         if (items[i].find("Password") != std::string::npos ||
             items[i].find("password") != std::string::npos)
@@ -52,7 +47,7 @@ std::vector<std::string> Newt::fieldMenu (
     returnValue = newtWinEntries(const_cast<char *>(title),
                                  const_cast<char *>(message),
                                  suggestedWidth, flexDown, flexUp,
-                                 maxHeightList, field,
+                                 maxHeightList, field.get(),
                                  const_cast<char *>(MSG_BUTTON_OK),
                                  MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL);
 
@@ -60,18 +55,14 @@ std::vector<std::string> Newt::fieldMenu (
         case 0:
             /* F12 is pressed, and we don't care; continue to case 1 */
         case 1:
-            if (hasEmptyField(field))
+            if (hasEmptyField(field.get()))
                 goto question;
 #ifdef _DEBUG_
-            debugEntries(field);
+            debugEntries(field.get());
 #endif
             for (unsigned i = 0 ; field[i].value ; i++) {
                 entries.emplace_back(*field[i].value);
             }
-
-            // TODO: Remove delete[];
-            delete[] fieldEntries;
-            delete[] field;
 
             return entries;
         case 2:
