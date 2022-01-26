@@ -16,7 +16,7 @@ std::string Newt::listMenu (const char* title, const char* message,
     int suggestedWidth = 50;
     int flexUp = 5;
     int flexDown = 5;
-    int maxHeightList = 3;
+    int maxHeightList = static_cast<int>(items.size());
 
     /* Newt expects a NULL terminated array of C style strings */
     std::vector<const char*> cStrings;

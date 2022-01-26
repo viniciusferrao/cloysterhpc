@@ -35,8 +35,10 @@ public:
                const std::string&);
     ~Connection();
 
-    const std::string getInterface() const;
+    // TODO: OOP those methods. There's a lot of code repetition on set/fetch
+    [[nodiscard]] const std::string getInterface() const;
     void setInterface(const std::string&);
+    [[nodiscard]] std::vector<std::string> fetchInterfaces() const;
 
     const std::string &getMAC() const;
     void setMAC(const std::string&);

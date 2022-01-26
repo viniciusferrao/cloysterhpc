@@ -44,7 +44,8 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     // Network questions
     m_model->getHeadnode().addConnection(
             (m_model->getNetwork(Network::Profile::External)).front(),
-            networkInterfaceSelection({"en0", "eth1", "enp4s0f0"}),
+            //networkInterfaceSelection({"en0", "eth1", "enp4s0f0"}),
+            networkInterfaceSelection(m_model->getHeadnode().getConnection(Network::Profile::External).fetchInterfaces()),
             "192.168.10.10");
             //networkAddress({"Headnode IP", "Management network"}));
 

@@ -9,6 +9,7 @@
 
 #include <arpa/inet.h> /* inet_*() functions */
 #include <ifaddrs.h> /* getifaddrs() */
+#include <cstring>
 
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
@@ -75,6 +76,33 @@ void Connection::setInterface (const std::string& interface) {
 
     /* Interface not found, bugged */
     throw std::runtime_error("Cannot find network interface");
+}
+
+std::vector<std::string> Connection::fetchInterfaces() const {
+    struct ifaddrs *ifaddr, *ifa;
+    std::vector<std::string> interfaces;
+
+    if (getifaddrs(&ifaddr) == -1)
+        throw; /* TODO: parse errno to throw */
+
+    for (ifa = ifaddr; ifa != nullptr ; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr)
+            continue;
+
+        if (std::strcmp(ifa->ifa_name, "lo") == 0)
+            continue;
+
+        interfaces.emplace_back(ifa->ifa_name);
+    }
+
+    // TODO: It must have a better way to remove duplicates instead of creating
+    //       a set to filter out them. Perhaps changing the return type?
+    std::set<std::string> aux(interfaces.begin(), interfaces.end());
+    interfaces.clear();
+    interfaces.reserve(aux.size());
+    interfaces.assign(aux.begin(), aux.end());
+
+    return interfaces;
 }
 
 const std::string& Connection::getMAC() const {
