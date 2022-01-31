@@ -2,6 +2,7 @@
 # C; C++; macOS; Linux; Executable; Visual Studio Code, VIM.
 
 # Code specific
+build/
 chroot/
 debug/
 dummy/

@@ -10,6 +10,7 @@
 #include "node.h"
 #include "network.h"
 #include "types.h"
+#include "services/timezone.h"
 
 struct SLURM {
     std::string partition;
@@ -63,7 +64,7 @@ private:
 
     bool m_firewall {};
     SELinuxMode m_selinux {}; /* Control nodes SELinux settings */
-    std::string m_timezone;
+    Timezone m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
@@ -80,8 +81,8 @@ public:
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;
     void setSELinux(SELinuxMode);
-    const std::string& getTimezone() const;
-    void setTimezone(const std::string &timezone);
+    const Timezone& getTimezone() const;
+    void setTimezone(const std::string& tz);
     const std::string& getLocale() const;
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;

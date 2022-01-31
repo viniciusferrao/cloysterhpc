@@ -99,7 +99,7 @@ void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
 }
 
 // We use tz instead of timezone to avoid shadowing time.h
-void Shell::configureTimezone (const std::string& tz) {
+void Shell::configureTimezone (std::string_view tz) {
     runCommand(fmt::format("timedatectl set timezone {}", tz));
 }
 
@@ -313,7 +313,7 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
                         .getAddress(),
             cluster->getHeadnode().getFQDN(),
             cluster->getHeadnode().getHostname());
-    configureTimezone(cluster->getTimezone());
+    configureTimezone(cluster->getTimezone().getTimezone());
     configureLocale(cluster->getLocale());
 
     configureNetworks(cluster->getHeadnode().getConnections());

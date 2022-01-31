@@ -49,12 +49,12 @@ void Cluster::setSELinux(Cluster::SELinuxMode mode) {
     m_selinux = mode;
 }
 
-const std::string& Cluster::getTimezone() const {
+const Timezone& Cluster::getTimezone() const {
     return m_timezone;
 }
 
 void Cluster::setTimezone(const std::string& tz) {
-    m_timezone = tz;
+    m_timezone.setTimezone(tz);
 }
 
 const std::string& Cluster::getLocale() const {
@@ -212,7 +212,7 @@ void Cluster::printNetworks(
 void Cluster::printData () {
     LOG_TRACE("Dump cluster data:");
     std::cerr << "Cluster attributes defined:" << std::endl;
-    std::cerr << "Timezone: " << getTimezone() << std::endl;
+    std::cerr << "Timezone: " << getTimezone().getTimezone() << std::endl;
     std::cerr << "Locale: " << getLocale() << std::endl;
     std::cerr << "Hostname: " << this->m_headnode.getHostname() << std::endl;
     std::cerr << "DomainName: " << getDomainName() << std::endl;

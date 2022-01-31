@@ -27,7 +27,7 @@ private:
     void configureFQDN (const std::string&);
     void configureHostsFile (std::string_view, std::string_view,
                              std::string_view);
-    void configureTimezone (const std::string&);
+    void configureTimezone (std::string_view);
     void configureLocale (const std::string&);
 
     void disableNetworkManagerDNSOverride (); // This should be on Network

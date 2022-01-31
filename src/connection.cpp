@@ -59,7 +59,7 @@ void Connection::setInterface (const std::string& interface) {
     if (getifaddrs(&ifaddr) == -1)
         throw; /* TODO: parse errno to throw */
 
-    for (ifa = ifaddr; ifa != nullptr ; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
@@ -85,7 +85,7 @@ std::vector<std::string> Connection::fetchInterfaces() const {
     if (getifaddrs(&ifaddr) == -1)
         throw; /* TODO: parse errno to throw */
 
-    for (ifa = ifaddr; ifa != nullptr ; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 

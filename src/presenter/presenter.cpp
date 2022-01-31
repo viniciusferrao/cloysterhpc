@@ -15,8 +15,8 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     installInstructions();
     LOG_TRACE("Install instructions displayed\n");
 
-    m_model->setTimezone(timezoneSelection({"UTC", "GMT-3"}));
-    LOG_TRACE("Timezone set to: {}\n", m_model->getTimezone());
+    m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
+    LOG_TRACE("Timezone set to: {}\n", m_model->getTimezone().getTimezone()); // TODO: Horrible call
 
     m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
     LOG_TRACE("Locale set to: {}\n", m_model->getLocale());
