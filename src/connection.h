@@ -45,6 +45,7 @@ public:
 
     const std::string getAddress() const;
     void setAddress(const std::string&);
+    void fetchAddress();
 
     const std::string& getHostname() const;
     void setHostname(const std::string&);

@@ -137,6 +137,25 @@ void Connection::setAddress (const std::string& address) {
         throw "XXX"; //return -1; /* Invalid IP Address */
 }
 
+void Connection::fetchAddress()
+{
+    struct ifaddrs *ifaddr, *ifa;
+
+    if (getifaddrs(&ifaddr) == -1)
+        // TODO: Check for errno
+        throw std::runtime_error("Error fetching network interfaces");
+
+    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr)
+            continue;
+
+        // TODO: Test this
+        if (std::strcmp(ifa->ifa_name, getInterface().c_str()) == 0)
+            std::memcpy(&m_address, ifa->ifa_addr, sizeof(&ifa->ifa_addr));
+    }
+}
+
+
 const std::string& Connection::getHostname() const {
     return m_hostname;
 }

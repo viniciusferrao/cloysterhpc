@@ -55,6 +55,7 @@ std::vector<std::string> Newt::fieldMenu (
         case 0:
             /* F12 is pressed, and we don't care; continue to case 1 */
         case 1:
+            // TODO: The view should now check for this, it's a passive view
             if (hasEmptyField(field.get()))
                 goto question;
 #ifdef _DEBUG_
