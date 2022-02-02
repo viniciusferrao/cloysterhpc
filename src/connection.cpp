@@ -137,7 +137,7 @@ void Connection::setAddress (const std::string& address) {
         throw "XXX"; //return -1; /* Invalid IP Address */
 }
 
-void Connection::fetchAddress()
+const std::string Connection::fetchAddress()
 {
     struct ifaddrs *ifaddr, *ifa;
 
@@ -153,6 +153,8 @@ void Connection::fetchAddress()
         if (std::strcmp(ifa->ifa_name, getInterface().c_str()) == 0)
             std::memcpy(&m_address, ifa->ifa_addr, sizeof(&ifa->ifa_addr));
     }
+
+    return getAddress();
 }
 
 

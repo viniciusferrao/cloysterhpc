@@ -41,7 +41,7 @@ public:
     void addConnection(const Network&, const std::string&,
                        const std::string&);
 
-    [[nodiscard]] const Connection& getConnection(Network::Profile) const;
+    [[nodiscard]] Connection getConnection(Network::Profile) const;
 };
 
 #endif /* HEADNODE_H */

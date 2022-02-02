@@ -10,23 +10,23 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      : m_model(model), m_view(view) {
 
     welcomeMessage();
-    LOG_TRACE("Welcome message displayed\n");
+    LOG_TRACE("Welcome message displayed");
 
     installInstructions();
-    LOG_TRACE("Install instructions displayed\n");
+    LOG_TRACE("Install instructions displayed");
 
     m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
-    LOG_TRACE("Timezone set to: {}\n", m_model->getTimezone().getTimezone()); // TODO: Horrible call
+    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone()); // TODO: Horrible call
 
     m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
-    LOG_TRACE("Locale set to: {}\n", m_model->getLocale());
+    LOG_TRACE("Locale set to: {}", m_model->getLocale());
 
     // TODO: Get rid of aux
     std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
     m_model->getHeadnode().setHostname(aux[0]);
-    LOG_TRACE("Returned hostname: {}\n", aux[0]);
+    LOG_TRACE("Returned hostname: {}", aux[0]);
     LOG_ASSERT(aux[0] == m_model->getHeadnode().getHostname(),
-               "Failed setting hostname\n");
+               "Failed setting hostname");
 
     m_model->setDomainName(aux[1]);
     LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
@@ -41,14 +41,14 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-    // Network questions
+    // TODO: Under development
     m_model->getHeadnode().addConnection(
-            (m_model->getNetwork(Network::Profile::External)).front(),
-            //networkInterfaceSelection({"en0", "eth1", "enp4s0f0"}),
-            networkInterfaceSelection(
-                    m_model->getHeadnode().getConnection(Network::Profile::External).fetchInterfaces()),
-                    m_model->getHeadnode().getConnection(Network::Profile::External).getAddress());
-            //networkAddress({"Headnode IP", "Management network"}));
+            m_model->getNetwork(Network::Profile::External).front(),
+            networkInterfaceSelection(m_model->getHeadnode().getConnection(Network::Profile::External).fetchInterfaces()),
+            networkAddress({"IP", "Subnet Mask"}).front());
+    LOG_TRACE("Added external network: {}: {}",
+              m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
+              m_model->getHeadnode().getConnection(Network::Profile::External).getAddress());
 
     // Destroy the view since we don't need it anymore
     m_view.reset();
