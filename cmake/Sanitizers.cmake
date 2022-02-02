@@ -64,4 +64,10 @@ function(enable_sanitizers project_name)
     endif()
   endif()
 
+  option(ENABLE_SANITIZER_BLACKLIST "Enable sanitizer blacklist" ON)
+  if(ENABLE_SANITIZER_BLACKLIST AND CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+    target_compile_options(${project_name} INTERFACE -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/sanitizer-blacklist.txt)
+    target_link_libraries(${project_name} INTERFACE -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/sanitizer-blacklist.txt)
+  endif()
+
 endfunction()

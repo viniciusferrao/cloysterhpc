@@ -1,0 +1,7 @@
+# libfmt
+src:/opt/local/include/fmt/core.h
+# spdlog
+src:/opt/local/include/spdlog/spdlog.h
+src:/opt/local/include/spdlog/sinks/stdout_color_sinks.h
+type:std::__1::shared_ptr<spdlog::sinks::sink>::~shared_ptr()
+

@@ -8,6 +8,7 @@ debug/
 dummy/
 release/
 main
+*.log
 
 # Created by https://www.toptal.com/developers/gitignore/api/c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
