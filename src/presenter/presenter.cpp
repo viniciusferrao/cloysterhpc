@@ -42,13 +42,36 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 #endif
 
     // TODO: Under development
+
+    // Create the external network
+    m_model->addNetwork();
+    LOG_TRACE("Added the external network");
+
+    // Create a connection on the headnode
     m_model->getHeadnode().addConnection(
-            m_model->getNetwork(Network::Profile::External).front(),
-            networkInterfaceSelection(m_model->getHeadnode().getConnection(Network::Profile::External).fetchInterfaces()),
-            networkAddress({"IP", "Subnet Mask"}).front());
-    LOG_TRACE("Added external network: {}: {}",
-              m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
-              m_model->getHeadnode().getConnection(Network::Profile::External).getAddress());
+            m_model->getNetwork().front(),
+            networkInterfaceSelection(Connection::fetchInterfaces()),
+            networkAddress({"IP", "Subnet Mask"}).front()
+    );
+    LOG_TRACE("Added the external connection on headnode: {} -> {}",
+            m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
+            m_model->getHeadnode().getConnection(Network::Profile::External).getAddress()
+    );
+
+    // Create the management network
+    m_model->addNetwork(Network::Profile::Management);
+    LOG_TRACE("Added the management network");
+
+    // Create a connection on the headnode
+    m_model->getHeadnode().addConnection(
+            m_model->getNetwork()[1], // TODO: Better handling
+            networkInterfaceSelection(Connection::fetchInterfaces()),
+            "10.20.30.1"
+    );
+    LOG_TRACE("Added the management connection on headnode: {} -> {}",
+            m_model->getHeadnode().getConnection(Network::Profile::Management).getInterface(),
+            m_model->getHeadnode().getConnection(Network::Profile::Management).getAddress()
+    );
 
     // Destroy the view since we don't need it anymore
     m_view.reset();

@@ -29,7 +29,6 @@
 //Cluster::~Cluster() = default;
 
 Headnode& Cluster::getHeadnode() {
-//const std::unique_ptr<Headnode>& Cluster::getHeadnode() const {
     return m_headnode;
 }
 
@@ -95,9 +94,7 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
-/* TODO: This implementation of network is not that great */
-const std::vector<Network>& Cluster::getNetwork(
-                                        Network::Profile profile) const {
+std::vector<Network> Cluster::getNetwork() {
     return m_network;
 }
 
@@ -117,6 +114,14 @@ const std::vector<Network> Cluster::getNet(Network::Profile profile) {
     }
 }
 #endif
+
+void Cluster::addNetwork() {
+    m_network.emplace_back(Network());
+}
+
+void Cluster::addNetwork(Network::Profile profile) {
+    m_network.emplace_back(Network(profile));
+}
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& address,
@@ -167,11 +172,11 @@ const std::vector<Node>& Cluster::getNodes() const {
     return m_nodes;
 }
 
-void Cluster::addNode(std::string_view t_name, const std::string& t_address,
+void Cluster::addNode(std::string_view t_name, const Network& network, const std::string& t_address,
                       const std::string& t_mac, std::string_view t_bmcAddress,
                       std::string_view t_bmcUsername,
                       std::string_view t_bmcPassword) {
-    m_nodes.emplace_back(t_name, t_address, t_mac, t_bmcAddress, t_bmcUsername,
+    m_nodes.emplace_back(t_name, network, t_address, t_mac, t_bmcAddress, t_bmcUsername,
                          t_bmcPassword);
 }
 
@@ -189,7 +194,7 @@ void Cluster::printNetworks(
 #else
     for (size_t i = 0; auto const &network: networkType) {
 #endif
-        std::cerr << fmt::format("Management Network [{}]", i++) << std::endl;
+        std::cerr << fmt::format("Network [{}]", i++) << std::endl;
         std::cerr << "Address: " << network.getAddress() << std::endl;
         std::cerr << "Subnet Mask: " << network.getSubnetMask() << std::endl;
         std::cerr << "Gateway " << network.getGateway() << std::endl;
@@ -312,9 +317,9 @@ void Cluster::fillTestData () {
 
     setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
-    addNode("n01", "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
+    addNode("n01", getNetwork().front(), "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
             "ADMIN", "ADMIN");
-    addNode("n02", "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
+    addNode("n02", getNetwork().front(), "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
             "root", "calvin");
 
     /* Bad and old data */

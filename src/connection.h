@@ -25,7 +25,8 @@ private:
     std::string m_fqdn; // Remove
 
 public:
-    Connection();
+    Connection() = delete;
+    explicit Connection(const Network& network);
     Connection(const std::string&, const std::string&);
     Connection(const Network&,
                const std::string&, const std::string&);
@@ -38,7 +39,7 @@ public:
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
     [[nodiscard]] const std::string getInterface() const;
     void setInterface(const std::string&);
-    [[nodiscard]] std::vector<std::string> fetchInterfaces() const;
+    [[nodiscard]] static const std::vector<std::string> fetchInterfaces();
 
     const std::string &getMAC() const;
     void setMAC(const std::string&);

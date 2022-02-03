@@ -81,6 +81,10 @@ const std::vector<Connection>& Headnode::getConnections() const {
     return m_connection;
 }
 
+void Headnode::addConnection(const Network& network) {
+    m_connection.emplace_back(network);
+}
+
 void Headnode::addConnection(const Network& network,
                              const std::string& interface,
                              const std::string& address) {
@@ -88,7 +92,7 @@ void Headnode::addConnection(const Network& network,
     m_connection.emplace_back(network, interface, address);
 }
 
-Connection Headnode::getConnection(Network::Profile profile) const {
+const Connection& Headnode::getConnection(Network::Profile profile) const {
     for (auto const& connection : std::as_const(m_connection)) {
         if (connection.getNetwork().getProfile() == profile)
             return connection;

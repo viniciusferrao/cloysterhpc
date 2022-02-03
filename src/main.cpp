@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     auto model = std::make_unique<Cluster>();
 
 #ifdef _DEBUG_
-    model->fillTestData();
+    //model->fillTestData();
 #endif
 
     //View* view = new Newt();
@@ -48,8 +48,8 @@ int main(int argc, char** argv) {
 #endif
 
     //Execution* engine = new Shell();
-    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
-    executionEngine->install(model);
+    //std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
+    //executionEngine->install(model);
     //delete engine;
 
 #if 0 /* Porting TerminalUI */

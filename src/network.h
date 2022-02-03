@@ -79,12 +79,12 @@ public:
     Network();
     explicit Network(Profile);
     Network(Profile, Type);
-    Network(Profile, Type, const std::string&, const std::string&,
-            const std::string&, const uint16_t&, const std::string&,
+    Network(Profile, Type, const std::string& address, const std::string& subnetMask,
+            const std::string& gateway, const uint16_t& vlan, const std::string& domainName,
             const std::vector<std::string>& nameserver);
     ~Network();
 
-    /* We cannot set or change Profile/Type after instantiation */
+    // We cannot set or change Profile/Type after instantiation
     [[nodiscard]] Profile getProfile () const;
     [[nodiscard]] Type getType () const;
 

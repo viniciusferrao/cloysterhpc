@@ -3,7 +3,7 @@
 //
 #include "node.h"
 
-Node::Node(std::string_view hostname, const std::string& address,
+Node::Node(std::string_view hostname, const Network& network, const std::string& address,
            const std::string& mac, std::string_view bmcAddress,
            std::string_view bmcUsername, std::string_view bmcPassword)
            : m_hostname(hostname)
@@ -11,7 +11,7 @@ Node::Node(std::string_view hostname, const std::string& address,
            , m_bmcUsername(bmcUsername)
            , m_bmcPassword(bmcPassword) {
 
-    addConnection(address, mac);
+    addConnection(network, address, mac);
 }
 
 const std::string& Node::getHostname() const noexcept {
@@ -34,9 +34,10 @@ const std::vector<Connection>& Node::getConnection() const noexcept {
     return m_connection;
 }
 
-void Node::addConnection(const std::string& t_address,
+void Node::addConnection(const Network& network,
+                         const std::string& t_address,
                          const std::string& t_mac) {
-    m_connection.emplace_back();
+    m_connection.emplace_back(network);
     m_connection.back().setMAC(t_mac);
     m_connection.back().setAddress(t_address);
 }

@@ -87,8 +87,10 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-    const std::vector<Network>& getNetwork(Network::Profile) const;
-    void addNetwork(Network::Profile, Network::Type, const std::string&,
+    std::vector<Network> getNetwork();
+    void addNetwork();
+    void addNetwork(Network::Profile profile);
+    void addNetwork(Network::Profile profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
 
@@ -105,7 +107,7 @@ public:
     void setISOPath(const std::filesystem::path &isoPath);
 
     const std::vector<Node>& getNodes() const;
-    void addNode(std::string_view, const std::string&, const std::string&,
+    void addNode(std::string_view, const Network& network, const std::string&, const std::string&,
                  std::string_view, std::string_view, std::string_view);
 
 #ifdef _DEBUG_

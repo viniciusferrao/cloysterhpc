@@ -26,7 +26,7 @@ private:
     std::string m_bmcPassword;
 
 public:
-    Node(std::string_view, const std::string&, const std::string&,
+    Node(std::string_view, const Network& network, const std::string&, const std::string&,
          std::string_view, std::string_view, std::string_view);
 
     [[nodiscard]] const std::string &getHostname() const noexcept;
@@ -36,7 +36,7 @@ public:
     void setFQDN(const std::string&);
 
     [[nodiscard]] const std::vector<Connection> &getConnection() const noexcept;
-    void addConnection(const std::string&, const std::string&);
+    void addConnection(const Network& network, const std::string&, const std::string&);
 
     const std::string& getBMCAddress() const noexcept;
     void setBMCAddress(const std::string& bmcAddress);

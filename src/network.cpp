@@ -10,7 +10,7 @@
 #endif
 
 Network::Network()
-    : Network(Profile::External, Type::Ethernet) {}
+    : Network(Profile::External) {}
 
 Network::Network(Profile profile)
     : Network(profile, Type::Ethernet) {}

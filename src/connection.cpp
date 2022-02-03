@@ -15,9 +15,9 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-Connection::Connection() = default;
-
 Connection::~Connection() = default;
+
+Connection::Connection(const Network& network) : m_network(network) {}
 
 Connection::Connection(const std::string& interface,
                        const std::string& address) {
@@ -78,7 +78,7 @@ void Connection::setInterface (const std::string& interface) {
     throw std::runtime_error("Cannot find network interface");
 }
 
-std::vector<std::string> Connection::fetchInterfaces() const {
+const std::vector<std::string> Connection::fetchInterfaces() {
     struct ifaddrs *ifaddr, *ifa;
     std::vector<std::string> interfaces;
 
