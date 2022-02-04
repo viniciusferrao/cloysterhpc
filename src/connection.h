@@ -12,7 +12,7 @@
  */
 class Connection {
 private:
-    Network m_network;
+    const Network& m_network;
 
     std::string m_interface;
     std::string m_mac;
@@ -27,13 +27,8 @@ private:
 public:
     Connection() = delete;
     explicit Connection(const Network& network);
-    Connection(const std::string&, const std::string&);
-    Connection(const Network&,
-               const std::string&, const std::string&);
+    Connection(const Network& network, const std::string&, const std::string&);
 
-    /* TODO: Remove this constructor */
-    Connection(const std::string&, const std::string&, const std::string&,
-               const std::string&);
     ~Connection();
 
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch

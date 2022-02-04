@@ -11,20 +11,14 @@
 #include <ifaddrs.h> /* getifaddrs() */
 #include <cstring>
 
+#include <fmt/format.h>
+
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
 #endif
 
-Connection::~Connection() = default;
-
-Connection::Connection(const Network& network) : m_network(network) {}
-
-Connection::Connection(const std::string& interface,
-                       const std::string& address) {
-
-    setInterface(interface);
-    setAddress(address);
-}
+Connection::Connection(const Network& network)
+                       : m_network(network) {}
 
 Connection::Connection(const Network& network,
                        const std::string& interface,
@@ -35,14 +29,8 @@ Connection::Connection(const Network& network,
     setAddress(address);
 }
 
-Connection::Connection(const std::string& interface, const std::string& address,
-                       const std::string& hostname, const std::string& fqdn) {
+Connection::~Connection() = default;
 
-    setInterface(interface);
-    setAddress(address);
-    setHostname(hostname);
-    setFQDN(fqdn);
-}
 
 const std::string Connection::getInterface() const {
     return m_interface;
@@ -57,13 +45,15 @@ void Connection::setInterface (const std::string& interface) {
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1)
-        throw; /* TODO: parse errno to throw */
+        throw std::runtime_error(fmt::format(
+                "Cannot get interfaces: {}\n", std::strerror(errno)));
 
     for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
-        // TODO: Since we are already here, get the MAC Address from sa_data
+        // TODO: Since we are already here, get the MAC Address from sa_data and
+        //       add it to m_mac.
         if (interface == ifa->ifa_name) {
             m_interface = interface;
 
@@ -74,7 +64,6 @@ void Connection::setInterface (const std::string& interface) {
 
     freeifaddrs(ifaddr);
 
-    /* Interface not found, bugged */
     throw std::runtime_error("Cannot find network interface");
 }
 
@@ -83,7 +72,8 @@ const std::vector<std::string> Connection::fetchInterfaces() {
     std::vector<std::string> interfaces;
 
     if (getifaddrs(&ifaddr) == -1)
-        throw; /* TODO: parse errno to throw */
+        throw std::runtime_error(fmt::format(
+                "Cannot get interfaces: {}\n", std::strerror(errno)));
 
     for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
@@ -142,8 +132,8 @@ const std::string Connection::fetchAddress()
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1)
-        // TODO: Check for errno
-        throw std::runtime_error("Error fetching network interfaces");
+        throw std::runtime_error(fmt::format(
+                "Cannot get interfaces: {}\n", std::strerror(errno)));
 
     for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)

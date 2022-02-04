@@ -9,29 +9,29 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-    welcomeMessage();
-    LOG_TRACE("Welcome message displayed");
-
-    installInstructions();
-    LOG_TRACE("Install instructions displayed");
-
-    m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
-    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone()); // TODO: Horrible call
-
-    m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
-    LOG_TRACE("Locale set to: {}", m_model->getLocale());
-
-    // TODO: Get rid of aux
-    std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
-    m_model->getHeadnode().setHostname(aux[0]);
-    LOG_TRACE("Returned hostname: {}", aux[0]);
-    LOG_ASSERT(aux[0] == m_model->getHeadnode().getHostname(),
-               "Failed setting hostname");
-
-    m_model->setDomainName(aux[1]);
-    LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
-    LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
-    LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
+//    welcomeMessage();
+//    LOG_TRACE("Welcome message displayed");
+//
+//    installInstructions();
+//    LOG_TRACE("Install instructions displayed");
+//
+//    m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
+//    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone()); // TODO: Horrible call
+//
+//    m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
+//    LOG_TRACE("Locale set to: {}", m_model->getLocale());
+//
+//    // TODO: Get rid of aux
+//    std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
+//    m_model->getHeadnode().setHostname(aux[0]);
+//    LOG_TRACE("Returned hostname: {}", aux[0]);
+//    LOG_ASSERT(aux[0] == m_model->getHeadnode().getHostname(),
+//               "Failed setting hostname");
+//
+//    m_model->setDomainName(aux[1]);
+//    LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
+//    LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
+//    LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
 
 #if 0
     [this](std::vector<std::string> aux) -> void {
@@ -48,11 +48,19 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Added the external network");
 
     // Create a connection on the headnode
-    m_model->getHeadnode().addConnection(
-            m_model->getNetwork().front(),
-            networkInterfaceSelection(Connection::fetchInterfaces()),
-            networkAddress({"IP", "Subnet Mask"}).front()
-    );
+//    m_model->getHeadnode().addConnection(
+//            m_model->getNetwork().front(),
+//            networkInterfaceSelection(Connection::fetchInterfaces()),
+//            networkAddress({"IP", "Subnet Mask"}).front()
+//    );
+    m_model->getHeadnode().addConnection(m_model->getNetwork().front());
+    LOG_TRACE("Added the external connection");
+
+    m_model->getHeadnode().getConnection(Network::Profile::External)
+                .setInterface(networkInterfaceSelection(Connection::fetchInterfaces()));
+    m_model->getHeadnode().getConnection(Network::Profile::External)
+                .setAddress(networkAddress({"IP", "Subnet Mask"}).front());
+
     LOG_TRACE("Added the external connection on headnode: {} -> {}",
             m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
             m_model->getHeadnode().getConnection(Network::Profile::External).getAddress()
@@ -64,7 +72,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     // Create a connection on the headnode
     m_model->getHeadnode().addConnection(
-            m_model->getNetwork()[1], // TODO: Better handling
+            m_model->getNetwork().back(), // TODO: Better handling
             networkInterfaceSelection(Connection::fetchInterfaces()),
             "10.20.30.1"
     );

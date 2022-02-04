@@ -35,11 +35,11 @@ Network::Network(Profile profile, Type type, const std::string& address,
 
 Network::~Network() = default;
 
-Network::Profile Network::getProfile () const {
+const Network::Profile& Network::getProfile () const {
     return m_profile;
 }
 
-Network::Type Network::getType () const {
+const Network::Type& Network::getType () const {
     return m_type;
 }
 

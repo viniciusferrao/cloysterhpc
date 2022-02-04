@@ -6,7 +6,7 @@
 #endif
 
 #include <string>
-#include <vector>
+#include <list>
 #include <memory>
 
 #include "server.h"
@@ -20,7 +20,7 @@ private:
     OS m_os;
     std::string m_hostname;
     std::string m_fqdn;
-    std::vector<Connection> m_connection;
+    std::list<Connection> m_connection;
 
 private:
     void discoverNames();
@@ -37,12 +37,14 @@ public:
     void setFQDN(const std::string& fqdn);
 
     //const std::unique_ptr<Connection>& getConnection() const;
-    [[nodiscard]] const std::vector<Connection>& getConnections() const;
+    [[nodiscard]] const std::list<Connection>& getConnections() const;
     void addConnection(const Network& network);
     void addConnection(const Network&, const std::string&,
                                        const std::string&);
 
-    [[nodiscard]] const Connection& getConnection(Network::Profile) const;
+    //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
+    [[nodiscard]] Connection& getConnection(Network::Profile);
+
 };
 
 #endif /* HEADNODE_H */

@@ -94,13 +94,13 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
-std::vector<Network> Cluster::getNetwork() {
+std::list<Network> Cluster::getNetwork() {
     return m_network;
 }
 
 #if 0
-const std::vector<Network> Cluster::getNet(Network::Profile profile) {
-    std::vector<Network> network;
+const std::list<Network> Cluster::getNet(Network::Profile profile) {
+    std::list<Network> network;
 
     switch (profile) {
         case Network::Profile::External:
@@ -183,7 +183,7 @@ void Cluster::addNode(std::string_view t_name, const Network& network, const std
 #ifdef _DEBUG_
 /* TODO: This debug function must be made as a template */
 void Cluster::printNetworks(
-        const std::vector<Network>& networkType) {
+        const std::list<Network>& networkType) {
 
     LOG_TRACE("Dump network data:");
 
@@ -308,9 +308,9 @@ void Cluster::fillTestData () {
 //    m_headnode.getConnection().front().setNetwork(
 //            getNetwork(Network::Profile::External).front());
 //    m_headnode.getConnection().front().setNetwork(m_network.external.front());
-    m_headnode.addConnection(m_network[0], "en0", "172.26.1.22");
-    m_headnode.addConnection(m_network[1], "en1", "10.1.1.7");
-    m_headnode.addConnection(m_network[2], "en1", "192.168.22.8");
+//    m_headnode.addConnection(m_network[0], "en0", "172.26.1.22");
+//    m_headnode.addConnection(m_network[1], "en1", "10.1.1.7");
+//    m_headnode.addConnection(m_network[2], "en1", "192.168.22.8");
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);

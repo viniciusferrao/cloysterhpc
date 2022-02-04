@@ -1,4 +1,5 @@
 #include "headnode.h"
+#include "services/log.h"
 
 #include <iostream>
 #include <fstream>
@@ -77,7 +78,7 @@ void Headnode::setFQDN(const std::string& fqdn) {
 //    return m_externalConnection;
 //}
 
-const std::vector<Connection>& Headnode::getConnections() const {
+const std::list<Connection>& Headnode::getConnections() const {
     return m_connection;
 }
 
@@ -92,10 +93,23 @@ void Headnode::addConnection(const Network& network,
     m_connection.emplace_back(network, interface, address);
 }
 
-const Connection& Headnode::getConnection(Network::Profile profile) const {
-    for (auto const& connection : std::as_const(m_connection)) {
-        if (connection.getNetwork().getProfile() == profile)
+//const Connection& Headnode::getConnection(Network::Profile profile) const {
+//    for (auto const& connection : std::as_const(m_connection)) {
+//        if (connection.getNetwork().getProfile() == profile)
+//            return connection;
+//    }
+//    throw; /* Cannot find a connection with profile */
+//}
+
+Connection& Headnode::getConnection(Network::Profile profile) {
+    LOG_TRACE("Trying to get a Connection with the given profile");
+    for (auto& connection : m_connection) {
+        LOG_TRACE("Trying...");
+        if (connection.getNetwork().getProfile() == profile) {
+            LOG_TRACE("Matched profile while getting a Connection");
             return connection;
+        }
     }
-    throw; /* Cannot find a connection with profile */
+    // TODO: Better throw message; need to make getProfileSting as static
+    throw std::runtime_error("Cannot get any connection with required profile");
 }

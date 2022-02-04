@@ -66,8 +66,8 @@ public:
     };
 
 private:
-    const Profile m_profile{};
-    const Type m_type{};
+    const Profile m_profile;
+    const Type m_type;
     struct in_addr m_address{};
     struct in_addr m_subnetMask{};
     struct in_addr m_gateway{};
@@ -85,8 +85,8 @@ public:
     ~Network();
 
     // We cannot set or change Profile/Type after instantiation
-    [[nodiscard]] Profile getProfile () const;
-    [[nodiscard]] Type getType () const;
+    [[nodiscard]] const Profile& getProfile () const;
+    [[nodiscard]] const Type& getType () const;
 
     const std::string getAddress() const;
     void setAddress(const std::string&);

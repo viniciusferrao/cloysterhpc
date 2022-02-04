@@ -30,7 +30,7 @@ void Node::setFQDN(const std::string& fqdn) {
     m_fqdn = fqdn;
 }
 
-const std::vector<Connection>& Node::getConnection() const noexcept {
+const std::list<Connection>& Node::getConnection() const noexcept {
     return m_connection;
 }
 

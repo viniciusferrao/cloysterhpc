@@ -31,14 +31,14 @@ private:
     void configureLocale (const std::string&);
 
     void disableNetworkManagerDNSOverride (); // This should be on Network
-    void configureNetworks(const std::vector<Connection>&);
+    void configureNetworks(const std::list<Connection>&);
 
     void runSystemUpdate (bool);
     void installRequiredPackages ();
 
     void configureRepositories (const std::unique_ptr<Cluster>&);
     void installOpenHPCBase ();
-    void configureTimeService (const std::vector<Connection>&);
+    void configureTimeService (const std::list<Connection>&);
     void configureQueueSystem (const std::unique_ptr<Cluster>&);
     void configureInfiniband (const std::unique_ptr<Cluster>&);
     void configureNetworkFileSystem ();

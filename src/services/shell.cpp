@@ -128,7 +128,7 @@ void Shell::disableNetworkManagerDNSOverride () {
  * At the end of execution we disable DNS override since the headnode machine
  * will be providing the service.
  */
-void Shell::configureNetworks(const std::vector<Connection>& connections) {
+void Shell::configureNetworks(const std::list<Connection>& connections) {
     runCommand("systemctl enable --now NetworkManager");
 
     for (auto const& connection : std::as_const(connections)) {
@@ -197,7 +197,7 @@ void Shell::installOpenHPCBase () {
     runCommand("dnf -y install ohpc-base");
 }
 
-void Shell::configureTimeService (const std::vector<Connection>& connections) {
+void Shell::configureTimeService (const std::list<Connection>& connections) {
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 

@@ -9,7 +9,7 @@
 #endif
 
 #include <string>
-#include <vector>
+#include <list>
 
 #include "server.h"
 #include "network.h"
@@ -20,7 +20,7 @@ private:
     // TODO: First three attributes may be moved to Server class
     std::string m_hostname;
     std::string m_fqdn;
-    std::vector<Connection> m_connection;
+    std::list<Connection> m_connection;
     std::string m_bmcAddress;
     std::string m_bmcUsername;
     std::string m_bmcPassword;
@@ -35,7 +35,7 @@ public:
     [[nodiscard]] const std::string &getFQDN() const noexcept;
     void setFQDN(const std::string&);
 
-    [[nodiscard]] const std::vector<Connection> &getConnection() const noexcept;
+    [[nodiscard]] const std::list<Connection> &getConnection() const noexcept;
     void addConnection(const Network& network, const std::string&, const std::string&);
 
     const std::string& getBMCAddress() const noexcept;
