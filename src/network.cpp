@@ -1,10 +1,12 @@
 #include "network.h"
 #include "services/log.h"
+#include "connection.h"
 
 #include <vector>
 #include <string>
 #include <regex>
 #include <arpa/inet.h> /* inet_*() functions */
+#include <ifaddrs.h>
 
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
@@ -60,6 +62,20 @@ void Network::setAddress(const std::string& address) {
         throw; //return -1; /* Invalid IP Address */
 }
 
+std::string Network::fetchAddress(const std::string& interface) {
+    struct in_addr addr{}, netmask{}, network{};
+
+    if (inet_aton(Connection::fetchAddress(interface).c_str(), &addr) == 0)
+        throw std::runtime_error("Invalid IP address");
+    if (inet_aton(fetchSubnetMask(interface).c_str(), &netmask) == 0)
+        throw std::runtime_error("Invalid subnet mask address");
+
+    network.s_addr = addr.s_addr & netmask.s_addr;
+
+    return (inet_ntoa(network));
+}
+
+
 const std::string Network::getSubnetMask() const {
     if (inet_ntoa(m_subnetMask) == nullptr)
         throw;
@@ -69,6 +85,44 @@ const std::string Network::getSubnetMask() const {
 void Network::setSubnetMask(const std::string& subnetMask) {
     if (inet_aton(subnetMask.c_str(), &this->m_subnetMask) == 0)
         throw; //return -1; /* Invalid IP Address */
+}
+
+std::string Network::fetchSubnetMask(const std::string& interface) {
+    struct ifaddrs *ifaddr, *ifa;
+
+    if (getifaddrs(&ifaddr) == -1)
+        throw std::runtime_error(fmt::format(
+                "Cannot get interfaces: {}", std::strerror(errno)));
+
+    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+        if (ifa->ifa_netmask == nullptr)
+            continue;
+
+        if (ifa->ifa_netmask->sa_family != AF_INET)
+            continue;
+
+        // TODO: Check for leaks since we can't run freeifaddrs before return
+        if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
+            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_netmask);
+            //freeifaddrs(ifaddr);
+
+            if (inet_ntoa(sa->sin_addr) == nullptr)
+                throw std::runtime_error(fmt::format(
+                        "Interface {} does not have a netmask address defined",
+                        interface));
+
+#ifndef _NDEBUG_
+            LOG_TRACE("Got subnet mask address {} from interface {}",
+                      inet_ntoa(sa->sin_addr), interface);
+#endif
+
+            return inet_ntoa(sa->sin_addr);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    throw std::runtime_error(fmt::format(
+            "Interface {} cannot be found or used as a resource", interface));
 }
 
 const std::string Network::getGateway() const {
@@ -81,7 +135,44 @@ void Network::setGateway(const std::string& gateway) {
     if (inet_aton(gateway.c_str(), &this->m_gateway) == 0)
         throw; //return -1; /* Invalid IP Address */
 }
-/* End of TODO */
+
+std::string Network::fetchGateway(const std::string &interface) {
+    struct ifaddrs *ifaddr, *ifa;
+
+    if (getifaddrs(&ifaddr) == -1)
+        throw std::runtime_error(fmt::format(
+                "Cannot get interfaces: {}", std::strerror(errno)));
+
+    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+        if (ifa->ifa_dstaddr == nullptr)
+            continue;
+
+        if (ifa->ifa_dstaddr->sa_family != AF_INET)
+            continue;
+
+        // TODO: Check for leaks since we can't run freeifaddrs before return
+        if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
+            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_dstaddr);
+            //freeifaddrs(ifaddr);
+
+            if (inet_ntoa(sa->sin_addr) == nullptr)
+                throw std::runtime_error(fmt::format(
+                        "Interface {} does not have a gateway IP address defined",
+                        interface));
+
+#ifndef _NDEBUG_
+            LOG_TRACE("Got gateway address {} from interface {}",
+                      inet_ntoa(sa->sin_addr), interface);
+#endif
+
+            return inet_ntoa(sa->sin_addr);
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    throw std::runtime_error(fmt::format(
+            "Interface {} cannot be found or used as a resource", interface));
+}
 
 const uint16_t& Network::getVLAN() const {
     return m_vlan;

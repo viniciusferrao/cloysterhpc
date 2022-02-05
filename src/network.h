@@ -90,12 +90,15 @@ public:
 
     const std::string getAddress() const;
     void setAddress(const std::string&);
+    [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
     const std::string getSubnetMask() const;
     void setSubnetMask(const std::string&);
+    [[nodiscard]] static std::string fetchSubnetMask(const std::string& interface);
 
     const std::string getGateway() const;
     void setGateway(const std::string&);
+    [[nodiscard]] static std::string fetchGateway(const std::string& interface);
 
     const uint16_t& getVLAN() const;
     void setVLAN(const uint16_t& vlan);

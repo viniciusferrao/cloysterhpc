@@ -149,6 +149,11 @@ std::string Connection::fetchAddress(const std::string& interface)
             auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
             //freeifaddrs(ifaddr);
 
+            if (inet_ntoa(sa->sin_addr) == nullptr)
+                throw std::runtime_error(fmt::format(
+                        "Interface {} does not have an IP address defined",
+                        interface));
+
 #ifndef _NDEBUG_
             LOG_TRACE("Got address {} from interface {}",
                       inet_ntoa(sa->sin_addr), interface);
@@ -160,7 +165,7 @@ std::string Connection::fetchAddress(const std::string& interface)
 
     freeifaddrs(ifaddr);
     throw std::runtime_error(fmt::format(
-            "Interface {} does not have an IP address defined", interface));
+            "Interface {} cannot be found or used as a resource", interface));
 }
 
 const std::string& Connection::getHostname() const {

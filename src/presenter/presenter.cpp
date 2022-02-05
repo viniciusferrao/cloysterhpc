@@ -53,8 +53,9 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     m_model->getHeadnode().getConnection(Network::Profile::External)
                 .setInterface(networkInterfaceSelection(Connection::fetchInterfaces()));
+
+    // TODO: Add an TUI to inform the user about the detected IP addresses
     m_model->getHeadnode().getConnection(Network::Profile::External)
-                //.setAddress(networkAddress({"IP", "Subnet Mask"}).front());
                 .setAddress(Connection::fetchAddress(
                         m_model->getHeadnode()
                                 .getConnection(Network::Profile::External)
@@ -72,9 +73,9 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     // Create a connection on the headnode
     m_model->getHeadnode().addConnection(
-            m_model->getNetwork(Network::Profile::Management), // TODO: Better handling
-            networkInterfaceSelection(Connection::fetchInterfaces()),
-            "10.20.30.1"
+            m_model->getNetwork(Network::Profile::Management),
+                networkInterfaceSelection(Connection::fetchInterfaces()),
+                networkAddress({"IP Address"}).front()
     );
     LOG_TRACE("Added the management connection on headnode: {} -> {}",
             m_model->getHeadnode().getConnection(Network::Profile::Management).getInterface(),

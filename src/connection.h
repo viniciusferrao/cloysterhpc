@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 
 /* Each server can have one and only one connection to a given network, although
  * it can have more than one address. This is standard TCP networking.
