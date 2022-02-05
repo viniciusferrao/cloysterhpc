@@ -87,7 +87,8 @@ public:
     void setLocale(const std::string &locale);
     const std::string& getDomainName() const;
     void setDomainName(const std::string &domainName);
-    std::list<Network> getNetwork();
+    std::list<Network>& getNetworks();
+    Network& getNetwork(Network::Profile profile);
     void addNetwork();
     void addNetwork(Network::Profile profile);
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,

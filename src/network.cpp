@@ -1,4 +1,5 @@
 #include "network.h"
+#include "services/log.h"
 
 #include <vector>
 #include <string>
@@ -150,3 +151,9 @@ void Network::setNameserver(const std::vector<std::string>& nameserver) {
     }
 }
 
+#ifndef _NDEBUG_
+void Network::dumpNetwork() const {
+    LOG_DEBUG("Profile: {}", getProfileString.at(m_profile));
+    LOG_DEBUG("Type: {}", getTypeString.at(m_type));
+}
+#endif

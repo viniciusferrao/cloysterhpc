@@ -16,11 +16,11 @@ private:
 
     std::string m_interface;
     std::string m_mac;
-    /* TODO: Use std::vector to support more than one IP address */
+    // TODO: Use std::vector to support more than one IP address per interface
     //std::vector<struct in_addr> m_address;
     struct in_addr m_address {};
 
-    /* TODO: This may not be here */
+    // TODO: This may not be here
     std::string m_hostname; // Remove
     std::string m_fqdn; // Remove
 
@@ -32,25 +32,24 @@ public:
     ~Connection();
 
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
-    [[nodiscard]] const std::string getInterface() const;
+    [[nodiscard]] std::string getInterface() const;
     void setInterface(const std::string&);
-    [[nodiscard]] static const std::vector<std::string> fetchInterfaces();
+    [[nodiscard]] static std::vector<std::string> fetchInterfaces();
 
-    const std::string &getMAC() const;
+    [[nodiscard]] const std::string &getMAC() const;
     void setMAC(const std::string&);
 
-    const std::string getAddress() const;
+    [[nodiscard]] std::string getAddress() const;
     void setAddress(const std::string&);
-    const std::string fetchAddress();
+    [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
-    const std::string& getHostname() const;
+    [[nodiscard]] const std::string& getHostname() const;
     void setHostname(const std::string&);
 
-    const std::string& getFQDN() const;
+    [[nodiscard]] const std::string& getFQDN() const;
     void setFQDN(const std::string&);
 
-    const Network& getNetwork() const;
-//    void setNetwork(const Network&);
+    [[nodiscard]] const Network& getNetwork() const;
 };
 
 #endif /* CONNECTION_H */

@@ -105,6 +105,10 @@ public:
 
     std::vector<std::string> getNameserver() const;
     void setNameserver(const std::vector<std::string>&);
+
+#ifndef _NDEBUG_
+    void dumpNetwork() const;
+#endif
 };
 
 #endif /* NETWORK_H */

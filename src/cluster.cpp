@@ -94,8 +94,18 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 }
 
-std::list<Network> Cluster::getNetwork() {
+std::list<Network>& Cluster::getNetworks() {
     return m_network;
+}
+
+Network& Cluster::getNetwork(Network::Profile profile) {
+    for (auto& network : m_network) {
+        if (network.getProfile() == profile) {
+            return network;
+        }
+    }
+    throw std::runtime_error(fmt::format(
+            "Cannot get any network with the profile {}", profile));
 }
 
 #if 0
@@ -317,9 +327,9 @@ void Cluster::fillTestData () {
 
     setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
-    addNode("n01", getNetwork().front(), "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
+    addNode("n01", getNetworks().front(), "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
             "ADMIN", "ADMIN");
-    addNode("n02", getNetwork().front(), "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
+    addNode("n02", getNetworks().front(), "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
             "root", "calvin");
 
     /* Bad and old data */

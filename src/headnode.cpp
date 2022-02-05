@@ -102,14 +102,20 @@ void Headnode::addConnection(const Network& network,
 //}
 
 Connection& Headnode::getConnection(Network::Profile profile) {
-    LOG_TRACE("Trying to get a Connection with the given profile");
+//    auto it = std::find_if(
+//            m_connection.begin(), m_connection.end(),
+//            [&](const Connection& x){
+//        return x.getNetwork().getProfile() == profile;
+//    });
+//
+//    return *it;
+
     for (auto& connection : m_connection) {
-        LOG_TRACE("Trying...");
         if (connection.getNetwork().getProfile() == profile) {
-            LOG_TRACE("Matched profile while getting a Connection");
             return connection;
         }
     }
     // TODO: Better throw message; need to make getProfileSting as static
-    throw std::runtime_error("Cannot get any connection with required profile");
+    throw std::runtime_error(fmt::format(
+            "Cannot get any connection with profile {}", profile));
 }

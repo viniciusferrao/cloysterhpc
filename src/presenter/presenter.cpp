@@ -48,18 +48,18 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Added the external network");
 
     // Create a connection on the headnode
-//    m_model->getHeadnode().addConnection(
-//            m_model->getNetwork().front(),
-//            networkInterfaceSelection(Connection::fetchInterfaces()),
-//            networkAddress({"IP", "Subnet Mask"}).front()
-//    );
-    m_model->getHeadnode().addConnection(m_model->getNetwork().front());
+    m_model->getHeadnode().addConnection(m_model->getNetwork(Network::Profile::External));
     LOG_TRACE("Added the external connection");
 
     m_model->getHeadnode().getConnection(Network::Profile::External)
                 .setInterface(networkInterfaceSelection(Connection::fetchInterfaces()));
     m_model->getHeadnode().getConnection(Network::Profile::External)
-                .setAddress(networkAddress({"IP", "Subnet Mask"}).front());
+                //.setAddress(networkAddress({"IP", "Subnet Mask"}).front());
+                .setAddress(Connection::fetchAddress(
+                        m_model->getHeadnode()
+                                .getConnection(Network::Profile::External)
+                                .getInterface()
+                ));
 
     LOG_TRACE("Added the external connection on headnode: {} -> {}",
             m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
@@ -72,7 +72,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     // Create a connection on the headnode
     m_model->getHeadnode().addConnection(
-            m_model->getNetwork().back(), // TODO: Better handling
+            m_model->getNetwork(Network::Profile::Management), // TODO: Better handling
             networkInterfaceSelection(Connection::fetchInterfaces()),
             "10.20.30.1"
     );
