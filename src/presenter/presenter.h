@@ -23,6 +23,8 @@ private:
     std::vector<std::string> networkHostnameSelection(const std::vector<std::string>&);
     std::string networkInterfaceSelection(const std::vector<std::string>&);
     std::vector<std::string> networkAddress(const std::vector<std::string>&);
+    void networkConfirmation(const std::vector<std::pair<std::string, std::string>>& pairs);
+
 
 public:
     Presenter(std::unique_ptr<Newt>& view,

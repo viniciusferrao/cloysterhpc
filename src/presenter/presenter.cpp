@@ -54,13 +54,34 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_model->getHeadnode().getConnection(Network::Profile::External)
                 .setInterface(networkInterfaceSelection(Connection::fetchInterfaces()));
 
-    // TODO: Add an TUI to inform the user about the detected IP addresses
-    m_model->getHeadnode().getConnection(Network::Profile::External)
-                .setAddress(Connection::fetchAddress(
-                        m_model->getHeadnode()
+    // Fetch the required network/connection data and display on a TUI
+    auto interface = m_model->getHeadnode()
                                 .getConnection(Network::Profile::External)
-                                .getInterface()
-                ));
+                                .getInterface();
+    std::vector<std::pair<std::string, std::string>> networkDetails;
+
+    networkDetails.reserve(4);
+    networkDetails.emplace_back(
+            std::make_pair("IP Address", Connection::fetchAddress(interface)));
+    networkDetails.emplace_back(
+            std::make_pair("Subnet Mask", Network::fetchSubnetMask(interface)));
+    networkDetails.emplace_back(
+            std::make_pair("Network Address", Network::fetchAddress(interface)));
+    networkDetails.emplace_back(
+            std::make_pair("Gateway", Network::fetchGateway(interface)));
+    networkConfirmation(networkDetails);
+    networkDetails.clear();
+
+    // Set the gathered data
+    m_model->getHeadnode().getConnection(Network::Profile::External)
+                .setAddress(Connection::fetchAddress(interface));
+    m_model->getNetwork(Network::Profile::External)
+                .setAddress(Network::fetchAddress(interface));
+    m_model->getNetwork(Network::Profile::External)
+                .setSubnetMask(Network::fetchSubnetMask(interface));
+    m_model->getNetwork(Network::Profile::External)
+                .setGateway(Network::fetchGateway(interface));
+
 
     LOG_TRACE("Added the external connection on headnode: {} -> {}",
             m_model->getHeadnode().getConnection(Network::Profile::External).getInterface(),
@@ -129,4 +150,11 @@ Presenter::networkAddress(const std::vector<std::string>& addresses) {
                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4,
                             addresses,
                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
+}
+
+// TODO: Better implementation
+void
+Presenter::networkConfirmation(const std::vector<std::pair<std::string, std::string>>& pairs)
+{
+    return m_view->okCancelMessage("The following network attributes were detected:", pairs);
 }

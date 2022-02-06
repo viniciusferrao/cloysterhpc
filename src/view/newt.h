@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 #include <newt.h>
+#include <fmt/format.h>
 #include "view.h"
 #include "../messages.h" /* Legacy constexpr */
 
@@ -41,6 +42,9 @@ public:
     void message(const char*, const char*);
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
+    // TODO: Template?
+    void okCancelMessage(const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
+    void okCancelMessage(const char* title, const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
     std::vector<std::string> fieldMenu(const char* title, const char* message,
