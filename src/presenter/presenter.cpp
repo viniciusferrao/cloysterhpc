@@ -55,12 +55,13 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                 .setInterface(networkInterfaceSelection(Connection::fetchInterfaces()));
 
     // Fetch the required network/connection data and display on a TUI
-    auto interface = m_model->getHeadnode()
+    const auto& interface = m_model->getHeadnode()
                                 .getConnection(Network::Profile::External)
                                 .getInterface();
     std::vector<std::pair<std::string, std::string>> networkDetails;
 
-    networkDetails.reserve(4);
+    const auto nameservers = Network::fetchNameserver();
+    networkDetails.reserve(5 + nameservers.size());
     networkDetails.emplace_back(
             std::make_pair("IP Address", Connection::fetchAddress(interface)));
     networkDetails.emplace_back(
@@ -69,6 +70,15 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
             std::make_pair("Network Address", Network::fetchAddress(interface)));
     networkDetails.emplace_back(
             std::make_pair("Gateway", Network::fetchGateway(interface)));
+
+    for (size_t i = 0 ; const auto& ns : nameservers) {
+        networkDetails.emplace_back(
+            std::make_pair(fmt::format("Nameserver[{}]", i++), ns));
+    }
+
+    networkDetails.emplace_back(
+            std::make_pair("Domain name", Network::fetchDomainName()));
+
     networkConfirmation(networkDetails);
     networkDetails.clear();
 

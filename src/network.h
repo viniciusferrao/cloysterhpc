@@ -105,9 +105,11 @@ public:
 
     const std::string& getDomainName() const;
     void setDomainName(const std::string&);
+    [[nodiscard]] static std::string fetchDomainName();
 
-    std::vector<std::string> getNameserver() const;
+        std::vector<std::string> getNameserver() const;
     void setNameserver(const std::vector<std::string>&);
+    [[nodiscard]] static std::vector<std::string> fetchNameserver();
 
 #ifndef _NDEBUG_
     void dumpNetwork() const;

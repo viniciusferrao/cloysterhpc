@@ -59,6 +59,7 @@ target_link_libraries(main
     Boost::headers Boost::system Boost::thread Boost::log Boost::log_setup
     fmt::fmt
     spdlog::spdlog
+    resolv
     ${STDC++FS}
 )
 

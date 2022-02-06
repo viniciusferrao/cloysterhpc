@@ -7,6 +7,7 @@
 #include <regex>
 #include <arpa/inet.h> /* inet_*() functions */
 #include <ifaddrs.h>
+#include <resolv.h>
 
 #if __cplusplus < 202002L
 #include <boost/algorithm/string.hpp>
@@ -136,6 +137,7 @@ void Network::setGateway(const std::string& gateway) {
         throw; //return -1; /* Invalid IP Address */
 }
 
+// FIXME: It's fetching the broadcast address instead
 std::string Network::fetchGateway(const std::string &interface) {
     struct ifaddrs *ifaddr, *ifa;
 
@@ -184,7 +186,7 @@ void Network::setVLAN(const uint16_t& vlan) {
     m_vlan = vlan;
 }
 
-const std::string &Network::getDomainName() const {
+const std::string& Network::getDomainName() const {
     return m_domainName;
 }
 
@@ -209,6 +211,13 @@ void Network::setDomainName(const std::string& domainName) {
         throw;
 
     m_domainName = domainName;
+}
+
+std::string Network::fetchDomainName() {
+    if (res_init() == -1)
+        throw std::runtime_error("Failed to initialize domain name resolution");
+
+    return _res.defdname; // TODO: Seems to be a deprecated call
 }
 
 /* TODO: Check return type
@@ -240,6 +249,21 @@ void Network::setNameserver(const std::vector<std::string>& nameserver) {
         if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
             throw;
     }
+}
+
+std::vector<std::string> Network::fetchNameserver() {
+    std::vector<std::string> nameservers;
+    if (res_init() == -1)
+        throw std::runtime_error("Failed to initialize domain name resolution");
+
+    nameservers.reserve(static_cast<size_t>(_res.nscount));
+    for (const auto& ns : _res.nsaddr_list) {
+        if (std::string{inet_ntoa(ns.sin_addr)} == "0.0.0.0")
+            continue;
+        nameservers.emplace_back(inet_ntoa(ns.sin_addr));
+    }
+
+    return nameservers;
 }
 
 #ifndef _NDEBUG_
