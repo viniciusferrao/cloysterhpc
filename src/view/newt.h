@@ -23,10 +23,6 @@ protected:
     void helpMessage (const char*) override;
     bool hasEmptyField (const struct newtWinEntry*);
 
-#ifdef _DEBUG_
-    void debugEntries(const struct newtWinEntry*);
-#endif
-
 public:
     Newt();
 
@@ -40,16 +36,24 @@ public:
 
     void message(const char*);
     void message(const char*, const char*);
+
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
     // TODO: Template?
     void okCancelMessage(const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
     void okCancelMessage(const char* title, const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
+
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
+
     std::vector<std::string> fieldMenu(const char* title, const char* message,
                                        const std::vector<std::string>& items,
                                        const char* helpMessage);
+
+    std::vector<std::pair<std::string,std::string>> fieldMenu(const char* title, const char* message,
+                                       const std::vector<std::pair<std::string,std::string>>& items,
+                                       const char* helpMessage);
+
     bool yesNoQuestion(const char* title, const char* message,
                        const char* helpMessage);
 

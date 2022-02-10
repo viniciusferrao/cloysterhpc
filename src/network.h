@@ -7,16 +7,13 @@
 #include <unordered_map>
 
 /* TODO: Refactoring is necessary
- *  Profile and Type must be const, they cannot change after being set.
- *  By default Profile and Type should be External and Ethernet; this must be
- *  done within the constructor.
  *  m_domainName is also available here since non-default networks may
  *  exist on the entire cluster and they should have their own domain.
  */
 class Network {
 public:
     enum class Profile { External, Management, Service, Application };
-    const std::unordered_map<Profile, std::string> getProfileString = {
+    inline static const std::unordered_map<Profile, std::string> getProfileString = { // NOLINT
         {Profile::External,    "External"},
         {Profile::Management,  "Management"},
         {Profile::Service,     "Service"},
@@ -24,12 +21,12 @@ public:
     };
 
     enum class Type { Ethernet, Infiniband };
-    const std::unordered_map<Type, std::string> getTypeString = {
+    inline static const std::unordered_map<Type, std::string> getTypeString = { // NOLINT
         {Type::Ethernet,   "Ethernet"},
         {Type::Infiniband, "Infiniband"}
     };
 
-    const std::unordered_map<std::string, uint8_t> cidr = {
+    inline static const std::unordered_map<std::string, uint8_t> cidr = { // NOLINT
         {"0.0.0.0",          0},
         {"128.0.0.0",        1},
         {"192.0.0.0",        2},

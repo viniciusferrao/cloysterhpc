@@ -66,10 +66,13 @@ void Network::setAddress(const std::string& address) {
 std::string Network::fetchAddress(const std::string& interface) {
     struct in_addr addr{}, netmask{}, network{};
 
+    // TODO: Fix exceptions
     if (inet_aton(Connection::fetchAddress(interface).c_str(), &addr) == 0)
-        throw std::runtime_error("Invalid IP address");
+        return {};
+        //throw std::runtime_error("Invalid IP address");
     if (inet_aton(fetchSubnetMask(interface).c_str(), &netmask) == 0)
-        throw std::runtime_error("Invalid subnet mask address");
+        return {};
+        //throw std::runtime_error("Invalid subnet mask address");
 
     network.s_addr = addr.s_addr & netmask.s_addr;
 
@@ -108,9 +111,7 @@ std::string Network::fetchSubnetMask(const std::string& interface) {
             //freeifaddrs(ifaddr);
 
             if (inet_ntoa(sa->sin_addr) == nullptr)
-                throw std::runtime_error(fmt::format(
-                        "Interface {} does not have a netmask address defined",
-                        interface));
+                continue;
 
 #ifndef _NDEBUG_
             LOG_TRACE("Got subnet mask address {} from interface {}",
@@ -122,8 +123,9 @@ std::string Network::fetchSubnetMask(const std::string& interface) {
     }
 
     freeifaddrs(ifaddr);
+    return {};
     throw std::runtime_error(fmt::format(
-            "Interface {} cannot be found or used as a resource", interface));
+            "Interface {} does not have a netmask address defined", interface));
 }
 
 const std::string Network::getGateway() const {
@@ -158,9 +160,7 @@ std::string Network::fetchGateway(const std::string &interface) {
             //freeifaddrs(ifaddr);
 
             if (inet_ntoa(sa->sin_addr) == nullptr)
-                throw std::runtime_error(fmt::format(
-                        "Interface {} does not have a gateway IP address defined",
-                        interface));
+                continue;
 
 #ifndef _NDEBUG_
             LOG_TRACE("Got gateway address {} from interface {}",
@@ -172,8 +172,9 @@ std::string Network::fetchGateway(const std::string &interface) {
     }
 
     freeifaddrs(ifaddr);
+    return {};
     throw std::runtime_error(fmt::format(
-            "Interface {} cannot be found or used as a resource", interface));
+            "Interface {} does not have a gateway IP address defined", interface));
 }
 
 const uint16_t& Network::getVLAN() const {

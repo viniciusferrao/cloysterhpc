@@ -218,8 +218,8 @@ void Cluster::printNetworks(
 #endif
             std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
         }
+        std::cerr << "\n";
     }
-    std::cerr << std::endl;
 }
 #endif
 

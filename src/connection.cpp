@@ -47,7 +47,7 @@ void Connection::setInterface (const std::string& interface) {
 
     if (getifaddrs(&ifaddr) == -1)
         throw std::runtime_error(fmt::format(
-                "Cannot get interfaces: {}\n", std::strerror(errno)));
+                "Cannot get interface: {}\n", std::strerror(errno)));
 
     for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
@@ -150,9 +150,7 @@ std::string Connection::fetchAddress(const std::string& interface)
             //freeifaddrs(ifaddr);
 
             if (inet_ntoa(sa->sin_addr) == nullptr)
-                throw std::runtime_error(fmt::format(
-                        "Interface {} does not have an IP address defined",
-                        interface));
+                continue;
 
 #ifndef _NDEBUG_
             LOG_TRACE("Got address {} from interface {}",
@@ -164,8 +162,9 @@ std::string Connection::fetchAddress(const std::string& interface)
     }
 
     freeifaddrs(ifaddr);
+    return {};
     throw std::runtime_error(fmt::format(
-            "Interface {} cannot be found or used as a resource", interface));
+            "Interface {} does not have an IP address defined", interface));
 }
 
 const std::string& Connection::getHostname() const {

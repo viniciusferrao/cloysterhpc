@@ -56,22 +56,3 @@ void Newt::helpMessage (const char* message) {
                    const_cast<char *>(MSG_BUTTON_OK),
                    const_cast<char *>(message));
 }
-
-/* TODO: Refactor this with a C++ dialect */
-#ifdef _DEBUG_
-void Newt::debugEntries(const struct newtWinEntry *entries) {
-    /* This may result in a buffer overflow if the string is > 255 chars */
-    char message[255] = {};
-
-    /* The ideia on this loop is to read all the available data from *entries,
-     * so we add the size of the string in order to give padding for additional
-     * data. In the first iteraion strlen() should be zero, and only in the
-     * following iterations data will be added to the string.
-     */
-    for (unsigned i = 0 ; entries[i].text ; i++)
-        sprintf(message + strlen(message), "%s -> %s\n", entries[i].text, 
-                *entries[i].value);
-    
-    newtWinMessage(NULL, const_cast<char *>(MSG_BUTTON_OK), message);
-}
-#endif

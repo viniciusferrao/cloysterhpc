@@ -6,12 +6,34 @@
 #include <optional>
 #include <memory>
 
+// TODO: Enhance this method, use std::transform? Lambda functions?
 std::vector<std::string> Newt::fieldMenu (
+                                        const char* title,
+                                        const char* message,
+                                        const std::vector<std::string>& items,
+                                        const char* helpMessage)
+{
+    std::vector<std::pair<std::string,std::string>> pairs;
+    std::vector<std::string> returnVector;
+
+    pairs.reserve(items.size());
+    for (const auto& item : items)
+        pairs.emplace_back(std::make_pair(item, std::string{}));
+
+    const auto& returnPairs = fieldMenu(title, message, pairs, helpMessage);
+
+    returnVector.reserve(returnPairs.size());
+    for (const auto& returnPair : returnPairs)
+        returnVector.emplace_back(returnPair.second);
+
+    return returnVector;
+}
+
+std::vector<std::pair<std::string,std::string>> Newt::fieldMenu (
         const char* title,
         const char* message,
-        // TODO: std::pair and std::optional for already set variables
-        //const std::vector<std::pair<std::string,std::optional<std::string>>>& items,
-        const std::vector<std::string>& items,
+        // TODO: std::optional on second pair
+        const std::vector<std::pair<std::string,std::string>>& items,
         const char* helpMessage)
 {
 
@@ -26,29 +48,38 @@ std::vector<std::string> Newt::fieldMenu (
     auto fieldEntries = std::make_unique<char*[]>(vectorSize + 1);
     auto field = std::make_unique<newtWinEntry[]>(vectorSize + 1);
 
-    for (unsigned i = 0 ; i < vectorSize ; i++) {
-        field[i].text = const_cast<char*>(items[i].c_str());
-        //field[i].value = fieldEntries.get() + i;
+    // This "for loop" will populate newtWinEntry with the necessary data to be
+    // displayed on the interface.
+    // Please note that field[i].value is a char** because it's passing data by
+    // reference in C style, since the data can be modified by the newt form,
+    // it's not an array of char*
+    for (size_t i = 0 ; i < vectorSize ; i++) {
+        field[i].text = const_cast<char*>(items[i].first.c_str());
+        fieldEntries[i] = const_cast<char*>(items[i].second.c_str());
+
+        // TODO: Check is there's a way to hide &
         field[i].value = &fieldEntries[i];
-        /* TODO: Fix this hack to enable password fields */
-        if (items[i].find("Password") != std::string::npos ||
-            items[i].find("password") != std::string::npos)
+
+        // TODO: Fix this hack to enable password fields
+        if (items[i].first.find("Password") != std::string::npos ||
+            items[i].first.find("password") != std::string::npos)
             field[i].flags = NEWT_FLAG_PASSWORD;
         else
             field[i].flags = 0;
     }
+
     field[vectorSize].text = nullptr;
     field[vectorSize].value = nullptr;
     field[vectorSize].flags = 0;
 
-    std::vector<std::string> entries;
+    std::vector<std::pair<std::string,std::string>> returnVector;
 
     question:
-    returnValue = newtWinEntries(const_cast<char *>(title),
-                                 const_cast<char *>(message),
+    returnValue = newtWinEntries(const_cast<char*>(title),
+                                 const_cast<char*>(message),
                                  suggestedWidth, flexDown, flexUp,
                                  maxHeightList, field.get(),
-                                 const_cast<char *>(MSG_BUTTON_OK),
+                                 const_cast<char*>(MSG_BUTTON_OK),
                                  MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL);
 
     switch(returnValue) {
@@ -58,14 +89,15 @@ std::vector<std::string> Newt::fieldMenu (
             // TODO: The view should now check for this, it's a passive view
             if (hasEmptyField(field.get()))
                 goto question;
-#ifdef _DEBUG_
-            debugEntries(field.get());
-#endif
-            for (unsigned i = 0 ; field[i].value ; i++) {
-                entries.emplace_back(*field[i].value);
+
+            returnVector.reserve(vectorSize);
+            for (size_t i = 0 ; field[i].text ; i++) {
+                returnVector.emplace_back(
+                        std::make_pair<std::string,std::string>(
+                                field[i].text, *field[i].value));
             }
 
-            return entries;
+            return returnVector;
         case 2:
             abortInstall();
             break;
