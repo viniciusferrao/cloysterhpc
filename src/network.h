@@ -14,15 +14,15 @@ class Network {
 public:
     enum class Profile { External, Management, Service, Application };
     inline static const std::unordered_map<Profile, std::string> getProfileString = { // NOLINT
-        {Profile::External,    "External"},
-        {Profile::Management,  "Management"},
-        {Profile::Service,     "Service"},
-        {Profile::Application, "Application" }
+        {Profile::External,       "External"},
+        {Profile::Management,   "Management"},
+        {Profile::Service,         "Service"},
+        {Profile::Application, "Application"}
     };
 
     enum class Type { Ethernet, Infiniband };
     inline static const std::unordered_map<Type, std::string> getTypeString = { // NOLINT
-        {Type::Ethernet,   "Ethernet"},
+        {Type::Ethernet,     "Ethernet"},
         {Type::Infiniband, "Infiniband"}
     };
 

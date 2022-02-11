@@ -133,6 +133,10 @@ void Cluster::addNetwork(Network::Profile profile) {
     m_network.emplace_back(Network(profile));
 }
 
+void Cluster::addNetwork(Network::Profile profile, Network::Type type) {
+    m_network.emplace_back(Network(profile, type));
+}
+
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& address,
                              const std::string& subnetMask,
@@ -168,6 +172,14 @@ Cluster::OFED Cluster::getOFED() const {
 
 void Cluster::setOFED(Cluster::OFED ofed) {
     m_ofed = ofed;
+}
+
+Cluster::QueueSystem Cluster::getQueueSystem() const {
+    return m_queueSystem;
+}
+
+void Cluster::setQueueSystem(Cluster::QueueSystem queueSystem) {
+    m_queueSystem = queueSystem;
 }
 
 const std::filesystem::path& Cluster::getISOPath() const {

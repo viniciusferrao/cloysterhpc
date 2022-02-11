@@ -53,13 +53,27 @@ public:
     enum class Provisioner { xCAT };
     enum class Directory { None, FreeIPA };
     enum class OFED { None, Inbox, Mellanox, Oracle };
+    inline static const std::unordered_map<OFED, std::string> getOFEDString = { // NOLINT
+            {OFED::None,         "None"},
+            {OFED::Inbox,       "Inbox"},
+            {OFED::Mellanox, "Mellanox"},
+            {OFED::Oracle,     "Oracle"}
+    };
     enum class QueueSystem { None, SLURM, PBS };
+    inline static const std::unordered_map<QueueSystem, std::string> getQueueSystemString = { // NOLINT
+            {QueueSystem::None,   "None"},
+            {QueueSystem::SLURM, "SLURM"},
+            {QueueSystem::PBS,     "PBS"}
+    };
 
 private:
     //std::unique_ptr<Headnode> m_headnode;
     Headnode m_headnode;
     Provisioner m_provisioner;
     OFED m_ofed;
+    QueueSystem m_queueSystem;
+
+private:
     std::vector<Node> m_nodes;
 
     bool m_firewall {};
@@ -91,6 +105,7 @@ public:
     Network& getNetwork(Network::Profile profile);
     void addNetwork();
     void addNetwork(Network::Profile profile);
+    void addNetwork(Network::Profile profile, Network::Type type);
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
@@ -103,6 +118,9 @@ public:
 
     OFED getOFED() const;
     void setOFED(OFED);
+
+    QueueSystem getQueueSystem() const;
+    void setQueueSystem(QueueSystem queueSystem);
 
     const std::filesystem::path &getISOPath() const;
     void setISOPath(const std::filesystem::path &isoPath);
@@ -125,7 +143,6 @@ public:
     std::string nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
-    QueueSystem queueSystem;
     Postfix postfix;
     bool remoteAccess {};
 

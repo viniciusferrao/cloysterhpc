@@ -33,7 +33,8 @@ private:
 public:
     PresenterNetwork(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model,
-                     Network::Profile profile);
+                     Network::Profile profile = Network::Profile::External,
+                     Network::Type type = Network::Type::Ethernet);
 };
 
 

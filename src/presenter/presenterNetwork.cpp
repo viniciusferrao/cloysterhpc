@@ -7,13 +7,16 @@
 // FIXME: I don't like this code, it's ugly.
 PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
                                    std::unique_ptr<Cluster>& model,
-                                   Network::Profile profile)
+                                   Network::Profile profile,
+                                   Network::Type type)
                                    : m_model(model), m_view(view) {
 
     // Create the external network
-    m_model->addNetwork(profile);
+    m_model->addNetwork(profile, type);
     auto& network = m_model->getNetwork(profile);
-    LOG_TRACE("Added {} network", Network::getProfileString.at(profile));
+    LOG_TRACE("Added {} network with type {}",
+              Network::getProfileString.at(profile),
+              Network::getTypeString.at(type));
 
     // Create a connection on the headnode
     m_model->getHeadnode().addConnection(m_model->getNetwork(profile));
