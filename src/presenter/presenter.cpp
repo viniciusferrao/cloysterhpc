@@ -132,14 +132,15 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     // Queue System
     // TODO: Template this. This calls looks just like OFED selection.
     const auto& queueSystems = {
-            Cluster::getQueueSystemString.at(Cluster::QueueSystem::None),
-            Cluster::getQueueSystemString.at(Cluster::QueueSystem::SLURM),
-            Cluster::getQueueSystemString.at(Cluster::QueueSystem::PBS)
+            QueueSystem::getKindString.at(QueueSystem::Kind::None),
+            QueueSystem::getKindString.at(QueueSystem::Kind::SLURM),
+            QueueSystem::getKindString.at(QueueSystem::Kind::PBS)
     };
 
     m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS, MSG_QUEUE_SYSTEM_SETTINGS,
                      queueSystems, MSG_QUEUE_SYSTEM_SETTINGS_HELP);
-    //m_model->setQueueSystem();
+    // TODO: Remove hardcoded argument
+    m_model->setQueueSystem(QueueSystem::Kind::PBS);
 
     // TODO: Placeholder data
     const std::vector<std::pair<std::string,std::string>> fieldsSLURM = {
@@ -147,11 +148,11 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
     const std::vector<std::string> listPBS = {"Shared", "Scatter"};
 
-    switch (m_model->getQueueSystem()) {
-        case Cluster::QueueSystem::None:
+    switch (m_model->getQueueSystem()->getKind()) {
+        case QueueSystem::Kind::None:
             break;
 
-        case Cluster::QueueSystem::SLURM:
+        case QueueSystem::Kind::SLURM:
             // TODO: Set the gathered data
             m_view->fieldMenu(MSG_TITLE_SLURM_SETTINGS,
                               MSG_SLURM_SETTINGS,
@@ -159,7 +160,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                               MSG_SLURM_SETTINGS_HELP);
             break;
 
-        case Cluster::QueueSystem::PBS:
+        case QueueSystem::Kind::PBS:
             // TODO: Set the gathered data
             m_view->fieldMenu(MSG_TITLE_PBS_SETTINGS,
                               MSG_PBS_SETTINGS,

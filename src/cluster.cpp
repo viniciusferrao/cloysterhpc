@@ -174,12 +174,24 @@ void Cluster::setOFED(Cluster::OFED ofed) {
     m_ofed = ofed;
 }
 
-Cluster::QueueSystem Cluster::getQueueSystem() const {
+std::unique_ptr<QueueSystem>& Cluster::getQueueSystem() {
     return m_queueSystem;
 }
 
-void Cluster::setQueueSystem(Cluster::QueueSystem queueSystem) {
-    m_queueSystem = queueSystem;
+void Cluster::setQueueSystem(QueueSystem::Kind kind) {
+    switch (kind) {
+        case QueueSystem::Kind::None:
+            m_queueSystem = nullptr;
+            break;
+
+        case QueueSystem::Kind::SLURM:
+            m_queueSystem = std::make_unique<SLURM>();
+            break;
+
+        case QueueSystem::Kind::PBS:
+            m_queueSystem = std::make_unique<PBS>();
+            break;
+    }
 }
 
 const std::filesystem::path& Cluster::getISOPath() const {

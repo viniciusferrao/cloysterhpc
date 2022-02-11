@@ -11,21 +11,8 @@
 #include "network.h"
 #include "types.h"
 #include "services/timezone.h"
-
-struct SLURM {
-    std::string partition;
-};
-
-struct PBS {
-    enum class DefaultPlace { Shared, Scatter };
-    DefaultPlace defaultPlace;
-};
-
-struct QueueSystem {
-    std::string name;
-    std::optional<SLURM> slurm;
-    std::optional<PBS> pbs;
-};
+#include "queuesystem/slurm.h"
+#include "queuesystem/pbs.h"
 
 struct PostfixRelay {
     std::string hostname;
@@ -59,25 +46,17 @@ public:
             {OFED::Mellanox, "Mellanox"},
             {OFED::Oracle,     "Oracle"}
     };
-    enum class QueueSystem { None, SLURM, PBS };
-    inline static const std::unordered_map<QueueSystem, std::string> getQueueSystemString = { // NOLINT
-            {QueueSystem::None,   "None"},
-            {QueueSystem::SLURM, "SLURM"},
-            {QueueSystem::PBS,     "PBS"}
-    };
 
 private:
     //std::unique_ptr<Headnode> m_headnode;
     Headnode m_headnode;
     Provisioner m_provisioner;
     OFED m_ofed;
-    QueueSystem m_queueSystem;
-
-private:
+    std::unique_ptr<QueueSystem> m_queueSystem;
     std::vector<Node> m_nodes;
 
-    bool m_firewall {};
-    SELinuxMode m_selinux {}; /* Control nodes SELinux settings */
+    bool m_firewall{};
+    SELinuxMode m_selinux{}; /* Control nodes SELinux settings */
     Timezone m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
@@ -119,8 +98,8 @@ public:
     OFED getOFED() const;
     void setOFED(OFED);
 
-    QueueSystem getQueueSystem() const;
-    void setQueueSystem(QueueSystem queueSystem);
+    std::unique_ptr<QueueSystem>& getQueueSystem();
+    void setQueueSystem(QueueSystem::Kind kind);
 
     const std::filesystem::path &getISOPath() const;
     void setISOPath(const std::filesystem::path &isoPath);
