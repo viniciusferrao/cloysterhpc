@@ -48,3 +48,14 @@ std::vector<std::string> Timezone::getAvailableTimezones() const
 {
     return m_availableTimezones;
 }
+
+void Timezone::setTimeservers(const std::vector<std::string>& timeservers) {
+    m_timeservers.reserve(timeservers.size());
+
+    for (const auto& timeserver : timeservers)
+        m_timeservers.emplace_back(timeserver);
+}
+
+std::vector<std::string> Timezone::getTimeservers() {
+    return m_timeservers;
+}

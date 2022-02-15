@@ -16,10 +16,14 @@
 #include "os.h"
 
 class Headnode : public Server {
+public:
+    enum class Target { Text, Graphical };
+
 private:
     OS m_os;
     std::string m_hostname;
     std::string m_fqdn;
+    Target m_target;
     std::list<Connection> m_connection;
 
 private:
@@ -35,6 +39,9 @@ public:
 
     [[nodiscard]] const std::string& getFQDN() const noexcept;
     void setFQDN(const std::string& fqdn);
+
+    [[nodiscard]] Target getTarget() const;
+    void setTarget(Target target);
 
     //const std::unique_ptr<Connection>& getConnection() const;
     [[nodiscard]] const std::list<Connection>& getConnections() const;

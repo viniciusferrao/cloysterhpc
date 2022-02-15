@@ -10,9 +10,10 @@ class CloysterHPC(ConanFile):
     name = "CloysterHPC"
     version = "0.1"
     requires = (
-        "boost/1.77.0",
-	"fmt/8.0.1",
+        "boost/1.78.0",
+	    "fmt/8.1.1",
         "spdlog/1.9.2",
+        "magic_enum/0.7.3"
 #        "catch2/2.13.7",
 #        "docopt.cpp/0.6.2",
     )

@@ -6,6 +6,7 @@
 #define CLOYSTERHPC_QUEUESYSTEM_H
 
 #include <string>
+#include <unordered_map>
 
 class QueueSystem {
 public:
@@ -17,15 +18,17 @@ public:
     };
 
 private:
-    Kind m_kind;
+    Kind m_kind = Kind::None;
     std::string_view m_defaultQueue;
 
 public:
     void setKind(Kind kind);
-    Kind getKind(void);
+    Kind getKind();
 
-    virtual void setDefaultQueue(std::string_view);
-    virtual std::string_view getDefaultQueue(void);
+    void setDefaultQueue(std::string_view);
+    std::string_view getDefaultQueue();
+
+    virtual ~QueueSystem() = default;
 };
 
 #endif //CLOYSTERHPC_QUEUESYSTEM_H

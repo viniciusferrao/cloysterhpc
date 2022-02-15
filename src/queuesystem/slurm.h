@@ -7,6 +7,9 @@
 
 #include "queuesystem.h"
 
-class SLURM : QueueSystem {};
+class SLURM : public QueueSystem {
+public:
+    SLURM();
+};
 
 #endif //CLOYSTERHPC_SLURM_H

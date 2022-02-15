@@ -49,9 +49,10 @@ public:
     std::vector<std::string> fieldMenu(const char* title, const char* message,
                                        const std::vector<std::string>& items,
                                        const char* helpMessage);
-
-    std::vector<std::pair<std::string,std::string>> fieldMenu(const char* title, const char* message,
-                                       const std::vector<std::pair<std::string,std::string>>& items,
+    template <typename T>
+    std::vector<std::pair<T, T>>
+    fieldMenu(const char* title, const char* message,
+                                       const std::vector<std::pair<T, T>>& items,
                                        const char* helpMessage);
 
     bool yesNoQuestion(const char* title, const char* message,

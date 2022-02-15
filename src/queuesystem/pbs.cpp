@@ -4,6 +4,10 @@
 
 #include "pbs.h"
 
+PBS::PBS() {
+    setKind(QueueSystem::Kind::PBS);
+}
+
 void PBS::setExecutionPlace(ExecutionPlace executionPlace) {
     m_executionPlace = executionPlace;
 }

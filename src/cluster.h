@@ -50,6 +50,9 @@ public:
 private:
     //std::unique_ptr<Headnode> m_headnode;
     Headnode m_headnode;
+    std::string_view m_name;
+    std::string_view m_companyName;
+    std::string_view m_adminMail;
     Provisioner m_provisioner;
     OFED m_ofed;
     std::unique_ptr<QueueSystem> m_queueSystem;
@@ -70,11 +73,17 @@ public:
     // If we want to change things inside the headnode it must be passed as a
     // reference, or else a simple setter will fail.
     Headnode& getHeadnode();
+    const std::string_view& getName() const;
+    void setName(const std::string_view &name);
+    const std::string_view& getCompanyName() const;
+    void setCompanyName(const std::string_view &companyName);
+    const std::string_view& getAdminMail() const;
+    void setAdminMail(const std::string_view &adminMail);
     bool isFirewall() const;
     void setFirewall(bool firewall);
     SELinuxMode getSELinux() const;
     void setSELinux(SELinuxMode);
-    const Timezone& getTimezone() const;
+    Timezone& getTimezone();
     void setTimezone(const std::string& tz);
     const std::string& getLocale() const;
     void setLocale(const std::string &locale);

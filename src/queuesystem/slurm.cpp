@@ -3,3 +3,7 @@
 //
 
 #include "slurm.h"
+
+SLURM::SLURM() {
+    setKind(QueueSystem::Kind::SLURM);
+}

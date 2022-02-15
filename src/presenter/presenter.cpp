@@ -10,16 +10,47 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-#if 0
+#if 1
     welcomeMessage();
     LOG_TRACE("Welcome message displayed");
 
     installInstructions();
     LOG_TRACE("Install instructions displayed");
 
-    m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
-    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone()); // TODO: Horrible call
+    // Set general settings
+    // std::vector<std::pair<std::string_view,std::string_view>> generalSettings = {
+    std::vector<std::pair<std::string,std::string>> generalSettings = {
+            {"Cluster Name", ""},
+            {"Company Name", ""},
+            {"Administrator e-mail", ""}
+    };
+    generalSettings = m_view->fieldMenu("General cluster settings", "Fill the required data about your new cluster",
+                      generalSettings, "");
+    m_model->setName(generalSettings[0].second);
+    LOG_INFO("Set cluster name: {}", m_model->getName());
+    m_model->setCompanyName(generalSettings[1].second);
+    LOG_INFO("Set cluster company name: {}", m_model->getCompanyName());
+    m_model->setAdminMail(generalSettings[2].second);
+    LOG_INFO("Set cluster admin e-email: {}", m_model->getAdminMail());
 
+    // Timezone and locale support
+    m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
+    // TODO: Horrible call; getTimezone() two times? Srsly?
+    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone());
+
+    // TODO: Fix the interface hack to show only one time "time server"
+    std::vector<std::pair<std::string,std::string>> timeservers = {
+            {"Time server", "0.br.pool.ntp.org"},
+            {"", "1.br.pool.ntp.org"},
+            {"", "2.br.pool.ntp.org"}
+    };
+    timeservers = m_view->fieldMenu("Time server settings",
+                                    "Add or change the list of available time servers",
+                                    timeservers, "");
+//    m_model->getTimezone().setTimeservers(timeservers);
+//    LOG_INFO("Timeservers set to {}", m_model->getTimezone().getTimeservers());
+
+    // TODO: Get locales from the system
     m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
     LOG_TRACE("Locale set to: {}", m_model->getLocale());
 
@@ -34,6 +65,17 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
     LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
     LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
+
+    // Boot target on headnode selection
+    // TODO: Enum handling (magic_enum)
+    m_model->getHeadnode().setTarget(Headnode::Target::Text);
+            m_view->listMenu(
+            "General settings",
+            "Select the boot target for the headnode",
+            {"Text", "Graphical"},
+            "No help");
+    LOG_INFO("{} target set on headnode")//, m_model->(getHeadnode().getTarget());
+
 #endif
 
 #if 0
@@ -63,7 +105,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1
+#if 0
     // Infiniband support
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
@@ -137,10 +179,18 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
             QueueSystem::getKindString.at(QueueSystem::Kind::PBS)
     };
 
-    m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS, MSG_QUEUE_SYSTEM_SETTINGS,
-                     queueSystems, MSG_QUEUE_SYSTEM_SETTINGS_HELP);
-    // TODO: Remove hardcoded argument
-    m_model->setQueueSystem(QueueSystem::Kind::PBS);
+    const auto& queueSystem = m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
+                                               MSG_QUEUE_SYSTEM_SETTINGS,
+                                               queueSystems,
+                                               MSG_QUEUE_SYSTEM_SETTINGS_HELP);
+
+    // TODO: Better handling of this case statement
+    if (queueSystem == "SLURM")
+        m_model->setQueueSystem(QueueSystem::Kind::SLURM);
+    else if (queueSystem == "PBS")
+        m_model->setQueueSystem(QueueSystem::Kind::PBS);
+//    else
+//        m_model->setQueueSystem(QueueSystem::Kind::None);
 
     // TODO: Placeholder data
     const std::vector<std::pair<std::string,std::string>> fieldsSLURM = {
@@ -148,25 +198,27 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
     const std::vector<std::string> listPBS = {"Shared", "Scatter"};
 
-    switch (m_model->getQueueSystem()->getKind()) {
-        case QueueSystem::Kind::None:
-            break;
+    if (m_model->getQueueSystem()) {
+        switch (m_model->getQueueSystem()->getKind()) {
+            case QueueSystem::Kind::None:
+                break;
 
-        case QueueSystem::Kind::SLURM:
-            // TODO: Set the gathered data
-            m_view->fieldMenu(MSG_TITLE_SLURM_SETTINGS,
-                              MSG_SLURM_SETTINGS,
-                              fieldsSLURM,
-                              MSG_SLURM_SETTINGS_HELP);
-            break;
+            case QueueSystem::Kind::SLURM:
+                // TODO: Set the gathered data
+                m_view->fieldMenu(MSG_TITLE_SLURM_SETTINGS,
+                                  MSG_SLURM_SETTINGS,
+                                  fieldsSLURM,
+                                  MSG_SLURM_SETTINGS_HELP);
+                break;
 
-        case QueueSystem::Kind::PBS:
-            // TODO: Set the gathered data
-            m_view->fieldMenu(MSG_TITLE_PBS_SETTINGS,
-                              MSG_PBS_SETTINGS,
-                              listPBS,
-                              MSG_PBS_SETTINGS_HELP);
-            break;
+            case QueueSystem::Kind::PBS:
+                // TODO: Set the gathered data
+                m_view->listMenu(MSG_TITLE_PBS_SETTINGS,
+                                 MSG_PBS_SETTINGS,
+                                 listPBS,
+                                 MSG_PBS_SETTINGS_HELP);
+                break;
+        }
     }
 
 #endif

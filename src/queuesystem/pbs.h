@@ -7,7 +7,7 @@
 
 #include "queuesystem.h"
 
-class PBS : QueueSystem {
+class PBS : public QueueSystem {
 public:
     enum class ExecutionPlace {Shared, Scatter};
 
@@ -18,7 +18,8 @@ public:
     void setExecutionPlace(ExecutionPlace);
     ExecutionPlace getExecutionPlace(void);
 
+public:
+    PBS();
 };
-
 
 #endif //CLOYSTERHPC_PBS_H

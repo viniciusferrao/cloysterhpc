@@ -29,11 +29,12 @@ std::vector<std::string> Newt::fieldMenu (
     return returnVector;
 }
 
-std::vector<std::pair<std::string,std::string>> Newt::fieldMenu (
+template <typename T>
+std::vector<std::pair<T, T>> Newt::fieldMenu (
         const char* title,
         const char* message,
         // TODO: std::optional on second pair
-        const std::vector<std::pair<std::string,std::string>>& items,
+        const std::vector<std::pair<T, T>>& items,
         const char* helpMessage)
 {
 

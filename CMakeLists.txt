@@ -70,7 +70,7 @@ include(cmake/StaticAnalyzers.cmake)
 
 option(BUILD_SHARED_LIBS "Enable compilation of shared libraries" OFF)
 option(ENABLE_PCH "Enable Precompiled Headers" OFF)
-option(ENABLE_CONAN "Use Conan for dependency management" OFF)
+option(ENABLE_CONAN "Use Conan for dependency management" ON)
 option(ENABLE_TESTING "Enable Test Builds" OFF)
 option(ENABLE_FUZZING "Enable Fuzzing Builds" OFF)
 option(ENABLE_UNITY "Enable Unity builds of projects" OFF)

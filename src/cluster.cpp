@@ -32,6 +32,30 @@ Headnode& Cluster::getHeadnode() {
     return m_headnode;
 }
 
+const std::string_view& Cluster::getName() const {
+    return m_name;
+}
+
+void Cluster::setName(const std::string_view &name) {
+    m_name = name;
+}
+
+const std::string_view& Cluster::getCompanyName() const {
+    return m_companyName;
+}
+
+void Cluster::setCompanyName(const std::string_view &companyName) {
+    m_companyName = companyName;
+}
+
+const std::string_view& Cluster::getAdminMail() const {
+    return m_adminMail;
+}
+
+void Cluster::setAdminMail(const std::string_view &adminMail) {
+    m_adminMail = adminMail;
+}
+
 bool Cluster::isFirewall() const {
     return m_firewall;
 }
@@ -48,7 +72,7 @@ void Cluster::setSELinux(Cluster::SELinuxMode mode) {
     m_selinux = mode;
 }
 
-const Timezone& Cluster::getTimezone() const {
+Timezone& Cluster::getTimezone() {
     return m_timezone;
 }
 
@@ -181,14 +205,18 @@ std::unique_ptr<QueueSystem>& Cluster::getQueueSystem() {
 void Cluster::setQueueSystem(QueueSystem::Kind kind) {
     switch (kind) {
         case QueueSystem::Kind::None:
+            // TODO: This crashes because the object does not exist
             m_queueSystem = nullptr;
+//            m_queueSystem = std::make_unique<QueueSystem>();
             break;
 
         case QueueSystem::Kind::SLURM:
+            //m_queueSystem = std::unique_ptr<QueueSystem>(new SLURM());
             m_queueSystem = std::make_unique<SLURM>();
             break;
 
         case QueueSystem::Kind::PBS:
+            //m_queueSystem = std::unique_ptr<QueueSystem>(new PBS());
             m_queueSystem = std::make_unique<PBS>();
             break;
     }

@@ -19,7 +19,7 @@
  */
 //Headnode::Headnode () = default;
 
-Headnode::Headnode() {
+Headnode::Headnode() : m_target(Target::Text) {
     discoverNames();
 }
 
@@ -118,4 +118,12 @@ Connection& Headnode::getConnection(Network::Profile profile) {
     // TODO: Better throw message; need to make getProfileSting as static
     throw std::runtime_error(fmt::format(
             "Cannot get any connection with profile {}", profile));
+}
+
+Headnode::Target Headnode::getTarget() const {
+    return m_target;
+}
+
+void Headnode::setTarget(Headnode::Target target) {
+    m_target = target;
 }

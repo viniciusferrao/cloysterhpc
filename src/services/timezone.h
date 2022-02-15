@@ -11,6 +11,7 @@ class Timezone {
 private:
     std::string m_timezone;
     std::vector<std::string> m_availableTimezones;
+    std::vector<std::string> m_timeservers;
 
 public:
     Timezone();
@@ -18,10 +19,13 @@ public:
 
     void setTimezone(std::string_view);
     std::string_view getTimezone() const;
-    void setSystemTimezone();
-    std::vector<std::string> fetchAvailableTimezones();
-    std::vector<std::string> getAvailableTimezones() const;
 
+    void setSystemTimezone();
+    std::vector<std::string> getAvailableTimezones() const;
+    std::vector<std::string> fetchAvailableTimezones();
+
+    void setTimeservers(const std::vector<std::string>& timeservers);
+    std::vector<std::string> getTimeservers();
 };
 
 
