@@ -10,6 +10,7 @@
 #include "../services/log.h"
 
 #include <memory>
+#include <variant>
 #include <fmt/format.h>
 
 // TODO: Pure virtual

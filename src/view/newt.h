@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <variant>
 #include <iostream>
 #include <newt.h>
 #include <fmt/format.h>
@@ -46,6 +47,7 @@ public:
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
 
+    // TODO: Remove this method, it's deprecated
     std::vector<std::string> fieldMenu(const char* title, const char* message,
                                        const std::vector<std::string>& items,
                                        const char* helpMessage);
@@ -54,6 +56,13 @@ public:
     fieldMenu(const char* title, const char* message,
                                        const std::vector<std::pair<T, T>>& items,
                                        const char* helpMessage);
+
+    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>>
+    fieldMenu(const char* title, const char* message,
+              const std::vector<std::pair<std::string, std::variant<std::string, unsigned>>>& items,
+              const char* helpMessage);
+
+
 
     bool yesNoQuestion(const char* title, const char* message,
                        const char* helpMessage);

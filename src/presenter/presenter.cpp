@@ -10,7 +10,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-#if 1
+#if 0
     welcomeMessage();
     LOG_TRACE("Welcome message displayed");
 
@@ -75,7 +75,6 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
             {"Text", "Graphical"},
             "No help");
     LOG_INFO("{} target set on headnode")//, m_model->(getHeadnode().getTarget());
-
 #endif
 
 #if 0
@@ -171,6 +170,33 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 #endif
 
 #if 1
+//    std::unordered_map<std::string, std::string> nodes;
+//    nodes.reserve(4);
+//    nodes.emplace("Racks");
+//    nodes.emplace("Nodes");
+//    nodes.emplace("Node start number");
+//    nodes.emplace("Node base name");
+    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> nodes;
+//            {"Racks", static_cast<unsigned>(1)},
+//            {"Nodes", static_cast<unsigned>(1)},
+//            {"Node start number", static_cast<unsigned>(1)},
+//            {"Node base name", "n"}
+//    };
+
+    nodes.reserve(4);
+    nodes.emplace_back("Racks", static_cast<unsigned>(1));
+    nodes.emplace_back("Nodes", static_cast<unsigned>(1));
+    nodes.emplace_back("Node start number", static_cast<unsigned>(1));
+    nodes.emplace_back("Node base name", "n");
+
+    m_view->fieldMenu("Node Settings",
+                      "Fill the required node information data",
+                      nodes,
+                      "No help");
+
+#endif
+
+#if 0
     // Queue System
     // TODO: Template this. This calls looks just like OFED selection.
     const auto& queueSystems = {
