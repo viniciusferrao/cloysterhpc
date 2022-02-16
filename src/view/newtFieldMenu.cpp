@@ -5,6 +5,7 @@
 #include "newt.h"
 #include <optional>
 #include <memory>
+#include "../services/log.h"
 
 // TODO: Enhance this method, use std::transform? Lambda functions?
 std::vector<std::string> Newt::fieldMenu (
@@ -150,12 +151,21 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
 //        };
 //        check_value(items[i].second);
 
-        if (holds_alternative<unsigned>(items[i].second))
-            fieldEntries[i] = const_cast<char*>(std::to_string(std::get<unsigned>(items[i].second)).c_str());
+//        if (std::holds_alternative<unsigned>(items[i].second))
+//            fieldEntries[i] = const_cast<char*>(std::to_string(std::get<unsigned>(items[i].second)).c_str());
+//        else
+//            fieldEntries[i] = const_cast<char*>(std::get<std::string>(items[i].second).c_str());
+
+        //if (const unsigned* value = std::get_if<unsigned>(&items[i].second))
+        if (auto value = std::get_if<unsigned>(&items[i].second))
+            fieldEntries[i] = const_cast<char*>(
+                    fmt::format("{}", *value).c_str());
         else
-            fieldEntries[i] = const_cast<char*>(std::get<std::string>(items[i].second).c_str());
+            fieldEntries[i] = const_cast<char*>(
+                    std::get<std::string>(items[i].second).c_str());
 
         //fieldEntries[i] = const_cast<char*>(items[i].second.c_str());
+        LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
 
         // TODO: Check is there's a way to hide &
         field[i].value = &fieldEntries[i];
@@ -180,7 +190,7 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
                                  suggestedWidth, flexDown, flexUp,
                                  maxHeightList, field.get(),
                                  const_cast<char*>(MSG_BUTTON_OK),
-                                 MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, NULL);
+                                 MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, nullptr);
 
     switch(returnValue) {
         case 0:

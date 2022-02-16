@@ -176,18 +176,18 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 //    nodes.emplace("Nodes");
 //    nodes.emplace("Node start number");
 //    nodes.emplace("Node base name");
-    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> nodes;
-//            {"Racks", static_cast<unsigned>(1)},
-//            {"Nodes", static_cast<unsigned>(1)},
-//            {"Node start number", static_cast<unsigned>(1)},
-//            {"Node base name", "n"}
-//    };
+    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> nodes = {
+            {"Racks", 1u},
+            {"Nodes", 5u},
+            {"Node start number", 1u},
+            {"Node base name", "n"}
+    };
 
-    nodes.reserve(4);
-    nodes.emplace_back("Racks", static_cast<unsigned>(1));
-    nodes.emplace_back("Nodes", static_cast<unsigned>(1));
-    nodes.emplace_back("Node start number", static_cast<unsigned>(1));
-    nodes.emplace_back("Node base name", "n");
+//    nodes.reserve(4);
+//    nodes.emplace_back("Racks", 1u);
+//    nodes.emplace_back("Nodes", 1u);
+//    nodes.emplace_back("Node start number", 1u);
+//    nodes.emplace_back("Node base name", "n");
 
     m_view->fieldMenu("Node Settings",
                       "Fill the required node information data",
