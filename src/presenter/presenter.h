@@ -14,6 +14,7 @@
 #include <memory>
 #include <variant>
 #include <fmt/format.h>
+#include <string_view>
 
 // TODO: Pure virtual
 class Presenter {

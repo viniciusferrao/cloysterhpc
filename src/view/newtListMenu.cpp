@@ -5,6 +5,17 @@
 //#include "newtListMenu.h"
 #include "newt.h"
 
+// Just a quick test to see if we can handle std::array
+template<size_t N>
+std::string Newt::listMenu(const char* title, const char* message,
+                     const std::array<std::string_view, N>& items,
+                     const char* helpMessage) {
+
+    const std::vector<std::string>& aux{items};
+
+    return listMenu(title, message, aux, helpMessage);
+}
+
 //std::string NewtListMenu::draw (const char * title, const char * message,
 std::string Newt::listMenu (const char* title, const char* message,
                             const std::vector<std::string>& items,

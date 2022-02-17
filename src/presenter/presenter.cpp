@@ -85,7 +85,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-#if 1
+#if 0
     // TODO: Under development
     try {
         PresenterNetwork external(view, model);
@@ -108,16 +108,21 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
 
-        const std::vector<std::string>& ibStacks = {
-                magic_enum::enum_name(Cluster::OFED::Inbox).data(),
-                magic_enum::enum_name(Cluster::OFED::Mellanox).data(),
-                magic_enum::enum_name(Cluster::OFED::Oracle).data()
-        };
+        constexpr auto ibStacks = magic_enum::enum_names<Cluster::OFED>();
+//        const std::vector<std::string>& ibStacks = {
+//                magic_enum::enum_name(Cluster::OFED::Inbox).data(),
+//                magic_enum::enum_name(Cluster::OFED::Mellanox).data(),
+//                magic_enum::enum_name(Cluster::OFED::Oracle).data()
+//        };
 
-        // TODO: Boost.bimap to m_model->setOFED();
-        m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS, MSG_INFINIBAND_SETTINGS, ibStacks, MSG_INFINIBAND_SETTINGS_HELP);
-        //m_model->setOFED(m_view->listMenu(
-        //        MSG_TITLE_INFINIBAND_SETTINGS, MSG_INFINIBAND_SETTINGS, ibStacks, MSG_INFINIBAND_SETTINGS_HELP));
+        // TODO: Fix magic_enum (string to enum)
+        m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS, MSG_INFINIBAND_SETTINGS,
+                         ibStacks, MSG_INFINIBAND_SETTINGS_HELP);
+//        m_model->setOFED(magic_enum::enum_cast<Cluster::OFED>(
+//                m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS,
+//                                 MSG_INFINIBAND_SETTINGS,
+//                                 ibStacks,
+//                                 MSG_INFINIBAND_SETTINGS_HELP)));
 
         try {
             PresenterNetwork application(view, model, Network::Profile::Application, Network::Type::Infiniband);
@@ -195,7 +200,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
 #endif
 
-#if 1
+#if 0
     // Queue System
     // TODO: Template this. This calls looks just like OFED selection.
     const std::vector<std::string>& queueSystems = {

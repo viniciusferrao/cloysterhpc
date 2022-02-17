@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <iostream>
 #include <newt.h>
@@ -46,6 +47,10 @@ public:
 
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
+
+    template<size_t N>
+    std::string listMenu(const char*, const char*,
+                         const std::array<std::string_view, N>&, const char*);
 
     // TODO: Remove this method, it's deprecated
     std::vector<std::string> fieldMenu(const char* title, const char* message,
