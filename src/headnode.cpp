@@ -19,7 +19,7 @@
  */
 //Headnode::Headnode () = default;
 
-Headnode::Headnode() : m_target(Target::Text) {
+Headnode::Headnode() : m_bootTarget(BootTarget::Text) {
     discoverNames();
 }
 
@@ -120,10 +120,10 @@ Connection& Headnode::getConnection(Network::Profile profile) {
             "Cannot get any connection with profile {}", profile));
 }
 
-Headnode::Target Headnode::getTarget() const {
-    return m_target;
+Headnode::BootTarget Headnode::getBootTarget() const {
+    return m_bootTarget;
 }
 
-void Headnode::setTarget(Headnode::Target target) {
-    m_target = target;
+void Headnode::setBootTarget(Headnode::BootTarget bootTarget) {
+    m_bootTarget = bootTarget;
 }

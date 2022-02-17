@@ -65,19 +65,24 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
     LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
     LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
-
-    // Boot target on headnode selection
-    // TODO: Enum handling (magic_enum)
-    m_model->getHeadnode().setTarget(Headnode::Target::Text);
-            m_view->listMenu(
-            "General settings",
-            "Select the boot target for the headnode",
-            {"Text", "Graphical"},
-            "No help");
-    LOG_INFO("{} target set on headnode")//, m_model->(getHeadnode().getTarget());
 #endif
 
-#if 0
+#if 0 // Boot target on headnode selection
+    m_model->getHeadnode().setBootTarget(
+            magic_enum::enum_cast<Headnode::BootTarget>(
+                m_view->listMenu(
+                    "General settings",
+                    "Select the boot target for the headnode",
+                    magic_enum::enum_names<Headnode::BootTarget>(),
+                    "No help")
+            ).value()
+    );
+    LOG_INFO("{} boot target set on headnode",
+             magic_enum::enum_name<Headnode::BootTarget>(
+                     m_model->getHeadnode().getBootTarget()));
+#endif
+
+#if 0 // Lambda test
     [this](std::vector<std::string> aux) -> void {
         aux = networkHostnameSelection({"Hostname", "Domain name"});
         m_model->getHeadnode().setHostname(aux[0]);
@@ -85,7 +90,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-#if 0
+#if 0 // Networking
     // TODO: Under development
     try {
         PresenterNetwork external(view, model);
@@ -104,25 +109,17 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Infiniband support
+#if 0 // Infiniband support
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
 
-        constexpr auto ibStacks = magic_enum::enum_names<Cluster::OFED>();
-//        const std::vector<std::string>& ibStacks = {
-//                magic_enum::enum_name(Cluster::OFED::Inbox).data(),
-//                magic_enum::enum_name(Cluster::OFED::Mellanox).data(),
-//                magic_enum::enum_name(Cluster::OFED::Oracle).data()
-//        };
-
-        // TODO: Fix magic_enum (string to enum)
-        m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS, MSG_INFINIBAND_SETTINGS,
-                         ibStacks, MSG_INFINIBAND_SETTINGS_HELP);
-//        m_model->setOFED(magic_enum::enum_cast<Cluster::OFED>(
-//                m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS,
-//                                 MSG_INFINIBAND_SETTINGS,
-//                                 ibStacks,
-//                                 MSG_INFINIBAND_SETTINGS_HELP)));
+        m_model->setOFED(magic_enum::enum_cast<Cluster::OFED>(
+                m_view->listMenu(MSG_TITLE_INFINIBAND_SETTINGS,
+                                 MSG_INFINIBAND_SETTINGS,
+                                 magic_enum::enum_names<Cluster::OFED>(),
+                                 MSG_INFINIBAND_SETTINGS_HELP)).value()
+                );
+        LOG_INFO("Set OFED stack as: {}", magic_enum::enum_name<Cluster::OFED>(m_model->getOFED()));
 
         try {
             PresenterNetwork application(view, model, Network::Profile::Application, Network::Type::Infiniband);
@@ -134,8 +131,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0
-    // Compute nodes details
+#if 0 // Compute nodes details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
@@ -173,7 +169,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_model->setISOPath(nodeData[4].second);
 #endif
 
-#if 0
+#if 0 // Compute nodes details
 //    std::unordered_map<std::string, std::string> nodes;
 //    nodes.reserve(4);
 //    nodes.emplace("Racks");
@@ -197,30 +193,15 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                       "Fill the required node information data",
                       nodes,
                       "No help");
-
 #endif
 
-#if 0
-    // Queue System
-    // TODO: Template this. This calls looks just like OFED selection.
-    const std::vector<std::string>& queueSystems = {
-            magic_enum::enum_name(QueueSystem::Kind::None).data(),
-            magic_enum::enum_name(QueueSystem::Kind::SLURM).data(),
-            magic_enum::enum_name(QueueSystem::Kind::PBS).data()
-    };
-
-    const auto& queueSystem = m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
-                                               MSG_QUEUE_SYSTEM_SETTINGS,
-                                               queueSystems,
-                                               MSG_QUEUE_SYSTEM_SETTINGS_HELP);
-
-    // TODO: Better handling of this case statement
-    if (queueSystem == "SLURM")
-        m_model->setQueueSystem(QueueSystem::Kind::SLURM);
-    else if (queueSystem == "PBS")
-        m_model->setQueueSystem(QueueSystem::Kind::PBS);
-//    else
-//        m_model->setQueueSystem(QueueSystem::Kind::None);
+#if 0 // Queue System
+    m_model->setQueueSystem(
+            magic_enum::enum_cast<QueueSystem::Kind>(
+                    m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
+                                     MSG_QUEUE_SYSTEM_SETTINGS,
+                                     magic_enum::enum_names<QueueSystem::Kind>(),
+                                     MSG_QUEUE_SYSTEM_SETTINGS_HELP)).value());
 
     // TODO: Placeholder data
     const std::vector<std::pair<std::string,std::string>> fieldsSLURM = {

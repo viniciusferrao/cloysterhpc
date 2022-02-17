@@ -48,9 +48,24 @@ public:
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
 
+//    template<size_t N>
+//    std::string listMenu(const char*, const char*,
+//                         const std::array<std::string_view, N>&, const char*);
+
+    // TODO: We need to make this template the default one instead of the method
+    //       declared later in this code.
     template<size_t N>
-    std::string listMenu(const char*, const char*,
-                         const std::array<std::string_view, N>&, const char*);
+    std::string listMenu(const char* title, const char* message,
+                               const std::array<std::string_view, N>& items,
+                               const char* helpMessage) {
+
+        std::vector<std::string> aux;
+        aux.reserve(items.size());
+        for (const auto& item : items)
+            aux.emplace_back(item);
+
+        return Newt::listMenu(title, message, aux, helpMessage);
+    }
 
     // TODO: Remove this method, it's deprecated
     std::vector<std::string> fieldMenu(const char* title, const char* message,
