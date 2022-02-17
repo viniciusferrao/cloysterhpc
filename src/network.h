@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 #include <unordered_map>
 
+#include "include/magic_enum.hpp"
+
 /* TODO: Refactoring is necessary
  *  m_domainName is also available here since non-default networks may
  *  exist on the entire cluster and they should have their own domain.
@@ -13,18 +15,7 @@
 class Network {
 public:
     enum class Profile { External, Management, Service, Application };
-    inline static const std::unordered_map<Profile, std::string> getProfileString = { // NOLINT
-        {Profile::External,       "External"},
-        {Profile::Management,   "Management"},
-        {Profile::Service,         "Service"},
-        {Profile::Application, "Application"}
-    };
-
     enum class Type { Ethernet, Infiniband };
-    inline static const std::unordered_map<Type, std::string> getTypeString = { // NOLINT
-        {Type::Ethernet,     "Ethernet"},
-        {Type::Infiniband, "Infiniband"}
-    };
 
     inline static const std::unordered_map<std::string, uint8_t> cidr = { // NOLINT
         {"0.0.0.0",          0},

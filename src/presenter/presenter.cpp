@@ -85,13 +85,13 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-#if 0
+#if 1
     // TODO: Under development
     try {
         PresenterNetwork external(view, model);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
-                 Network::getProfileString.at(Network::Profile::External),
+                 magic_enum::enum_name(Network::Profile::External),
                  ex.what());
     }
 
@@ -99,20 +99,19 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
         PresenterNetwork management(view, model, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
-                 Network::getProfileString.at(Network::Profile::Management),
+                 magic_enum::enum_name(Network::Profile::Management),
                  ex.what());
     }
 #endif
 
-#if 0
-    // Infiniband support
+#if 1 // Infiniband support
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
 
-        const auto& ibStacks = {
-                Cluster::getOFEDString.at(Cluster::OFED::Inbox),
-                Cluster::getOFEDString.at(Cluster::OFED::Mellanox),
-                Cluster::getOFEDString.at(Cluster::OFED::Oracle)
+        const std::vector<std::string>& ibStacks = {
+                magic_enum::enum_name(Cluster::OFED::Inbox).data(),
+                magic_enum::enum_name(Cluster::OFED::Mellanox).data(),
+                magic_enum::enum_name(Cluster::OFED::Oracle).data()
         };
 
         // TODO: Boost.bimap to m_model->setOFED();
@@ -124,7 +123,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
             PresenterNetwork application(view, model, Network::Profile::Application, Network::Type::Infiniband);
         } catch (const std::exception& ex) {
             LOG_WARN("Failed to add {} network: {}",
-                     Network::getProfileString.at(Network::Profile::Application),
+                     magic_enum::enum_name(Network::Profile::Application),
                      ex.what());
         }
     }
@@ -169,7 +168,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_model->setISOPath(nodeData[4].second);
 #endif
 
-#if 1
+#if 0
 //    std::unordered_map<std::string, std::string> nodes;
 //    nodes.reserve(4);
 //    nodes.emplace("Racks");
@@ -196,13 +195,13 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
 #endif
 
-#if 0
+#if 1
     // Queue System
     // TODO: Template this. This calls looks just like OFED selection.
-    const auto& queueSystems = {
-            QueueSystem::getKindString.at(QueueSystem::Kind::None),
-            QueueSystem::getKindString.at(QueueSystem::Kind::SLURM),
-            QueueSystem::getKindString.at(QueueSystem::Kind::PBS)
+    const std::vector<std::string>& queueSystems = {
+            magic_enum::enum_name(QueueSystem::Kind::None).data(),
+            magic_enum::enum_name(QueueSystem::Kind::SLURM).data(),
+            magic_enum::enum_name(QueueSystem::Kind::PBS).data()
     };
 
     const auto& queueSystem = m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,

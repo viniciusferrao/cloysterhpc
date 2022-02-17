@@ -15,14 +15,14 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
     m_model->addNetwork(profile, type);
     auto& network = m_model->getNetwork(profile);
     LOG_TRACE("Added {} network with type {}",
-              Network::getProfileString.at(profile),
-              Network::getTypeString.at(type));
+              magic_enum::enum_name(profile),
+              magic_enum::enum_name(type));
 
     // Create a connection on the headnode
     m_model->getHeadnode().addConnection(m_model->getNetwork(profile));
     auto& connection = m_model->getHeadnode().getConnection(profile);
     LOG_TRACE("Added connection to {} network",
-              Network::getProfileString.at(profile));
+              magic_enum::enum_name(profile));
 
     // Get the network interface
     const auto& interface = networkInterfaceSelection(Connection::fetchInterfaces());
@@ -64,7 +64,7 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
     network.setNameserver({m_networkDetails[i++].second}); // This is a std::vector
 
     LOG_TRACE("Added {} connection on headnode: {} -> {}",
-              Network::getProfileString.at(profile),
+              magic_enum::enum_name(profile),
               m_model->getHeadnode().getConnection(profile).getInterface(),
               m_model->getHeadnode().getConnection(profile).getAddress()
     );

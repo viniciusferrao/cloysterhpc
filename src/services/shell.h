@@ -8,6 +8,8 @@
 #define _DEBUG_
 #endif
 
+#include "../include/magic_enum.hpp"
+
 #include "execution.h"
 #include "../cluster.h"
 #include "provisioner.h"

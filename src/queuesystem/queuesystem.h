@@ -11,11 +11,6 @@
 class QueueSystem {
 public:
     enum class Kind { None, SLURM, PBS };
-    inline static const std::unordered_map<Kind, std::string> getKindString = { // NOLINT
-            {Kind::None,   "None"},
-            {Kind::SLURM, "SLURM"},
-            {Kind::PBS,     "PBS"}
-    };
 
 private:
     Kind m_kind = Kind::None;

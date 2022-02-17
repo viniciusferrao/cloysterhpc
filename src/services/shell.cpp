@@ -149,10 +149,10 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 "mtu 1500 ipv4.method manual ipv4.address {}/{} "
                 "ipv4.gateway {} ipv4.dns \"{}\" "
                 "ipv4.dns-search {} ipv6.method disabled",
-                connection.getNetwork().getProfileString.at(
+                magic_enum::enum_name(
                         connection.getNetwork().getProfile()),
                 interface,
-                connection.getNetwork().getTypeString.at(
+                magic_enum::enum_name(
                         connection.getNetwork().getType()),
                 connection.getAddress(),
                 connection.getNetwork().cidr.at(

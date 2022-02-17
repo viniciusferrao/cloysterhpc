@@ -9,6 +9,8 @@
 #include "../cluster.h"
 #include "../services/log.h"
 
+#include "../include/magic_enum.hpp"
+
 #include <memory>
 #include <variant>
 #include <fmt/format.h>

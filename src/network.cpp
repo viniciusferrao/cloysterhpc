@@ -269,7 +269,7 @@ std::vector<std::string> Network::fetchNameserver() {
 
 #ifndef _NDEBUG_
 void Network::dumpNetwork() const {
-    LOG_DEBUG("Profile: {}", getProfileString.at(m_profile));
-    LOG_DEBUG("Type: {}", getTypeString.at(m_type));
+    LOG_DEBUG("Profile: {}", magic_enum::enum_name(m_profile));
+    LOG_DEBUG("Type: {}", magic_enum::enum_name(m_type));
 }
 #endif

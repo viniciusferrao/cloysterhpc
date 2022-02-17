@@ -40,12 +40,6 @@ public:
     enum class Provisioner { xCAT };
     enum class Directory { None, FreeIPA };
     enum class OFED { None, Inbox, Mellanox, Oracle };
-    inline static const std::unordered_map<OFED, std::string> getOFEDString = { // NOLINT
-            {OFED::None,         "None"},
-            {OFED::Inbox,       "Inbox"},
-            {OFED::Mellanox, "Mellanox"},
-            {OFED::Oracle,     "Oracle"}
-    };
 
 private:
     //std::unique_ptr<Headnode> m_headnode;

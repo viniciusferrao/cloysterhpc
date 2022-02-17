@@ -1,0 +1,3 @@
+[submodule "src/include/magic_enum"]
+	path = src/include/magic_enum
+	url = https://github.com/Neargye/magic_enum.git

@@ -133,6 +133,17 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
     auto fieldEntries = std::make_unique<char*[]>(vectorSize + 1);
     auto field = std::make_unique<newtWinEntry[]>(vectorSize + 1);
 
+    // If we need to convert a value to a string, we store them here, so we can
+    // keep its reference from being destroyed when the next item comes and
+    // overwrites the stack data of the previous one
+    std::vector<std::string> stringifiedRefs;
+
+    // We NEED this reserve, otherwise the pointers will move when the size
+    // change and the references will be lost, and the installer will segfault.
+    // We reserve exactly the amount of items we need
+    // DO NOT TAKE THIS OUT.
+    stringifiedRefs.reserve(items.size());
+
     // This "for loop" will populate newtWinEntry with the necessary data to be
     // displayed on the interface.
     // Please note that field[i].value is a char** because it's passing data by
@@ -141,30 +152,15 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
     for (size_t i = 0 ; i < vectorSize ; i++) {
         field[i].text = const_cast<char*>(items[i].first.c_str());
 
-        // TODO: Is this lambda really necessary?
-//        auto check_value = [&fieldEntries, &i, &items](const std::variant<std::string, unsigned>& v)
-//        {
-//            if(const unsigned* pval = std::get_if<unsigned>(&v))
-//                fieldEntries[i] = const_cast<char*>(std::to_string(*pval).c_str());
-//            else
-//                fieldEntries[i] = const_cast<char*>(std::get<std::string>(items[i].second).c_str());
-//        };
-//        check_value(items[i].second);
-
-//        if (std::holds_alternative<unsigned>(items[i].second))
-//            fieldEntries[i] = const_cast<char*>(std::to_string(std::get<unsigned>(items[i].second)).c_str());
-//        else
-//            fieldEntries[i] = const_cast<char*>(std::get<std::string>(items[i].second).c_str());
-
-        //if (const unsigned* value = std::get_if<unsigned>(&items[i].second))
-        if (auto value = std::get_if<unsigned>(&items[i].second))
+        if (auto value = std::get_if<unsigned>(&items[i].second)) {
+            stringifiedRefs.push_back(std::to_string(*value));
             fieldEntries[i] = const_cast<char*>(
-                    fmt::format("{}", *value).c_str());
-        else
+                    stringifiedRefs.back().c_str());
+        } else {
             fieldEntries[i] = const_cast<char*>(
                     std::get<std::string>(items[i].second).c_str());
+        }
 
-        //fieldEntries[i] = const_cast<char*>(items[i].second.c_str());
         LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
 
         // TODO: Check is there's a way to hide &
