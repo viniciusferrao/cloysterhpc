@@ -391,7 +391,7 @@ void Cluster::fillTestData () {
     directoryManagerPassword = "pwdManager";
     directoryDisableDNSSEC = true;
     nodePrefix = "n";
-    nodePadding = "2";
+    nodePadding = 2;
     nodeStartIP = "172.26.0.1";
     nodeRootPassword = "pwdNodeRoot";
     remoteAccess = true;

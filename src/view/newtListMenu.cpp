@@ -5,7 +5,6 @@
 //#include "newtListMenu.h"
 #include "newt.h"
 
-//std::string NewtListMenu::draw (const char * title, const char * message,
 std::string Newt::listMenu (const char* title, const char* message,
                             const std::vector<std::string>& items,
                             const char* helpMessage) {
@@ -50,8 +49,7 @@ std::string Newt::listMenu (const char* title, const char* message,
             this->helpMessage(helpMessage);
             goto question;
     }
-#endif
-#if 0
+#else
     /* Gotoless implementation */
     for (;;) {
         returnValue = newtWinMenu(const_cast<char *>(title),

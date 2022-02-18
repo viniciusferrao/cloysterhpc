@@ -122,7 +122,7 @@ public:
     std::string directoryManagerPassword;
     bool directoryDisableDNSSEC {};
     std::string nodePrefix;
-    std::string nodePadding;
+    size_t nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
     Postfix postfix;

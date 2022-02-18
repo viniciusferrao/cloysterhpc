@@ -114,11 +114,11 @@ std::vector<std::pair<T, T>> Newt::fieldMenu (
     throw std::runtime_error("Invalid return path on newt library");
 }
 
-std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::fieldMenu (
+std::vector<std::pair<std::string, std::variant<std::string, size_t>>> Newt::fieldMenu (
         const char* title,
         const char* message,
         // TODO: std::optional on second pair
-        const std::vector<std::pair<std::string, std::variant<std::string, unsigned>>>& items,
+        const std::vector<std::pair<std::string, std::variant<std::string, size_t>>>& items,
         const char* helpMessage)
 {
 
@@ -152,7 +152,7 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
     for (size_t i = 0 ; i < vectorSize ; i++) {
         field[i].text = const_cast<char*>(items[i].first.c_str());
 
-        if (auto value = std::get_if<unsigned>(&items[i].second)) {
+        if (auto value = std::get_if<size_t>(&items[i].second)) {
             stringifiedRefs.push_back(std::to_string(*value));
             fieldEntries[i] = const_cast<char*>(
                     stringifiedRefs.back().c_str());
@@ -178,7 +178,7 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
     field[vectorSize].value = nullptr;
     field[vectorSize].flags = 0;
 
-    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> returnVector;
+    std::vector<std::pair<std::string, std::variant<std::string, size_t>>> returnVector;
 
     question:
     returnValue = newtWinEntries(const_cast<char*>(title),
@@ -199,7 +199,7 @@ std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> Newt::f
             returnVector.reserve(vectorSize);
             for (size_t i = 0 ; field[i].text ; i++) {
                 returnVector.emplace_back(
-                        std::make_pair<std::string, std::variant<std::string, unsigned>>(
+                        std::make_pair<std::string, std::variant<std::string, size_t>>(
                                 field[i].text, *field[i].value));
             }
 

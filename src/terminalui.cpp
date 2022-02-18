@@ -605,7 +605,7 @@ void TerminalUI::drawNodeSettings (Cluster& cluster) {
     }
 
     cluster.nodePrefix = fields[0];
-    cluster.nodePadding = fields[1];
+    cluster.nodePadding = std::stoul(fields[1]);
     cluster.nodeStartIP = fields[2];
     cluster.nodeRootPassword = fields[3];
     //cluster.iso = fields[4];

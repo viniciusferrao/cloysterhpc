@@ -10,40 +10,45 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-#if 0
+#if 0 // Welcome messages
     welcomeMessage();
     LOG_TRACE("Welcome message displayed");
 
     installInstructions();
     LOG_TRACE("Install instructions displayed");
+#endif
 
-    // Set general settings
-    // std::vector<std::pair<std::string_view,std::string_view>> generalSettings = {
-    std::vector<std::pair<std::string,std::string>> generalSettings = {
-            {"Cluster Name", ""},
-            {"Company Name", ""},
-            {"Administrator e-mail", ""}
-    };
+#if 0 // Set general settings
+    auto generalSettings = std::to_array<
+            std::pair<std::string, std::variant<std::string, unsigned>>>({
+                    {"Cluster Name", "cl0yst3r"},
+                    {"Company Name", "Profiterolis Corp"},
+                    {"Administrator e-mail", "root@example.com"}
+            });
+
     generalSettings = m_view->fieldMenu("General cluster settings", "Fill the required data about your new cluster",
                       generalSettings, "");
-    m_model->setName(generalSettings[0].second);
+    m_model->setName(get<std::string>(generalSettings[0].second));
     LOG_INFO("Set cluster name: {}", m_model->getName());
-    m_model->setCompanyName(generalSettings[1].second);
+    m_model->setCompanyName(get<std::string>(generalSettings[1].second));
     LOG_INFO("Set cluster company name: {}", m_model->getCompanyName());
-    m_model->setAdminMail(generalSettings[2].second);
+    m_model->setAdminMail(get<std::string>(generalSettings[2].second));
     LOG_INFO("Set cluster admin e-email: {}", m_model->getAdminMail());
+#endif
 
-    // Timezone and locale support
+#if 0 // Timezone and locale support
     m_model->setTimezone(timezoneSelection(m_model->getTimezone().getAvailableTimezones()));
     // TODO: Horrible call; getTimezone() two times? Srsly?
     LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone());
 
     // TODO: Fix the interface hack to show only one time "time server"
-    std::vector<std::pair<std::string,std::string>> timeservers = {
-            {"Time server", "0.br.pool.ntp.org"},
-            {"", "1.br.pool.ntp.org"},
-            {"", "2.br.pool.ntp.org"}
-    };
+    auto timeservers = std::to_array<
+            std::pair<std::string, std::variant<std::string, unsigned>>>({
+                    {"Time server", "0.br.pool.ntp.org"},
+                    {"", "1.br.pool.ntp.org"},
+                    {"", "2.br.pool.ntp.org"}
+            });
+
     timeservers = m_view->fieldMenu("Time server settings",
                                     "Add or change the list of available time servers",
                                     timeservers, "");
@@ -131,63 +136,59 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0 // Compute nodes details
+#if 0 // Compute nodes formation details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
-    const std::vector<std::pair<std::string,std::string>> fields = {
-            {"Prefix","n"},
-            {"Padding","2"}, // TODO: should be integer on .second?
-            {"Compute node first IP","1"},
-            {"Compute node root password","p@ssw0rd"},
-            {"ISO path of Node OS","/root/iso/rhel-8.5-dvd1.iso"}
-    };
+    auto fields = std::to_array<
+            std::pair<std::string, std::variant<std::string, size_t>>>({
+//    const std::vector<std::pair<std::string,std::string>> fields = {
+                    {"Prefix","n"},
+                    {"Padding", 2ul}, // TODO: should be integer on .second?
+                    {"Compute node first IP", "172.31.22.45"},
+                    {"Compute node root password","p@ssw0rd"},
+                    {"ISO path of Node OS","/root/iso/rhel-8.5-dvd1.iso"}
+            });
 
     retry:
-    const auto& nodeData = m_view->fieldMenu("Node Settings", MSG_NODE_SETTINGS, fields, MSG_NODE_SETTINGS_HELP);
+    fields = m_view->fieldMenu("Node Settings", MSG_NODE_SETTINGS, fields,
+                                MSG_NODE_SETTINGS_HELP);
 
-    for (const auto& nd : nodeData) {
-        if (nd.first == "Prefix")
-            if (std::isalpha(nd.second[0]) == false) {
-                m_view->message(nullptr, "Prefix must start with a letter");
+    for (const auto& field : fields) {
+        if (field.first == "Prefix") {
+            if (std::isalpha(std::get<std::string>(field.second)[0]) == false) {
+                m_view->message("Prefix must start with a letter");
                 goto retry;
             }
+        }
 
-        if (nd.first == "Padding") {
-            if (std::stoul(nd.second) > 3) {
-                m_view->message(nullptr, "We can only support up to 1000 nodes");
+        // FIXME: I'm throwing on std::get<size_t>
+        if (field.first == "Padding") {
+            //if (std::get<size_t>(field.second) > 3ul) {
+            if (std::stoul(std::get<std::string>(field.second)) > 3) {
+                m_view->message("We can only support up to 1000 nodes");
                 goto retry;
             }
         }
     }
 
     // TODO: Encapsulate
-    m_model->nodePrefix = nodeData[0].second;
-    m_model->nodePadding = nodeData[1].second;
-    m_model->nodeStartIP = nodeData[2].second;
-    m_model->nodeRootPassword = nodeData[3].second;
-    m_model->setISOPath(nodeData[4].second);
+    m_model->nodePrefix = std::get<std::string>(fields[0].second);
+    m_model->nodePadding = std::stoul(std::get<std::string>(fields[1].second));
+    m_model->nodeStartIP = std::get<std::string>(fields[2].second);
+    m_model->nodeRootPassword = std::get<std::string>(fields[3].second);
+    m_model->setISOPath(std::get<std::string>(fields[4].second));
 #endif
 
 #if 0 // Compute nodes details
-//    std::unordered_map<std::string, std::string> nodes;
-//    nodes.reserve(4);
-//    nodes.emplace("Racks");
-//    nodes.emplace("Nodes");
-//    nodes.emplace("Node start number");
-//    nodes.emplace("Node base name");
-    std::vector<std::pair<std::string, std::variant<std::string, unsigned>>> nodes = {
-            {"Racks", 1u},
-            {"Nodes", 5u},
-            {"Node start number", 1u},
-            {"Node base name", "n"}
-    };
-
-//    nodes.reserve(4);
-//    nodes.emplace_back("Racks", 1u);
-//    nodes.emplace_back("Nodes", 1u);
-//    nodes.emplace_back("Node start number", 1u);
-//    nodes.emplace_back("Node base name", "n");
+    // FIXME: std::variant is irrelevant due to a bug on newt::fieldMenu.
+    auto nodes = std::to_array<
+            std::pair<std::string, std::variant<std::string, size_t>>>({
+                    {"Racks", "2"},
+                    {"Nodes", "5"},
+                    {"Node start number", "7"},
+                    {"Node base name", "n"}
+            });
 
     m_view->fieldMenu("Node Settings",
                       "Fill the required node information data",
@@ -204,10 +205,13 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                                      MSG_QUEUE_SYSTEM_SETTINGS_HELP)).value());
 
     // TODO: Placeholder data
-    const std::vector<std::pair<std::string,std::string>> fieldsSLURM = {
-            {"Partition Name","execution"}
-    };
-    const std::vector<std::string> listPBS = {"Shared", "Scatter"};
+    auto fieldsSLURM = std::to_array<
+            std::pair<std::string, std::variant<std::string, size_t>>>({
+                    {"Partition Name","execution"}
+            });
+    auto listPBS = std::to_array<std::string_view>(
+            {"Shared", "Scatter"}
+    );
 
     if (m_model->getQueueSystem()) {
         switch (m_model->getQueueSystem()->getKind()) {
