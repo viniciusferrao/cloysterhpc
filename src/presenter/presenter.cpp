@@ -196,7 +196,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                       "No help");
 #endif
 
-#if 0 // Queue System
+#if 1 // Queue System
     m_model->setQueueSystem(
             magic_enum::enum_cast<QueueSystem::Kind>(
                     m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
@@ -213,25 +213,36 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
             {"Shared", "Scatter"}
     );
 
-    if (m_model->getQueueSystem()) {
-        switch (m_model->getQueueSystem()->getKind()) {
+    if (auto& queue = m_model->getQueueSystem()) {
+        switch (m_model->getQueueSystem().value()->getKind()) {
             case QueueSystem::Kind::None:
+                // I never get here
                 break;
 
             case QueueSystem::Kind::SLURM:
                 // TODO: Set the gathered data
-                m_view->fieldMenu(MSG_TITLE_SLURM_SETTINGS,
-                                  MSG_SLURM_SETTINGS,
-                                  fieldsSLURM,
-                                  MSG_SLURM_SETTINGS_HELP);
+                fieldsSLURM = m_view->fieldMenu(MSG_TITLE_SLURM_SETTINGS,
+                                                MSG_SLURM_SETTINGS,
+                                                fieldsSLURM,
+                                                MSG_SLURM_SETTINGS_HELP);
+
+                queue.value()->setDefaultQueue(
+                        std::get<std::string>(fieldsSLURM[0].second));
+
                 break;
 
             case QueueSystem::Kind::PBS:
                 // TODO: Set the gathered data
-                m_view->listMenu(MSG_TITLE_PBS_SETTINGS,
-                                 MSG_PBS_SETTINGS,
-                                 listPBS,
-                                 MSG_PBS_SETTINGS_HELP);
+                const auto& execution = m_view->listMenu(
+                        MSG_TITLE_PBS_SETTINGS,
+                        MSG_PBS_SETTINGS,
+                        listPBS,
+                        MSG_PBS_SETTINGS_HELP);
+
+                // FIXME: Runtime polymorphism is not working
+//                queue.value()->setExecutionPlace(
+//                        magic_enum::enum_cast<PBS::ExecutionPlace>(execution).value());
+
                 break;
         }
     }

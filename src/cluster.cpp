@@ -198,16 +198,14 @@ void Cluster::setOFED(Cluster::OFED ofed) {
     m_ofed = ofed;
 }
 
-std::unique_ptr<QueueSystem>& Cluster::getQueueSystem() {
+std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem() {
     return m_queueSystem;
 }
 
 void Cluster::setQueueSystem(QueueSystem::Kind kind) {
     switch (kind) {
         case QueueSystem::Kind::None:
-            // TODO: This crashes because the object does not exist
-            m_queueSystem = nullptr;
-//            m_queueSystem = std::make_unique<QueueSystem>();
+            m_queueSystem = std::nullopt;
             break;
 
         case QueueSystem::Kind::SLURM:

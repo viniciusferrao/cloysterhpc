@@ -49,7 +49,7 @@ private:
     std::string_view m_adminMail;
     Provisioner m_provisioner;
     OFED m_ofed;
-    std::unique_ptr<QueueSystem> m_queueSystem;
+    std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};
     std::vector<Node> m_nodes;
 
     bool m_firewall{};
@@ -101,7 +101,7 @@ public:
     OFED getOFED() const;
     void setOFED(OFED);
 
-    std::unique_ptr<QueueSystem>& getQueueSystem();
+    std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
     void setQueueSystem(QueueSystem::Kind kind);
 
     const std::filesystem::path &getISOPath() const;

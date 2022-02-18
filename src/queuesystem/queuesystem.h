@@ -6,7 +6,6 @@
 #define CLOYSTERHPC_QUEUESYSTEM_H
 
 #include <string>
-#include <unordered_map>
 
 class QueueSystem {
 public:
