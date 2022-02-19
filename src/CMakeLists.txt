@@ -49,6 +49,7 @@ configureProject()
 
 # Add source files and set linking
 file(GLOB_RECURSE SOURCE_FILES *.cpp)
+list(REMOVE_ITEM SOURCE_FILES include)
 add_executable(main ${SOURCE_FILES})
 
 target_link_libraries(main
