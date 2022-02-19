@@ -13,26 +13,7 @@
 #include "services/timezone.h"
 #include "queuesystem/slurm.h"
 #include "queuesystem/pbs.h"
-
-struct PostfixRelay {
-    std::string hostname;
-    uint16_t port;
-};
-
-struct PostfixSASL {
-    std::string hostname;
-    uint16_t port;
-    std::string username;
-    std::string password;
-};
-
-struct Postfix {
-    bool enable;
-    enum class ProfileId { Relay, SASL };
-    ProfileId profileId;
-    std::optional<PostfixRelay> relay;
-    std::optional<PostfixSASL> sasl;
-};
+#include "mailsystem/postfix.h"
 
 class Cluster {
 public:
@@ -50,6 +31,7 @@ private:
     Provisioner m_provisioner;
     OFED m_ofed;
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};
+    std::optional<Postfix> m_mailSystem{};
     std::vector<Node> m_nodes;
 
     bool m_firewall{};
@@ -104,6 +86,9 @@ public:
     std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
     void setQueueSystem(QueueSystem::Kind kind);
 
+    std::optional<Postfix>& getMailSystem();
+    void setMailSystem(Postfix::Profile profile);
+
     const std::filesystem::path &getISOPath() const;
     void setISOPath(const std::filesystem::path &isoPath);
 
@@ -125,7 +110,6 @@ public:
     size_t nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
-    Postfix postfix;
     bool remoteAccess {};
 
     //Cluster();

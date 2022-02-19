@@ -220,6 +220,14 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind) {
     }
 }
 
+std::optional<Postfix>& Cluster::getMailSystem() {
+    return m_mailSystem;
+}
+
+void Cluster::setMailSystem(Postfix::Profile profile) {
+    m_mailSystem = Postfix(profile);
+}
+
 const std::filesystem::path& Cluster::getISOPath() const {
     return m_isoPath;
 }

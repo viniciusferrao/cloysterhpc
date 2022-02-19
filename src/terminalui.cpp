@@ -32,7 +32,7 @@ TerminalUI::~TerminalUI () {
 }
 
 void TerminalUI::beginInstall (Cluster& cluster, Headnode& headnode) {
-#if 1
+#if 0
     drawWelcomeMessage();
     drawTimeSettings(cluster);
     drawLocaleSettings(cluster);
@@ -671,19 +671,20 @@ void TerminalUI::drawPBSSettings (Cluster& cluster) {
 
 }
 
+#if 0
 void TerminalUI::drawPostfixSettings (Cluster& cluster) {
     drawPostfixEnable(cluster);
 
     if (!cluster.postfix.enable)
         return;
-    
+
     drawPostfixProfile(cluster);
 
     if (cluster.postfix.profileId == Postfix::ProfileId::Relay)
         drawPostfixRelaySettings(cluster);
 
-    if (cluster.postfix.profileId == Postfix::ProfileId::SASL)
-        drawPostfixSASLSettings(cluster);
+if (cluster.postfix.profileId == Postfix::ProfileId::SASL)
+drawPostfixSASLSettings(cluster);
 }
 
 void TerminalUI::drawPostfixEnable (Cluster& cluster) {
@@ -692,8 +693,8 @@ void TerminalUI::drawPostfixEnable (Cluster& cluster) {
                                 MSG_POSTFIX_ENABLE,
                                 MSG_POSTFIX_ENABLE_HELP);
 
-    enablePostfix ? 
-        cluster.postfix.enable = true : 
+    enablePostfix ?
+        cluster.postfix.enable = true :
         cluster.postfix.enable = false;
 }
 
@@ -705,7 +706,7 @@ void TerminalUI::drawPostfixProfile (Cluster& cluster) {
     };
 
     const std::string postfixProfile = drawListMenu(MSG_TITLE_POSTFIX_SETTINGS,
-                                    MSG_POSTFIX_SETTINGS_PROFILE, 
+                                    MSG_POSTFIX_SETTINGS_PROFILE,
                                     postfixProfiles,
                                     MSG_POSTFIX_SETTINGS_PROFILE_HELP);
 
@@ -759,6 +760,7 @@ void TerminalUI::drawPostfixSASLSettings (Cluster& cluster) {
     cluster.postfix.sasl.password = fields[3];
 #endif
 }
+#endif
 
 void TerminalUI::drawUpdateSystem (Cluster& cluster) {
     const bool updateSystem = drawYesNoQuestion(
