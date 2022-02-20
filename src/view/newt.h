@@ -42,9 +42,43 @@ public:
 
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
+
     // TODO: Template?
-    void okCancelMessage(const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
-    void okCancelMessage(const char* title, const char* message, const std::vector<std::pair<std::string, std::string>>& pairs);
+    template<size_t N>
+    void okCancelMessage(const char* title, const char* message,
+                               const std::array<std::pair<std::string, std::string>, N>& pairs)
+    {
+        int returnValue;
+        std::string newMessage = message;
+
+        newMessage += "\n\n";
+        for (auto const& pair : pairs) {
+            newMessage += fmt::format("{} -> {}\n", pair.first, pair.second);
+        }
+
+        returnValue = newtWinChoice(const_cast<char*>(title),
+                                    const_cast<char*>(MSG_BUTTON_OK),
+                                    const_cast<char*>(MSG_BUTTON_CANCEL),
+                                    const_cast<char*>(newMessage.c_str()));
+
+        switch (returnValue) {
+            case 0:
+                /* F12 is pressed, and we don't care; continue to case 1 */
+            case 1:
+                break;
+            case 2:
+                abortInstall();
+                break;
+            default:
+                throw std::runtime_error("Out of bounds in a switch statement");
+        }
+    }
+
+    template<size_t N>
+    void okCancelMessage(const char* message,
+                               const std::array<std::pair<std::string, std::string>, N>& pairs) {
+        okCancelMessage(nullptr, message, pairs);
+    }
 
     std::string listMenu(const char*, const char*,
                          const std::vector<std::string>&, const char*);
@@ -72,9 +106,9 @@ public:
     // Test function to migrate from std::vector to std::array
     // TODO: Support std::string_view
     template<size_t N>
-    std::array<std::pair<std::string, std::variant<std::string, size_t>>, N>
+    std::array<std::pair<std::string, std::string>, N>
     fieldMenu(const char* title, const char* message,
-              const std::array<std::pair<std::string, std::variant<std::string, size_t>>, N>& items,
+              const std::array<std::pair<std::string, std::string>, N>& items,
               const char* helpMessage)
     {
         int returnValue;
@@ -88,11 +122,6 @@ public:
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
         auto field = std::make_unique<newtWinEntry[]>(arraySize + 1);
 
-        // If we need to convert a value to a string, we store them here, so we can
-        // keep its reference from being destroyed when the next item comes and
-        // overwrites the stack data of the previous one
-        std::string temporaryStrings;
-
         // This "for loop" will populate newtWinEntry with the necessary data to be
         // displayed on the interface.
         // Please note that field[i].value is a char** because it's passing data by
@@ -100,16 +129,7 @@ public:
         // it's not an array of char*
         for (size_t i = 0 ; i < arraySize ; i++) {
             field[i].text = const_cast<char*>(items[i].first.c_str());
-
-            if (auto value = std::get_if<size_t>(&items[i].second)) {
-                temporaryStrings = std::to_string(*value);
-                fieldEntries[i] = const_cast<char*>(
-                        temporaryStrings.c_str());
-            } else {
-                fieldEntries[i] = const_cast<char*>(
-                        std::get<std::string>(items[i].second).c_str());
-            }
-
+            fieldEntries[i] = const_cast<char*>((items[i].second).c_str());
             LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
 
             // TODO: Check is there's a way to hide &
@@ -127,7 +147,7 @@ public:
         field[arraySize].value = nullptr;
         field[arraySize].flags = 0;
 
-        std::array<std::pair<std::string, std::variant<std::string, size_t>>, N> returnArray;
+        std::array<std::pair<std::string, std::string>, N> returnArray;
 
         question:
         returnValue = newtWinEntries(const_cast<char*>(title),
@@ -148,10 +168,10 @@ public:
                 // FIXME: We forgot that we should return size_t sometimes and
                 //        that was triggering an exception on the presenter, so
                 //        basically the std::variant is useless here, we always
-                //        return stdd:string.
+                //        return std:string.
                 for (size_t i = 0 ; field[i].text ; i++) {
                     returnArray[i] =
-                            std::make_pair<std::string, std::variant<std::string, size_t>>(
+                            std::make_pair<std::string, std::string>(
                                     field[i].text, *field[i].value);
                 }
 

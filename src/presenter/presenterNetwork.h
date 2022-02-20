@@ -19,17 +19,27 @@ class PresenterNetwork {
 private:
     std::unique_ptr<Cluster>& m_model;
     std::unique_ptr<Newt>& m_view;
-    std::vector<std::pair<std::string, std::string>> m_networkDetails;
+    //std::vector<std::pair<std::string, std::string>> m_networkDetails;
 
     // Helper methods
-    template<class T>
-    void addNetworkDetail(const std::string& key, const T& value);
+//    template<class T>
+//    void addNetworkDetail(const std::string& key, const T& value);
 
-    std::string networkInterfaceSelection(const std::vector<std::string>&);
-    std::vector<std::string> networkAddress(const std::vector<std::string>&);
-    std::vector<std::pair<std::string,std::string>> networkAddress(const std::vector<std::pair<std::string,std::string>>& fields);
+//    // TODO: Deprecate and remove this method
+//    std::string networkInterfaceSelection(const std::vector<std::string>&);
+
+    template<size_t N>
+    std::string networkInterfaceSelection(const std::array<std::string_view, N>& interfaces);
+
+//    std::vector<std::string> networkAddress(const std::vector<std::string>&);
+
+    template<size_t N>
+    std::array<std::pair<std::string,std::string>, N>
+    networkAddress(const std::array<std::pair<std::string,std::string>, N>& fields);
+
 #ifndef _NDEBUG_
-    void networkConfirmation(const std::vector<std::pair<std::string, std::string>>& pairs);
+    template<size_t N>
+    void networkConfirmation(const std::array<std::pair<std::string, std::string>, N>& pairs);
 #endif
 
 public:

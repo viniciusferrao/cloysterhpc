@@ -16,6 +16,8 @@
 #include <fmt/format.h>
 #include <string_view>
 
+#include <boost/lexical_cast.hpp>
+
 // TODO: Pure virtual
 class Presenter {
 private:
@@ -25,8 +27,17 @@ private:
     void welcomeMessage();
     void installInstructions();
     std::string timezoneSelection(const std::vector<std::string>&);
-    std::string localeSelection(const std::vector<std::string>&);
-    std::vector<std::string> networkHostnameSelection(const std::vector<std::string>&);
+
+    // TODO: Try to return an string_view instead
+    template<size_t N>
+    std::string localeSelection(const std::array<std::string_view, N>& locales);
+
+//    std::vector<std::string> networkHostnameSelection(const std::vector<std::string>&);
+
+    // TODO: Organize this code
+    template<size_t N>
+    std::array<std::pair<std::string, std::string>, N>
+    networkHostnameSelection(const std::array<std::pair<std::string, std::string>, N>& entries);
 
 public:
     Presenter(std::unique_ptr<Newt>& view,

@@ -19,7 +19,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
 #if 0 // Set general settings
     auto generalSettings = std::to_array<
-            std::pair<std::string, std::variant<std::string, unsigned>>>({
+            std::pair<std::string, std::string>>({
                     {"Cluster Name", "cl0yst3r"},
                     {"Company Name", "Profiterolis Corp"},
                     {"Administrator e-mail", "root@example.com"}
@@ -27,11 +27,11 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     generalSettings = m_view->fieldMenu("General cluster settings", "Fill the required data about your new cluster",
                       generalSettings, "");
-    m_model->setName(get<std::string>(generalSettings[0].second));
+    m_model->setName(generalSettings[0].second);
     LOG_INFO("Set cluster name: {}", m_model->getName());
-    m_model->setCompanyName(get<std::string>(generalSettings[1].second));
+    m_model->setCompanyName(generalSettings[1].second);
     LOG_INFO("Set cluster company name: {}", m_model->getCompanyName());
-    m_model->setAdminMail(get<std::string>(generalSettings[2].second));
+    m_model->setAdminMail(generalSettings[2].second);
     LOG_INFO("Set cluster admin e-email: {}", m_model->getAdminMail());
 #endif
 
@@ -42,12 +42,13 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     // TODO: Fix the interface hack to show only one time "time server"
     auto timeservers = std::to_array<
-            std::pair<std::string, std::variant<std::string, unsigned>>>({
+            std::pair<std::string, std::string>>({
                     {"Time server", "0.br.pool.ntp.org"},
                     {"", "1.br.pool.ntp.org"},
                     {"", "2.br.pool.ntp.org"}
             });
 
+    // TODO: Set timeservers
     timeservers = m_view->fieldMenu("Time server settings",
                                     "Add or change the list of available time servers",
                                     timeservers, "");
@@ -55,20 +56,29 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 //    LOG_INFO("Timeservers set to {}", m_model->getTimezone().getTimeservers());
 
     // TODO: Get locales from the system
-    m_model->setLocale(localeSelection({"en_US.UTF-8", "pt_BR.UTF-8", "C"}));
+    auto locales = std::to_array<std::string_view>(
+            {"en_US.UTF-8", "pt_BR.UTF-8", "C"});
+
+    m_model->setLocale(localeSelection(locales));
     LOG_TRACE("Locale set to: {}", m_model->getLocale());
 
     // TODO: Get rid of aux
-    std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
-    m_model->getHeadnode().setHostname(aux[0]);
-    LOG_TRACE("Returned hostname: {}", aux[0]);
-    LOG_ASSERT(aux[0] == m_model->getHeadnode().getHostname(),
+    auto aux = networkHostnameSelection(std::to_array<
+            std::pair<std::string, std::string>>({
+                    {"Hostname", "headnode"},
+                    {"Domain name", "example.com"}
+            }));
+
+    //std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
+    m_model->getHeadnode().setHostname(aux[0].second);
+    LOG_TRACE("Returned hostname: {}", aux[0].second);
+    LOG_ASSERT(aux[0].second == m_model->getHeadnode().getHostname(),
                "Failed setting hostname");
 
-    m_model->setDomainName(aux[1]);
-    LOG_TRACE("Hostname set to: {}\n", m_model->getHeadnode().getHostname());
-    LOG_TRACE("Domain name set to: {}\n", m_model->getDomainName());
-    LOG_TRACE("FQDN: {}\n", m_model->getHeadnode().getFQDN());
+    m_model->setDomainName(aux[1].second);
+    LOG_TRACE("Hostname set to: {}", m_model->getHeadnode().getHostname());
+    LOG_TRACE("Domain name set to: {}", m_model->getDomainName());
+    LOG_TRACE("FQDN: {}", m_model->getHeadnode().getFQDN());
 #endif
 
 #if 0 // Boot target on headnode selection
@@ -135,18 +145,17 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0 // Compute nodes formation details
+#if 1 // Compute nodes formation details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
     auto fields = std::to_array<
-            std::pair<std::string, std::variant<std::string, size_t>>>({
-//    const std::vector<std::pair<std::string,std::string>> fields = {
-                    {"Prefix","n"},
-                    {"Padding", 2ul}, // TODO: should be integer on .second?
+            std::pair<std::string, std::string>>({
+                    {"Prefix", "n"},
+                    {"Padding", "2"},
                     {"Compute node first IP", "172.31.22.45"},
-                    {"Compute node root password","p@ssw0rd"},
-                    {"ISO path of Node OS","/root/iso/rhel-8.5-dvd1.iso"}
+                    {"Compute node root password", "p@ssw0rd"},
+                    {"ISO path of Node OS", "/root/iso/rhel-8.5-dvd1.iso"}
             });
 
     retry:
@@ -155,16 +164,14 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     for (const auto& field : fields) {
         if (field.first == "Prefix") {
-            if (std::isalpha(std::get<std::string>(field.second)[0]) == false) {
+            if (std::isalpha(field.second[0] == false)) {
                 m_view->message("Prefix must start with a letter");
                 goto retry;
             }
         }
 
-        // FIXME: I'm throwing on std::get<size_t>
         if (field.first == "Padding") {
-            //if (std::get<size_t>(field.second) > 3ul) {
-            if (std::stoul(std::get<std::string>(field.second)) > 3) {
+            if (boost::lexical_cast<size_t>(field.second) > 3) {
                 m_view->message("We can only support up to 1000 nodes");
                 goto retry;
             }
@@ -172,17 +179,16 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 
     // TODO: Encapsulate
-    m_model->nodePrefix = std::get<std::string>(fields[0].second);
-    m_model->nodePadding = std::stoul(std::get<std::string>(fields[1].second));
-    m_model->nodeStartIP = std::get<std::string>(fields[2].second);
-    m_model->nodeRootPassword = std::get<std::string>(fields[3].second);
-    m_model->setISOPath(std::get<std::string>(fields[4].second));
+    m_model->nodePrefix = fields[0].second;
+    m_model->nodePadding = boost::lexical_cast<size_t>(fields[1].second);
+    m_model->nodeStartIP = fields[2].second;
+    m_model->nodeRootPassword = fields[3].second;
+    m_model->setISOPath(fields[4].second);
 #endif
 
 #if 0 // Compute nodes details
-    // FIXME: std::variant is irrelevant due to a bug on newt::fieldMenu.
     auto nodes = std::to_array<
-            std::pair<std::string, std::variant<std::string, size_t>>>({
+            std::pair<std::string, std::string>>({
                     {"Racks", "2"},
                     {"Nodes", "5"},
                     {"Node start number", "7"},
@@ -205,7 +211,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
     // TODO: Placeholder data
     auto fieldsSLURM = std::to_array<
-            std::pair<std::string, std::variant<std::string, size_t>>>({
+            std::pair<std::string, std::string>>({
                     {"Partition Name","execution"}
             });
     auto listPBS = std::to_array<std::string_view>(
@@ -225,9 +231,8 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                                                 fieldsSLURM,
                                                 MSG_SLURM_SETTINGS_HELP);
 
-                const auto &slurm = dynamic_cast<SLURM *>(queue.value().get());
-                slurm->setDefaultQueue(
-                        std::get<std::string>(fieldsSLURM[0].second));
+                const auto &slurm = dynamic_cast<SLURM*>(queue.value().get());
+                slurm->setDefaultQueue(fieldsSLURM[0].second);
                 LOG_INFO("Set SLURM default queue: {}", slurm->getDefaultQueue());
 
                 break;
@@ -240,7 +245,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                         listPBS,
                         MSG_PBS_SETTINGS_HELP);
 
-                const auto &pbs = dynamic_cast<PBS *>(queue.value().get());
+                const auto &pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
                         magic_enum::enum_cast<PBS::ExecutionPlace>(execution).value());
                 LOG_INFO("Set PBS Execution Place: {}",
@@ -278,7 +283,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
             case Postfix::Profile::Relay: {
                 auto fields = std::to_array<
-                        std::pair<std::string, std::variant<std::string, size_t>>>({
+                        std::pair<std::string, std::string>>({
                                 {"Hostname of the MTA", ""},
                                 {"Port", "25"}
                         });
@@ -288,8 +293,8 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                                            fields,
                                            MSG_POSTFIX_RELAY_SETTINGS_HELP);
 
-                mailSystem.setHostname(get<std::string>(fields[0].second));
-                mailSystem.setPort(std::stoul(get<std::string>(fields[1].second)));
+                mailSystem.setHostname(fields[0].second);
+                mailSystem.setPort(boost::lexical_cast<uint16_t>(fields[1].second));
 
                 LOG_INFO("Set Postfix Relay: {}:{}",
                          mailSystem.getHostname().value(),
@@ -300,7 +305,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 
             case Postfix::Profile::SASL: {
                 auto fields = std::to_array<
-                        std::pair<std::string, std::variant<std::string, size_t>>>({
+                        std::pair<std::string, std::string>>({
                                 {"Hostname of the MTA", ""},
                                 {"Port", ""},
                                 {"Username", ""},
@@ -312,10 +317,10 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                                            fields,
                                            MSG_POSTFIX_SASL_SETTINGS_HELP);
 
-                mailSystem.setHostname(get<std::string>(fields[0].second));
-                mailSystem.setPort(std::stoul(get<std::string>(fields[1].second)));
-                mailSystem.setUsername(get<std::string>(fields[2].second));
-                mailSystem.setPassword(get<std::string>(fields[3].second));
+                mailSystem.setHostname(fields[0].second);
+                mailSystem.setPort(boost::lexical_cast<uint16_t>(fields[1].second));
+                mailSystem.setUsername(fields[2].second);
+                mailSystem.setPassword(fields[3].second);
 
                 LOG_INFO("Set Postfix SASL: {}:{}\nUsername: {} | Password: {}",
                          mailSystem.getHostname().value(),
@@ -330,11 +335,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     } else {
         LOG_INFO("Postfix wasn't enabled");
     }
-
-
-
 #endif
-
 
     // Destroy the view since we don't need it anymore
     m_view.reset();
@@ -354,17 +355,27 @@ std::string Presenter::timezoneSelection(const std::vector<std::string>& timezon
                             MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
-std::string Presenter::localeSelection(const std::vector<std::string>& locales)
+template<size_t N>
+std::string Presenter::localeSelection(const std::array<std::string_view, N>& locales)
 {
-    return m_view->listMenu(MSG_TITLE_LOCALE_SETTINGS,
+    return std::string{m_view->listMenu(MSG_TITLE_LOCALE_SETTINGS,
                             MSG_LOCALE_SETTINGS_LOCALE, locales,
-                            MSG_LOCALE_SETTINGS_LOCALE_HELP);
+                            MSG_LOCALE_SETTINGS_LOCALE_HELP)};
 }
 
-std::vector<std::string>
-Presenter::networkHostnameSelection(const std::vector<std::string>& entries)
+template<size_t N>
+std::array<std::pair<std::string, std::string>, N>
+Presenter::networkHostnameSelection(const std::array<std::pair<std::string, std::string>, N>& entries)
 {
     return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
                              MSG_NETWORK_SETTINGS_HOSTID, entries,
                              MSG_NETWORK_SETTINGS_HOSTID_HELP);
 }
+
+//std::vector<std::string>
+//Presenter::networkHostnameSelection(const std::vector<std::string>& entries)
+//{
+//    return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
+//                             MSG_NETWORK_SETTINGS_HOSTID, entries,
+//                             MSG_NETWORK_SETTINGS_HOSTID_HELP);
+//}
