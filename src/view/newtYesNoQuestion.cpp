@@ -26,7 +26,6 @@ bool Newt::yesNoQuestion(const char * title, const char * message,
             this->helpMessage(helpMessage);
             goto question;
         default:
-            throw;
+            __builtin_unreachable();
     }
-    return false; /* We should never reach here */
 }

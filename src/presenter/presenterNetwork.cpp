@@ -28,7 +28,7 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
     // TODO: This copy is pathetic, we randomly allocate a huge array.
     //       Also we can't do this, this breaks the Terminal UI interface.
     const auto& aux = Connection::fetchInterfaces();
-    std::array<std::string_view, 50> interfaces;
+    std::array<std::string_view, 20> interfaces;
     std::copy_n(std::make_move_iterator(aux.begin()), aux.size(), interfaces.begin());
 
     const auto& interface = networkInterfaceSelection(interfaces);

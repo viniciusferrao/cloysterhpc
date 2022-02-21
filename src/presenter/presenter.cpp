@@ -145,7 +145,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Compute nodes formation details
+#if 0 // Compute nodes formation details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
@@ -201,7 +201,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                       "No help");
 #endif
 
-#if 0 // Queue System
+#if 1 // Queue System
     m_model->setQueueSystem(
             magic_enum::enum_cast<QueueSystem::Kind>(
                     m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
@@ -221,8 +221,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     if (auto& queue = m_model->getQueueSystem()) {
         switch (queue.value()->getKind()) {
             case QueueSystem::Kind::None: {
-                // I never get here
-                break;
+                __builtin_unreachable();
             }
 
             case QueueSystem::Kind::SLURM: {
@@ -257,7 +256,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Mail system
+#if 0 // Mail system
     if (m_view->yesNoQuestion(
             MSG_TITLE_POSTFIX_SETTINGS,
             MSG_POSTFIX_ENABLE,

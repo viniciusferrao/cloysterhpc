@@ -80,22 +80,91 @@ public:
         okCancelMessage(nullptr, message, pairs);
     }
 
-    std::string listMenu(const char*, const char*,
-                         const std::vector<std::string>&, const char*);
+    // TODO:
+    //  * Add C++20 concepts; limit by some types.
+    //  * Optimize for std::string_view and std::string.
+    template<typename T>
+    std::string listMenu (const char* title, const char* message,
+                                const T& items,
+                                const char* helpMessage) {
 
-    // TODO: We need to make this template the default one instead of the method
-    //       declared later in this code.
-    template<size_t N>
-    std::string listMenu(const char* title, const char* message,
-                               const std::array<std::string_view, N>& items,
-                               const char* helpMessage) {
+        int returnValue;
+        int selector = 0;
 
-        std::vector<std::string> aux;
-        aux.reserve(items.size());
+        int suggestedWidth = 50;
+        int flexUp = 5;
+        int flexDown = 5;
+        int maxHeightList = static_cast<int>(items.size());
+
+        // TODO: Is it possible do use std::array instead?
+        // TODO: Check types to avoid this copy (C++20 concepts?)
+        std::vector<std::string> tempStrings;
+        tempStrings.reserve(items.size());
         for (const auto& item : items)
-            aux.emplace_back(item);
+            tempStrings.emplace_back(item);
 
-        return Newt::listMenu(title, message, aux, helpMessage);
+        // Newt expects a NULL terminated array of C style strings
+        std::vector<const char*> cStrings;
+        cStrings.reserve(tempStrings.size() + 1);
+
+        for (const auto& string : tempStrings) {
+            cStrings.push_back(string.c_str());
+            LOG_TRACE("Pushed back std::string {}", string.c_str());
+        }
+        cStrings.push_back(nullptr);
+        LOG_TRACE("Pushed back std::nullptr");
+
+#if 1
+        // goto implementation
+        question:
+        returnValue = newtWinMenu(const_cast<char*>(title),
+                                  const_cast<char*>(message),
+                                  suggestedWidth, flexDown, flexUp, maxHeightList,
+                                  const_cast<char**>(cStrings.data()), &selector,
+                                  const_cast<char*>(MSG_BUTTON_OK),
+                                  const_cast<char*>(MSG_BUTTON_CANCEL),
+                                  const_cast<char*>(MSG_BUTTON_HELP), NULL);
+
+        switch(returnValue) {
+            case 0:
+                /* F12 is pressed, and we don't care; continue to case 1 */
+            case 1:
+                return std::string{items[static_cast<unsigned long>(selector)]};
+            case 2:
+                abortInstall();
+                break;
+            case 3:
+                this->helpMessage(helpMessage);
+                goto question;
+            default:
+                __builtin_unreachable();
+        }
+#else
+        // gotoless implementation
+    for (;;) {
+        returnValue = newtWinMenu(const_cast<char*>(title),
+                              const_cast<char*>(message),
+                              suggestedWidth, flexUp, flexDown, maxHeightList,
+                              const_cast<char**>(items), &selector,
+                              const_cast<char*>(MSG_BUTTON_OK),
+                              const_cast<char*>(MSG_BUTTON_CANCEL),
+                              const_cast<char*>(MSG_BUTTON_HELP), NULL);
+
+        switch(returnValue) {
+            case 0:
+                /* F12 is pressed, and we don't care; continue to case 1 */
+            case 1:
+                return items[selector];
+            case 2:
+                abortInstall();
+            case 3:
+                this->helpMessage(helpMessage);
+                continue;
+        }
+        break; // for (;;)
+    }
+#endif
+        __builtin_unreachable();
     }
 
     // TODO: Remove this method, it's deprecated
