@@ -48,8 +48,14 @@ endfunction()
 configureProject()
 
 # Add source files and set linking
-file(GLOB_RECURSE SOURCE_FILES *.cpp)
-list(REMOVE_ITEM SOURCE_FILES include)
+file(GLOB SOURCE_FILES
+        *.cpp
+        mailsystem/*.cpp
+        presenter/*.cpp
+        queuesystem/*.cpp
+        services/*.cpp
+        view/*.cpp)
+message(STATUS "Source files found are ${SOURCE_FILES}")
 add_executable(main ${SOURCE_FILES})
 
 target_link_libraries(main
