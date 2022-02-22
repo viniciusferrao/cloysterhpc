@@ -28,10 +28,10 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
     // TODO: This copy is pathetic, we randomly allocate a huge array.
     //       Also we can't do this, this breaks the Terminal UI interface.
     const auto& aux = Connection::fetchInterfaces();
-    std::array<std::string_view, 20> interfaces;
-    std::copy_n(std::make_move_iterator(aux.begin()), aux.size(), interfaces.begin());
+//    std::array<std::string_view, 30> interfaces;
+//    std::copy_n(std::make_move_iterator(aux.begin()), aux.size(), interfaces.begin());
 
-    const auto& interface = networkInterfaceSelection(interfaces);
+    const auto& interface = networkInterfaceSelection(aux);
     connection.setInterface(interface);
 
     // Build the networkDetails std::vector to feed the view
@@ -42,6 +42,7 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
 //    addNetworkDetail("Gateway", Network::fetchGateway(interface));
 
     // std::array version
+    // TODO: Nameservers should be std::vector due to it's random nature
     auto networkDetails = std::to_array<
             std::pair<std::string, std::string>>({
                 {"IP Address", Connection::fetchAddress(interface)},
@@ -89,43 +90,14 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
     );
 }
 
-// FIXME: Exception handling is basically useless here.
-//        There's an issue where exceptions aren't being handled correctly on
-//        the template, and that was circumvented replacing throw for return {};
-//template<class T>
-//void PresenterNetwork::addNetworkDetail(const std::string& key, const T& value) {
-//    try {
-//        m_networkDetails.emplace_back(std::make_pair(key, value));
-//    } catch (const std::exception& ex) {
-//        LOG_WARN(ex.what());
-//        m_networkDetails.emplace_back(std::make_pair(key, std::string{}));
-//    }
-//}
-
-//std::string
-//PresenterNetwork::networkInterfaceSelection(const std::vector<std::string>& interface)
-//{
-//    return m_view->listMenu(MSG_TITLE_NETWORK_SETTINGS,
-//                            MSG_NETWORK_SETTINGS_EXTERNAL_IF, interface,
-//                            MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP);
-//}
-
-template<size_t N>
+template<typename T>
 std::string
-PresenterNetwork::networkInterfaceSelection(const std::array<std::string_view, N>& interfaces)
+PresenterNetwork::networkInterfaceSelection(const T& interfaces)
 {
     return std::string {m_view->listMenu(MSG_TITLE_NETWORK_SETTINGS,
                             MSG_NETWORK_SETTINGS_EXTERNAL_IF, interfaces,
                             MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP)};
 }
-
-//std::vector<std::string>
-//PresenterNetwork::networkAddress(const std::vector<std::string>& fields) {
-//    return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
-//                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4,
-//                             fields,
-//                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
-//}
 
 template<size_t N>
 std::array<std::pair<std::string,std::string>, N>

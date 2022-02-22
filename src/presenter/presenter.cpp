@@ -104,7 +104,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-#if 0 // Networking
+#if 1 // Networking
     // TODO: Under development
     try {
         PresenterNetwork external(view, model);
@@ -123,7 +123,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0 // Infiniband support
+#if 1 // Infiniband support
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
 
@@ -145,7 +145,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0 // Compute nodes formation details
+#if 1 // Compute nodes formation details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
@@ -186,7 +186,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_model->setISOPath(fields[4].second);
 #endif
 
-#if 0 // Compute nodes details
+#if 1 // Compute nodes details
     auto nodes = std::to_array<
             std::pair<std::string, std::string>>({
                     {"Racks", "2"},
@@ -256,7 +256,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 0 // Mail system
+#if 1 // Mail system
     if (m_view->yesNoQuestion(
             MSG_TITLE_POSTFIX_SETTINGS,
             MSG_POSTFIX_ENABLE,

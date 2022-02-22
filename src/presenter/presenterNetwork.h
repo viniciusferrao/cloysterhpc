@@ -19,19 +19,9 @@ class PresenterNetwork {
 private:
     std::unique_ptr<Cluster>& m_model;
     std::unique_ptr<Newt>& m_view;
-    //std::vector<std::pair<std::string, std::string>> m_networkDetails;
 
-    // Helper methods
-//    template<class T>
-//    void addNetworkDetail(const std::string& key, const T& value);
-
-//    // TODO: Deprecate and remove this method
-//    std::string networkInterfaceSelection(const std::vector<std::string>&);
-
-    template<size_t N>
-    std::string networkInterfaceSelection(const std::array<std::string_view, N>& interfaces);
-
-//    std::vector<std::string> networkAddress(const std::vector<std::string>&);
+    template<typename T>
+    std::string networkInterfaceSelection(const T& interfaces);
 
     template<size_t N>
     std::array<std::pair<std::string,std::string>, N>

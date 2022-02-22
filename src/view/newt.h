@@ -12,6 +12,7 @@
 #include <iostream>
 #include <newt.h>
 #include <fmt/format.h>
+#include <boost/lexical_cast.hpp>
 #include "view.h"
 #include "../messages.h" /* Legacy constexpr */
 #include "../services/log.h"
@@ -98,10 +99,7 @@ public:
 
         // TODO: Is it possible do use std::array instead?
         // TODO: Check types to avoid this copy (C++20 concepts?)
-        std::vector<std::string> tempStrings;
-        tempStrings.reserve(items.size());
-        for (const auto& item : items)
-            tempStrings.emplace_back(item);
+        std::vector<std::string> tempStrings(items.begin(), items.end());
 
         // Newt expects a NULL terminated array of C style strings
         std::vector<const char*> cStrings;
@@ -129,7 +127,7 @@ public:
             case 0:
                 /* F12 is pressed, and we don't care; continue to case 1 */
             case 1:
-                return std::string{items[static_cast<unsigned long>(selector)]};
+                return tempStrings[boost::lexical_cast<size_t>(selector)];
             case 2:
                 abortInstall();
                 break;
@@ -167,18 +165,14 @@ public:
         __builtin_unreachable();
     }
 
-    // TODO: Remove this method, it's deprecated
-    std::vector<std::string> fieldMenu(const char* title, const char* message,
-                                       const std::vector<std::string>& items,
-                                       const char* helpMessage);
-
-    // Test function to migrate from std::vector to std::array
-    // TODO: Support std::string_view
-    template<size_t N>
-    std::array<std::pair<std::string, std::string>, N>
-    fieldMenu(const char* title, const char* message,
-              const std::array<std::pair<std::string, std::string>, N>& items,
-              const char* helpMessage)
+    // TODO:
+    //  * Add C++20 concepts; limit by some types.
+    //  * Optimize for std::string_view and std::string.
+    //  * std::optional on second pair
+    template<typename T>
+    T fieldMenu(const char* title, const char* message,
+                const T& items,
+                const char* helpMessage)
     {
         int returnValue;
 
@@ -216,7 +210,7 @@ public:
         field[arraySize].value = nullptr;
         field[arraySize].flags = 0;
 
-        std::array<std::pair<std::string, std::string>, N> returnArray;
+        T returnArray;
 
         question:
         returnValue = newtWinEntries(const_cast<char*>(title),
@@ -258,19 +252,6 @@ public:
 
         throw std::runtime_error("Invalid return path on newt library");
     }
-
-    template <typename T>
-    std::vector<std::pair<T, T>>
-    fieldMenu(const char* title, const char* message,
-                                       const std::vector<std::pair<T, T>>& items,
-                                       const char* helpMessage);
-
-    std::vector<std::pair<std::string, std::variant<std::string, size_t>>>
-    fieldMenu(const char* title, const char* message,
-              const std::vector<std::pair<std::string, std::variant<std::string, size_t>>>& items,
-              const char* helpMessage);
-
-
 
     bool yesNoQuestion(const char* title, const char* message,
                        const char* helpMessage);
