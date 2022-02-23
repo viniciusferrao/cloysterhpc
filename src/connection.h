@@ -30,8 +30,6 @@ public:
     explicit Connection(const Network& network);
     Connection(const Network& network, const std::string&, const std::string&);
 
-    ~Connection();
-
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
     [[nodiscard]] std::string getInterface() const;
     void setInterface(const std::string&);

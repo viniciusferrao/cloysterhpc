@@ -17,11 +17,31 @@
 #include "../messages.h" /* Legacy constexpr */
 #include "../services/log.h"
 
+#include <fmt/compile.h>
+
+
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
  * we start using abstract classes.
  */
 class Newt : public View {
+private:
+    struct TUIText {
+        // TODO: Find a way to evaluate as constexpr
+//        static constexpr const char* title =
+//                fmt::format(FMT_COMPILE("{} Installer"), productName).c_str();
+        static constexpr const char* title = "CloysterHPC Installer";
+        static constexpr const char* helpLine = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled";
+
+        struct Buttons {
+            static constexpr const char* ok = "OK";
+            static constexpr const char* cancel = "Cancel";
+            static constexpr const char* yes = "Yes";
+            static constexpr const char* no = "No";
+            static constexpr const char* help = "Help";
+        };
+    };
+
 protected:
     void abortInstall () override;
     void helpMessage (const char*) override;
@@ -58,8 +78,8 @@ public:
         }
 
         returnValue = newtWinChoice(const_cast<char*>(title),
-                                    const_cast<char*>(MSG_BUTTON_OK),
-                                    const_cast<char*>(MSG_BUTTON_CANCEL),
+                                    const_cast<char*>(TUIText::Buttons::ok),
+                                    const_cast<char*>(TUIText::Buttons::cancel),
                                     const_cast<char*>(newMessage.c_str()));
 
         switch (returnValue) {

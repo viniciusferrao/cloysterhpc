@@ -3,8 +3,6 @@
 
 #include <string> /* std::string */
 
-#include "types.h"
-
 struct repofile {
     std::string id;
     bool enabled;

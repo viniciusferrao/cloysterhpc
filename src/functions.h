@@ -9,8 +9,6 @@
 #include <optional>
 #include <vector>
 
-#include "types.h"
-
 namespace cloyster {
 /* getopt */
 int parseArguments(int, char**);

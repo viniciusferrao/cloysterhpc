@@ -6,11 +6,6 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-//constexpr const char * MSG_INSTALL_HELP_LINE "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled"
-#define MSG_INSTALL_HELP_LINE NULL
-
-constexpr const char * MSG_INSTALL_TITLE = \
-    "CloysterHPC Installer\n";
 constexpr const char * MSG_INSTALL_ABORT = \
     "Installation aborted due to operator request\n";
 

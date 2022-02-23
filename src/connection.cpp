@@ -30,9 +30,6 @@ Connection::Connection(const Network& network,
     setAddress(address);
 }
 
-Connection::~Connection() = default;
-
-
 std::string Connection::getInterface() const {
     return m_interface;
 }

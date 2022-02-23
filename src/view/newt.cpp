@@ -13,10 +13,10 @@ Newt::Newt() {
     newtCls();
 
     /* Push the title to the top left corner */
-    newtDrawRootText(0, 0, "PLACEHOLDER: Title text");
+    newtDrawRootText(0, 0, TUIText::title);
 
     /* Add the default help line in the bottom */
-    newtPushHelpLine("PLACEHOLDER: Help message");
+    newtPushHelpLine(TUIText::helpLine);
     newtRefresh();
 }
 
@@ -30,7 +30,7 @@ void Newt::abortInstall () {
     exit(EXIT_SUCCESS);
 }
 
-/* TODO: Refactor this with a C++ dialect */
+// TODO: Remove this method; this check must be done outside the view
 bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
     /* This may result in a buffer overflow if the string is > 63 chars */
     char message[63] = {};

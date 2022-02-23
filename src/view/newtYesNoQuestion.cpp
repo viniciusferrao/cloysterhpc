@@ -4,8 +4,8 @@
 
 #include "newt.h"
 
-bool Newt::yesNoQuestion(const char * title, const char * message,
-                         const char * helpMessage) {
+bool Newt::yesNoQuestion(const char* title, const char* message,
+                         const char* helpMessage) {
     int returnValue;
 
     question:

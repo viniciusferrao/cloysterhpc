@@ -9,7 +9,6 @@
 #include "headnode.h"
 #include "node.h"
 #include "network.h"
-#include "types.h"
 #include "services/timezone.h"
 #include "queuesystem/slurm.h"
 #include "queuesystem/pbs.h"
@@ -23,11 +22,10 @@ public:
     enum class OFED { None, Inbox, Mellanox, Oracle };
 
 private:
-    //std::unique_ptr<Headnode> m_headnode;
-    Headnode m_headnode;
     std::string_view m_name;
     std::string_view m_companyName;
     std::string_view m_adminMail;
+    Headnode m_headnode;
     Provisioner m_provisioner;
     OFED m_ofed;
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};

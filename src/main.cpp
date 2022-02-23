@@ -11,15 +11,12 @@
 #endif
 
 #include "services/log.h"
-#include "error.h"
 #include "const.h"
-#include "types.h"
 #include "messages.h"
 #include "functions.h"
 #include "headnode.h"
 #include "cluster.h"
 #include "connection.h"
-#include "terminalui.h"
 #include "view/newt.h"
 #include "services/shell.h"
 #include "presenter/presenter.h"
