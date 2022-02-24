@@ -10,9 +10,9 @@ bool Newt::yesNoQuestion(const char* title, const char* message,
 
     question:
     returnValue = newtWinTernary(const_cast<char *>(title),
-                                 const_cast<char *>(MSG_BUTTON_YES),
-                                 const_cast<char *>(MSG_BUTTON_NO),
-                                 const_cast<char *>(MSG_BUTTON_HELP),
+                                 const_cast<char *>(TUIText::Buttons::yes),
+                                 const_cast<char *>(TUIText::Buttons::no),
+                                 const_cast<char *>(TUIText::Buttons::help),
                                  const_cast<char *>(message), NULL);
 
     switch(returnValue) {

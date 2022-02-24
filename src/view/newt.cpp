@@ -42,7 +42,7 @@ bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
         if (strlen(*entries[i].value) == 0) {
             sprintf(message, "%s cannot be empty\n", entries[i].text);
 
-            newtWinMessage(nullptr, const_cast<char *>(MSG_BUTTON_OK), message);
+            newtWinMessage(nullptr, const_cast<char *>(TUIText::Buttons::ok), message);
             return true;
         }
     }
@@ -53,6 +53,6 @@ bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
 void Newt::helpMessage (const char* message) {
     newtBell();
     newtWinMessage(const_cast<char *>(MSG_TITLE_HELP),
-                   const_cast<char *>(MSG_BUTTON_OK),
+                   const_cast<char *>(TUIText::Buttons::ok),
                    const_cast<char *>(message));
 }

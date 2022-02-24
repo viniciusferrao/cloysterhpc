@@ -36,12 +36,6 @@ constexpr const char * MSG_TITLE_UPDATE_SYSTEM = \
 constexpr const char * MSG_TITLE_REMOTE_ACCESS = \
     "Remote Support\n";
 
-constexpr const char * MSG_BUTTON_OK = "Ok\n";
-constexpr const char * MSG_BUTTON_CANCEL = "Cancel\n";
-constexpr const char * MSG_BUTTON_HELP = "Help\n";
-constexpr const char * MSG_BUTTON_YES = "Yes\n";
-constexpr const char * MSG_BUTTON_NO = "No\n";
-
 constexpr const char * MSG_WELCOME = \
     "Welcome to the guided installer of CloysterHPC!\n\nLorem ipsum dolor " \
     "sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt " \

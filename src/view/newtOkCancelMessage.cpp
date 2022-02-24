@@ -13,8 +13,8 @@ void Newt::okCancelMessage(const char* title, const char* message) {
 
     /* Information about the installation scheme */
     returnValue = newtWinChoice(const_cast<char*>(title),
-                                const_cast<char*>(MSG_BUTTON_OK),
-                                const_cast<char*>(MSG_BUTTON_CANCEL),
+                                const_cast<char*>(TUIText::Buttons::ok),
+                                const_cast<char*>(TUIText::Buttons::cancel),
                                 const_cast<char*>(message));
 
     switch (returnValue) {

@@ -17,9 +17,6 @@
 #include "../messages.h" /* Legacy constexpr */
 #include "../services/log.h"
 
-#include <fmt/compile.h>
-
-
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
  * we start using abstract classes.
@@ -27,10 +24,13 @@
 class Newt : public View {
 private:
     struct TUIText {
-        // TODO: Find a way to evaluate as constexpr
-//        static constexpr const char* title =
-//                fmt::format(FMT_COMPILE("{} Installer"), productName).c_str();
-        static constexpr const char* title = "CloysterHPC Installer";
+
+#ifdef __cpp_lib_constexpr_string
+        static constexpr const char* title =
+                fmt::format("{} Installer", productName);
+#else
+        static constexpr const char* title = PRODUCT_NAME " Installer";
+#endif
         static constexpr const char* helpLine = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled";
 
         struct Buttons {
@@ -67,7 +67,7 @@ public:
     // TODO: Template?
     template<size_t N>
     void okCancelMessage(const char* title, const char* message,
-                               const std::array<std::pair<std::string, std::string>, N>& pairs)
+                         const std::array<std::pair<std::string, std::string>, N>& pairs)
     {
         int returnValue;
         std::string newMessage = message;
@@ -97,7 +97,7 @@ public:
 
     template<size_t N>
     void okCancelMessage(const char* message,
-                               const std::array<std::pair<std::string, std::string>, N>& pairs) {
+                         const std::array<std::pair<std::string, std::string>, N>& pairs) {
         okCancelMessage(nullptr, message, pairs);
     }
 
@@ -139,9 +139,9 @@ public:
                                   const_cast<char*>(message),
                                   suggestedWidth, flexDown, flexUp, maxHeightList,
                                   const_cast<char**>(cStrings.data()), &selector,
-                                  const_cast<char*>(MSG_BUTTON_OK),
-                                  const_cast<char*>(MSG_BUTTON_CANCEL),
-                                  const_cast<char*>(MSG_BUTTON_HELP), NULL);
+                                  const_cast<char*>(TUIText::Buttons::ok),
+                                  const_cast<char*>(TUIText::Buttons::cancel),
+                                  const_cast<char*>(TUIText::Buttons::help), NULL);
 
         switch(returnValue) {
             case 0:
@@ -237,8 +237,9 @@ public:
                                      const_cast<char*>(message),
                                      suggestedWidth, flexDown, flexUp,
                                      maxHeightList, field.get(),
-                                     const_cast<char*>(MSG_BUTTON_OK),
-                                     MSG_BUTTON_CANCEL, MSG_BUTTON_HELP, nullptr);
+                                     const_cast<char*>(TUIText::Buttons::ok),
+                                     TUIText::Buttons::cancel,
+                                     TUIText::Buttons::help, nullptr);
 
         switch(returnValue) {
             case 0:
