@@ -25,7 +25,7 @@ include_directories(${fmt_INCLUDE_DIRS})
 
 # Library: Boost
 find_package(Boost REQUIRED
-    COMPONENTS system thread log log_setup
+    COMPONENTS system thread
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -63,7 +63,7 @@ target_link_libraries(main
             project_warnings
 
     ${newt_LIBRARIES}
-    Boost::headers Boost::system Boost::thread Boost::log Boost::log_setup
+    Boost::headers Boost::system Boost::thread
     fmt::fmt
     spdlog::spdlog
     resolv

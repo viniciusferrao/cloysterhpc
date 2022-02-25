@@ -1,3 +1,6 @@
 [submodule "src/include/magic_enum"]
 	path = src/include/magic_enum
 	url = https://github.com/Neargye/magic_enum.git
+[submodule "src/include/i18n-cpp"]
+	path = src/include/i18n-cpp
+	url = https://github.com/zauguin/i18n-cpp.git

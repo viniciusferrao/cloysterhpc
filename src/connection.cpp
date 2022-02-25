@@ -4,6 +4,7 @@
 
 #include <string>
 #include <regex>
+#include <set>
 
 #include <boost/algorithm/string.hpp>
 #include <utility>

@@ -21,27 +21,30 @@
 #include "services/shell.h"
 #include "presenter/presenter.h"
 
+//#include "include/i18n-cpp.hpp"
+
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
     Log::init();
     LOG_INFO("{} Started", productName);
+
     int rc; /* return code */
 
     //Cluster* model = new Cluster();
-    auto model = std::make_unique<Cluster>();
+    //auto model = std::make_unique<Cluster>();
 
 #ifdef _DEBUG_
     //model->fillTestData();
 #endif
 
     //View* view = new Newt();
-    auto view = std::make_unique<Newt>();
+    //auto view = std::make_unique<Newt>();
 
     //Presenter* presenter = new Presenter(view, model);
-    auto presenter = std::make_unique<Presenter>(view, model);
+    //auto presenter = std::make_unique<Presenter>(view, model);
 
 #ifdef _DEBUG_
-    model->printData();
+    //model->printData();
 #endif
 
     //Execution* engine = new Shell();
