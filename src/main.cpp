@@ -21,7 +21,7 @@
 #include "services/shell.h"
 #include "presenter/presenter.h"
 
-//#include "include/i18n-cpp.hpp"
+#include "include/i18n-cpp.hpp"
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
