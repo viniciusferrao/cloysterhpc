@@ -199,7 +199,7 @@ void changeValueInConfigurationFile(const std::string& filename,
 }
 
 void addStringToFile(std::string_view filename, std::string_view line) {
-#if __cplusplus >= 202002L
+#ifdef _LIBCPP_VERSION
     std::ofstream file(filename, std::ios_base::app);
 #else
     std::ofstream file(std::string{filename}, std::ios_base::app);

@@ -9,7 +9,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-#if 0 // Welcome messages
+#if 1 // Welcome messages
     welcomeMessage();
     LOG_TRACE("Welcome message displayed");
 
@@ -17,7 +17,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Install instructions displayed");
 #endif
 
-#if 0 // Set general settings
+#if 1 // Set general settings
     auto generalSettings = std::to_array<
             std::pair<std::string, std::string>>({
                     {"Cluster Name", "cl0yst3r"},
@@ -81,7 +81,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("FQDN: {}", m_model->getHeadnode().getFQDN());
 #endif
 
-#if 0 // Boot target on headnode selection
+#if 1 // Boot target on headnode selection
     m_model->getHeadnode().setBootTarget(
             magic_enum::enum_cast<Headnode::BootTarget>(
                 m_view->listMenu(

@@ -129,7 +129,8 @@ Network& Cluster::getNetwork(Network::Profile profile) {
         }
     }
     throw std::runtime_error(fmt::format(
-            "Cannot get any network with the profile {}", profile));
+            "Cannot get any network with the profile {}",
+            magic_enum::enum_name(profile)));
 }
 
 #if 0

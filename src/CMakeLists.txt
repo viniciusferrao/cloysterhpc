@@ -30,6 +30,9 @@ find_package(Boost REQUIRED
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(${os_version_suffix} MATCHES "el8")
+        if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+            link_directories(/opt/rh/gcc-toolset-11/root/usr/lib/gcc/x86_64-redhat-linux/11)
+        endif()
         set(STDC++FS "stdc++fs")
     endif()
 endif()

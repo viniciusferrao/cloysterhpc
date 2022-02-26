@@ -31,20 +31,20 @@ int main(int argc, char** argv) {
     int rc; /* return code */
 
     //Cluster* model = new Cluster();
-    //auto model = std::make_unique<Cluster>();
+    auto model = std::make_unique<Cluster>();
 
 #ifdef _DEBUG_
     //model->fillTestData();
 #endif
 
     //View* view = new Newt();
-    //auto view = std::make_unique<Newt>();
+    auto view = std::make_unique<Newt>();
 
     //Presenter* presenter = new Presenter(view, model);
-    //auto presenter = std::make_unique<Presenter>(view, model);
+    auto presenter = std::make_unique<Presenter>(view, model);
 
 #ifdef _DEBUG_
-    //model->printData();
+    model->printData();
 #endif
 
     //Execution* engine = new Shell();

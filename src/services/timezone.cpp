@@ -31,14 +31,14 @@ void Timezone::setSystemTimezone()
 
 std::vector<std::string> Timezone::fetchAvailableTimezones()
 {
-    LOG_TRACE("Fetching available system timezones\n");
+    LOG_TRACE("Fetching available system timezones");
     std::vector<std::string> output;
 
 // TODO: Remove this hack
 #if __APPLE__
     output.insert(output.end(), {"UTC-3", "GMT", "America/Sao_Paolo"});
 #else // Linux or others Unixes
-    cloyster::runCommand(fmt::format("timedatectl list-timezones"), output);
+    cloyster::runCommand(fmt::format("timedatectl list-timezones --no-pager"), output);
 #endif
 
     return output;

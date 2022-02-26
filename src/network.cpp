@@ -9,7 +9,7 @@
 #include <ifaddrs.h>
 #include <resolv.h>
 
-#if __cplusplus < 202002L
+#if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -195,7 +195,7 @@ void Network::setDomainName(const std::string& domainName) {
     if (domainName.size() > 255)
         throw;
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
 #else
     if (boost::algorithm::starts_with(domainName, "-") or

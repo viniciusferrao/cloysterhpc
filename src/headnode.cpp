@@ -9,7 +9,7 @@
 
 #include <sys/utsname.h>
 
-#if __cplusplus < 202002L
+#if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -35,7 +35,7 @@ void Headnode::setHostname(const std::string& hostname) {
     if (hostname.size() > 63)
         throw;
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
 #else
     if (boost::algorithm::starts_with(hostname, "-") or
@@ -117,7 +117,8 @@ Connection& Headnode::getConnection(Network::Profile profile) {
     }
     // TODO: Better throw message; need to make getProfileSting as static
     throw std::runtime_error(fmt::format(
-            "Cannot get any connection with profile {}", profile));
+            "Cannot get any connection with profile {}",
+            magic_enum::enum_name(profile)));
 }
 
 Headnode::BootTarget Headnode::getBootTarget() const {

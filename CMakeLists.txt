@@ -29,6 +29,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         # If we match Enterprise Linux 8 now compiles with C++20, but we need to
         # provide gcc-toolset-11 to make it work. C++17 is too "old" now.
         target_compile_features(project_options INTERFACE cxx_std_20)
+        if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+            include_directories(SYSTEM
+                    /opt/rh/gcc-toolset-11/root/usr/include/c++/11
+                    /opt/rh/gcc-toolset-11/root/usr/include/c++/11/x86_64-redhat-linux)
+            target_compile_options(project_options INTERFACE -nostdinc++)
+        endif()
     endif()
 else()
     target_compile_features(project_options INTERFACE cxx_std_20)
