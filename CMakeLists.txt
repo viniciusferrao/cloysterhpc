@@ -26,8 +26,9 @@ include(cmake/PreventInSourceBuilds.cmake)
 add_library(project_options INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(${os_version_suffix} MATCHES "el8")
-        # If we match Enterprise Linux 8 just compile with C++17
-        target_compile_features(project_options INTERFACE cxx_std_17)
+        # If we match Enterprise Linux 8 now compiles with C++20, but we need to
+        # provide gcc-toolset-11 to make it work. C++17 is too "old" now.
+        target_compile_features(project_options INTERFACE cxx_std_20)
     endif()
 else()
     target_compile_features(project_options INTERFACE cxx_std_20)
@@ -70,7 +71,7 @@ include(cmake/StaticAnalyzers.cmake)
 
 option(BUILD_SHARED_LIBS "Enable compilation of shared libraries" OFF)
 option(ENABLE_PCH "Enable Precompiled Headers" OFF)
-option(ENABLE_CONAN "Use Conan for dependency management" OFF)
+option(ENABLE_CONAN "Use Conan for dependency management" ON)
 option(ENABLE_TESTING "Enable Test Builds" OFF)
 option(ENABLE_FUZZING "Enable Fuzzing Builds" OFF)
 option(ENABLE_UNITY "Enable Unity builds of projects" OFF)

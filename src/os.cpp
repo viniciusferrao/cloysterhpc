@@ -10,7 +10,7 @@
 #include <fmt/format.h>
 #include <sys/utsname.h>
 
-#if __cplusplus < 202002L
+#if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -191,7 +191,7 @@ void OS::discover () {
         while (std::getline(file, line)) {
 
             /* TODO: Refactor the next three conditions */
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("PLATFORM_ID=")) {
 #else
             if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
@@ -199,7 +199,7 @@ void OS::discover () {
                 setPlatform(getValueFromKey(line));
             }
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("ID=")) {
 #else
             if (boost::algorithm::starts_with(line, "ID=")) {
@@ -207,7 +207,7 @@ void OS::discover () {
                 setDistro(getValueFromKey(line));
             }
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("VERSION=")) {
 #else
             if (boost::algorithm::starts_with(line, "VERSION=")) {

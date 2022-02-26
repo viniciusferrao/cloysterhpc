@@ -12,6 +12,7 @@
 #include <iostream>
 #include <newt.h>
 #include <fmt/format.h>
+#include <fmt/compile.h>
 #include <boost/lexical_cast.hpp>
 #include "view.h"
 #include "../messages.h" /* Legacy constexpr */
@@ -25,9 +26,9 @@ class Newt : public View {
 private:
     struct TUIText {
 
-#ifdef __cpp_lib_constexpr_string
+#if __cpp_lib_constexpr_string >= 201907L
         static constexpr const char* title =
-                fmt::format("{} Installer", productName);
+                fmt::format("{} Installer", productName).c_str();
 #else
         static constexpr const char* title = PRODUCT_NAME " Installer";
 #endif

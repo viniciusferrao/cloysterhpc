@@ -16,7 +16,7 @@
 #include <regex>
 #include <memory>
 
-#if __cplusplus < 202002L
+#if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -99,7 +99,7 @@ void Cluster::setDomainName(const std::string& domainName) {
     if (domainName.size() > 255)
         throw;
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
 #else
     if (boost::algorithm::starts_with(domainName, "-") or
@@ -270,7 +270,7 @@ void Cluster::printNetworks(
         std::cerr << "Domain Name: " << network.getDomainName() << std::endl;
 #if __cplusplus < 202002L
         j = 0;
-        for (auto const &nameserver: network->getNameserver()) {
+        for (auto const &nameserver: network.getNameserver()) {
 #else
         for (size_t j = 0; auto const &nameserver: network.getNameserver()) {
 #endif
