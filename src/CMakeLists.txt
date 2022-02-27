@@ -17,7 +17,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(newt DEFAULT_MSG
 )
 
 mark_as_advanced(newt_INCLUDE_DIRS newt_LIBRARIES)
-#include_directories(${newt_INCLUDE_DIRS}) # This seems to be unnecessary
+include_directories(${newt_INCLUDE_DIRS})
 
 # Library: fmt
 find_package(fmt REQUIRED)

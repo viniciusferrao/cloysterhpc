@@ -3,6 +3,11 @@
 
 cmake_minimum_required(VERSION 3.18.2)
 
+# We hardcode to clang since we may need to use an i18n library that mandates
+# clang to generate translation files
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+
 project(CloysterHPC
         VERSION 0.1
         DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer"
@@ -15,9 +20,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     string (REGEX MATCH "\\el[2-9]" os_version_suffix ${CMAKE_SYSTEM})
 endif()
 
-include(cmake/StandardProjectSettings.cmake)
-include(cmake/PreventInSourceBuilds.cmake)
-
 # There is a bug on CMake that using cxx_std_20 always defaults to --std=gnu++20
 # instead of --std=c++20:
 # https://gitlab.kitware.com/cmake/cmake/-/issues/22224
@@ -26,8 +28,8 @@ include(cmake/PreventInSourceBuilds.cmake)
 add_library(project_options INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(${os_version_suffix} MATCHES "el8")
-        # If we match Enterprise Linux 8 now compiles with C++20, but we need to
-        # provide gcc-toolset-11 to make it work. C++17 is too "old" now.
+        # If we match Enterprise Linux 8 we will compile with C++20, but we need
+        # to provide gcc-toolset-11 to make it work. C++17 is too "old" now.
         target_compile_features(project_options INTERFACE cxx_std_20)
         if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
             include_directories(SYSTEM
@@ -42,6 +44,9 @@ endif()
 # TODO: Find a way to set those features as project_options
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(cmake/StandardProjectSettings.cmake)
+include(cmake/PreventInSourceBuilds.cmake)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     option(ENABLE_BUILD_WITH_TIME_TRACE "Enable -ftime-trace to generate time tracing .json files on clang" OFF)
