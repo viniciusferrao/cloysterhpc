@@ -5,11 +5,24 @@
 #include "presenterNetwork.h"
 
 // FIXME: I don't like this code, it's ugly.
-PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
-                                   std::unique_ptr<Cluster>& model,
-                                   Network::Profile profile,
-                                   Network::Type type)
-                                   : m_model(model), m_view(view) {
+//  * Lifecycle may be a problem: what happens if any function throws after
+//  adding the Network or Connection? A ghost object will exist without proper
+//  data.
+//  * If an exception is thrown inside the constructor, the destruction will not
+//  be called, leaving garbage on the model.
+//  * Try and catch blocks should be added to avoid all those conditions.
+// TODO: Just an idea, instead of undoing changes on the model, we may
+//  instantiate a Network and a Connection object and after setting up it's
+//  attributes we just copy them to the right place or even better, we move it.
+//  After the end of this class the temporary objects will be destroyed anyway.
+
+PresenterNetwork::PresenterNetwork(
+        std::unique_ptr<Cluster>& model,
+        std::unique_ptr<Newt>& view,
+        Network::Profile profile,
+        Network::Type type)
+        : m_model(model)
+        , m_view(view) {
 
     // Create the external network
     m_model->addNetwork(profile, type);
@@ -25,47 +38,24 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
               magic_enum::enum_name(profile));
 
     // Get the network interface
-    // TODO: This copy is pathetic, we randomly allocate a huge array.
-    //       Also we can't do this, this breaks the Terminal UI interface.
     const auto& aux = Connection::fetchInterfaces();
-//    std::array<std::string_view, 30> interfaces;
-//    std::copy_n(std::make_move_iterator(aux.begin()), aux.size(), interfaces.begin());
-
     const auto& interface = networkInterfaceSelection(aux);
     connection.setInterface(interface);
 
-    // Build the networkDetails std::vector to feed the view
-//    m_networkDetails.reserve(6);
-//    addNetworkDetail("IP Address", Connection::fetchAddress(interface));
-//    addNetworkDetail("Subnet Mask", Network::fetchSubnetMask(interface));
-//    addNetworkDetail("Network Address", Network::fetchAddress(interface));
-//    addNetworkDetail("Gateway", Network::fetchGateway(interface));
-
-    // std::array version
     // TODO: Nameservers should be std::vector due to it's random nature
     auto networkDetails = std::to_array<
             std::pair<std::string, std::string>>({
-                {"IP Address", Connection::fetchAddress(interface)},
-                {"Subnet Mask", Network::fetchSubnetMask(interface)},
-                {"Network Address", Network::fetchAddress(interface)},
-                {"Gateway", Network::fetchGateway(interface)},
+                {Messages::IP::address, Connection::fetchAddress(interface)},
+                {Messages::IP::subnetMask, Network::fetchSubnetMask(interface)},
+                {Messages::IP::network, Network::fetchAddress(interface)},
+                {Messages::IP::gateway, Network::fetchGateway(interface)},
                 // Nameserver definitions
-                {"Domain name", Network::fetchDomainName()},
+                {Messages::Domain::name, Network::fetchDomainName()},
                 // TODO: Make it comma or space separated to easy the development
-                {"Nameservers", fmt::format("{}", Network::fetchNameserver()[0])}
+                {Messages::Domain::servers, fmt::format("{}", Network::fetchNameserver()[0])}
             });
 
-    // Nameserver definitions
-    //addNetworkDetail("Domain name", Network::fetchDomainName());
-
-    // TODO: Make it comma or space separated to easy the development
-//    const auto nameservers = Network::fetchNameserver();
-//    for (size_t i = 0 ; const auto& ns : nameservers) {
-//        m_networkDetails.emplace_back(
-//                std::make_pair(fmt::format("Nameserver[{}]", i++), ns));
-//    }
-
-    // Rewrite the data if needed
+    // TODO: Can we use move semantics?
     networkDetails = networkAddress(networkDetails);
 
 #ifndef _NDEBUG_
@@ -89,31 +79,3 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Newt>& view,
               m_model->getHeadnode().getConnection(profile).getAddress()
     );
 }
-
-template<typename T>
-std::string
-PresenterNetwork::networkInterfaceSelection(const T& interfaces)
-{
-    return std::string {m_view->listMenu(MSG_TITLE_NETWORK_SETTINGS,
-                            MSG_NETWORK_SETTINGS_EXTERNAL_IF, interfaces,
-                            MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP)};
-}
-
-template<size_t N>
-std::array<std::pair<std::string,std::string>, N>
-PresenterNetwork::networkAddress(const std::array<std::pair<std::string,std::string>, N>& fields) {
-    return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
-                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4,
-                             fields,
-                             MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP);
-}
-
-// TODO: Better implementation
-#ifndef _NDEBUG_
-template <size_t N>
-void
-PresenterNetwork::networkConfirmation(const std::array<std::pair<std::string, std::string>, N>& pairs)
-{
-    return m_view->okCancelMessage("The following network attributes were detected:", pairs);
-}
-#endif

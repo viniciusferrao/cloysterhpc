@@ -1,7 +1,3 @@
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include <iostream>
 #include <cstdlib>
 
@@ -12,16 +8,16 @@
 
 #include "services/log.h"
 #include "const.h"
-#include "messages.h"
 #include "functions.h"
 #include "headnode.h"
 #include "cluster.h"
-#include "connection.h"
 #include "view/newt.h"
 #include "services/shell.h"
 #include "presenter/presenter.h"
 
+#ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
+#endif
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels

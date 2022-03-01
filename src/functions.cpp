@@ -10,7 +10,6 @@
 #include <getopt.h>
 #endif
 
-/* This is when we just don't care anymore */
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>

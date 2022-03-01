@@ -15,7 +15,7 @@
 
 #include <fmt/format.h>
 
-#if __cplusplus < 202002L
+#if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
@@ -174,11 +174,11 @@ void Connection::setHostname(const std::string& hostname) {
         throw std::range_error(
                 "Hostname cannot be bigger than 64 characters");
 
-#if __cplusplus >= 202002L
+#if __cpp_lib_starts_ends_with >= 201711L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
 #else
-        if (boost::algorithm::starts_with(hostname, "-") or
-            boost::algorithm::ends_with(hostname, "-"))
+    if (boost::algorithm::starts_with(hostname, "-") or
+        boost::algorithm::ends_with(hostname, "-"))
 #endif
         throw std::runtime_error("Hostname cannot start or end with dashes");
 

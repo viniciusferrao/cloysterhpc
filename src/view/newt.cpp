@@ -24,10 +24,11 @@ Newt::~Newt() {
     newtFinished();
 }
 
-void Newt::abortInstall () {
+void Newt::abort () {
+    // TODO: We should only destroy the view and not terminate the application
     this->~Newt();
-    std::cout << MSG_INSTALL_ABORT;
-    exit(EXIT_SUCCESS);
+    LOG_WARN("{}", TUIText::abort);
+    std::exit(EXIT_SUCCESS);
 }
 
 // TODO: Remove this method; this check must be done outside the view
@@ -52,7 +53,7 @@ bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
 
 void Newt::helpMessage (const char* message) {
     newtBell();
-    newtWinMessage(const_cast<char *>(MSG_TITLE_HELP),
+    newtWinMessage(const_cast<char *>(TUIText::Help::title),
                    const_cast<char *>(TUIText::Buttons::ok),
                    const_cast<char *>(message));
 }

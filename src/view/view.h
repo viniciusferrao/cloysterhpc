@@ -13,7 +13,7 @@ class View {
 public:
     virtual ~View() = default;
 
-    virtual void abortInstall() = 0;
+    virtual void abort() = 0;
     virtual void helpMessage(const char*) = 0;
 };
 

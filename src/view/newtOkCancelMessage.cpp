@@ -23,7 +23,7 @@ void Newt::okCancelMessage(const char* title, const char* message) {
         case 1:
             break;
         case 2:
-            abortInstall();
+            abort();
             break;
         default:
             throw;

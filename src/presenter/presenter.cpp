@@ -9,7 +9,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                      std::unique_ptr<Cluster>& model)
                      : m_model(model), m_view(view) {
 
-#if 1 // Welcome messages
+#if 0 // Welcome messages
     welcomeMessage();
     LOG_TRACE("Welcome message displayed");
 
@@ -17,7 +17,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("Install instructions displayed");
 #endif
 
-#if 1 // Set general settings
+#if 0 // Set general settings
     auto generalSettings = std::to_array<
             std::pair<std::string, std::string>>({
                     {"Cluster Name", "cl0yst3r"},
@@ -81,7 +81,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     LOG_TRACE("FQDN: {}", m_model->getHeadnode().getFQDN());
 #endif
 
-#if 1 // Boot target on headnode selection
+#if 0 // Boot target on headnode selection
     m_model->getHeadnode().setBootTarget(
             magic_enum::enum_cast<Headnode::BootTarget>(
                 m_view->listMenu(
@@ -107,7 +107,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 #if 1 // Networking
     // TODO: Under development
     try {
-        PresenterNetwork external(view, model);
+        PresenterNetwork(model, view);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
                  magic_enum::enum_name(Network::Profile::External),
@@ -115,7 +115,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 
     try {
-        PresenterNetwork management(view, model, Network::Profile::Management);
+        PresenterNetwork management(model, view, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
                  magic_enum::enum_name(Network::Profile::Management),
@@ -123,7 +123,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Infiniband support
+#if 0 // Infiniband support
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion("Infiniband Network", "Do you have an Infiniband Fabric available?", "No help")) {
 
@@ -136,7 +136,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
         LOG_INFO("Set OFED stack as: {}", magic_enum::enum_name<Cluster::OFED>(m_model->getOFED()));
 
         try {
-            PresenterNetwork application(view, model, Network::Profile::Application, Network::Type::Infiniband);
+            PresenterNetwork application(model, view, Network::Profile::Application, Network::Type::Infiniband);
         } catch (const std::exception& ex) {
             LOG_WARN("Failed to add {} network: {}",
                      magic_enum::enum_name(Network::Profile::Application),
@@ -145,7 +145,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Compute nodes formation details
+#if 0 // Compute nodes formation details
     m_view->message("We will now gather information to fill your compute nodes data");
 
     // TODO: Placeholder data
@@ -186,7 +186,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_model->setISOPath(fields[4].second);
 #endif
 
-#if 1 // Compute nodes details
+#if 0 // Compute nodes details
     auto nodes = std::to_array<
             std::pair<std::string, std::string>>({
                     {"Racks", "2"},
@@ -201,7 +201,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
                       "No help");
 #endif
 
-#if 1 // Queue System
+#if 0 // Queue System
     m_model->setQueueSystem(
             magic_enum::enum_cast<QueueSystem::Kind>(
                     m_view->listMenu(MSG_TITLE_QUEUE_SYSTEM_SETTINGS,
@@ -256,7 +256,7 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     }
 #endif
 
-#if 1 // Mail system
+#if 0 // Mail system
     if (m_view->yesNoQuestion(
             MSG_TITLE_POSTFIX_SETTINGS,
             MSG_POSTFIX_ENABLE,
@@ -341,11 +341,11 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
 }
 
 void Presenter::welcomeMessage() {
-    m_view->message(MSG_WELCOME);
+    m_view->message(Messages::Welcome::message);
 }
 
 void Presenter::installInstructions() {
-    m_view->okCancelMessage(MSG_GUIDED_INSTALL);
+    m_view->okCancelMessage(Messages::GuidedInstall::message);
 }
 
 std::string Presenter::timezoneSelection(const std::vector<std::string>& timezones) {

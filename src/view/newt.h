@@ -12,7 +12,6 @@
 #include <iostream>
 #include <newt.h>
 #include <fmt/format.h>
-#include <fmt/compile.h>
 #include <boost/lexical_cast.hpp>
 #include "view.h"
 #include "../messages.h" /* Legacy constexpr */
@@ -33,6 +32,7 @@ private:
         static constexpr const char* title = PRODUCT_NAME " Installer";
 #endif
         static constexpr const char* helpLine = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled";
+        static constexpr const char* abort = "Installation aborted due to operator request";
 
         struct Buttons {
             static constexpr const char* ok = "OK";
@@ -41,21 +41,25 @@ private:
             static constexpr const char* no = "No";
             static constexpr const char* help = "Help";
         };
+
+        struct Help {
+            static constexpr const char* title = "Help";
+        };
     };
 
 protected:
-    void abortInstall () override;
+    void abort () override;
     void helpMessage (const char*) override;
     bool hasEmptyField (const struct newtWinEntry*);
 
 public:
     Newt();
 
-    Newt(Newt const& other) = delete;
-    Newt& operator=(Newt const& other) = delete;
+    Newt(const Newt&) = delete;
+    Newt& operator=(const Newt&) = delete;
 
-    Newt(Newt&& other) = delete;
-    Newt& operator=(Newt&& other) = delete;
+    Newt(Newt&&) = delete;
+    Newt& operator=(Newt&&) = delete;
     
     ~Newt() override;
 
@@ -65,7 +69,9 @@ public:
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
 
-    // TODO: Template?
+    // TODO:
+    //  * Better template?
+    //  * The name "okCancelMessage" of this function is not ideal
     template<size_t N>
     void okCancelMessage(const char* title, const char* message,
                          const std::array<std::pair<std::string, std::string>, N>& pairs)
@@ -89,7 +95,7 @@ public:
             case 1:
                 break;
             case 2:
-                abortInstall();
+                abort();
                 break;
             default:
                 throw std::runtime_error("Out of bounds in a switch statement");
@@ -150,7 +156,7 @@ public:
             case 1:
                 return tempStrings[boost::lexical_cast<size_t>(selector)];
             case 2:
-                abortInstall();
+                abort();
                 break;
             case 3:
                 this->helpMessage(helpMessage);
@@ -262,7 +268,7 @@ public:
 
                 return returnArray;
             case 2:
-                abortInstall();
+                abort();
                 break;
             case 3:
                 this->helpMessage(helpMessage);

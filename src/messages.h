@@ -6,11 +6,6 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-constexpr const char * MSG_INSTALL_ABORT = \
-    "Installation aborted due to operator request\n";
-
-constexpr const char * MSG_TITLE_HELP = \
-    "Help\n";
 constexpr const char * MSG_TITLE_TIME_SETTINGS = \
     "Timezone Settings\n";
 constexpr const char * MSG_TITLE_LOCALE_SETTINGS = \
@@ -67,26 +62,6 @@ constexpr const char * MSG_LOCALE_SETTINGS_LOCALE_HELP = \
 constexpr const char * MSG_NETWORK_SETTINGS_HOSTID = \
     "Enter the desired hostname and domain name for this machine\n";
 constexpr const char * MSG_NETWORK_SETTINGS_HOSTID_HELP = \
-    MSG_DEFAULT_HELP_NOT_AVAILABLE;
-constexpr const char * MSG_NETWORK_SETTINGS_EXTERNAL_IF = \
-    "Select your external network interface\n";
-constexpr const char * MSG_NETWORK_SETTINGS_EXTERNAL_IF_HELP = \
-    MSG_DEFAULT_HELP_NOT_AVAILABLE;
-constexpr const char * MSG_NETWORK_SETTINGS_INTERNAL_IF = \
-    "Select your internal network interface\n";
-constexpr const char * MSG_NETWORK_SETTINGS_INTERNAL_IF_HELP = \
-    MSG_DEFAULT_HELP_NOT_AVAILABLE;
-constexpr const char * MSG_NETWORK_SETTINGS_INTERNAL_IPV4 = \
-    "Enter the IPv4 information for the management network\n";
-constexpr const char * MSG_NETWORK_SETTINGS_INTERNAL_IPV4_HELP = \
-    MSG_DEFAULT_HELP_NOT_AVAILABLE;
-constexpr const char * MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE = \
-    "Enter the xCAT Dynamic range for node discovery\n";
-constexpr const char * MSG_NETWORK_SETTINGS_XCAT_DHCP_RANGE_HELP = \
-    MSG_DEFAULT_HELP_NOT_AVAILABLE;
-constexpr const char * MSG_NETWORK_SETTINGS_IP = \
-    "Fill the IP network information\n";
-constexpr const char * MSG_NETWORK_SETTINGS_IP_HELP = \
     MSG_DEFAULT_HELP_NOT_AVAILABLE;
 
 constexpr const char * MSG_DIRECTORY_SERVICES_SETTINGS_PASSWORD = \

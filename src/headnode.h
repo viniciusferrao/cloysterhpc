@@ -1,10 +1,6 @@
 #ifndef HEADNODE_H
 #define HEADNODE_H
 
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include <string>
 #include <list>
 #include <memory>
