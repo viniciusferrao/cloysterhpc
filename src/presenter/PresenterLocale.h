@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERLOCALE_H
 #define CLOYSTERHPC_PRESENTERLOCALE_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 class PresenterLocale : public Presenter {
 private:

@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERNETWORK_H
 #define CLOYSTERHPC_PRESENTERNETWORK_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 #include "../view/newt.h"
 #include "../cluster.h"

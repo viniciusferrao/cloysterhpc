@@ -2,14 +2,14 @@
 // Created by Vinícius Ferrão on 24/11/21.
 //
 
-#include "presenterInstall.h"
-#include "presenterWelcome.h"
+#include "PresenterInstall.h"
+#include "PresenterWelcome.h"
 #include "PresenterInstructions.h"
 #include "PresenterGeneralSettings.h"
 #include "PresenterTime.h"
 #include "PresenterLocale.h"
 #include "PresenterHostId.h"
-#include "presenterNetwork.h"
+#include "PresenterNetwork.h"
 #include "PresenterInfiniband.h"
 #include "PresenterNodes.h"
 #include "PresenterQueueSystem.h"

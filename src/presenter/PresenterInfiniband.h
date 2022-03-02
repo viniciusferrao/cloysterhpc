@@ -5,8 +5,8 @@
 #ifndef CLOYSTERHPC_PRESENTERINFINIBAND_H
 #define CLOYSTERHPC_PRESENTERINFINIBAND_H
 
-#include "presenter.h"
-#include "presenterNetwork.h"
+#include "Presenter.h"
+#include "PresenterNetwork.h"
 
 class PresenterInfiniband : public Presenter {
 private:

@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERINSTALL_H
 #define CLOYSTERHPC_PRESENTERINSTALL_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 #include "../include/magic_enum.hpp"
 #include <boost/lexical_cast.hpp>

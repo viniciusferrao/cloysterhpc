@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERGENERALSETTINGS_H
 #define CLOYSTERHPC_PRESENTERGENERALSETTINGS_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 class PresenterGeneralSettings : public Presenter {
 private:

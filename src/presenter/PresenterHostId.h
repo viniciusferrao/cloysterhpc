@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERHOSTID_H
 #define CLOYSTERHPC_PRESENTERHOSTID_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 class PresenterHostId : public Presenter {
 private:

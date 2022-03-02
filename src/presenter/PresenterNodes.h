@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERNODES_H
 #define CLOYSTERHPC_PRESENTERNODES_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 class PresenterNodes : public Presenter {
 private:

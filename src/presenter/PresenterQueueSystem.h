@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_PRESENTERQUEUESYSTEM_H
 #define CLOYSTERHPC_PRESENTERQUEUESYSTEM_H
 
-#include "presenter.h"
+#include "Presenter.h"
 
 class PresenterQueueSystem : public Presenter {
 private:
