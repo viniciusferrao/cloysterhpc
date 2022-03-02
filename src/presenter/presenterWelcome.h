@@ -6,7 +6,6 @@
 #define CLOYSTERHPC_PRESENTERWELCOME_H
 
 #include "presenter.h"
-#include "presenterInstall.h"
 
 class PresenterWelcome : public Presenter {
 private:

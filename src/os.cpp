@@ -148,7 +148,7 @@ std::string OS::getValueFromKey (const std::string& line) {
     std::string value;
 
     /* Get values from keys */
-    size_t pos = line.find_first_of('=');
+    std::size_t pos = line.find_first_of('=');
     value = line.substr(pos + 1);
 
     /* Remove double quotes (") if found */

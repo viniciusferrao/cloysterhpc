@@ -72,7 +72,7 @@ public:
     // TODO:
     //  * Better template?
     //  * The name "okCancelMessage" of this function is not ideal
-    template<size_t N>
+    template<std::size_t N>
     void okCancelMessage(const char* title, const char* message,
                          const std::array<std::pair<std::string, std::string>, N>& pairs)
     {
@@ -102,7 +102,7 @@ public:
         }
     }
 
-    template<size_t N>
+    template<std::size_t N>
     void okCancelMessage(const char* message,
                          const std::array<std::pair<std::string, std::string>, N>& pairs) {
         okCancelMessage(nullptr, message, pairs);
@@ -154,7 +154,7 @@ public:
             case 0:
                 /* F12 is pressed, and we don't care; continue to case 1 */
             case 1:
-                return tempStrings[boost::lexical_cast<size_t>(selector)];
+                return tempStrings[boost::lexical_cast<std::size_t>(selector)];
             case 2:
                 abort();
                 break;
@@ -208,7 +208,7 @@ public:
         int flexDown = 5;
         int maxHeightList = 20;
 
-        size_t arraySize = items.size();
+        std::size_t arraySize = items.size();
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
         auto field = std::make_unique<newtWinEntry[]>(arraySize + 1);
 
@@ -217,7 +217,7 @@ public:
         // Please note that field[i].value is a char** because it's passing data by
         // reference in C style, since the data can be modified by the newt form,
         // it's not an array of char*
-        for (size_t i = 0 ; i < arraySize ; i++) {
+        for (std::size_t i = 0 ; i < arraySize ; i++) {
             field[i].text = const_cast<char*>(items[i].first.c_str());
             fieldEntries[i] = const_cast<char*>((items[i].second).c_str());
             LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
@@ -260,7 +260,7 @@ public:
                 //        that was triggering an exception on the presenter, so
                 //        basically the std::variant is useless here, we always
                 //        return std:string.
-                for (size_t i = 0 ; field[i].text ; i++) {
+                for (std::size_t i = 0 ; field[i].text ; i++) {
                     returnArray[i] =
                             std::make_pair<std::string, std::string>(
                                     field[i].text, *field[i].value);

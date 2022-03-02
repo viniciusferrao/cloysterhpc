@@ -244,7 +244,7 @@ void Network::setNameserver(const std::vector<std::string>& nameserver) {
     size_t i = 0;
     for (auto const& ns : std::as_const(nameserver)) {
 #else
-    for (size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
+    for (std::size_t i = 0 ; auto const& ns : std::as_const(nameserver)) {
 #endif
         m_nameserver.push_back(aux); /* aux may have garbage on it */
         if (inet_aton(ns.c_str(), &this->m_nameserver[i++]) == 0)
@@ -257,7 +257,7 @@ std::vector<std::string> Network::fetchNameserver() {
     if (res_init() == -1)
         throw std::runtime_error("Failed to initialize domain name resolution");
 
-    nameservers.reserve(static_cast<size_t>(_res.nscount));
+    nameservers.reserve(static_cast<std::size_t>(_res.nscount));
     for (const auto& ns : _res.nsaddr_list) {
         if (std::string{inet_ntoa(ns.sin_addr)} == "0.0.0.0")
             continue;

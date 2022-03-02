@@ -65,7 +65,7 @@ void PresenterNetwork::createNetwork()
 #endif
 
     // Set the gathered data
-    size_t i = 0;
+    std::size_t i = 0;
     m_connection.setAddress(networkDetails[i++].second);
     m_network.setSubnetMask(networkDetails[i++].second);
     m_network.setAddress(networkDetails[i++].second);
