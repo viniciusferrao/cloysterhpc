@@ -29,8 +29,8 @@ PresenterTime::PresenterTime(
     auto timeservers = std::to_array<
             std::pair<std::string, std::string>>({
                  {Messages::Timeservers::field, "0.br.pool.ntp.org"},
-                 {nullptr, "1.br.pool.ntp.org"},
-                 {nullptr, "2.br.pool.ntp.org"}
+                 {"", "1.br.pool.ntp.org"},
+                 {"", "2.br.pool.ntp.org"}
             });
 
     // TODO: Set timeservers

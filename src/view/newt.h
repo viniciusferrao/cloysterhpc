@@ -14,7 +14,6 @@
 #include <fmt/format.h>
 #include <boost/lexical_cast.hpp>
 #include "view.h"
-#include "../messages.h" /* Legacy constexpr */
 #include "../services/log.h"
 
 /* This is just a prototype about making the View as an Interface to be easily

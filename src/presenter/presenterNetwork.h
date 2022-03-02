@@ -29,12 +29,12 @@ private:
         //       "Select your <external> network interface", for example.
         struct Interface {
             static constexpr const char* question = "Select your network interface";
-            static constexpr const char* help = MSG_DEFAULT_HELP_NOT_AVAILABLE;
+            static constexpr const char* help = Presenter::Messages::Placeholder::help;
         };
 
         struct Details {
             static constexpr const char* question = "Fill the required network details";
-            static constexpr const char* help = MSG_DEFAULT_HELP_NOT_AVAILABLE;
+            static constexpr const char* help = Presenter::Messages::Placeholder::help;
         };
 
         struct IP {
