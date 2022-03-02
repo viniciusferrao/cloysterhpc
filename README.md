@@ -20,7 +20,7 @@ Cloyster HPC is written in modern C++ and some leftover code in plain C with
 [newt](https://pagure.io/newt) as the terminal user interface.
 
 The software tries to implement an architectural pattern based on
-[MVP](https://en.wikipedia.org/wiki/Model–view–presenter) (Model-View-Presenter)
+[MVP](https://en.wikipedia.org/wiki/Model–view–presenter) (Model-View-PresenterInstall)
 where the components can be easily swapped in the future if needed.
 
 There's no need for a database setting since all the configuration is stored in

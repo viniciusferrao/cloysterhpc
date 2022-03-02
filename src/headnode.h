@@ -43,6 +43,7 @@ public:
     void addConnection(const Network& network);
     void addConnection(const Network&, const std::string&,
                                        const std::string&);
+    void addConnection(Connection&& connection);
 
     //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
     [[nodiscard]] Connection& getConnection(Network::Profile);

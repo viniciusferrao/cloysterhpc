@@ -5,6 +5,8 @@
 #ifndef CLOYSTERHPC_PRESENTERNETWORK_H
 #define CLOYSTERHPC_PRESENTERNETWORK_H
 
+#include "presenter.h"
+
 #include "../view/newt.h"
 #include "../cluster.h"
 #include "../network.h"
@@ -15,10 +17,10 @@
 #include <memory>
 #include <utility>
 
-class PresenterNetwork {
+class PresenterNetwork : public Presenter {
 private:
-    std::unique_ptr<Cluster>& m_model;
-    std::unique_ptr<Newt>& m_view;
+    Network m_network;
+    Connection m_connection;
 
     struct Messages {
         static constexpr const char* title = "Network Settings";
@@ -85,12 +87,14 @@ private:
     }
 #endif
 
+    void createNetwork();
+
 public:
-     PresenterNetwork(
-             std::unique_ptr<Cluster>& model,
-             std::unique_ptr<Newt>& view,
-             Network::Profile profile = Network::Profile::External,
-             Network::Type type = Network::Type::Ethernet);
+    PresenterNetwork(
+        std::unique_ptr<Cluster>& model,
+        std::unique_ptr<Newt>& view,
+        Network::Profile profile = Network::Profile::External,
+        Network::Type type = Network::Type::Ethernet);
 };
 
 

@@ -71,6 +71,7 @@ public:
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
+    void addNetwork(Network&& network);
 
     bool isUpdateSystem() const;
     void setUpdateSystem(bool);

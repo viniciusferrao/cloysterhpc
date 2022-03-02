@@ -13,7 +13,7 @@
 #include "cluster.h"
 #include "view/newt.h"
 #include "services/shell.h"
-#include "presenter/presenter.h"
+#include "presenter/presenterInstall.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -36,8 +36,9 @@ int main(int argc, char** argv) {
     //View* view = new Newt();
     auto view = std::make_unique<Newt>();
 
-    //Presenter* presenter = new Presenter(view, model);
-    auto presenter = std::make_unique<Presenter>(view, model);
+    //PresenterInstall* presenter = new PresenterInstall(model, view);
+    auto presenter = std::make_unique<PresenterInstall>(model, view);
+    //auto presenter = std::make_unique<PresenterInstall>(std::move(model), std::move(view));
 
 #ifdef _DEBUG_
     model->printData();

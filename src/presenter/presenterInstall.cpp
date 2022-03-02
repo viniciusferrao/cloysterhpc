@@ -2,15 +2,20 @@
 // Created by Vinícius Ferrão on 24/11/21.
 //
 
-#include "presenter.h"
+#include "presenterInstall.h"
 #include "presenterNetwork.h"
+#include "presenterWelcome.h"
 
-Presenter::Presenter(std::unique_ptr<Newt>& view,
-                     std::unique_ptr<Cluster>& model)
-                     : m_model(model), m_view(view) {
+PresenterInstall::PresenterInstall(std::unique_ptr<Cluster>& model,
+                                   std::unique_ptr<Newt>& view)
+                                   : Presenter(model, view)
+{
 
-#if 0 // Welcome messages
-    welcomeMessage();
+#if 1 // Welcome messages
+    // TODO: This is not cool; pick 1, 2 or 3:
+    //m_view->message(Messages::Welcome::message);
+    //welcomeMessage();
+    //PresenterWelcome(model, view);
     LOG_TRACE("Welcome message displayed");
 
     installInstructions();
@@ -104,22 +109,24 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     };
 #endif
 
-#if 1 // Networking
+#if 0 // Networking
     // TODO: Under development
+    //  * Add it to a loop where it asks to the user which kind of network we
+    //  should add, while the operator says it's done adding networks. We remove
+    //  the lazy network{1,2} after that.
+
     try {
-        PresenterNetwork(model, view);
+        PresenterNetwork network(model, view);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
-                 magic_enum::enum_name(Network::Profile::External),
-                 ex.what());
+                 magic_enum::enum_name(Network::Profile::External), ex.what());
     }
 
     try {
-        PresenterNetwork management(model, view, Network::Profile::Management);
+        PresenterNetwork network(model, view, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_WARN("Failed to add {} network: {}",
-                 magic_enum::enum_name(Network::Profile::Management),
-                 ex.what());
+                 magic_enum::enum_name(Network::Profile::Management), ex.what());
     }
 #endif
 
@@ -340,22 +347,22 @@ Presenter::Presenter(std::unique_ptr<Newt>& view,
     m_view.reset();
 }
 
-void Presenter::welcomeMessage() {
+void PresenterInstall::welcomeMessage() {
     m_view->message(Messages::Welcome::message);
 }
 
-void Presenter::installInstructions() {
+void PresenterInstall::installInstructions() {
     m_view->okCancelMessage(Messages::GuidedInstall::message);
 }
 
-std::string Presenter::timezoneSelection(const std::vector<std::string>& timezones) {
+std::string PresenterInstall::timezoneSelection(const std::vector<std::string>& timezones) {
     return m_view->listMenu(MSG_TITLE_TIME_SETTINGS,
                             MSG_TIME_SETTINGS_TIMEZONE, timezones,
                             MSG_TIME_SETTINGS_TIMEZONE_HELP);
 }
 
 template<size_t N>
-std::string Presenter::localeSelection(const std::array<std::string_view, N>& locales)
+std::string PresenterInstall::localeSelection(const std::array<std::string_view, N>& locales)
 {
     return std::string{m_view->listMenu(MSG_TITLE_LOCALE_SETTINGS,
                             MSG_LOCALE_SETTINGS_LOCALE, locales,
@@ -364,7 +371,7 @@ std::string Presenter::localeSelection(const std::array<std::string_view, N>& lo
 
 template<size_t N>
 std::array<std::pair<std::string, std::string>, N>
-Presenter::networkHostnameSelection(const std::array<std::pair<std::string, std::string>, N>& entries)
+PresenterInstall::networkHostnameSelection(const std::array<std::pair<std::string, std::string>, N>& entries)
 {
     return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
                              MSG_NETWORK_SETTINGS_HOSTID, entries,
@@ -372,7 +379,7 @@ Presenter::networkHostnameSelection(const std::array<std::pair<std::string, std:
 }
 
 //std::vector<std::string>
-//Presenter::networkHostnameSelection(const std::vector<std::string>& entries)
+//PresenterInstall::networkHostnameSelection(const std::vector<std::string>& entries)
 //{
 //    return m_view->fieldMenu(MSG_TITLE_NETWORK_SETTINGS,
 //                             MSG_NETWORK_SETTINGS_HOSTID, entries,

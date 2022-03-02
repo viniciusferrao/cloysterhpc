@@ -53,7 +53,7 @@ bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
 
 void Newt::helpMessage (const char* message) {
     newtBell();
-    newtWinMessage(const_cast<char *>(TUIText::Help::title),
-                   const_cast<char *>(TUIText::Buttons::ok),
-                   const_cast<char *>(message));
+    newtWinMessage(const_cast<char*>(TUIText::Help::title),
+                   const_cast<char*>(TUIText::Buttons::ok),
+                   const_cast<char*>(message));
 }

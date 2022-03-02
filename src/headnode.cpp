@@ -93,6 +93,10 @@ void Headnode::addConnection(const Network& network,
     m_connection.emplace_back(network, interface, address);
 }
 
+void Headnode::addConnection(Connection&& connection) {
+    m_connection.emplace_back(connection);
+}
+
 //const Connection& Headnode::getConnection(Network::Profile profile) const {
 //    for (auto const& connection : std::as_const(m_connection)) {
 //        if (connection.getNetwork().getProfile() == profile)

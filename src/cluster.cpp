@@ -175,6 +175,10 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                 nameserver));
 }
 
+void Cluster::addNetwork(Network&& network) {
+    m_network.emplace_back(network);
+}
+
 bool Cluster::isUpdateSystem() const {
     return m_updateSystem;
 }
