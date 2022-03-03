@@ -170,13 +170,12 @@ void OS::discover () {
     setFamily(system.sysname);
     setKernel(system.release);
 
-#ifdef _DUMMY_
+#ifdef __APPLE__
     if (true) {
-        std::string filename = "chroot/etc/os-release";
 #else
     if (getFamily() == OS::Family::Linux) {
-        std::string filename = "/etc/os-release";
 #endif
+        std::string filename = CHROOT"/etc/os-release";
         std::ifstream file(filename);
 
         if (!file.is_open()) {

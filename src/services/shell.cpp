@@ -6,9 +6,6 @@
 #include "../functions.h"
 #include "log.h"
 
-#ifdef _DEBUG_
-#include <iostream>
-#endif
 #include <memory>
 #include <fmt/format.h>
 #include <boost/property_tree/ptree.hpp>
@@ -17,38 +14,12 @@
 
 #include "../cluster.h"
 
-int Shell::runCommand(const std::string& command) {
-#ifndef _DUMMY_
-    LOG_TRACE("Running command: {}", command);
-    boost::process::ipstream pipe_stream;
-    boost::process::child c(command, boost::process::std_out > pipe_stream);
-
-    std::string line;
-
-    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
-#ifdef _DEBUG_
-        std::cerr << line << std::endl;
-#endif
-        c.wait();
-    }
-
-    LOG_DEBUG("Exit code: {}", c.exit_code);
-    return c.exit_code();
-
-#else
-    LOG_TRACE("exec: {}", command);
-    return 0;
-#endif
-}
+using cloyster::runCommand;
 
 void Shell::disableSELinux () {
     runCommand("setenforce 0");
 
-#ifdef _DUMMY_
-    const std::string filename = "chroot/etc/sysconfig/selinux";
-#else
-    const std::string filename = "/etc/sysconfig/selinux";
-#endif
+    const std::string filename = CHROOT"/etc/sysconfig/selinux";
 
     cloyster::backupFile(filename);
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
@@ -88,11 +59,7 @@ void Shell::configureFQDN (const std::string& fqdn) {
 void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
                                 std::string_view hostname) {
 
-#ifdef _DUMMY_
-    std::string_view filename = "chroot/etc/hosts";
-#else
-    std::string_view filename = "/etc/hosts";
-#endif
+    std::string_view filename = CHROOT"/etc/hosts";
 
     cloyster::addStringToFile(filename,
                             fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
@@ -108,12 +75,8 @@ void Shell::configureLocale (const std::string& locale) {
 }
 
 void Shell::disableNetworkManagerDNSOverride () {
-#ifdef _DUMMY_
     std::string_view filename =
-            "chroot/etc/NetworkManager/conf.d/90-dns-none.conf";
-#else
-    std::string_view filename = "/etc/NetworkManager/conf.d/90-dns-none.conf";
-#endif
+            CHROOT"/etc/NetworkManager/conf.d/90-dns-none.conf";
 
     /* TODO: Would be better handled with a .conf function */
     cloyster::addStringToFile(filename, "[main]\n"
@@ -201,11 +164,7 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 
-#ifdef _DUMMY_
-    std::string_view filename = "chroot/etc/chrony.conf";
-#else
-    std::string_view filename = "/etc/chrony.conf";
-#endif
+    std::string_view filename = CHROOT"/etc/chrony.conf";
 
     for (const auto& connection : std::as_const(connections)) {
         if ((connection.getNetwork().getProfile() ==
@@ -257,11 +216,7 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
 
 /* TODO: Restrict by networks */
 void Shell::configureNetworkFileSystem () {
-#ifdef _DUMMY_
-    std::string_view filename = "chroot/etc/exports";
-#else
-    std::string_view filename = "/etc/exports";
-#endif
+    std::string_view filename = CHROOT"/etc/exports";
 
     cloyster::addStringToFile(filename,
                       "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
@@ -272,11 +227,7 @@ void Shell::configureNetworkFileSystem () {
 }
 
 void Shell::removeMemlockLimits () {
-#ifdef _DUMMY_
-    std::string_view filename = "chroot/etc/security/limits.conf";
-#else
-    std::string_view filename = "/etc/security/limits.conf";
-#endif
+    std::string_view filename = CHROOT"/etc/security/limits.conf";
 
     cloyster::addStringToFile(filename, "* soft memlock unlimited\n"
                                         "* hard memlock unlimited\n");

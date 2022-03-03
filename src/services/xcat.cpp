@@ -11,14 +11,14 @@
 
 /* TODO: Implement a repos class to properly do this */
 void XCAT::configureRepositories() {
-    Shell::runCommand("wget -P /etc/yum.repos.d "
+    cloyster::runCommand("wget -P /etc/yum.repos.d "
                       "https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
-    Shell::runCommand("wget -P /etc/yum.repos.d "
+    cloyster::runCommand("wget -P /etc/yum.repos.d "
                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 }
 
 void XCAT::installPackages () {
-    Shell::runCommand("dnf -y install xCAT");
+    cloyster::runCommand("dnf -y install xCAT");
 }
 
 void XCAT::setup(const std::unique_ptr<Cluster>& cluster) {
@@ -31,37 +31,33 @@ void XCAT::setup(const std::unique_ptr<Cluster>& cluster) {
 
 /* TODO: Maybe create a chdef method to do it cleaner? */
 void XCAT::setDHCPInterfaces (std::string_view interface) {
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface));
 }
 
 void XCAT::setDomain (std::string_view domain) {
-    Shell::runCommand(fmt::format("chdef -t site domain={}", domain));
+    cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
 void XCAT::copycds (const std::filesystem::path& isopath) {
-    Shell::runCommand(fmt::format("copycds {}", isopath.string()));
+    cloyster::runCommand(fmt::format("copycds {}", isopath.string()));
 }
 
 void XCAT::genimage () {
-    Shell::runCommand(fmt::format("genimage {}", m_stateless.osimage));
+    cloyster::runCommand(fmt::format("genimage {}", m_stateless.osimage));
 }
 
 void XCAT::packimage () {
-    Shell::runCommand(fmt::format("packimage {}", m_stateless.osimage));
+    cloyster::runCommand(fmt::format("packimage {}", m_stateless.osimage));
 }
 
 void XCAT::nodeset() {
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "nodeset compute osimage={}", m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree () {
-#ifdef _DUMMY_
-    std::filesystem::create_directories("chroot/install/custom/netboot");
-#else
-    std::filesystem::create_directories("/install/custom/netboot");
-#endif
+    std::filesystem::create_directories(CHROOT"/install/custom/netboot");
 }
 
 void XCAT::configureOpenHPC() {
@@ -117,12 +113,8 @@ void XCAT::configureSLURM (const std::unique_ptr<Cluster>& cluster) {
 }
 
 void XCAT::generateOtherPkgListFile () {
-#ifdef _DUMMY_
     std::string_view filename =
-            "chroot/install/custom/netboot/compute.otherpkglist";
-#else
-    std::string_view filename = "/install/custom/netboot/compute.otherpkglist";
-#endif
+            CHROOT"/install/custom/netboot/compute.otherpkglist";
 
     cloyster::addStringToFile(filename, fmt::format("{}\n",
                         fmt::join(m_stateless.otherpkgs, "\n")));
@@ -130,12 +122,9 @@ void XCAT::generateOtherPkgListFile () {
 }
 
 void XCAT::generatePostinstallFile (const std::unique_ptr<Cluster>& cluster) {
-#ifdef _DUMMY_
     std::string_view filename =
-            "chroot/install/custom/netboot/compute.postinstall";
-#else
-    std::string_view filename = "/install/custom/netboot/compute.postinstall";
-#endif
+            CHROOT"/install/custom/netboot/compute.postinstall";
+
     m_stateless.postinstall.emplace_back(fmt::format(
         "cat << END >> $installroot/etc/fstab\n"
         "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
@@ -159,12 +148,9 @@ void XCAT::generatePostinstallFile (const std::unique_ptr<Cluster>& cluster) {
 }
 
 void XCAT::generateSynclistsFile () {
-#ifdef _DUMMY_
     std::string_view filename =
-            "chroot/install/custom/netboot/compute.synclists";
-#else
-    std::string_view filename = "/install/custom/netboot/compute.synclists";
-#endif
+            CHROOT"/install/custom/netboot/compute.synclists";
+
     cloyster::addStringToFile(filename,
                               "/etc/passwd -> /etc/passwd\n"
                               "/etc/group -> /etc/group\n"
@@ -174,15 +160,15 @@ void XCAT::generateSynclistsFile () {
 }
 
 void XCAT::configureOSImageDefinition(const std::unique_ptr<Cluster>& cluster) {
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus otherpkglist="
             "/install/custom/netboot/compute.pkglist", m_stateless.osimage));
 
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus postinstall="
             "/install/custom/netboot/compute.postinstall", m_stateless.osimage));
 
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus synclists="
             "/install/custom/netboot/compute.synclists", m_stateless.osimage));
 
@@ -222,17 +208,17 @@ void XCAT::configureOSImageDefinition(const std::unique_ptr<Cluster>& cluster) {
     repos.emplace_back("https://repos.openhpc.community/OpenHPC/2/updates/CentOS_8");
 
 
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus otherpkgdir={}",
             m_stateless.osimage, fmt::join(repos, ",")));
 }
 
 void XCAT::customizeImage () {
     // Bugfixes for Munge
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chroot {} chown munge:munge /var/lib/munge",
             m_stateless.chroot.string()));
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "chroot {} chown munge:munge /etc/munge",
             m_stateless.chroot.string()));
 }
@@ -268,7 +254,7 @@ void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
                    std::string_view t_bmcusername,
                    std::string_view t_bmcpassword) {
 
-    Shell::runCommand(fmt::format(
+    cloyster::runCommand(fmt::format(
             "mkdef -f -t node {} arch={} ip={} mac={} bmc={} bmcusername={} "
             "bmcpassword={} mgt=ipmi cons=ipmi serialport=0 serialspeed=115200 "
             "groups=compute,all netboot=xnba", t_name, t_arch, t_address,
@@ -284,10 +270,10 @@ void XCAT::addNodes(const std::unique_ptr<Cluster>& cluster) {
                 node.getBMCPassword());
 
     // TODO: Create separate functions
-    Shell::runCommand("makehosts");
-    Shell::runCommand("makedhcp -n");
-    Shell::runCommand("makedns -n");
-    Shell::runCommand("makegocons");
+    cloyster::runCommand("makehosts");
+    cloyster::runCommand("makedhcp -n");
+    cloyster::runCommand("makedns -n");
+    cloyster::runCommand("makegocons");
     nodeset();
 }
 

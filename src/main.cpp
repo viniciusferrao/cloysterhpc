@@ -13,11 +13,14 @@
 #include "cluster.h"
 #include "view/newt.h"
 #include "services/shell.h"
-#include "presenter/presenterInstall.h"
+#include "presenter/PresenterInstall.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
 #endif
+
+// Globals definition
+bool cloyster::dryRun = true;
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
@@ -25,6 +28,11 @@ int main(int argc, char** argv) {
     LOG_INFO("{} Started", productName);
 
     int rc; /* return code */
+
+    std::list<std::string> output;
+    cloyster::runCommand("ls -l", output, true);
+    for (const auto& out : output)
+        std::cout << out << "\n";
 
     //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
@@ -37,7 +45,7 @@ int main(int argc, char** argv) {
     auto view = std::make_unique<Newt>();
 
     //PresenterInstall* presenter = new PresenterInstall(model, view);
-    auto presenter = std::make_unique<PresenterInstall>(model, view);
+    //auto presenter = std::make_unique<PresenterInstall>(model, view);
     //auto presenter = std::make_unique<PresenterInstall>(std::move(model), std::move(view));
 
 #ifdef _DEBUG_

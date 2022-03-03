@@ -23,7 +23,6 @@ class Shell : public Execution {
     friend class XCAT;
 
 private:
-    static int runCommand(const std::string&);
     void configureSELinuxMode (Cluster::SELinuxMode);
     void configureFirewall (bool);
     void configureFQDN (const std::string&);

@@ -8,6 +8,7 @@
 #include "provisioner.h"
 #include "execution.h"
 #include "shell.h"
+#include "../const.h"
 
 #include <string>
 #include <memory>

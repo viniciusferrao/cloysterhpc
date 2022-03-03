@@ -94,37 +94,47 @@ int parseArguments(int argc, char **argv) {
 #endif
 }
 
+// FIXME: Maybe std::optional here is irrelevant? Look at the next overload.
 int runCommand(const std::string& command,
-               const std::optional<std::vector<std::string>>& output) {
-#ifndef _DUMMY_
-    LOG_TRACE("Running command: {}", command);
-    boost::process::ipstream pipe_stream;
-    boost::process::child c(command, boost::process::std_out > pipe_stream);
+               //std::optional<std::list<std::string>>& output,
+               std::list<std::string>& output,
+               bool overrideDryRun) {
 
-    std::string line;
+    if (!cloyster::dryRun || overrideDryRun) {
+        LOG_TRACE("Running command: {}", command);
+        boost::process::ipstream pipe_stream;
+        boost::process::child child(command, boost::process::std_out > pipe_stream);
 
-    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
-#ifdef _DEBUG_
-        std::cerr << line << std::endl;
+        std::string line;
+
+        while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
+
+#ifndef _NDEBUG_
+            LOG_TRACE("{}", line);
 #endif
-        output = emplace_back(line);
-        c.wait();
+
+            output.emplace_back(line);
+            child.wait();
+        }
+
+        LOG_TRACE("Exit code: {}", child.exit_code());
+        return child.exit_code();
     }
-
-    LOG_DEBUG("Exit code: {}", c.exit_code);
-    return c.exit_code();
-
-#else
-    LOG_TRACE("exec: {}", command);
-    return 0;
-#endif
+    else
+    {
+        LOG_WARN("Dry Run: {}", command);
+        return 0;
+    }
 }
 
-int runCommand(const std::string& command) {
-    return runCommand(command, std::nullopt);
+int runCommand(const std::string& command, bool overrideDryRun) {
+    // FIXME: Why we can't pass std::nullopt instead?
+    std::list<std::string> discard;
+    //std::optional<std::list<std::string>> discard;
+    return runCommand(command, discard, overrideDryRun);
 }
 
-/* Returns a specific environment varible when requested.
+/* Returns a specific environment variable when requested.
 * If the variable is not set it will return as an empty string. That's by
 * design and not considered a bug right now.
 */

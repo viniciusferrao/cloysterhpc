@@ -1,22 +1,26 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include <string>
 #include <optional>
 #include <vector>
+#include <list>
 
 namespace cloyster {
+
+// Globals
+extern bool dryRun;
+
 /* getopt */
 int parseArguments(int, char**);
 
 /* shell execution */
 int runCommand(const std::string& command,
-               const std::optional<std::vector<std::string>>& output);
-int runCommand(const std::string& command);
+               //std::optional<std::list<std::string>>& output,
+               std::list<std::string>& output,
+               bool overrideDryRun = false);
+int runCommand(const std::string& command,
+               bool overrideDryRun = false);
 
 /* environment variables helper functions */
 std::string getEnvironmentVariable(const std::string&);

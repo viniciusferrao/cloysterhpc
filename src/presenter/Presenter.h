@@ -15,6 +15,9 @@
 
 class Presenter {
 protected:
+    // FIXME: According to Herb Sutter we shouldn't be passing this as const ref&
+    //  - https://youtu.be/xnqTKD8uD64?t=1145
+    //  - http://tinyurl.com/gotw91
     std::unique_ptr<Cluster>& m_model;
     std::unique_ptr<Newt>& m_view;
 

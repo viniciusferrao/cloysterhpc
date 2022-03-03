@@ -6,6 +6,7 @@
 #endif
 
 #include <string>
+#include "const.h"
 
 /* Darwin added for development reasons, not really supported. */
 class OS {
