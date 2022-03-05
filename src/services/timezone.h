@@ -6,11 +6,12 @@
 #define CLOYSTERHPC_TIMEZONE_H
 
 #include <string>
+#include <list>
 
 class Timezone {
 private:
     std::string m_timezone;
-    std::vector<std::string> m_availableTimezones;
+    std::list<std::string> m_availableTimezones;
     std::vector<std::string> m_timeservers;
 
 public:
@@ -21,8 +22,8 @@ public:
     std::string_view getTimezone() const;
 
     void setSystemTimezone();
-    std::vector<std::string> getAvailableTimezones() const;
-    std::vector<std::string> fetchAvailableTimezones();
+    std::list<std::string> getAvailableTimezones() const;
+    std::list<std::string> fetchAvailableTimezones();
 
     void setTimeservers(const std::vector<std::string>& timeservers);
     std::vector<std::string> getTimeservers();

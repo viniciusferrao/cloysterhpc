@@ -20,8 +20,6 @@
  * Shell class, which may not be desirable.
  */
 class Shell : public Execution {
-    friend class XCAT;
-
 private:
     void configureSELinuxMode (Cluster::SELinuxMode);
     void configureFirewall (bool);

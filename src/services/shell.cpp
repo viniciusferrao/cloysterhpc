@@ -19,7 +19,7 @@ using cloyster::runCommand;
 void Shell::disableSELinux () {
     runCommand("setenforce 0");
 
-    const std::string filename = CHROOT"/etc/sysconfig/selinux";
+    const auto filename = CHROOT"/etc/sysconfig/selinux";
 
     cloyster::backupFile(filename);
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");

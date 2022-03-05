@@ -29,10 +29,10 @@ void Timezone::setSystemTimezone()
             fmt::format("timedatectl set timezone {}", m_timezone));
 }
 
-std::vector<std::string> Timezone::fetchAvailableTimezones()
+std::list<std::string> Timezone::fetchAvailableTimezones()
 {
     LOG_TRACE("Fetching available system timezones");
-    std::vector<std::string> output;
+    std::list<std::string> output;
 
 // TODO: Remove this hack
 #if __APPLE__
@@ -44,7 +44,7 @@ std::vector<std::string> Timezone::fetchAvailableTimezones()
     return output;
 }
 
-std::vector<std::string> Timezone::getAvailableTimezones() const
+std::list<std::string> Timezone::getAvailableTimezones() const
 {
     return m_availableTimezones;
 }
