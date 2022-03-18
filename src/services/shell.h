@@ -4,21 +4,12 @@
 #ifndef CLOYSTER_SHELL_H
 #define CLOYSTER_SHELL_H
 
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include "../include/magic_enum.hpp"
 
 #include "execution.h"
 #include "../cluster.h"
 #include "provisioner.h"
 
-/* Adding XCAT (Provisioner) as a friend class of Shell will block the usage of
- * the static function runCommand outside of Shell (and it's friends). The only
- * drawback is that we now enabled friend classes full access to contents of
- * Shell class, which may not be desirable.
- */
 class Shell : public Execution {
 private:
     void configureSELinuxMode (Cluster::SELinuxMode);

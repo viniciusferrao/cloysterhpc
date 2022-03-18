@@ -10,12 +10,18 @@ PresenterLocale::PresenterLocale(
         : Presenter(model, view) {
 
     // TODO: Get locales from the system
-    const auto& locales = std::to_array<std::string_view>(
-            {"en_US.UTF-8", "pt_BR.UTF-8", "C"});
+//    auto availableLocales = m_model->getLocale()
+//                                    .getAvailableLocales();
 
-    const auto& selectedLocale = m_view->listMenu(Messages::title,
-                                           Messages::question, locales,
-                                           Messages::help);
+    // FIXME: For now we will only support those two locales
+    const auto& locales = std::to_array<std::string_view>(
+            {"en_US.UTF-8", "pt_BR.UTF-8"});
+
+    const auto& selectedLocale = m_view->listMenu(
+            Messages::title,
+            Messages::question,
+            locales,
+            Messages::help);
 
     m_model->setLocale(selectedLocale);
     LOG_TRACE("Locale set to: {}", m_model->getLocale());

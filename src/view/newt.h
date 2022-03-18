@@ -47,6 +47,14 @@ private:
     };
 
 protected:
+    int m_cols;
+    int m_rows;
+    int m_suggestedWidth;
+    int m_flexDown;
+    int m_flexUp;
+    int m_dataWidth;
+    int m_maxListHeight;
+
     void abort () override;
     void helpMessage (const char*) override;
     bool hasEmptyField (const struct newtWinEntry*);
@@ -112,16 +120,13 @@ public:
     //  * Optimize for std::string_view and std::string.
     template<typename T>
     std::string listMenu (const char* title, const char* message,
-                                const T& items,
-                                const char* helpMessage) {
-
+                          const T& items,
+                          const char* helpMessage)
+    {
         int returnValue;
+        // TODO: Initial value of selector should be available on function
+        //       declaration so we can start at the already set option
         int selector = 0;
-
-        int suggestedWidth = 50;
-        int flexUp = 5;
-        int flexDown = 5;
-        int maxHeightList = static_cast<int>(items.size());
 
         // TODO: Is it possible do use std::array instead?
         // TODO: Check types to avoid this copy (C++20 concepts?)
@@ -136,18 +141,23 @@ public:
             LOG_TRACE("Pushed back std::string {}", string.c_str());
         }
         cStrings.push_back(nullptr);
-        LOG_TRACE("Pushed back std::nullptr");
+        LOG_TRACE("Pushed back nullptr");
 
 #if 1
         // goto implementation
         question:
         returnValue = newtWinMenu(const_cast<char*>(title),
                                   const_cast<char*>(message),
-                                  suggestedWidth, flexDown, flexUp, maxHeightList,
-                                  const_cast<char**>(cStrings.data()), &selector,
+                                  m_suggestedWidth,
+                                  m_flexDown,
+                                  m_flexUp,
+                                  m_maxListHeight,
+                                  const_cast<char**>(cStrings.data()),
+                                  &selector,
                                   const_cast<char*>(TUIText::Buttons::ok),
                                   const_cast<char*>(TUIText::Buttons::cancel),
-                                  const_cast<char*>(TUIText::Buttons::help), NULL);
+                                  const_cast<char*>(TUIText::Buttons::help),
+                                  nullptr);
 
         switch(returnValue) {
             case 0:
@@ -167,12 +177,17 @@ public:
         // gotoless implementation
     for (;;) {
         returnValue = newtWinMenu(const_cast<char*>(title),
-                              const_cast<char*>(message),
-                              suggestedWidth, flexUp, flexDown, maxHeightList,
-                              const_cast<char**>(items), &selector,
-                              const_cast<char*>(MSG_BUTTON_OK),
-                              const_cast<char*>(MSG_BUTTON_CANCEL),
-                              const_cast<char*>(MSG_BUTTON_HELP), NULL);
+                                  const_cast<char*>(message),
+                                  m_suggestedWidth,
+                                  m_flexUp,
+                                  m_flexDown,
+                                  m_maxListHeight,
+                                  const_cast<char**>(cStrings.data()),
+                                  &selector,
+                                  const_cast<char*>(TUIText::Buttons::ok),
+                                  const_cast<char*>(TUIText::Buttons::cancel),
+                                  const_cast<char*>(TUIText::Buttons::help),
+                                  NULL);
 
         switch(returnValue) {
             case 0:
@@ -201,11 +216,6 @@ public:
                 const char* helpMessage)
     {
         int returnValue;
-
-        int suggestedWidth = 50;
-        int flexUp = 5;
-        int flexDown = 5;
-        int maxHeightList = 20;
 
         std::size_t arraySize = items.size();
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
@@ -241,11 +251,15 @@ public:
         question:
         returnValue = newtWinEntries(const_cast<char*>(title),
                                      const_cast<char*>(message),
-                                     suggestedWidth, flexDown, flexUp,
-                                     maxHeightList, field.get(),
+                                     m_suggestedWidth,
+                                     m_flexDown,
+                                     m_flexUp,
+                                     m_dataWidth,
+                                     field.get(),
                                      const_cast<char*>(TUIText::Buttons::ok),
-                                     TUIText::Buttons::cancel,
-                                     TUIText::Buttons::help, nullptr);
+                                     const_cast<char*>(TUIText::Buttons::cancel),
+                                     const_cast<char*>(TUIText::Buttons::help),
+                                     nullptr);
 
         switch(returnValue) {
             case 0:
@@ -276,7 +290,6 @@ public:
                 throw std::runtime_error(
                         "Invalid return value from fields on newt library");
         }
-
         throw std::runtime_error("Invalid return path on newt library");
     }
 

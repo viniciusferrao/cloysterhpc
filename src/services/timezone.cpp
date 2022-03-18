@@ -38,7 +38,8 @@ std::list<std::string> Timezone::fetchAvailableTimezones()
 #if __APPLE__
     output.insert(output.end(), {"UTC-3", "GMT", "America/Sao_Paolo"});
 #else // Linux or others Unixes
-    cloyster::runCommand(fmt::format("timedatectl list-timezones --no-pager"), output);
+    cloyster::runCommand(
+            fmt::format("timedatectl list-timezones --no-pager"), output, true);
 #endif
 
     return output;

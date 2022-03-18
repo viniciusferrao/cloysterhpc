@@ -8,9 +8,20 @@
 #include <cstdio> /* sprintf() */
 #include <newt.h>
 
-Newt::Newt() {
+Newt::Newt()
+    : m_flexDown(2)
+    , m_flexUp(2) {
     newtInit();
     newtCls();
+
+    // Get the terminal size
+    newtGetScreenSize(&m_cols, &m_rows);
+    m_suggestedWidth = m_cols / 2;
+    m_dataWidth = m_suggestedWidth * 2 / 3;
+    // Line count: title, box top border, padding, text message (var),
+    // padding (before list), padding (after list), button (4), padding,
+    // box bottom border, shadow, status.
+    m_maxListHeight = m_rows - 14;
 
     /* Push the title to the top left corner */
     newtDrawRootText(0, 0, TUIText::title);
@@ -24,7 +35,7 @@ Newt::~Newt() {
     newtFinished();
 }
 
-void Newt::abort () {
+void Newt::abort() {
     // TODO: We should only destroy the view and not terminate the application
     this->~Newt();
     LOG_WARN("{}", TUIText::abort);
@@ -32,7 +43,7 @@ void Newt::abort () {
 }
 
 // TODO: Remove this method; this check must be done outside the view
-bool Newt::hasEmptyField (const struct newtWinEntry *entries) {
+bool Newt::hasEmptyField(const struct newtWinEntry *entries) {
     /* This may result in a buffer overflow if the string is > 63 chars */
     char message[63] = {};
 

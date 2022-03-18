@@ -29,11 +29,6 @@ int main(int argc, char** argv) {
 
     int rc; /* return code */
 
-    std::list<std::string> output;
-    cloyster::runCommand("ls -l", output, true);
-    for (const auto& out : output)
-        std::cout << out << "\n";
-
     //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
 
@@ -45,7 +40,7 @@ int main(int argc, char** argv) {
     auto view = std::make_unique<Newt>();
 
     //PresenterInstall* presenter = new PresenterInstall(model, view);
-    //auto presenter = std::make_unique<PresenterInstall>(model, view);
+    auto presenter = std::make_unique<PresenterInstall>(model, view);
     //auto presenter = std::make_unique<PresenterInstall>(std::move(model), std::move(view));
 
 #ifdef _DEBUG_
