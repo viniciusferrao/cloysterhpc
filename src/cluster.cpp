@@ -254,7 +254,6 @@ void Cluster::addNode(std::string_view t_name, const Network& network, const std
 }
 
 #ifdef _DEBUG_
-/* TODO: This debug function must be made as a template */
 void Cluster::printNetworks(
         const std::list<Network>& networkType) {
 
@@ -267,21 +266,21 @@ void Cluster::printNetworks(
 #else
     for (size_t i = 0; auto const &network: networkType) {
 #endif
-        std::cerr << fmt::format("Network [{}]", i++) << std::endl;
-        std::cerr << "Address: " << network.getAddress() << std::endl;
-        std::cerr << "Subnet Mask: " << network.getSubnetMask() << std::endl;
-        std::cerr << "Gateway " << network.getGateway() << std::endl;
-        std::cerr << "VLAN " << network.getVLAN() << std::endl;
-        std::cerr << "Domain Name: " << network.getDomainName() << std::endl;
+        LOG_TRACE("Network [{}]", i++);
+        LOG_TRACE("Address: ", network.getAddress());
+        LOG_TRACE("Subnet Mask: ", network.getSubnetMask());
+        LOG_TRACE("Gateway ", network.getGateway());
+        LOG_TRACE("VLAN ", network.getVLAN());
+        LOG_TRACE("Domain Name: ", network.getDomainName());
 #if __cplusplus < 202002L
         j = 0;
         for (auto const &nameserver: network.getNameserver()) {
 #else
         for (size_t j = 0; auto const &nameserver: network.getNameserver()) {
 #endif
-            std::cerr << fmt::format("Nameserver [{}]: {}\n", j++, nameserver);
+            LOG_TRACE("Nameserver [{}]: {}\n", j++, nameserver);
         }
-        std::cerr << "\n";
+        LOG_TRACE("\n");
     }
 }
 #endif
@@ -289,62 +288,62 @@ void Cluster::printNetworks(
 #ifdef _DEBUG_
 void Cluster::printData () {
     LOG_TRACE("Dump cluster data:");
-    std::cerr << "Cluster attributes defined:" << std::endl;
-    std::cerr << "Timezone: " << getTimezone().getTimezone() << std::endl;
-    std::cerr << "Locale: " << getLocale() << std::endl;
-    std::cerr << "Hostname: " << this->m_headnode.getHostname() << std::endl;
-    std::cerr << "DomainName: " << getDomainName() << std::endl;
-    std::cerr << "FQDN: " << this->m_headnode.getFQDN() << std::endl;
+    LOG_TRACE("Cluster attributes defined:");
+    LOG_TRACE("Timezone: ", getTimezone().getTimezone());
+    LOG_TRACE("Locale: ", getLocale());
+    LOG_TRACE("Hostname: ", this->m_headnode.getHostname());
+    LOG_TRACE("DomainName: ", getDomainName());
+    LOG_TRACE("FQDN: ", this->m_headnode.getFQDN());
 
     printNetworks(m_network);
 
-    std::cerr << "Provisioner: " << static_cast<int>(getProvisioner()) << std::endl;
+    LOG_TRACE("Provisioner: ", static_cast<int>(getProvisioner()));
 
-    std::cerr << "xCATDynamicRangeStart: " << xCATDynamicRangeStart << std::endl;
-    std::cerr << "xCATDynamicRangeEnd: " << xCATDynamicRangeEnd << std::endl;
+    LOG_TRACE("xCATDynamicRangeStart: ", xCATDynamicRangeStart);
+    LOG_TRACE("xCATDynamicRangeEnd: ", xCATDynamicRangeEnd);
 
-    std::cerr << "Directory Admin Password: " << directoryAdminPassword << std::endl;
-    std::cerr << "Directory Manager Password: " << directoryManagerPassword << std::endl;
-    std::cerr << "Directory Disable DNSSEC: " << (directoryDisableDNSSEC ? "true" : "false") << std::endl;
+    LOG_TRACE("Directory Admin Password: ", directoryAdminPassword);
+    LOG_TRACE("Directory Manager Password: ", directoryManagerPassword);
+    LOG_TRACE("Directory Disable DNSSEC: ", (directoryDisableDNSSEC ? "true" : "false"));
 
-    std::cerr << "nodePrefix: " << nodePrefix << std::endl;
-    std::cerr << "nodePadding: " << nodePadding << std::endl;
-    std::cerr << "nodeStartIP: " << nodeStartIP << std::endl;
-    std::cerr << "nodeRootPassword: " << nodeRootPassword << std::endl;
-    std::cerr << "nodeISOPath: " << getISOPath() << std::endl;
+    LOG_TRACE("nodePrefix: ", nodePrefix);
+    LOG_TRACE("nodePadding: ", nodePadding);
+    LOG_TRACE("nodeStartIP: ", nodeStartIP);
+    LOG_TRACE("nodeRootPassword: ", nodeRootPassword);
+    LOG_TRACE("nodeISOPath: ", getISOPath().string());
 
     // if (queueSystem.name == "SLURM")
-    //     std::cerr << "slurm.partition: " << queueSystem.slurm.partition << std::endl;
+    //     LOG_TRACE("slurm.partition: ", queueSystem.slurm.partition);
     // if (queueSystem.name == "PBS")
-    //     std::cerr << "pbs.defaultPlace: " << queueSystem.pbs.defaultPlace << std::endl;
+    //     LOG_TRACE("pbs.defaultPlace: ", queueSystem.pbs.defaultPlace);
 
-    // std::cerr << "Enable Postfix: " << postfix.enable ? "true" : "false" << std::endl;
+    // LOG_TRACE("Enable Postfix: ", postfix.enable ? "true" : "false");
     // if (postfix.enable) {
-    //     std::cerr << "\t-> Profile: " << postfixProfiles[cluster.postfix.profileId] << std::endl;
+    //     LOG_TRACE("\t-> Profile: ", postfixProfiles[cluster.postfix.profileId]);
     //     switch (cluster.postfix.profileId) {
     //         case 0:
     //             /* Local */
     //             break;
     //         case 1:
     //             /* Relay */
-    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.relay.m_hostname << std::endl;
-    //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.relay.port << std::endl;
+    //             LOG_TRACE("\t\t-> Hostname: ", cluster.postfix.relay.m_hostname);
+    //             LOG_TRACE("\t\t-> Port: %u\n", cluster.postfix.relay.port);
     //             break;
     //         case 2:
     //             /* SASL */
-    //             std::cerr << "\t\t-> Hostname: " << cluster.postfix.sasl.m_hostname << std::endl;
-    //             std::cerr << "\t\t-> Port: %u\n", cluster.postfix.sasl.port << std::endl;
-    //             std::cerr << "\t\t-> Username: " << cluster.postfix.sasl.username << std::endl;
-    //             std::cerr << "\t\t-> Password: " << cluster.postfix.sasl.password << std::endl;
+    //             LOG_TRACE("\t\t-> Hostname: ", cluster.postfix.sasl.m_hostname);
+    //             LOG_TRACE("\t\t-> Port: %u\n", cluster.postfix.sasl.port);
+    //             LOG_TRACE("\t\t-> Username: ", cluster.postfix.sasl.username);
+    //             LOG_TRACE("\t\t-> Password: ", cluster.postfix.sasl.password);
     //             break;
     //     }
     // }
 
-    std::cerr << "Update system: " << (isUpdateSystem() ? "true" : "false") << std::endl;
-    std::cerr << "Remote access: " << (remoteAccess ? "true" : "false") << std::endl;
+    LOG_TRACE("Update system: ", (isUpdateSystem() ? "true" : "false"));
+    LOG_TRACE("Remote access: ", (remoteAccess ? "true" : "false"));
 
-    std::cerr << "Firewall: " << (isFirewall() ? "true" : "false") << std::endl;
-    std::cerr << "SELinux: " << static_cast<int>(getSELinux()) << std::endl;
+    LOG_TRACE("Firewall: ", (isFirewall() ? "true" : "false"));
+    LOG_TRACE("SELinux: ", static_cast<int>(getSELinux()));
 }
 
 void Cluster::fillTestData () {

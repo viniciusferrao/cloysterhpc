@@ -4,10 +4,19 @@
 
 #include "PresenterInfiniband.h"
 
+#include <algorithm>
+
 PresenterInfiniband::PresenterInfiniband(
         std::unique_ptr<Cluster>& model,
         std::unique_ptr<Newt>& view)
         : Presenter(model, view) {
+
+    auto interfaces = Connection::fetchInterfaces();
+    if (std::find(interfaces.begin(), interfaces.end(), "ib0") == interfaces.end()) {
+        LOG_WARN("No Infiniband interfaces found.");
+        return;
+    }
+
 
     // TODO: Infiniband class? Detect if IB is available (fetch ib0)
     if (m_view->yesNoQuestion(Messages::title, Messages::question, Messages::help)) {
