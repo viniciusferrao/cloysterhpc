@@ -119,7 +119,7 @@ Connection& Headnode::getConnection(Network::Profile profile) {
             return connection;
         }
     }
-    // TODO: Better throw message; need to make getProfileSting as static
+
     throw std::runtime_error(fmt::format(
             "Cannot get any connection with profile {}",
             magic_enum::enum_name(profile)));

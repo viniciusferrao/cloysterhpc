@@ -254,33 +254,33 @@ void Cluster::addNode(std::string_view t_name, const Network& network, const std
 }
 
 #ifdef _DEBUG_
-void Cluster::printNetworks(
-        const std::list<Network>& networkType) {
+void Cluster::printNetworks(const std::list<Network>& networkType)
+{
 
     LOG_TRACE("Dump network data:");
 
 #if __cplusplus < 202002L
     size_t i, j;
-    for (auto const &network: networkType) {
+    for (auto const &network : networkType) {
         i = 0;
 #else
-    for (size_t i = 0; auto const &network: networkType) {
+    for (size_t i = 0; auto const &network : networkType) {
 #endif
         LOG_TRACE("Network [{}]", i++);
-        LOG_TRACE("Address: ", network.getAddress());
-        LOG_TRACE("Subnet Mask: ", network.getSubnetMask());
-        LOG_TRACE("Gateway ", network.getGateway());
-        LOG_TRACE("VLAN ", network.getVLAN());
-        LOG_TRACE("Domain Name: ", network.getDomainName());
+        LOG_TRACE("Profile: {}", magic_enum::enum_name(network.getProfile()));
+        LOG_TRACE("Address: {}", network.getAddress());
+        LOG_TRACE("Subnet Mask: {}", network.getSubnetMask());
+        LOG_TRACE("Gateway: {}", network.getGateway());
+        LOG_TRACE("VLAN: {}", network.getVLAN());
+        LOG_TRACE("Domain Name: {}", network.getDomainName());
 #if __cplusplus < 202002L
         j = 0;
         for (auto const &nameserver: network.getNameserver()) {
 #else
         for (size_t j = 0; auto const &nameserver: network.getNameserver()) {
 #endif
-            LOG_TRACE("Nameserver [{}]: {}\n", j++, nameserver);
+            LOG_TRACE("Nameserver [{}]: {}", j++, nameserver);
         }
-        LOG_TRACE("\n");
     }
 }
 #endif
@@ -289,28 +289,28 @@ void Cluster::printNetworks(
 void Cluster::printData () {
     LOG_TRACE("Dump cluster data:");
     LOG_TRACE("Cluster attributes defined:");
-    LOG_TRACE("Timezone: ", getTimezone().getTimezone());
-    LOG_TRACE("Locale: ", getLocale());
-    LOG_TRACE("Hostname: ", this->m_headnode.getHostname());
-    LOG_TRACE("DomainName: ", getDomainName());
-    LOG_TRACE("FQDN: ", this->m_headnode.getFQDN());
+    LOG_TRACE("Timezone: {}", getTimezone().getTimezone());
+    LOG_TRACE("Locale: {}", getLocale());
+    LOG_TRACE("Hostname: {}", this->m_headnode.getHostname());
+    LOG_TRACE("DomainName: {}", getDomainName());
+    LOG_TRACE("FQDN: {}", this->m_headnode.getFQDN());
 
     printNetworks(m_network);
 
-    LOG_TRACE("Provisioner: ", static_cast<int>(getProvisioner()));
+    LOG_TRACE("Provisioner: {}", static_cast<int>(getProvisioner()));
 
-    LOG_TRACE("xCATDynamicRangeStart: ", xCATDynamicRangeStart);
-    LOG_TRACE("xCATDynamicRangeEnd: ", xCATDynamicRangeEnd);
+    LOG_TRACE("xCATDynamicRangeStart: {}", xCATDynamicRangeStart);
+    LOG_TRACE("xCATDynamicRangeEnd: {}", xCATDynamicRangeEnd);
 
-    LOG_TRACE("Directory Admin Password: ", directoryAdminPassword);
-    LOG_TRACE("Directory Manager Password: ", directoryManagerPassword);
-    LOG_TRACE("Directory Disable DNSSEC: ", (directoryDisableDNSSEC ? "true" : "false"));
+    LOG_TRACE("Directory Admin Password: {}", directoryAdminPassword);
+    LOG_TRACE("Directory Manager Password: {}", directoryManagerPassword);
+    LOG_TRACE("Directory Disable DNSSEC: {}", (directoryDisableDNSSEC ? "true" : "false"));
 
-    LOG_TRACE("nodePrefix: ", nodePrefix);
-    LOG_TRACE("nodePadding: ", nodePadding);
-    LOG_TRACE("nodeStartIP: ", nodeStartIP);
-    LOG_TRACE("nodeRootPassword: ", nodeRootPassword);
-    LOG_TRACE("nodeISOPath: ", getISOPath().string());
+    LOG_TRACE("nodePrefix: {}", nodePrefix);
+    LOG_TRACE("nodePadding: {}", nodePadding);
+    LOG_TRACE("nodeStartIP: {}", nodeStartIP);
+    LOG_TRACE("nodeRootPassword: {}", nodeRootPassword);
+    LOG_TRACE("nodeISOPath: {}", getISOPath().string());
 
     // if (queueSystem.name == "SLURM")
     //     LOG_TRACE("slurm.partition: ", queueSystem.slurm.partition);
@@ -339,11 +339,11 @@ void Cluster::printData () {
     //     }
     // }
 
-    LOG_TRACE("Update system: ", (isUpdateSystem() ? "true" : "false"));
-    LOG_TRACE("Remote access: ", (remoteAccess ? "true" : "false"));
+    LOG_TRACE("Update system: {}", (isUpdateSystem() ? "true" : "false"));
+    LOG_TRACE("Remote access: {}", (remoteAccess ? "true" : "false"));
 
-    LOG_TRACE("Firewall: ", (isFirewall() ? "true" : "false"));
-    LOG_TRACE("SELinux: ", static_cast<int>(getSELinux()));
+    LOG_TRACE("Firewall: {}", (isFirewall() ? "true" : "false"));
+    LOG_TRACE("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
 void Cluster::fillTestData () {

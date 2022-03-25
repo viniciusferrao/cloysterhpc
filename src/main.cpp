@@ -33,23 +33,22 @@ int main(int argc, char** argv) {
     auto model = std::make_unique<Cluster>();
 
 #ifdef _DEBUG_
-    //model->fillTestData();
+    model->fillTestData();
 #endif
 
     //View* view = new Newt();
-    auto view = std::make_unique<Newt>();
+    //auto view = std::make_unique<Newt>();
 
     //PresenterInstall* presenter = new PresenterInstall(model, view);
-    auto presenter = std::make_unique<PresenterInstall>(model, view);
-    //auto presenter = std::make_unique<PresenterInstall>(std::move(model), std::move(view));
+    //auto presenter = std::make_unique<PresenterInstall>(model, view);
 
 #ifdef _DEBUG_
     model->printData();
 #endif
 
     //Execution* engine = new Shell();
-    //std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
-    //executionEngine->install(model);
+    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
+    executionEngine->install(model);
     //delete engine;
 
 #if 0 /* Porting TerminalUI */
