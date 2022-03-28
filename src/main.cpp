@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
 #endif
 
     //Execution* engine = new Shell();
-    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>();
-    executionEngine->install(model);
+    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
+    executionEngine->install();
     //delete engine;
 
 #if 0 /* Porting TerminalUI */

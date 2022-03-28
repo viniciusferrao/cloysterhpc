@@ -38,7 +38,7 @@ public:
     [[nodiscard]] const std::string &getMAC() const;
     void setMAC(const std::string&);
 
-    [[nodiscard]] std::string getAddress() const;
+    [[nodiscard]] const std::string getAddress() const;
     void setAddress(const std::string&);
     [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 

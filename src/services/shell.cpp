@@ -16,7 +16,10 @@
 
 using cloyster::runCommand;
 
-void Shell::disableSELinux () {
+Shell::Shell(const std::unique_ptr<Cluster> &cluster)
+            : m_cluster(cluster) {}
+
+void Shell::disableSELinux() {
     runCommand("setenforce 0");
 
     const auto filename = CHROOT"/etc/sysconfig/selinux";
@@ -25,8 +28,8 @@ void Shell::disableSELinux () {
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 }
 
-void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
-    switch (mode) {
+void Shell::configureSELinuxMode() {
+    switch (m_cluster->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
             runCommand("setenforce 0");
             /* Permissive mode */
@@ -44,20 +47,25 @@ void Shell::configureSELinuxMode (Cluster::SELinuxMode mode) {
 }
 
 /* TODO: Better implementation */
-void Shell::configureFirewall(bool enabled) {
-    if (enabled)
+void Shell::configureFirewall() {
+    if (m_cluster->isFirewall())
         runCommand("systemctl enable --now firewalld");
     else
         runCommand("systemctl disable --now firewalld");
 }
 
-void Shell::configureFQDN (const std::string& fqdn) {
-    runCommand(fmt::format("hostnamectl set hostname {}", fqdn));
+void Shell::configureFQDN() {
+    runCommand(fmt::format("hostnamectl set hostname {}",
+                           m_cluster->getHeadnode().getFQDN()));
 }
 
-/* TODO: Proper file parsing */
-void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
-                                std::string_view hostname) {
+// TODO: Proper file parsing
+void Shell::configureHostsFile() {
+    auto& headnode = m_cluster->getHeadnode();
+
+    const auto& ip = headnode.getConnection(Network::Profile::External).getAddress();
+    const auto& fqdn = headnode.getFQDN();
+    const auto& hostname = headnode.getHostname();
 
     std::string_view filename = CHROOT"/etc/hosts";
 
@@ -65,20 +73,20 @@ void Shell::configureHostsFile (std::string_view ip, std::string_view fqdn,
                             fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
-// We use tz instead of timezone to avoid shadowing time.h
-void Shell::configureTimezone (std::string_view tz) {
-    runCommand(fmt::format("timedatectl set timezone {}", tz));
+void Shell::configureTimezone() {
+    runCommand(fmt::format("timedatectl set timezone {}",
+                           m_cluster->getTimezone().getTimezone()));
 }
 
-void Shell::configureLocale (const std::string& locale) {
-    runCommand(fmt::format("localectl set locale {}", locale));
+void Shell::configureLocale() {
+    runCommand(fmt::format("localectl set locale {}", m_cluster->getLocale()));
 }
 
-void Shell::disableNetworkManagerDNSOverride () {
+void Shell::disableNetworkManagerDNSOverride() {
     std::string_view filename =
             CHROOT"/etc/NetworkManager/conf.d/90-dns-none.conf";
 
-    /* TODO: Would be better handled with a .conf function */
+    // TODO: Would be better handled with a .conf function
     cloyster::addStringToFile(filename, "[main]\n"
                                         "dns=none\n");
 
@@ -128,22 +136,22 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
     disableNetworkManagerDNSOverride();
 }
 
-void Shell::runSystemUpdate (bool run) {
-    if (run)
+void Shell::runSystemUpdate() {
+    if (m_cluster->isUpdateSystem())
         runCommand("dnf -y update");
 }
 
-void Shell::installRequiredPackages () {
+void Shell::installRequiredPackages() {
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
+void Shell::configureRepositories() {
     runCommand("dnf -y install "
                "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install "
                "https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
 
-    switch (cluster->getHeadnode().getOS().getDistro()) {
+    switch (m_cluster->getHeadnode().getOS().getDistro()) {
         case OS::Distro::RHEL:
             runCommand("dnf config-manager --set-enabled "
                        "codeready-builder-for-rhel-8-x86_64-rpms");
@@ -156,7 +164,7 @@ void Shell::configureRepositories (const std::unique_ptr<Cluster>& cluster) {
     }
 }
 
-void Shell::installOpenHPCBase () {
+void Shell::installOpenHPCBase() {
     runCommand("dnf -y install ohpc-base");
 }
 
@@ -184,22 +192,46 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
     runCommand("systemctl enable --now chronyd");
 }
 
-void Shell::configureQueueSystem (const std::unique_ptr<Cluster>& cluster) {
-    // if (Cluster::QueueSystem::SLURM)
-    runCommand("dnf -y install ohpc-slurm-server");
-//    std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
-//                               "/etc/slurm/slurm.conf");
-    runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
-    runCommand(fmt::format("perl -pi -e "
-                           "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
-                           "/etc/slurm/slurm.conf",
-                           cluster->getHeadnode().getFQDN()));
-    runCommand("systemctl enable --now munge");
-    runCommand("systemctl enable --now slurmctld");
+void Shell::configureQueueSystem() {
+    if (const auto& queue = m_cluster->getQueueSystem()) {
+        switch (queue.value()->getKind()) {
+            case QueueSystem::Kind::None: {
+                __builtin_unreachable();
+            }
+
+            case QueueSystem::Kind::SLURM: {
+                runCommand("dnf -y install ohpc-slurm-server");
+                // TODO: Use std::filesystem
+                //  std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
+                //                             "/etc/slurm/slurm.conf");
+                runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
+                runCommand(fmt::format("perl -pi -e "
+                                       "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
+                                       "/etc/slurm/slurm.conf",
+                                       m_cluster->getHeadnode().getFQDN()));
+                runCommand("systemctl enable --now munge");
+                runCommand("systemctl enable --now slurmctld");
+                break;
+            }
+
+            case QueueSystem::Kind::PBS: {
+                const auto &pbs = dynamic_cast<PBS*>(queue.value().get());
+
+                runCommand("dnf -y install openpbs-server-ohpc");
+                runCommand("systemctl enable --now pbs");
+                runCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
+                runCommand(fmt::format("qmgr -c \"set server resources_default.place={}\"",
+                                       magic_enum::enum_name<PBS::ExecutionPlace>(
+                                               pbs->getExecutionPlace())));
+                runCommand("qmgr -c \"set server job_history_enable=True\"");
+                break;
+            }
+        }
+    }
 }
 
-void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
-    switch (cluster->getOFED()) {
+void Shell::configureInfiniband() {
+    switch (m_cluster->getOFED()) {
         case Cluster::OFED::None:
             return;
         case Cluster::OFED::Inbox:
@@ -207,15 +239,15 @@ void Shell::configureInfiniband (const std::unique_ptr<Cluster>& cluster) {
             break;
         case Cluster::OFED::Mellanox:
             /* TODO: Implement MLNX OFED support */
-            throw std::logic_error("MLNX OFED is not supported");
+            throw std::logic_error("MLNX OFED is not yet supported");
         case Cluster::OFED::Oracle:
             /* TODO: Implement Oracle RDMA release */
-            throw std::logic_error("Oracle RDMA release is not supported");
+            throw std::logic_error("Oracle RDMA release is not yet supported");
     }
 }
 
 /* TODO: Restrict by networks */
-void Shell::configureNetworkFileSystem () {
+void Shell::configureNetworkFileSystem() {
     std::string_view filename = CHROOT"/etc/exports";
 
     cloyster::addStringToFile(filename,
@@ -226,7 +258,7 @@ void Shell::configureNetworkFileSystem () {
     runCommand("systemctl enable --now nfs-server");
 }
 
-void Shell::removeMemlockLimits () {
+void Shell::removeMemlockLimits() {
     std::string_view filename = CHROOT"/etc/security/limits.conf";
 
     cloyster::addStringToFile(filename, "* soft memlock unlimited\n"
@@ -236,7 +268,7 @@ void Shell::removeMemlockLimits () {
 /* TODO: Third party libraries and some logic to install stacks according to
  *  specifics of the system: Infiniband, PSM, etc.
  */
-void Shell::installDevelopmentComponents () {
+void Shell::installDevelopmentComponents() {
     runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc"
                "valgrind-ohpc");
 
@@ -253,43 +285,38 @@ void Shell::installDevelopmentComponents () {
  * headnode. The last part will do provisioner related settings and image
  * creation for network booting
  */
-void Shell::install(const std::unique_ptr<Cluster>& cluster) {
-    configureSELinuxMode(cluster->getSELinux());
-    configureFirewall(cluster->isFirewall());
-    configureFQDN(cluster->getHeadnode().getFQDN());
+void Shell::install() {
+    configureSELinuxMode();
+    configureFirewall();
+    configureFQDN();
 
-    configureHostsFile(
-            cluster->getHeadnode()
-                        .getConnection(Network::Profile::External)
-                        .getAddress(),
-            cluster->getHeadnode().getFQDN(),
-            cluster->getHeadnode().getHostname());
-    configureTimezone(cluster->getTimezone().getTimezone());
-    configureLocale(cluster->getLocale());
+    configureHostsFile();
+    configureTimezone();
+    configureLocale();
 
-    configureNetworks(cluster->getHeadnode().getConnections());
-    runSystemUpdate(cluster->isUpdateSystem());
+    configureNetworks(m_cluster->getHeadnode().getConnections());
+    runSystemUpdate();
 
     // TODO: Pass headnode instead of cluster to reduce complexity
-    configureTimeService(cluster->getHeadnode().getConnections());
+    configureTimeService(m_cluster->getHeadnode().getConnections());
 
-    configureRepositories(cluster);
-    runSystemUpdate(cluster->isUpdateSystem());
+    configureRepositories();
+    runSystemUpdate();
 
     installRequiredPackages();
     installOpenHPCBase();
 
-    configureInfiniband(cluster);
+    configureInfiniband();
     configureNetworkFileSystem();
 
-    configureQueueSystem(cluster);
+    configureQueueSystem();
     removeMemlockLimits();
 
     installDevelopmentComponents();
 
     //std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
-    switch (cluster->getProvisioner()) {
+    switch (m_cluster->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
             provisioner = std::make_unique<XCAT>();
             break;
@@ -297,8 +324,8 @@ void Shell::install(const std::unique_ptr<Cluster>& cluster) {
 
     provisioner->configureRepositories();
     provisioner->installPackages();
-    provisioner->setup(cluster);
-    provisioner->createImage(cluster);
-    provisioner->addNodes(cluster);
+    provisioner->setup(m_cluster);
+    provisioner->createImage(m_cluster);
+    provisioner->addNodes(m_cluster);
     provisioner->setNodesImage();
 }

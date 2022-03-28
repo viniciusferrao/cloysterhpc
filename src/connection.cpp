@@ -115,7 +115,7 @@ void Connection::setMAC(const std::string& mac) {
         throw std::runtime_error("Invalid MAC address");
 }
 
-std::string Connection::getAddress () const {
+const std::string Connection::getAddress() const {
     if (inet_ntoa(m_address) == nullptr)
         throw std::runtime_error("Member address variable is not defined");
     return inet_ntoa(m_address);

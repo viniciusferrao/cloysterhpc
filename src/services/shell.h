@@ -12,35 +12,40 @@
 
 class Shell : public Execution {
 private:
-    void configureSELinuxMode (Cluster::SELinuxMode);
-    void configureFirewall (bool);
-    void configureFQDN (const std::string&);
-    void configureHostsFile (std::string_view, std::string_view,
-                             std::string_view);
-    void configureTimezone (std::string_view);
-    void configureLocale (const std::string&);
+    const std::unique_ptr<Cluster> &m_cluster;
 
-    void disableNetworkManagerDNSOverride (); // This should be on Network
+private:
+    void configureSELinuxMode();
+    void configureFirewall();
+    void configureFQDN();
+    void configureHostsFile();
+    void configureTimezone();
+    void configureLocale();
+
+    void disableNetworkManagerDNSOverride(); // This should be on Network
     void configureNetworks(const std::list<Connection>&);
 
-    void runSystemUpdate (bool);
-    void installRequiredPackages ();
+    void runSystemUpdate();
+    void installRequiredPackages();
 
-    void configureRepositories (const std::unique_ptr<Cluster>&);
-    void installOpenHPCBase ();
+    void configureRepositories();
+    void installOpenHPCBase();
     void configureTimeService (const std::list<Connection>&);
-    void configureQueueSystem (const std::unique_ptr<Cluster>&);
-    void configureInfiniband (const std::unique_ptr<Cluster>&);
+    void configureQueueSystem();
+    void configureInfiniband();
     void configureNetworkFileSystem ();
 
-    void removeMemlockLimits ();
-    void installDevelopmentComponents ();
+    void removeMemlockLimits();
+    void installDevelopmentComponents();
 
     /* Ancillary functions */
-    void disableSELinux ();
+    void disableSELinux();
 
 public:
-    void install(const std::unique_ptr<Cluster>&) override;
+    // FIXME: Guideline: Don’t use a const unique_ptr& as a parameter;
+    //  use widget* instead.
+    explicit Shell(const std::unique_ptr<Cluster> &cluster);
+    void install() override;
 };
 
 #endif //CLOYSTER_SHELL_H

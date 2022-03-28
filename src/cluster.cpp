@@ -1,11 +1,3 @@
-/* This file contains just placeholder implementations for future reference.
- * Everything here must be (re)factored.
- */
-
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include "cluster.h"
 #include "functions.h"
 #include "headnode.h"
@@ -312,33 +304,6 @@ void Cluster::printData () {
     LOG_TRACE("nodeRootPassword: {}", nodeRootPassword);
     LOG_TRACE("nodeISOPath: {}", getISOPath().string());
 
-    // if (queueSystem.name == "SLURM")
-    //     LOG_TRACE("slurm.partition: ", queueSystem.slurm.partition);
-    // if (queueSystem.name == "PBS")
-    //     LOG_TRACE("pbs.defaultPlace: ", queueSystem.pbs.defaultPlace);
-
-    // LOG_TRACE("Enable Postfix: ", postfix.enable ? "true" : "false");
-    // if (postfix.enable) {
-    //     LOG_TRACE("\t-> Profile: ", postfixProfiles[cluster.postfix.profileId]);
-    //     switch (cluster.postfix.profileId) {
-    //         case 0:
-    //             /* Local */
-    //             break;
-    //         case 1:
-    //             /* Relay */
-    //             LOG_TRACE("\t\t-> Hostname: ", cluster.postfix.relay.m_hostname);
-    //             LOG_TRACE("\t\t-> Port: %u\n", cluster.postfix.relay.port);
-    //             break;
-    //         case 2:
-    //             /* SASL */
-    //             LOG_TRACE("\t\t-> Hostname: ", cluster.postfix.sasl.m_hostname);
-    //             LOG_TRACE("\t\t-> Port: %u\n", cluster.postfix.sasl.port);
-    //             LOG_TRACE("\t\t-> Username: ", cluster.postfix.sasl.username);
-    //             LOG_TRACE("\t\t-> Password: ", cluster.postfix.sasl.password);
-    //             break;
-    //     }
-    // }
-
     LOG_TRACE("Update system: {}", (isUpdateSystem() ? "true" : "false"));
     LOG_TRACE("Remote access: {}", (remoteAccess ? "true" : "false"));
 
@@ -377,12 +342,12 @@ void Cluster::fillTestData () {
                "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
                "ib2.cluster.example.com", { "0.0.0.0" });
 
-//    m_headnode.getConnection().front().setNetwork(
-//            getNetwork(Network::Profile::External).front());
-//    m_headnode.getConnection().front().setNetwork(m_network.external.front());
-//    m_headnode.addConnection(m_network[0], "en0", "172.26.1.22");
-//    m_headnode.addConnection(m_network[1], "en1", "10.1.1.7");
-//    m_headnode.addConnection(m_network[2], "en1", "192.168.22.8");
+    m_headnode.addConnection(getNetwork(Network::Profile::External),
+                             "ens160", "172.26.1.22");
+    m_headnode.addConnection(getNetwork(Network::Profile::Management),
+                             "ens224", "10.1.1.7");
+    m_headnode.addConnection(getNetwork(Network::Profile::Service),
+                             "ens224", "192.168.22.8");
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
@@ -406,5 +371,4 @@ void Cluster::fillTestData () {
     nodeRootPassword = "pwdNodeRoot";
     remoteAccess = true;
 }
-
 #endif
