@@ -321,14 +321,16 @@ void Cluster::fillTestData () {
     this->m_headnode.setFQDN(
         fmt::format("{0}.{1}", this->m_headnode.getHostname(),
                     getDomainName()));
-    setOFED(OFED::Inbox);
+    setOFED(OFED::None);
+    setQueueSystem(QueueSystem::Kind::SLURM);
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
-               "192.2.0.0", "255.255.255.192", "192.2.0.1", 0, "example.com",
-               { "1.1.1.1", "208.67.222.222" });
+               "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+               "home.ferrao.net.br", { "172.16.144.1" });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
-               "10.0.0.0", "255.0.0.0", "0.0.0.0", 0, "cluster.example.com",
-               { "10.255.255.254" });
+               "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
+               { "172.26.0.1" });
+#if 0
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
                "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
                "srv.cluster.example.com", { "172.16.255.254" });
@@ -341,22 +343,25 @@ void Cluster::fillTestData () {
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
                "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
                "ib2.cluster.example.com", { "0.0.0.0" });
+#endif
 
     m_headnode.addConnection(getNetwork(Network::Profile::External),
-                             "ens160", "172.26.1.22");
+                             "ens160", "172.16.144.50");
     m_headnode.addConnection(getNetwork(Network::Profile::Management),
-                             "ens224", "10.1.1.7");
+                             "ens224", "172.26.255.254");
+#if 0
     m_headnode.addConnection(getNetwork(Network::Profile::Service),
                              "ens224", "192.168.22.8");
+#endif
 
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
     setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
-    addNode("n01", getNetworks().front(), "192.168.0.1", "aa:bb:cc:11:22:33", "192.168.1.1",
+    addNode("n01", getNetworks().front(), "172.26.0.1", "00:0c:29:9b:0c:75", "",
             "ADMIN", "ADMIN");
-    addNode("n02", getNetworks().front(), "192.168.0.2", "aa:ff:dc:22:da:cd", "192.168.1.2",
+    addNode("n02", getNetworks().front(), "172.26.0.2", "de:ad:be:ff:00:00", "",
             "root", "calvin");
 
     /* Bad and old data */

@@ -16,6 +16,8 @@ private:
     enum class NodeType { Compute, Service };
 
 private:
+    const std::unique_ptr<Cluster> &m_cluster;
+
     struct {
         std::vector<std::string_view> otherpkgs = {};
         std::string osimage;
@@ -25,40 +27,39 @@ private:
     } m_stateless;
 
 private:
-    void setDHCPInterfaces (std::string_view);
-    void setDomain (std::string_view);
-    void copycds (const std::filesystem::path&);
-    void genimage ();
-    void packimage ();
-    void nodeset();
-    void createDirectoryTree ();
+    void setDHCPInterfaces(std::string_view interface);
+    void setDomain(std::string_view domain);
+    void copycds(const std::filesystem::path& isopath);
+    void genimage();
+    void packimage();
+    void nodeset(std::string_view nodes);
+    void createDirectoryTree();
     void configureOpenHPC();
-    void configureTimeService(const std::unique_ptr<Cluster>& cluster);
-    void configureSLURM (const std::unique_ptr<Cluster>& cluster);
-    void generateOtherPkgListFile ();
-    void generatePostinstallFile (const std::unique_ptr<Cluster>&);
-    void generateSynclistsFile ();
-    void configureOSImageDefinition (const std::unique_ptr<Cluster>& cluster);
-    void customizeImage ();
+    void configureTimeService();
+    void configureSLURM();
+    void generateOtherPkgListFile();
+    void generatePostinstallFile();
+    void generateSynclistsFile();
+    void configureOSImageDefinition();
+    void customizeImage();
     void addNode(std::string_view, std::string_view, std::string_view,
                  std::string_view, std::string_view, std::string_view,
                  std::string_view);
-    void generateOSImageName(const std::unique_ptr<Cluster>&,
-                             ImageType, NodeType);
-    void generateOSImagePath(const std::unique_ptr<Cluster>& cluster,
-                             ImageType, NodeType);
+    void generateOSImageName(ImageType, NodeType);
+    void generateOSImagePath(ImageType, NodeType);
 
 
 public:
-    void configureRepositories ();
-    void installPackages ();
-    void setup(const std::unique_ptr<Cluster>&);
+    void configureRepositories();
+    void installPackages();
+    void setup();
 
-    void createImage (const std::unique_ptr<Cluster>&,
-                      ImageType = ImageType::Netboot,
-                      NodeType = NodeType::Compute);
-    void addNodes(const std::unique_ptr<Cluster>&);
+    void createImage(ImageType = ImageType::Netboot,
+                     NodeType = NodeType::Compute);
+    void addNodes();
     void setNodesImage();
+
+    explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };
 
 #endif /* XCAT_H */

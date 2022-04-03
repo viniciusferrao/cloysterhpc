@@ -149,7 +149,7 @@ void Shell::configureRepositories() {
     runCommand("dnf -y install "
                "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install "
-               "https://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
+               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
 
     switch (m_cluster->getHeadnode().getOS().getDistro()) {
         case OS::Distro::RHEL:
@@ -269,11 +269,11 @@ void Shell::removeMemlockLimits() {
  *  specifics of the system: Infiniband, PSM, etc.
  */
 void Shell::installDevelopmentComponents() {
-    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc"
+    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc "
                "valgrind-ohpc");
 
     /* Compiler and MPI stacks */
-    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc"
+    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc "
                "mpich-ucx-gnu9-ohpc mvapich2-gnu9-ohpc");
 
     /* Default OpenHPC environment */
@@ -314,18 +314,20 @@ void Shell::install() {
 
     installDevelopmentComponents();
 
+    LOG_TRACE("Setting up the provisioner: {}",
+              magic_enum::enum_name(m_cluster->getProvisioner()));
     //std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
-            provisioner = std::make_unique<XCAT>();
+            provisioner = std::make_unique<XCAT>(m_cluster);
             break;
     }
 
     provisioner->configureRepositories();
     provisioner->installPackages();
-    provisioner->setup(m_cluster);
-    provisioner->createImage(m_cluster);
-    provisioner->addNodes(m_cluster);
+    provisioner->setup();
+    provisioner->createImage();
+    provisioner->addNodes();
     provisioner->setNodesImage();
 }
