@@ -137,6 +137,16 @@ void XCAT::generatePostinstallFile() {
     std::string_view filename =
             CHROOT"/install/custom/netboot/compute.postinstall";
 
+    // TODO: Create a function to do this (handle file deletion)
+    LOG_TRACE("Checking if file {} already exists on filesystem:", filename);
+    if (std::filesystem::exists(filename)) {
+        LOG_TRACE("Already exists");
+        std::filesystem::remove(filename);
+        LOG_TRACE("File {} deleted", filename)
+    } else {
+        LOG_TRACE("No");
+    }
+
     m_stateless.postinstall.emplace_back(fmt::format(
         "cat << END >> $installroot/etc/fstab\n"
         "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
@@ -157,6 +167,12 @@ void XCAT::generatePostinstallFile() {
     for (const auto& entries : std::as_const(m_stateless.postinstall)) {
         cloyster::addStringToFile(filename, entries);
     }
+
+    std::filesystem::permissions(filename,
+                                 std::filesystem::perms::owner_exec |
+                                 std::filesystem::perms::group_exec |
+                                 std::filesystem::perms::others_exec,
+                                 std::filesystem::perm_options::add);
 }
 
 void XCAT::generateSynclistsFile() {
@@ -174,7 +190,7 @@ void XCAT::generateSynclistsFile() {
 void XCAT::configureOSImageDefinition() {
     cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus otherpkglist="
-            "/install/custom/netboot/compute.pkglist", m_stateless.osimage));
+            "/install/custom/netboot/compute.otherpkglist", m_stateless.osimage));
 
     cloyster::runCommand(fmt::format(
             "chdef -t osimage {} --plus postinstall="
@@ -191,7 +207,7 @@ void XCAT::configureOSImageDefinition() {
      */
     std::vector<std::string_view> repos;
 
-    switch (m_cluster->getHeadnode().getOS().getDistro()) {
+    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
         case OS::Distro::RHEL:
             repos.emplace_back(
                     "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
@@ -311,7 +327,7 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType) {
     }
     osimage += "-";
 
-    switch (m_cluster->getHeadnode().getOS().getArch()) {
+    switch (m_cluster->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             osimage += "x86_64";
             break;
@@ -351,21 +367,21 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType) {
 
     std::filesystem::path chroot = "/install/netboot/";
 
-    switch(m_cluster->getHeadnode().getOS().getDistro()) {
+    switch(m_cluster->getNodes()[0].getOS().getDistro()) {
         case OS::Distro::RHEL:
             chroot += "rhels";
-            chroot += m_cluster->getHeadnode().getOS().getVersion();
+            chroot += m_cluster->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::OL:
             chroot += "ol";
-            chroot += m_cluster->getHeadnode().getOS().getVersion();
+            chroot += m_cluster->getNodes()[0].getOS().getVersion();
             chroot += ".0";
             break;
     }
 
     chroot += "/";
 
-    switch (m_cluster->getHeadnode().getOS().getArch()) {
+    switch (m_cluster->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             chroot += "x86_64";
             break;

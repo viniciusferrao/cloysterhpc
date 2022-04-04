@@ -180,6 +180,7 @@ void backupFile(const std::string_view &filename) {
     std::fstream file(backupFile);
     if (!file.is_open()) {
         std::filesystem::copy_file(filename, backupFile);
+        LOG_TRACE("Created a backup copy of {} on {}", filename, backupFile);
     }
 }
 
@@ -214,13 +215,12 @@ void addStringToFile(std::string_view filename, std::string_view line) {
     std::ofstream file(std::string{filename}, std::ios_base::app);
 #endif
 
-    if (!file.is_open()) {
-        /* TODO: Change perror(); */
-        perror(fmt::format("Error opening file {}", filename).c_str());
-        throw; /* Cannot open file */
-    }
+    if (!file.is_open())
+        throw std::runtime_error(
+                fmt::format("Error opening file: {}", filename));
+
     file << line;
+    LOG_TRACE("Added line \"{}\" to file: {}", line, filename);
 }
 
-
-} /* namespace cloyster */
+} // namespace cloyster
