@@ -5,6 +5,7 @@
 #include "execution.h"
 #include "shell.h"
 #include "../const.h"
+#include "../include/magic_enum.hpp"
 
 #include <string>
 #include <memory>

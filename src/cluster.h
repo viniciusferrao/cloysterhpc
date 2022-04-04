@@ -92,8 +92,10 @@ public:
     void setISOPath(const std::filesystem::path &isoPath);
 
     const std::vector<Node>& getNodes() const;
-    void addNode(std::string_view, const Network& network, const std::string&, const std::string&,
-                 std::string_view, std::string_view, std::string_view);
+    void addNode(OS& os, std::string_view hostname, const Network& network,
+                 const std::string& address, const std::string& mac,
+                 std::string_view bmcAddress, std::string_view bmcUsername,
+                 std::string_view bmcPassword);
 
 #ifdef _DEBUG_
     void printNetworks(const std::list<Network>&);

@@ -3,10 +3,24 @@
 #include "shell.h"
 #include "../functions.h"
 
+#include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
 XCAT::XCAT(const std::unique_ptr<Cluster> &cluster)
-          : m_cluster(cluster) {}
+          : m_cluster(cluster) {
+
+    // Initialize some environment variables needed by proper xCAT execution
+    // TODO: Look for a better way to do this
+    std::string oldPath = std::getenv("PATH");
+    std::string newPath = "/opt/xcat/bin:"
+                          "/opt/xcat/sbin:"
+                          "/opt/xcat/share/xcat/tools:" + oldPath;
+    setenv("PATH", newPath.c_str(), true);
+    setenv("XCATROOT", "/opt/xcat", false);
+
+    // TODO: Hacky, we should properly set environment variable on locale
+    setenv("PERL_BADLANG", "0", false);
+}
 
 /* TODO: Implement a repos class to properly do this */
 void XCAT::configureRepositories() {
@@ -30,7 +44,7 @@ void XCAT::setup() {
 /* TODO: Maybe create a chdef method to do it cleaner? */
 void XCAT::setDHCPInterfaces(std::string_view interface) {
     cloyster::runCommand(fmt::format(
-            "chdef -t site dhcpinterfaces=\"xcatmn|{}\""    , interface));
+            "chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface));
 }
 
 void XCAT::setDomain(std::string_view domain) {
@@ -260,10 +274,12 @@ void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
 
 void XCAT::addNodes() {
     for (const auto& node : m_cluster->getNodes())
-        addNode(node.getHostname(), "x86_64",
+        addNode(node.getHostname(),
+                magic_enum::enum_name(node.getOS().getArch()),
                 node.getConnection().front().getAddress(),
                 node.getConnection().front().getMAC(),
-                node.getBMCAddress(), node.getBMCUsername(),
+                node.getBMCAddress(),
+                node.getBMCUsername(),
                 node.getBMCPassword());
 
     // TODO: Create separate functions
@@ -282,14 +298,14 @@ void XCAT::setNodesImage() {
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType) {
     std::string osimage;
 
-    switch(m_cluster->getHeadnode().getOS().getDistro()) {
+    switch(m_cluster->getNodes()[0].getOS().getDistro()) {
         case OS::Distro::RHEL:
             osimage += "rhels";
-            osimage += m_cluster->getHeadnode().getOS().getVersion();
+            osimage += m_cluster->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::OL:
             osimage += "ol";
-            osimage += m_cluster->getHeadnode().getOS().getVersion();
+            osimage += m_cluster->getNodes()[0].getOS().getVersion();
             osimage += ".0";
             break;
     }

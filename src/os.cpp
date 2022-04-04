@@ -1,7 +1,8 @@
 #include "os.h"
+#include "include/magic_enum.hpp"
 
-#ifdef _DEBUG_
-#include <iostream>
+#ifndef _NDEBUG_
+#include "services/log.h"
 #endif
 
 #include <string>
@@ -15,7 +16,76 @@
 #endif
 
 OS::OS() {
-    discover();
+    struct utsname system{};
+    uname(&system);
+
+    setArch(system.machine);
+    setFamily(system.sysname);
+    setKernel(system.release);
+
+#ifdef __APPLE__
+    if (true) {
+#else
+    if (getFamily() == OS::Family::Linux) {
+#endif
+        std::string filename = CHROOT"/etc/os-release";
+        std::ifstream file(filename);
+
+        if (!file.is_open()) {
+            perror(("Error while opening file " + filename).c_str());
+            throw; /* Error opening file */
+        }
+
+        /* Fetches OS information from /etc/os-release. The file is writen in a
+         * key=value style.
+         */
+        std::string line;
+        while (std::getline(file, line)) {
+
+            /* TODO: Refactor the next three conditions */
+#if __cpp_lib_starts_ends_with >= 201711L
+            if (line.starts_with("PLATFORM_ID=")) {
+#else
+                if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
+#endif
+                setPlatform(getValueFromKey(line));
+            }
+
+#if __cpp_lib_starts_ends_with >= 201711L
+            if (line.starts_with("ID=")) {
+#else
+                if (boost::algorithm::starts_with(line, "ID=")) {
+#endif
+                setDistro(getValueFromKey(line));
+            }
+
+#if __cpp_lib_starts_ends_with >= 201711L
+            if (line.starts_with("VERSION=")) {
+#else
+                if (boost::algorithm::starts_with(line, "VERSION=")) {
+#endif
+                setVersion(getValueFromKey(line));
+            }
+        }
+
+        if (file.bad()) {
+            perror(("Error while reading file " + filename).c_str());
+            throw; /* Error while reading file */
+        }
+    }
+}
+
+OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
+       OS::Distro distro, std::string_view kernel,
+       unsigned majorVersion, unsigned minorVersion)
+       : m_arch(arch)
+       , m_family(family)
+       , m_platform(platform)
+       , m_distro(distro)
+{
+    setKernel(kernel);
+    setMajorVersion(majorVersion);
+    setMinorVersion(minorVersion);
 }
 
 OS::Arch OS::getArch() const {
@@ -31,7 +101,7 @@ void OS::setArch(std::string_view arch) {
         throw std::runtime_error("Unsupported architecture");
     }
 
-    m_arch = OS::Arch::x86_64;
+    setArch(OS::Arch::x86_64);
 }
 
 OS::Family OS::getFamily() const {
@@ -43,20 +113,10 @@ void OS::setFamily(Family family) {
 }
 
 void OS::setFamily(std::string_view family) {
-    /* An unordered_map may be a better implementation:
-     * std::map<std::string, Family> osFamily
-     */
-    if (family == "Linux") {
-        m_family = OS::Family::Linux;
-        return;
-    }
-
-    if (family == "Darwin") {
-        m_family = OS::Family::Darwin;
-        return;
-    }
-
-    throw; /* Unsupported Family */
+    if (const auto& rv = magic_enum::enum_cast<Family>(family))
+        setFamily(rv.value());
+    else
+        throw std::runtime_error(fmt::format("Unsupported OS: {}", family));
 }
 
 OS::Platform OS::getPlatform() const {
@@ -68,12 +128,11 @@ void OS::setPlatform(OS::Platform platform) {
 }
 
 void OS::setPlatform(std::string_view platform) {
-    if (platform.substr(platform.find(':') + 1) == "el8") {
-        m_platform = OS::Platform::el8;
-        return;
-    }
-
-    throw; /* Unsupported Linux platform */
+    if (platform.substr(platform.find(':') + 1) == "el8")
+        setPlatform(OS::Platform::el8);
+    else
+        throw std::runtime_error(
+                fmt::format("Unsupported Platform: {}", platform));
 }
 
 OS::Distro OS::getDistro() const {
@@ -86,16 +145,29 @@ void OS::setDistro(OS::Distro distro) {
 
 void OS::setDistro(std::string_view distro) {
     if (distro == "rhel") {
-        m_distro = OS::Distro::RHEL;
+        setDistro(OS::Distro::RHEL);
         return;
     }
 
     if (distro == "ol") {
-        m_distro = OS::Distro::OL;
+        setDistro(OS::Distro::OL);
         return;
     }
 
-    throw; /* Unsupported Linux distribution */
+    throw std::runtime_error(
+            fmt::format("Unsupported Distribution: {}", distro));
+
+// This code block is left for future reference, if an insensitive comparison in
+// magic_enum would be implemented it may easily replace the upper code block.
+// Reference: https://github.com/Neargye/magic_enum/pull/139
+#if 0
+    if (const auto& rv = magic_enum::enum_cast<Distro>(
+            distro, magic_enum::case_insensitive))
+        setDistro(rv.value());
+    else
+        throw std::runtime_error(
+                fmt::format("Unsupported Distribution: {}", distro));
+#endif
 }
 
 std::string_view OS::getKernel() const {
@@ -158,78 +230,14 @@ std::string OS::getValueFromKey (const std::string& line) {
     return value;
 }
 
-/* TODO:
- *  - Throw exceptions on errors
- *  - Use setters and getters, moving the check logic to there
- */
-void OS::discover () {
-    struct utsname system {};
-    uname(&system);
-
-    setArch(system.machine);
-    setFamily(system.sysname);
-    setKernel(system.release);
-
-#ifdef __APPLE__
-    if (true) {
-#else
-    if (getFamily() == OS::Family::Linux) {
-#endif
-        std::string filename = CHROOT"/etc/os-release";
-        std::ifstream file(filename);
-
-        if (!file.is_open()) {
-            perror(("Error while opening file " + filename).c_str());
-            throw; /* Error opening file */
-        }
-
-        /* Fetches OS information from /etc/os-release. The file is writen in a
-         * key=value style.
-         */
-        std::string line;
-        while (std::getline(file, line)) {
-
-            /* TODO: Refactor the next three conditions */
-#if __cpp_lib_starts_ends_with >= 201711L
-            if (line.starts_with("PLATFORM_ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
-#endif
-                setPlatform(getValueFromKey(line));
-            }
-
-#if __cpp_lib_starts_ends_with >= 201711L
-            if (line.starts_with("ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "ID=")) {
-#endif
-                setDistro(getValueFromKey(line));
-            }
-
-#if __cpp_lib_starts_ends_with >= 201711L
-            if (line.starts_with("VERSION=")) {
-#else
-            if (boost::algorithm::starts_with(line, "VERSION=")) {
-#endif
-                setVersion(getValueFromKey(line));
-            }
-        }
-
-        if (file.bad()) {
-            perror(("Error while reading file " + filename).c_str());
-            throw; /* Error while reading file */
-        }
-    }
-}
-
-#ifdef _DEBUG_
-void OS::print() const {
-    std::cout << "Architecture: " << static_cast<int>(m_arch) << std::endl;
-    std::cout << "Family: " << static_cast<int>(m_family) << std::endl;
-    std::cout << "Kernel Release: " << m_kernel << std::endl;
-    std::cout << "Platform: " << static_cast<int>(m_platform) << std::endl;
-    std::cout << "Distribution: " << static_cast<int>(m_distro) << std::endl;
-    std::cout << "Major Version: " << m_majorVersion << std::endl;
-    std::cout << "Minor Version: " << m_minorVersion << std::endl;
+#ifndef _NDEBUG_
+void OS::printData() const {
+    LOG_TRACE("Architecture: {}", magic_enum::enum_name(m_arch));
+    LOG_TRACE("Family: {}", magic_enum::enum_name(m_family));
+    LOG_TRACE("Kernel Release: {}", m_kernel);
+    LOG_TRACE("Platform: {}", magic_enum::enum_name(m_platform));
+    LOG_TRACE("Distribution: {}", magic_enum::enum_name(m_distro));
+    LOG_TRACE("Major Version: {}", m_majorVersion);
+    LOG_TRACE("Minor Version: {}", m_minorVersion);
 }
 #endif

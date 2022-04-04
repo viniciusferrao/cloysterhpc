@@ -42,7 +42,7 @@ find_package(spdlog)
 
 # Generate a dummy binary
 # TODO: Create a custom build target
-option(DUMMY "Create a dummy executable" ON)
+option(DUMMY "Create a dummy executable" OFF)
 function(configureProject)
     if(DUMMY)
         target_compile_options(project_options INTERFACE -D_DUMMY_ -D_DEBUG_)

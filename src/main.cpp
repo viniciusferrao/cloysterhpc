@@ -20,7 +20,7 @@
 #endif
 
 // Globals definition
-bool cloyster::dryRun = true;
+bool cloyster::dryRun = false;
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
 #endif
 
     //Execution* engine = new Shell();
+    //cloyster::runCommand("ls -la");
     std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
     executionEngine->install();
     //delete engine;

@@ -114,9 +114,9 @@ int runCommand(const std::string& command,
 #endif
 
             output.emplace_back(line);
-            child.wait();
         }
 
+        child.wait();
         LOG_TRACE("Exit code: {}", child.exit_code());
         return child.exit_code();
     }

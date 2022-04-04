@@ -55,7 +55,7 @@ void Shell::configureFirewall() {
 }
 
 void Shell::configureFQDN() {
-    runCommand(fmt::format("hostnamectl set hostname {}",
+    runCommand(fmt::format("hostnamectl set-hostname {}",
                            m_cluster->getHeadnode().getFQDN()));
 }
 
@@ -74,12 +74,12 @@ void Shell::configureHostsFile() {
 }
 
 void Shell::configureTimezone() {
-    runCommand(fmt::format("timedatectl set timezone {}",
+    runCommand(fmt::format("timedatectl set-timezone {}",
                            m_cluster->getTimezone().getTimezone()));
 }
 
 void Shell::configureLocale() {
-    runCommand(fmt::format("localectl set locale {}", m_cluster->getLocale()));
+    runCommand(fmt::format("localectl set-locale {}", m_cluster->getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride() {
@@ -114,8 +114,6 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
         runCommand(fmt::format(
                 "nmcli device set {} autoconnect yes", interface));
         runCommand(fmt::format(
-                "nmcli device connect {}", interface));
-        runCommand(fmt::format(
                 "nmcli connection add con-name {} ifname {} type {} "
                 "mtu 1500 ipv4.method manual ipv4.address {}/{} "
                 "ipv4.gateway {} ipv4.dns \"{}\" "
@@ -131,6 +129,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 connection.getNetwork().getGateway(),
                 fmt::join(connection.getNetwork().getNameserver(), " "),
                 connection.getNetwork().getDomainName()));
+        runCommand(fmt::format(
+                "nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();

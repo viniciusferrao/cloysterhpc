@@ -2,12 +2,48 @@
 #define SERVER_H
 
 #include <string>
+#include <list>
+#include <regex>
+#include <fmt/format.h>
+
+#include "os.h"
+#include "connection.h"
 
 class Server {
+protected:
+    OS m_os;
+    std::string m_hostname;
+    std::string m_fqdn;
+    std::list<Connection> m_connection;
+
+//public:
+//    std::string vendor;
+//    unsigned processors;
+//    unsigned memory;
+
 public:
-    std::string vendor;
-    unsigned processors;
-    unsigned memory;
+    [[nodiscard]] const OS& getOS() const noexcept;
+    void setOS(const OS& os);
+
+    [[nodiscard]] const std::string& getHostname() const noexcept;
+    void setHostname(const std::string& hostname);
+    void setHostname(std::string_view hostname);
+
+    [[nodiscard]] const std::string& getFQDN() const noexcept;
+    void setFQDN(const std::string& fqdn);
+
+    //const std::unique_ptr<Connection>& getConnection() const;
+    [[nodiscard]] const std::list<Connection>& getConnections() const;
+    void addConnection(const Network& network);
+    virtual void addConnection(const Network& network,
+                               const std::string& interface,
+                               const std::string& address);
+    void addConnection(Connection&& connection);
+
+    //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
+    [[nodiscard]] Connection& getConnection(Network::Profile);
+
+    virtual ~Server() = default;
 };
 
-#endif /* SERVER_H */
+#endif // SERVER_H
