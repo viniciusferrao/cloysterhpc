@@ -144,30 +144,17 @@ void OS::setDistro(OS::Distro distro) {
 }
 
 void OS::setDistro(std::string_view distro) {
-    if (distro == "rhel") {
-        setDistro(OS::Distro::RHEL);
-        return;
-    }
-
-    if (distro == "ol") {
-        setDistro(OS::Distro::OL);
-        return;
-    }
-
-    throw std::runtime_error(
-            fmt::format("Unsupported Distribution: {}", distro));
-
 // This code block is left for future reference, if an insensitive comparison in
-// magic_enum would be implemented it may easily replace the upper code block.
+// magic_enum would be implemented it may easily replace the lambda block.
 // Reference: https://github.com/Neargye/magic_enum/pull/139
 #if 0
-    if (const auto& rv = magic_enum::enum_cast<Distro>(
-            distro, magic_enum::case_insensitive))
+    if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
+#endif
+    if (const auto& rv = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) { return std::tolower(lhs) == std::tolower(rhs); }))
         setDistro(rv.value());
     else
         throw std::runtime_error(
                 fmt::format("Unsupported Distribution: {}", distro));
-#endif
 }
 
 std::string_view OS::getKernel() const {

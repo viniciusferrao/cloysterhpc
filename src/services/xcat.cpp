@@ -96,7 +96,7 @@ void XCAT::configureTimeService() {
     m_stateless.otherpkgs.emplace_back("chrony");
 
     m_stateless.postinstall.emplace_back(fmt::format(
-            "echo \"server {}\" >> $installroot/etc/chrony.conf\n\n",
+            "echo \"server {}\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
             m_cluster->getHeadnode()
                       .getConnection(Network::Profile::Management)
                       .getAddress()));
@@ -107,19 +107,26 @@ void XCAT::configureSLURM() {
 
     m_stateless.postinstall.emplace_back(fmt::format(
             "echo SLURMD_OPTIONS=\"--conf-server {}\" > "
-            "$installroot/etc/sysconfig/slurmd\n\n",
+            "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
             m_cluster->getHeadnode()
                       .getConnection(Network::Profile::Management)
                       .getAddress()));
 
-    /* TODO: Enable "if" disallow login on compute nodes */
+    // TODO: Enable "if" disallow login on compute nodes
     m_stateless.postinstall.emplace_back(
             "echo \"account required pam_slurm.so\" >> "
-            "$installroot/etc/pam.d/sshd\n"
+            "$IMG_ROOTIMGDIR/etc/pam.d/sshd\n"
+            "\n");
+
+    // Enable services on image
+    m_stateless.postinstall.emplace_back(
+            "chroot $IMG_ROOTIMGDIR systemctl enable munge\n"
+            "chroot $IMG_ROOTIMGDIR systemctl enable slurmd\n"
             "\n");
 
     m_stateless.synclists.emplace_back(
-            "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
+            // Stateless config
+            //"/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
             "/etc/munge/munge.key -> /etc/munge/munge.key\n"
             "\n");
 }
@@ -148,7 +155,7 @@ void XCAT::generatePostinstallFile() {
     }
 
     m_stateless.postinstall.emplace_back(fmt::format(
-        "cat << END >> $installroot/etc/fstab\n"
+        "cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
         "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
         "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
         "END\n\n", m_cluster->getHeadnode()
@@ -157,9 +164,9 @@ void XCAT::generatePostinstallFile() {
 
     m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
-        "$installroot/etc/security/limits.conf\n"
+        "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
         "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' "
-        "$installroot/etc/security/limits.conf\n"
+        "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
         "\n");
 
     m_stateless.postinstall.emplace_back("systemctl disable firewalld\n");
@@ -243,12 +250,15 @@ void XCAT::configureOSImageDefinition() {
 
 void XCAT::customizeImage() {
     // Bugfixes for Munge
+    // Not needed if we sync /etc/passwd and /etc/groups
+#if 0
     cloyster::runCommand(fmt::format(
-            "chroot {} chown munge:munge /var/lib/munge",
+            "/bin/bash -c \"chroot {} chown munge:munge /var/lib/munge\"",
             m_stateless.chroot.string()));
     cloyster::runCommand(fmt::format(
-            "chroot {} chown munge:munge /etc/munge",
+            "/bin/bash -c \"chroot {} chown munge:munge /etc/munge\"",
             m_stateless.chroot.string()));
+#endif
 }
 
 /* This method will create an image for compute nodes, by default it will be a

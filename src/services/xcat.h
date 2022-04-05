@@ -6,6 +6,7 @@
 #include "shell.h"
 #include "../const.h"
 #include "../include/magic_enum.hpp"
+#include "../services/log.h"
 
 #include <string>
 #include <memory>
