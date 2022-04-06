@@ -17,7 +17,12 @@
 using cloyster::runCommand;
 
 Shell::Shell(const std::unique_ptr<Cluster> &cluster)
-            : m_cluster(cluster) {}
+            : m_cluster(cluster)
+{
+    // Initialize directory tree
+    cloyster::createDirectory(installPath);
+    cloyster::createDirectory(std::string{installPath} + "/backup");
+}
 
 void Shell::disableSELinux() {
     runCommand("setenforce 0");
@@ -69,6 +74,7 @@ void Shell::configureHostsFile() {
 
     std::string_view filename = CHROOT"/etc/hosts";
 
+    cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
                             fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
@@ -86,6 +92,9 @@ void Shell::disableNetworkManagerDNSOverride() {
     std::string_view filename =
             CHROOT"/etc/NetworkManager/conf.d/90-dns-none.conf";
 
+    // TODO: We should not violently remove the file, we may need to backup if
+    //  the file exists, and remove after the copy
+    cloyster::removeFile(filename);
     // TODO: Would be better handled with a .conf function
     cloyster::addStringToFile(filename, "[main]\n"
                                         "dns=none\n");
@@ -174,6 +183,8 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
 
     std::string_view filename = CHROOT"/etc/chrony.conf";
 
+    cloyster::backupFile(filename);
+
     for (const auto& connection : std::as_const(connections)) {
         if ((connection.getNetwork().getProfile() ==
              Network::Profile::Management) ||
@@ -250,6 +261,7 @@ void Shell::configureInfiniband() {
 void Shell::configureNetworkFileSystem() {
     std::string_view filename = CHROOT"/etc/exports";
 
+    cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
                       "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
                       "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\n");
@@ -261,6 +273,7 @@ void Shell::configureNetworkFileSystem() {
 void Shell::removeMemlockLimits() {
     std::string_view filename = CHROOT"/etc/security/limits.conf";
 
+    cloyster::backupFile(filename);
     cloyster::addStringToFile(filename, "* soft memlock unlimited\n"
                                         "* hard memlock unlimited\n");
 }

@@ -3,7 +3,6 @@
 #include <cstdlib> /* getenv() */
 #include <iostream>
 #include <fstream>
-#include <filesystem>
 
 #define ENABLE_GETOPT_H
 #ifdef ENABLE_GETOPT_H
@@ -174,11 +173,33 @@ void writeConfig(const std::string &filename) {
     boost::property_tree::write_ini(filename, tree);
 }
 
+void createDirectory(const std::filesystem::path& path) {
+    std::filesystem::create_directories(path);
+    LOG_TRACE("Created directory: {}", path.string());
+}
+
+/* Remove file */
+void removeFile(std::string_view filename) {
+    LOG_TRACE("Checking if file {} already exists on filesystem:", filename);
+    if (std::filesystem::exists(filename)) {
+        LOG_TRACE("Already exists");
+        std::filesystem::remove(filename);
+        LOG_TRACE("File {} deleted", filename)
+    } else {
+        LOG_TRACE("File does not exist");
+    }
+}
+
 /* Backup file */
 void backupFile(const std::string_view &filename) {
-    auto backupFile = fmt::format("{}.backup", filename);
+    const auto& backupFile = fmt::format("{}/backup{}", installPath, filename);
+
+    // Create the directory structure
+    createDirectory(std::filesystem::absolute(backupFile).parent_path());
+
     std::fstream file(backupFile);
     if (!file.is_open()) {
+        // Backup the file
         std::filesystem::copy_file(filename, backupFile);
         LOG_TRACE("Created a backup copy of {} on {}", filename, backupFile);
     }
@@ -192,15 +213,13 @@ void backupFile(const std::string_view &filename) {
  */
 void changeValueInConfigurationFile(const std::string& filename,
                                     const std::string& key,
-                                    std::string_view value) {
-
+                                    std::string_view value)
+{
     boost::property_tree::ptree tree;
 
     try {
         boost::property_tree::ini_parser::read_ini(filename, tree);
-    }
-
-    catch(boost::property_tree::ini_parser_error& ex) {
+    } catch(boost::property_tree::ini_parser_error& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 
@@ -220,7 +239,7 @@ void addStringToFile(std::string_view filename, std::string_view line) {
                 fmt::format("Error opening file: {}", filename));
 
     file << line;
-    LOG_TRACE("Added line \"{}\" to file: {}", line, filename);
+    LOG_TRACE("Added line(s):\n{}\n => to file: {}", line, filename);
 }
 
 } // namespace cloyster

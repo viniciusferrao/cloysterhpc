@@ -135,6 +135,7 @@ void XCAT::generateOtherPkgListFile() {
     std::string_view filename =
             CHROOT"/install/custom/netboot/compute.otherpkglist";
 
+    cloyster::removeFile(filename);
     cloyster::addStringToFile(filename, fmt::format("{}\n",
                         fmt::join(m_stateless.otherpkgs, "\n")));
 
@@ -144,15 +145,7 @@ void XCAT::generatePostinstallFile() {
     std::string_view filename =
             CHROOT"/install/custom/netboot/compute.postinstall";
 
-    // TODO: Create a function to do this (handle file deletion)
-    LOG_TRACE("Checking if file {} already exists on filesystem:", filename);
-    if (std::filesystem::exists(filename)) {
-        LOG_TRACE("Already exists");
-        std::filesystem::remove(filename);
-        LOG_TRACE("File {} deleted", filename)
-    } else {
-        LOG_TRACE("No");
-    }
+    cloyster::removeFile(filename);
 
     m_stateless.postinstall.emplace_back(fmt::format(
         "cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
@@ -186,6 +179,7 @@ void XCAT::generateSynclistsFile() {
     std::string_view filename =
             CHROOT"/install/custom/netboot/compute.synclists";
 
+    cloyster::removeFile(filename);
     cloyster::addStringToFile(filename,
                               "/etc/passwd -> /etc/passwd\n"
                               "/etc/group -> /etc/group\n"

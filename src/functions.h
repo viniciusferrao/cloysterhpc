@@ -5,6 +5,7 @@
 #include <optional>
 #include <vector>
 #include <list>
+#include <filesystem>
 
 namespace cloyster {
 
@@ -30,7 +31,9 @@ std::string readConfig(const std::string&);
 void writeConfig(const std::string&);
 
 /* helper function */
-void backupFile(const std::string_view&);
+void createDirectory(const std::filesystem::path& path);
+void removeFile(std::string_view filename);
+void backupFile(const std::string_view& filename);
 void changeValueInConfigurationFile(const std::string&, const std::string&,
                                     std::string_view);
 void addStringToFile(std::string_view, std::string_view);
