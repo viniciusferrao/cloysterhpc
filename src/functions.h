@@ -36,7 +36,7 @@ void removeFile(std::string_view filename);
 void backupFile(const std::string_view& filename);
 void changeValueInConfigurationFile(const std::string&, const std::string&,
                                     std::string_view);
-void addStringToFile(std::string_view, std::string_view);
+void addStringToFile(std::string_view filename, std::string_view string);
 
 } /* namespace cloyster */
 

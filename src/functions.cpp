@@ -227,7 +227,7 @@ void changeValueInConfigurationFile(const std::string& filename,
     boost::property_tree::write_ini(filename, tree);
 }
 
-void addStringToFile(std::string_view filename, std::string_view line) {
+void addStringToFile(std::string_view filename, std::string_view string) {
 #ifdef _LIBCPP_VERSION
     std::ofstream file(filename, std::ios_base::app);
 #else
@@ -238,8 +238,8 @@ void addStringToFile(std::string_view filename, std::string_view line) {
         throw std::runtime_error(
                 fmt::format("Error opening file: {}", filename));
 
-    file << line;
-    LOG_TRACE("Added line(s):\n{}\n => to file: {}", line, filename);
+    file << string;
+    LOG_TRACE("Added line(s):\n{}\n => to file: {}", string, filename);
 }
 
 } // namespace cloyster

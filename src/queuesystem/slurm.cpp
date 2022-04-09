@@ -17,15 +17,25 @@ void SLURM::installServer() {
     runCommand("dnf -y install ohpc-slurm-server");
 }
 
-void SLURM::configureServer() {
-    cloyster::removeFile("/etc/slurm/slurm.conf");
-    std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
-                               "/etc/slurm/slurm.conf");
+//void SLURM::configureServer() {
+//    cloyster::removeFile("/etc/slurm/slurm.conf");
+//    std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
+//                               "/etc/slurm/slurm.conf");
+//
+//    runCommand(fmt::format("perl -pi -e "
+//                           "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
+//                           "/etc/slurm/slurm.conf",
+//                           m_cluster.getHeadnode().getFQDN()));
+//}
 
-    runCommand(fmt::format("perl -pi -e "
-                           "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
-                           "/etc/slurm/slurm.conf",
-                           m_cluster.getHeadnode().getFQDN()));
+void SLURM::configureServer() {
+    std::string conf = fmt::format(
+            #include "../tmpl/slurm.conf.tmpl"
+            , fmt::arg("clusterName", m_cluster.getName())
+            , fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN())
+    );
+
+    cloyster::addStringToFile("/etc/slurm/slurm.conf", conf);
 }
 
 void SLURM::enableServer() {
