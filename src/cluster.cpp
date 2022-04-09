@@ -325,6 +325,7 @@ void Cluster::printData () {
 }
 
 void Cluster::fillTestData () {
+    setName("Cloyster");
     setFirewall(true);
     setSELinux(SELinuxMode::Disabled);
     setTimezone("America/Sao_Paulo");
@@ -336,6 +337,7 @@ void Cluster::fillTestData () {
                     getDomainName()));
     setOFED(OFED::None);
     setQueueSystem(QueueSystem::Kind::SLURM);
+    m_queueSystem.value()->setDefaultQueue("Execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
                "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,

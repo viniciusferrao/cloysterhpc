@@ -17,25 +17,28 @@ void SLURM::installServer() {
     runCommand("dnf -y install ohpc-slurm-server");
 }
 
-//void SLURM::configureServer() {
-//    cloyster::removeFile("/etc/slurm/slurm.conf");
-//    std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
-//                               "/etc/slurm/slurm.conf");
-//
-//    runCommand(fmt::format("perl -pi -e "
-//                           "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
-//                           "/etc/slurm/slurm.conf",
-//                           m_cluster.getHeadnode().getFQDN()));
-//}
-
 void SLURM::configureServer() {
+    std::string nodesDeclaration{};
+
+    for (const auto& node : m_cluster.getNodes())
+        nodesDeclaration += fmt::format(
+            "NodeName={} Sockets={} CoresPerSocket={} ThreadsPerCore={} State=UNKNOWN\n"
+            , node.getHostname()
+            , "2"//node.getSockets()
+            , "4"//node.getCoresPerSocket()
+            , "2"//node.getThreadsPerCore()
+        );
+
     std::string conf = fmt::format(
             #include "../tmpl/slurm.conf.tmpl"
             , fmt::arg("clusterName", m_cluster.getName())
             , fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN())
+            , fmt::arg("partitionName", getDefaultQueue())
+            , fmt::arg("nodesDeclaration", nodesDeclaration)
     );
 
     cloyster::addStringToFile("/etc/slurm/slurm.conf", conf);
+
 }
 
 void SLURM::enableServer() {

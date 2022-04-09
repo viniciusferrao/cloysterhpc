@@ -7,12 +7,14 @@
 #include <fmt/format.h>
 
 #include "os.h"
+#include "cpu.h"
 #include "services/bmc.h"
 #include "connection.h"
 
 class Server {
 protected:
     OS m_os;
+    //CPU m_cpu;
     std::optional<BMC> m_bmc{};
     std::string m_hostname;
     std::string m_fqdn;
