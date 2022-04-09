@@ -7,11 +7,13 @@
 #include <fmt/format.h>
 
 #include "os.h"
+#include "services/bmc.h"
 #include "connection.h"
 
 class Server {
 protected:
     OS m_os;
+    std::optional<BMC> m_bmc;
     std::string m_hostname;
     std::string m_fqdn;
     std::list<Connection> m_connection;
@@ -42,6 +44,8 @@ public:
 
     //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
     [[nodiscard]] Connection& getConnection(Network::Profile);
+
+    [[nodiscard]] const std::optional<BMC>& getBMC() const;
 
     virtual ~Server() = default;
 };

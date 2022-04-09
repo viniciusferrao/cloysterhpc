@@ -100,3 +100,7 @@ Connection& Server::getConnection(Network::Profile profile) {
             "Cannot get any connection with profile {}",
             magic_enum::enum_name(profile)));
 }
+
+const std::optional<BMC>& Server::getBMC() const {
+    return m_bmc;
+}

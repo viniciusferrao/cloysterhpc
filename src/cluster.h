@@ -93,9 +93,9 @@ public:
 
     const std::vector<Node>& getNodes() const;
     void addNode(OS& os, std::string_view hostname, const Network& network,
-                 const std::string& address, const std::string& mac,
-                 std::string_view bmcAddress, std::string_view bmcUsername,
-                 std::string_view bmcPassword);
+                 const std::string& address, const std::string& mac);
+    void addNode(OS& os, BMC& bmc, std::string_view hostname, const Network& network,
+                 const std::string& address, const std::string& mac);
 
 #ifdef _DEBUG_
     void printNetworks(const std::list<Network>&);

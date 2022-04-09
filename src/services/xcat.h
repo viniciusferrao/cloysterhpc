@@ -45,8 +45,7 @@ private:
     void configureOSImageDefinition();
     void customizeImage();
     void addNode(std::string_view, std::string_view, std::string_view,
-                 std::string_view, std::string_view, std::string_view,
-                 std::string_view);
+                 std::string_view, const std::optional<BMC>& bmc);
     void generateOSImageName(ImageType, NodeType);
     void generateOSImagePath(ImageType, NodeType);
 

@@ -281,15 +281,25 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType) {
 
 void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
                    std::string_view t_address, std::string_view t_macaddress,
-                   std::string_view t_bmcaddress,
-                   std::string_view t_bmcusername,
-                   std::string_view t_bmcpassword) {
+                   const std::optional<BMC>& bmc) {
 
-    cloyster::runCommand(fmt::format(
-            "mkdef -f -t node {} arch={} ip={} mac={} bmc={} bmcusername={} "
-            "bmcpassword={} mgt=ipmi cons=ipmi serialport=0 serialspeed=115200 "
-            "groups=compute,all netboot=xnba", t_name, t_arch, t_address,
-            t_macaddress, t_bmcaddress, t_bmcusername, t_bmcpassword));
+    std::string command = fmt::format(
+            "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
+            "netboot=xnba", t_name, t_arch, t_address, t_macaddress);
+
+    if (bmc.has_value())
+        command += fmt::format(" bmc={} bmcusername={} bmcpassword={} mgt=ipmi "
+                               "cons=ipmi serialport=0 serialspeed=115200",
+                               bmc.value().m_address, bmc.value().m_username,
+                               bmc.value().m_password);
+
+    cloyster::runCommand(command);
+//    cloyster::runCommand(fmt::format(
+//            "mkdef -f -t node {} arch={} ip={} mac={} bmc={} bmcusername={} "
+//            "bmcpassword={} mgt=ipmi cons=ipmi serialport=0 serialspeed=115200 "
+//            "groups=compute,all netboot=xnba", t_name, t_arch, t_address,
+//            t_macaddress, bmc.value().m_address, bmc.value().m_username,
+//            bmc.value().m_password));
 }
 
 void XCAT::addNodes() {
@@ -298,9 +308,7 @@ void XCAT::addNodes() {
                 magic_enum::enum_name(node.getOS().getArch()),
                 node.getConnection().front().getAddress(),
                 node.getConnection().front().getMAC(),
-                node.getBMCAddress(),
-                node.getBMCUsername(),
-                node.getBMCPassword());
+                node.getBMC());
 
     // TODO: Create separate functions
     cloyster::runCommand("makehosts");

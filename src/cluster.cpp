@@ -237,13 +237,18 @@ const std::vector<Node>& Cluster::getNodes() const {
     return m_nodes;
 }
 
-void Cluster::addNode(OS& t_os, std::string_view t_name, const Network& network,
+void Cluster::addNode(OS& t_os, std::string_view t_name,
+                      const Network& network,
                       const std::string& t_address,
-                      const std::string& t_mac, std::string_view t_bmcAddress,
-                      std::string_view t_bmcUsername,
-                      std::string_view t_bmcPassword) {
-    m_nodes.emplace_back(t_os, t_name, network, t_address, t_mac, t_bmcAddress, t_bmcUsername,
-                         t_bmcPassword);
+                      const std::string& t_mac) {
+    m_nodes.emplace_back(t_os, std::optional<BMC>(), t_name, network, t_address, t_mac);
+}
+
+void Cluster::addNode(OS& t_os, BMC& bmc, std::string_view t_name,
+                      const Network& network,
+                      const std::string& t_address,
+                      const std::string& t_mac) {
+    m_nodes.emplace_back(t_os, bmc, t_name, network, t_address, t_mac);
 }
 
 #ifdef _DEBUG_
@@ -363,10 +368,8 @@ void Cluster::fillTestData () {
     setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
               OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
-    addNode(nodeOS, "n01", getNetwork(Network::Profile::Management), "172.26.0.1", "00:0c:29:9b:0c:75", "",
-            "ADMIN", "ADMIN");
-    addNode(nodeOS, "n02", getNetwork(Network::Profile::Management), "172.26.0.2", "de:ad:be:ff:00:00", "",
-            "root", "calvin");
+    addNode(nodeOS, "n01", getNetwork(Network::Profile::Management), "172.26.0.1", "00:0c:29:9b:0c:75");
+    addNode(nodeOS, "n02", getNetwork(Network::Profile::Management), "172.26.0.2", "de:ad:be:ff:00:00");
 
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";
