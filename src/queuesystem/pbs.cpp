@@ -4,7 +4,9 @@
 
 #include "pbs.h"
 
-PBS::PBS() {
+PBS::PBS(const Cluster& cluster)
+    : QueueSystem(cluster)
+{
     setKind(QueueSystem::Kind::PBS);
 }
 

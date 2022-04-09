@@ -18,8 +18,8 @@
 
 class Node : public Server {
 public:
-    Node(OS& os, std::optional<BMC> bmc, std::string_view hostname, const Network& network,
-         const std::string& address, const std::string& mac);
+    Node(OS& os, std::string_view hostname, const Network& network,
+         const std::string& address, const std::string& mac, std::optional<BMC> bmc = std::nullopt);
 
     // FIXME: We need to rely on the definition on base class
     [[nodiscard]] const std::list<Connection> &getConnection() const noexcept;

@@ -19,7 +19,7 @@ public:
     ExecutionPlace getExecutionPlace(void);
 
 public:
-    PBS();
+    explicit PBS(const Cluster& cluster);
 };
 
 #endif //CLOYSTERHPC_PBS_H

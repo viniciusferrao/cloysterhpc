@@ -4,6 +4,9 @@
 
 #include "queuesystem.h"
 
+QueueSystem::QueueSystem(const Cluster& cluster)
+    : m_cluster(cluster) {}
+
 void QueueSystem::setKind(Kind kind) {
     m_kind = kind;
 }

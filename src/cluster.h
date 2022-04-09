@@ -47,6 +47,7 @@ public:
     // If we want to change things inside the headnode it must be passed as a
     // reference, or else a simple setter will fail.
     Headnode& getHeadnode();
+    [[nodiscard]] const Headnode& getHeadnode() const;
     const std::string_view& getName() const;
     void setName(const std::string_view &name);
     const std::string_view& getCompanyName() const;
@@ -94,8 +95,8 @@ public:
     const std::vector<Node>& getNodes() const;
     void addNode(OS& os, std::string_view hostname, const Network& network,
                  const std::string& address, const std::string& mac);
-    void addNode(OS& os, BMC& bmc, std::string_view hostname, const Network& network,
-                 const std::string& address, const std::string& mac);
+    void addNode(OS& os, std::string_view hostname, const Network& network,
+                 const std::string& address, const std::string& mac, BMC& bmc);
 
 #ifdef _DEBUG_
     void printNetworks(const std::list<Network>&);

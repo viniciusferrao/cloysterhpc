@@ -6,6 +6,12 @@
 #define CLOYSTERHPC_QUEUESYSTEM_H
 
 #include <string>
+#include <fmt/format.h>
+
+#include "../functions.h"
+
+// Forward declaration of Cluster
+class Cluster;
 
 class QueueSystem {
 public:
@@ -15,6 +21,9 @@ private:
     Kind m_kind = Kind::None;
     std::string_view m_defaultQueue;
 
+protected:
+    const Cluster& m_cluster;
+
 public:
     void setKind(Kind kind);
     Kind getKind();
@@ -22,6 +31,7 @@ public:
     void setDefaultQueue(std::string_view);
     std::string_view getDefaultQueue();
 
+    explicit QueueSystem(const Cluster& cluster);
     virtual ~QueueSystem() = default;
 };
 

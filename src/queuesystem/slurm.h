@@ -8,8 +8,16 @@
 #include "queuesystem.h"
 
 class SLURM : public QueueSystem {
+private:
+    bool m_accounting{false};
+
 public:
-    SLURM();
+    explicit SLURM(const Cluster& cluster);
+
+    void installServer();
+    void configureServer();
+    void enableServer();
+    void startServer();
 };
 
 #endif //CLOYSTERHPC_SLURM_H

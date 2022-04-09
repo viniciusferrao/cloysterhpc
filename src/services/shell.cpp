@@ -211,17 +211,11 @@ void Shell::configureQueueSystem() {
             }
 
             case QueueSystem::Kind::SLURM: {
-                runCommand("dnf -y install ohpc-slurm-server");
-                // TODO: Use std::filesystem
-                //  std::filesystem::copy_file("/etc/slurm/slurm.conf.ohpc",
-                //                             "/etc/slurm/slurm.conf");
-                runCommand("cp /etc/slurm/slurm.conf.ohpc /etc/slurm/slurm.conf");
-                runCommand(fmt::format("perl -pi -e "
-                                       "\"s/ControlMachine=\\S+/ControlMachine={}/\" "
-                                       "/etc/slurm/slurm.conf",
-                                       m_cluster->getHeadnode().getFQDN()));
-                runCommand("systemctl enable --now munge");
-                runCommand("systemctl enable --now slurmctld");
+                const auto &slurm = dynamic_cast<SLURM*>(queue.value().get());
+                slurm->installServer();
+                slurm->configureServer();
+                slurm->enableServer();
+                slurm->startServer();
                 break;
             }
 

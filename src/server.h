@@ -13,7 +13,7 @@
 class Server {
 protected:
     OS m_os;
-    std::optional<BMC> m_bmc;
+    std::optional<BMC> m_bmc{};
     std::string m_hostname;
     std::string m_fqdn;
     std::list<Connection> m_connection;

@@ -24,6 +24,10 @@ Headnode& Cluster::getHeadnode() {
     return m_headnode;
 }
 
+const Headnode& Cluster::getHeadnode() const {
+    return m_headnode;
+}
+
 const std::string_view& Cluster::getName() const {
     return m_name;
 }
@@ -207,12 +211,12 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind) {
 
         case QueueSystem::Kind::SLURM:
             //m_queueSystem = std::unique_ptr<QueueSystem>(new SLURM());
-            m_queueSystem = std::make_unique<SLURM>();
+            m_queueSystem = std::make_unique<SLURM>(*this);
             break;
 
         case QueueSystem::Kind::PBS:
             //m_queueSystem = std::unique_ptr<QueueSystem>(new PBS());
-            m_queueSystem = std::make_unique<PBS>();
+            m_queueSystem = std::make_unique<PBS>(*this);
             break;
     }
 }
@@ -241,14 +245,15 @@ void Cluster::addNode(OS& t_os, std::string_view t_name,
                       const Network& network,
                       const std::string& t_address,
                       const std::string& t_mac) {
-    m_nodes.emplace_back(t_os, std::optional<BMC>(), t_name, network, t_address, t_mac);
+//    m_nodes.emplace_back(t_os, std::optional<BMC>(), t_name, network, t_address, t_mac);
+    m_nodes.emplace_back(t_os, t_name, network, t_address, t_mac);
 }
 
-void Cluster::addNode(OS& t_os, BMC& bmc, std::string_view t_name,
+void Cluster::addNode(OS& t_os, std::string_view t_name,
                       const Network& network,
                       const std::string& t_address,
-                      const std::string& t_mac) {
-    m_nodes.emplace_back(t_os, bmc, t_name, network, t_address, t_mac);
+                      const std::string& t_mac, BMC& bmc) {
+    m_nodes.emplace_back(t_os, t_name, network, t_address, t_mac, bmc);
 }
 
 #ifdef _DEBUG_

@@ -3,12 +3,13 @@
 //
 #include "node.h"
 
-Node::Node(OS& os, std::optional<BMC> bmc, std::string_view hostname, const Network& network,
-           const std::string& address, const std::string& mac) {
+Node::Node(OS& os, std::string_view hostname, const Network& network,
+           const std::string& address, const std::string& mac,
+           std::optional<BMC> bmc) {
     setOS(os);
-    m_bmc = bmc;
     setHostname(hostname);
     addConnection(network, address, mac);
+    m_bmc = bmc;
 }
 
 const std::list<Connection>& Node::getConnection() const noexcept {
