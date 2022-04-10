@@ -51,10 +51,31 @@ void Shell::configureSELinuxMode() {
     }
 }
 
-/* TODO: Better implementation */
+// TODO: Better implementation
+//  * Perhaps we could loop through connections and add everything except the
+//    external connection as trusted. This way we don't need to check if a given
+//    network exists on the cluster.
 void Shell::configureFirewall() {
-    if (m_cluster->isFirewall())
+    if (m_cluster->isFirewall()) {
         runCommand("systemctl enable --now firewalld");
+
+        // Add the management interface as trusted
+        runCommand(fmt::format(
+                "firewall-cmd --permanent --zone=trusted --change-interface={}"
+                , m_cluster->getHeadnode()
+                            .getConnection(Network::Profile::Management)
+                            .getInterface()));
+
+        // If we have IB, also add its interface as trusted
+        if (m_cluster->getOFED() != Cluster::OFED::None)
+            runCommand(fmt::format(
+                    "firewall-cmd --permanent --zone=trusted --change-interface={}"
+                    , m_cluster->getHeadnode()
+                            .getConnection(Network::Profile::Application)
+                            .getInterface()));
+
+        runCommand("firewall-cmd --reload");
+    }
     else
         runCommand("systemctl disable --now firewalld");
 }
@@ -340,4 +361,5 @@ void Shell::install() {
     provisioner->createImage();
     provisioner->addNodes();
     provisioner->setNodesImage();
+    provisioner->setNodesBoot();
 }

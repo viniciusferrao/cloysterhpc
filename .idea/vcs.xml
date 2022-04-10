@@ -2,8 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/include/i18n-cpp" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/include/i18n-cpp/external/Catch2" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/src/include/magic_enum" vcs="Git" />
   </component>
 </project>

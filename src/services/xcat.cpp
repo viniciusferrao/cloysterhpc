@@ -318,6 +318,12 @@ void XCAT::setNodesImage() {
     nodeset("compute");
 }
 
+void XCAT::setNodesBoot() {
+    // TODO: Do proper checking if a given node have BMC support, and then issue
+    //  rsetboot only on the compatible machines instead of running in compute.
+    cloyster::runCommand("rsetboot compute net");
+}
+
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType) {
     std::string osimage;
 

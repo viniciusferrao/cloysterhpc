@@ -59,6 +59,7 @@ public:
                      NodeType = NodeType::Compute);
     void addNodes();
     void setNodesImage();
+    void setNodesBoot();
 
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };
