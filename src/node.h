@@ -18,7 +18,7 @@
 
 class Node : public Server {
 public:
-    Node(OS& os, std::string_view hostname, const Network& network,
+    Node(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
          const std::string& address, const std::string& mac, std::optional<BMC> bmc = std::nullopt);
 
     // FIXME: We need to rely on the definition on base class

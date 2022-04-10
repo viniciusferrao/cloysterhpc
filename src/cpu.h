@@ -16,10 +16,20 @@ private:
     std::size_t m_coresPerSocket;
     std::size_t m_threadsPerCore;
 
-    void checkTopology();
+    void checkTopology() const;
+
 public:
+    CPU();
+    CPU(std::size_t sockets, std::size_t coresPerSocket,
+        std::size_t threadsPerCore);
     CPU(std::size_t sockets, std::size_t cores, std::size_t threads,
         std::size_t coresPerSocket, std::size_t threadsPerCore);
+
+    [[nodiscard]] size_t getSockets() const;
+    [[nodiscard]] size_t getCores() const;
+    [[nodiscard]] size_t getThreads() const;
+    [[nodiscard]] size_t getCoresPerSocket() const;
+    [[nodiscard]] size_t getThreadsPerCore() const;
 };
 
 #endif //CLOYSTERHPC_CPU_H

@@ -184,7 +184,7 @@ void XCAT::generateSynclistsFile() {
                               "/etc/passwd -> /etc/passwd\n"
                               "/etc/group -> /etc/group\n"
                               "/etc/shadow -> /etc/shadow\n"
-                              "/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
+                              //"/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
                               "/etc/munge/munge.key -> /etc/munge/munge.key\n");
 }
 
@@ -279,13 +279,13 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType) {
     packimage();
 }
 
-void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
-                   std::string_view t_address, std::string_view t_macaddress,
+void XCAT::addNode(std::string_view hostname, std::string_view arch,
+                   std::string_view address, std::string_view mac,
                    const std::optional<BMC>& bmc) {
 
     std::string command = fmt::format(
             "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
-            "netboot=xnba", t_name, t_arch, t_address, t_macaddress);
+            "netboot=xnba", hostname, arch, address, mac);
 
     if (bmc.has_value())
         command += fmt::format(" bmc={} bmcusername={} bmcpassword={} mgt=ipmi "
@@ -294,12 +294,6 @@ void XCAT::addNode(std::string_view t_name, std::string_view t_arch,
                                bmc.value().m_password);
 
     cloyster::runCommand(command);
-//    cloyster::runCommand(fmt::format(
-//            "mkdef -f -t node {} arch={} ip={} mac={} bmc={} bmcusername={} "
-//            "bmcpassword={} mgt=ipmi cons=ipmi serialport=0 serialspeed=115200 "
-//            "groups=compute,all netboot=xnba", t_name, t_arch, t_address,
-//            t_macaddress, bmc.value().m_address, bmc.value().m_username,
-//            bmc.value().m_password));
 }
 
 void XCAT::addNodes() {

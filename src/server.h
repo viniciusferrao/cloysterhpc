@@ -14,7 +14,7 @@
 class Server {
 protected:
     OS m_os;
-    //CPU m_cpu;
+    CPU m_cpu;
     std::optional<BMC> m_bmc{};
     std::string m_hostname;
     std::string m_fqdn;
@@ -46,6 +46,9 @@ public:
 
     //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
     [[nodiscard]] Connection& getConnection(Network::Profile);
+
+    [[nodiscard]] const CPU& getCPU() const noexcept;
+    void setCPU(const CPU& cpu);
 
     [[nodiscard]] const std::optional<BMC>& getBMC() const;
 

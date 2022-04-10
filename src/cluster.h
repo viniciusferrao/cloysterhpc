@@ -93,9 +93,9 @@ public:
     void setISOPath(const std::filesystem::path &isoPath);
 
     const std::vector<Node>& getNodes() const;
-    void addNode(OS& os, std::string_view hostname, const Network& network,
+    void addNode(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
                  const std::string& address, const std::string& mac);
-    void addNode(OS& os, std::string_view hostname, const Network& network,
+    void addNode(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
                  const std::string& address, const std::string& mac, BMC& bmc);
 
 #ifdef _DEBUG_

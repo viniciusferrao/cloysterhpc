@@ -18,15 +18,17 @@ void SLURM::installServer() {
 }
 
 void SLURM::configureServer() {
+    cloyster::removeFile("/etc/slurm/slurm.conf");
+
     std::string nodesDeclaration{};
 
     for (const auto& node : m_cluster.getNodes())
         nodesDeclaration += fmt::format(
             "NodeName={} Sockets={} CoresPerSocket={} ThreadsPerCore={} State=UNKNOWN\n"
             , node.getHostname()
-            , "2"//node.getSockets()
-            , "4"//node.getCoresPerSocket()
-            , "2"//node.getThreadsPerCore()
+            , node.getCPU().getSockets()
+            , node.getCPU().getCoresPerSocket()
+            , node.getCPU().getThreadsPerCore()
         );
 
     std::string conf = fmt::format(

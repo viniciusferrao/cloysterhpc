@@ -20,7 +20,7 @@
 #endif
 
 // Globals definition
-bool cloyster::dryRun = true;
+bool cloyster::dryRun = false;
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
