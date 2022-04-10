@@ -191,6 +191,9 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
             (connection.getNetwork().getProfile() ==
              Network::Profile::Service)) {
 
+            // Configure server as local stratum (serve time without sync)
+            cloyster::addStringToFile(filename, "local stratum 10\n");
+
             cloyster::addStringToFile(
                     filename,
                     fmt::format("allow {}/{}\n",

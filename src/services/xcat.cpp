@@ -96,7 +96,7 @@ void XCAT::configureTimeService() {
     m_stateless.otherpkgs.emplace_back("chrony");
 
     m_stateless.postinstall.emplace_back(fmt::format(
-            "echo \"server {}\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
+            "echo \"server {} iburst\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
             m_cluster->getHeadnode()
                       .getConnection(Network::Profile::Management)
                       .getAddress()));
@@ -105,8 +105,9 @@ void XCAT::configureTimeService() {
 void XCAT::configureSLURM() {
     m_stateless.otherpkgs.emplace_back("ohpc-slurm-client");
 
+    // TODO: Deprecate this for SRV entries on DNS: _slurmctld._tcp 0 100 6817
     m_stateless.postinstall.emplace_back(fmt::format(
-            "echo SLURMD_OPTIONS=\"--conf-server {}\" > "
+            "echo SLURMD_OPTIONS=\\\"--conf-server {}\\\" > "
             "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
             m_cluster->getHeadnode()
                       .getConnection(Network::Profile::Management)
