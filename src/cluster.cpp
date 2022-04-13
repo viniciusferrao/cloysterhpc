@@ -191,12 +191,12 @@ void Cluster::setProvisioner(Cluster::Provisioner provisioner) {
     m_provisioner = provisioner;
 }
 
-Cluster::OFED Cluster::getOFED() const {
+std::optional<OFED> Cluster::getOFED() const {
     return m_ofed;
 }
 
-void Cluster::setOFED(Cluster::OFED ofed) {
-    m_ofed = ofed;
+void Cluster::setOFED(OFED::Kind kind) {
+    m_ofed = OFED(kind);
 }
 
 std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem() {
@@ -335,7 +335,8 @@ void Cluster::fillTestData () {
     this->m_headnode.setFQDN(
         fmt::format("{0}.{1}", this->m_headnode.getHostname(),
                     getDomainName()));
-    setOFED(OFED::None);
+
+    OFED ofed(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("Execution");
 

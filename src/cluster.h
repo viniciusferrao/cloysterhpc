@@ -9,6 +9,7 @@
 #include "headnode.h"
 #include "node.h"
 #include "network.h"
+#include "ofed.h"
 #include "services/timezone.h"
 #include "queuesystem/slurm.h"
 #include "queuesystem/pbs.h"
@@ -19,7 +20,6 @@ public:
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
     enum class Provisioner { xCAT };
     enum class Directory { None, FreeIPA };
-    enum class OFED { None, Inbox, Mellanox, Oracle };
 
 private:
     std::string_view m_name;
@@ -27,7 +27,7 @@ private:
     std::string_view m_adminMail;
     Headnode m_headnode;
     Provisioner m_provisioner;
-    OFED m_ofed;
+    std::optional<OFED> m_ofed;
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};
     std::optional<Postfix> m_mailSystem{};
     std::vector<Node> m_nodes;
@@ -80,8 +80,8 @@ public:
     Provisioner getProvisioner() const;
     void setProvisioner(Provisioner);
 
-    OFED getOFED() const;
-    void setOFED(OFED);
+    std::optional<OFED> getOFED() const;
+    void setOFED(OFED::Kind kind);
 
     std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
     void setQueueSystem(QueueSystem::Kind kind);

@@ -67,12 +67,12 @@ void Shell::configureFirewall() {
                             .getInterface()));
 
         // If we have IB, also add its interface as trusted
-        if (m_cluster->getOFED() != Cluster::OFED::None)
+        if (m_cluster->getOFED())
             runCommand(fmt::format(
                     "firewall-cmd --permanent --zone=trusted --change-interface={}"
                     , m_cluster->getHeadnode()
-                            .getConnection(Network::Profile::Application)
-                            .getInterface()));
+                                .getConnection(Network::Profile::Application)
+                                .getInterface()));
 
         runCommand("firewall-cmd --reload");
     }
@@ -260,19 +260,8 @@ void Shell::configureQueueSystem() {
 }
 
 void Shell::configureInfiniband() {
-    switch (m_cluster->getOFED()) {
-        case Cluster::OFED::None:
-            return;
-        case Cluster::OFED::Inbox:
-            runCommand("dnf -y groupinstall \"Infiniband Support\"");
-            break;
-        case Cluster::OFED::Mellanox:
-            /* TODO: Implement MLNX OFED support */
-            throw std::logic_error("MLNX OFED is not yet supported");
-        case Cluster::OFED::Oracle:
-            /* TODO: Implement Oracle RDMA release */
-            throw std::logic_error("Oracle RDMA release is not yet supported");
-    }
+    if (const auto& ofed = m_cluster->getOFED())
+        ofed->install();
 }
 
 /* TODO: Restrict by networks */
