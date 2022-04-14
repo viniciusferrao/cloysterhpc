@@ -92,11 +92,12 @@ public:
     const std::filesystem::path &getISOPath() const;
     void setISOPath(const std::filesystem::path &isoPath);
 
-    const std::vector<Node>& getNodes() const;
-    void addNode(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
-                 std::string_view mac, const std::string& address);
-    void addNode(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
-                 std::string_view mac, const std::string& address, BMC& bmc);
+    // TODO: Add std::optional to BMC with std::nullopt as default initializer
+    [[nodiscard]] const std::vector<Node>& getNodes() const;
+    void addNode(std::string_view hostname, OS& os, CPU& cpu,
+                 std::list<Connection>&& connections, BMC& bmc);
+    void addNode(std::string_view hostname, OS& os, CPU& cpu,
+                 std::list<Connection>&& connections);
 
 #ifdef _DEBUG_
     void printNetworks(const std::list<Network>&);

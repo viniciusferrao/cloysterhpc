@@ -61,7 +61,7 @@ private:
     struct in_addr m_gateway{};
     uint16_t m_vlan{};
     std::string m_domainName;
-    std::vector<struct in_addr> m_nameserver;
+    std::vector<struct in_addr> m_nameservers;
 
 public:
     Network();
@@ -76,28 +76,28 @@ public:
     [[nodiscard]] const Profile& getProfile () const;
     [[nodiscard]] const Type& getType () const;
 
-    const std::string getAddress() const;
+    [[nodiscard]] std::string getAddress() const;
     void setAddress(const std::string&);
     [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
-    const std::string getSubnetMask() const;
+    [[nodiscard]] std::string getSubnetMask() const;
     void setSubnetMask(const std::string&);
     [[nodiscard]] static std::string fetchSubnetMask(const std::string& interface);
 
-    const std::string getGateway() const;
+    [[nodiscard]] std::string getGateway() const;
     void setGateway(const std::string&);
     [[nodiscard]] static std::string fetchGateway(const std::string& interface);
 
-    const uint16_t& getVLAN() const;
-    void setVLAN(const uint16_t& vlan);
+    [[nodiscard]] std::uint16_t getVLAN() const;
+    void setVLAN(std::uint16_t vlan);
 
-    const std::string& getDomainName() const;
-    void setDomainName(const std::string&);
+    [[nodiscard]] const std::string& getDomainName() const;
+    void setDomainName(const std::string& domainName);
     [[nodiscard]] static std::string fetchDomainName();
 
-        std::vector<std::string> getNameserver() const;
-    void setNameserver(const std::vector<std::string>&);
-    [[nodiscard]] static std::vector<std::string> fetchNameserver();
+    [[nodiscard]] std::vector<std::string> getNameservers() const;
+    void setNameservers(const std::vector<std::string>& nameservers);
+    [[nodiscard]] static std::vector<std::string> fetchNameservers();
 
 #ifndef _NDEBUG_
     void dumpNetwork() const;

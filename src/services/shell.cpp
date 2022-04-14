@@ -158,7 +158,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 connection.getNetwork().cidr.at(
                         connection.getNetwork().getSubnetMask()),
                 connection.getNetwork().getGateway(),
-                fmt::join(connection.getNetwork().getNameserver(), " "),
+                fmt::join(connection.getNetwork().getNameservers(), " "),
                 connection.getNetwork().getDomainName()));
         runCommand(fmt::format(
                 "nmcli device connect {}", interface));

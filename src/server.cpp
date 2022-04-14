@@ -1,5 +1,15 @@
 #include "server.h"
 
+Server::Server(std::string_view hostname, OS& os, CPU& cpu,
+               std::list<Connection>&& connections, std::optional<BMC> bmc)
+               : m_os(os)
+               , m_cpu(cpu)
+               , m_connection(connections)
+               , m_bmc(bmc) {
+
+    setHostname(hostname);
+}
+
 const OS& Server::getOS() const noexcept {
     return m_os;
 }
@@ -14,7 +24,7 @@ const std::string& Server::getHostname() const noexcept {
 
 void Server::setHostname(const std::string& hostname) {
     if (hostname.size() > 63)
-        throw;
+        throw std::runtime_error("Hostname cannot be bigger than 63 characters");
 
 #if __cpp_lib_starts_ends_with >= 201711L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
@@ -26,14 +36,15 @@ void Server::setHostname(const std::string& hostname) {
 
     /* Check if string has only digits */
     if (std::regex_match(hostname, std::regex("^[0-9]+$")))
-        throw;
+        throw std::runtime_error("Hostname cannot contain only digits");
     /* Check if string is not only alphanumerics and - */
     if (!(std::regex_match(hostname, std::regex("^[A-Za-z0-9-]+$"))))
-        throw;
+        throw std::runtime_error("Hostname can only have alphanumerics");
 
     m_hostname = hostname;
 }
 
+// This overload is necessary for std::string_view compatibility
 void Server::setHostname(std::string_view hostname) {
     setHostname(std::string{hostname});
 }
@@ -45,14 +56,10 @@ const std::string& Server::getFQDN() const noexcept {
 /* TODO: Validate if FQDN is in right format */
 void Server::setFQDN(const std::string& fqdn) {
     if (fqdn.size() > 255)
-        throw;
+        throw std::runtime_error("FQDN cannot be bigger than 255 characters");
 
     m_fqdn = fqdn;
 }
-
-//const std::unique_ptr<Connection>& Server::getConnection() const {
-//    return m_externalConnection;
-//}
 
 const std::list<Connection>& Server::getConnections() const {
     return m_connection;

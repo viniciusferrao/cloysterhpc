@@ -54,7 +54,7 @@ void PresenterNetwork::createNetwork()
                 // Nameserver definitions
                 {Messages::Domain::name, Network::fetchDomainName()},
                 // TODO: Make it comma or space separated to easy the development
-                {Messages::Domain::servers, fmt::format("{}", Network::fetchNameserver()[0])}
+                {Messages::Domain::servers, fmt::format("{}", Network::fetchNameservers()[0])}
             });
 
     // TODO: Can we use move semantics?
@@ -73,7 +73,7 @@ void PresenterNetwork::createNetwork()
 
     // Domain Data
     m_network.setDomainName(networkDetails[i++].second);
-    m_network.setNameserver({networkDetails[i++].second}); // This is a std::array
+    m_network.setNameservers({networkDetails[i++].second}); // This is a std::array
 
     // Move the data
     m_model->addNetwork(std::move(m_network));

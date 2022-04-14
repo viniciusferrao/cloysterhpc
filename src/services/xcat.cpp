@@ -313,7 +313,7 @@ void XCAT::addNode(const Node& node) {
         , node.getHostname()
         , magic_enum::enum_name(node.getOS().getArch())
         , node.getConnection(Network::Profile::Management).getAddress()
-        , node.getConnection(Network::Profile::Management).getMAC()
+        , node.getConnection(Network::Profile::Management).getMAC().value()
     );
 
     if (const auto& bmc = node.getBMC())

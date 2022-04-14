@@ -41,13 +41,16 @@ Connection::Connection(const Network& network,
 
 Connection::Connection(const Network& network,
                        std::optional<std::string_view> interface,
-                       std::string_view mac, const std::string& address)
+                       std::optional<std::string_view> mac,
+                       const std::string& address)
                        : m_network(network) {
 
     if (interface.has_value())
         setInterface(interface.value());
 
-    setMAC(mac);
+    if (mac.has_value())
+        setMAC(mac.value());
+
     setAddress(address);
 
     if (network.getType() == Network::Type::Infiniband)
@@ -119,7 +122,7 @@ std::vector<std::string> Connection::fetchInterfaces() {
     return interfaces;
 }
 
-std::string_view Connection::getMAC() const {
+std::optional<std::string_view> Connection::getMAC() const {
     return m_mac;
 }
 

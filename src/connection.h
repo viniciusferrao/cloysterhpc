@@ -9,14 +9,23 @@
 #include <ifaddrs.h>
 
 /* Each server can have one and only one connection to a given network, although
- * it can have more than one address. This is standard TCP networking.
+ * it can have more than one address on the same interface. This may seem
+ * incorrect, but it is standard TCP networking.
+ *
+ * Therefore, every connection must have a const ref to a given network.
+ * Interface names and MAC addresses are always optional since we may be dealing
+ * with an DHCP network we aren't required to know which interface name exists
+ * on the other side. On other hand MAC addresses may be simply unavailable if
+ * a given Connection is from Infiniband for example, and we also don't need to
+ * know MAC addresses in advance if the interface will be configured with static
+ * IP addresses
  */
 class Connection {
 private:
     const Network& m_network;
 
     std::optional<std::string> m_interface;
-    std::string m_mac;
+    std::optional<std::string> m_mac;
     // TODO: Use std::vector to support more than one IP address per interface
     //std::vector<struct in_addr> m_address;
     struct in_addr m_address {};
@@ -34,14 +43,14 @@ public:
                const std::string& address);
     Connection(const Network& network,
                std::optional<std::string_view> interface,
-               std::string_view mac, const std::string& address);
+               std::optional<std::string_view> mac, const std::string& address);
 
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
     [[nodiscard]] std::optional<std::string_view> getInterface() const;
     void setInterface(std::string_view interface);
     [[nodiscard]] static std::vector<std::string> fetchInterfaces();
 
-    [[nodiscard]] std::string_view getMAC() const;
+    [[nodiscard]] std::optional<std::string_view> getMAC() const;
     void setMAC(std::string_view mac);
 
     [[nodiscard]] std::uint16_t getMTU() const;

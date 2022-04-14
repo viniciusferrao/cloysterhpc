@@ -241,19 +241,21 @@ const std::vector<Node>& Cluster::getNodes() const {
     return m_nodes;
 }
 
-void Cluster::addNode(OS& os, CPU& cpu, std::string_view hostname,
-                      const Network& network,
-                      std::string_view mac,
-                      const std::string& address) {
-    m_nodes.emplace_back(os, cpu, hostname, network, mac, address);
+void Cluster::addNode(std::string_view hostname,
+                      OS& os,
+                      CPU& cpu,
+                      std::list<Connection>&& connections) {
+
+    m_nodes.emplace_back(hostname, os, cpu, std::move(connections));
 }
 
-void Cluster::addNode(OS& os, CPU& cpu, std::string_view hostname,
-                      const Network& network,
-                      std::string_view mac,
-                      const std::string& address,
+void Cluster::addNode(std::string_view hostname,
+                      OS& os,
+                      CPU& cpu,
+                      std::list<Connection>&& connections,
                       BMC& bmc) {
-    m_nodes.emplace_back(os, cpu, hostname, network, mac, address, bmc);
+
+    m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
 #ifdef _DEBUG_
@@ -280,7 +282,7 @@ void Cluster::printNetworks(const std::list<Network>& networkType)
         j = 0;
         for (auto const &nameserver: network.getNameserver()) {
 #else
-        for (size_t j = 0; auto const &nameserver: network.getNameserver()) {
+        for (size_t j = 0; auto const &nameserver: network.getNameservers()) {
 #endif
             LOG_TRACE("Nameserver [{}]: {}", j++, nameserver);
         }
@@ -386,10 +388,19 @@ void Cluster::fillTestData () {
     CPU nodeCPU(2, 4, 2);
 
     // TODO: Pass network connection as object
-    addNode(nodeOS, nodeCPU, "n01", getNetwork(Network::Profile::Management), "00:0c:29:9b:0c:75", "172.26.0.1");
-    addNode(nodeOS, nodeCPU, "n02", getNetwork(Network::Profile::Management), "de:ad:be:ff:00:00", "172.26.0.2");
+    std::list<Connection> connections1{
+        {getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75", "172.26.0.1" },
+        {getNetwork(Network::Profile::Application), "ens256", {}, "172.27.0.1" }
+    };
 
-//    Connection connection(getNetwork(Network::Profile::Application)),
+    std::list<Connection> connections2{
+        {getNetwork(Network::Profile::Management), {}, "de:ad:be:ff:00:00", "172.26.0.2" }
+    };
+
+    BMC bmc{"172.25.0.2", "ADMIN", "ADMIN"};
+
+    addNode("n01", nodeOS, nodeCPU, std::move(connections1));
+    addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
 
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";
