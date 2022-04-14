@@ -38,14 +38,14 @@ private:
     void createDirectoryTree();
     void configureOpenHPC();
     void configureTimeService();
+    void configureInfiniband();
     void configureSLURM();
     void generateOtherPkgListFile();
     void generatePostinstallFile();
     void generateSynclistsFile();
     void configureOSImageDefinition();
     void customizeImage();
-    void addNode(std::string_view, std::string_view, std::string_view,
-                 std::string_view, const std::optional<BMC>& bmc);
+    void addNode(const Node& node);
     void generateOSImageName(ImageType, NodeType);
     void generateOSImagePath(ImageType, NodeType);
 
@@ -60,6 +60,7 @@ public:
     void addNodes();
     void setNodesImage();
     void setNodesBoot();
+    void resetNodes();
 
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };

@@ -84,7 +84,7 @@ void PresenterNetwork::createNetwork()
     // FIXME: Shouldn't m_network be unavailable after move? Is it being moved?
     LOG_TRACE("Added {} connection on headnode: {} -> {}",
               magic_enum::enum_name(m_network.getProfile()),
-              m_model->getHeadnode().getConnection(m_network.getProfile()).getInterface(),
+              m_model->getHeadnode().getConnection(m_network.getProfile()).getInterface().value(),
               m_model->getHeadnode().getConnection(m_network.getProfile()).getAddress()
     );
 }

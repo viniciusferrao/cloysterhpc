@@ -20,8 +20,13 @@
 #endif
 
 Connection::Connection(const Network& network)
-                       : m_network(network) {}
+                       : m_network(network) {
 
+    if (network.getType() == Network::Type::Infiniband)
+        setMTU(2044);
+}
+
+// TODO: Remove this constructor
 Connection::Connection(const Network& network,
                        const std::string& interface,
                        const std::string& address)
@@ -29,13 +34,33 @@ Connection::Connection(const Network& network,
 
     setInterface(interface);
     setAddress(address);
+
+    if (network.getType() == Network::Type::Infiniband)
+        setMTU(2044);
 }
 
-std::string Connection::getInterface() const {
+Connection::Connection(const Network& network,
+                       std::optional<std::string_view> interface,
+                       std::string_view mac, const std::string& address)
+                       : m_network(network) {
+
+    if (interface.has_value())
+        setInterface(interface.value());
+
+    setMAC(mac);
+    setAddress(address);
+
+    if (network.getType() == Network::Type::Infiniband)
+        setMTU(2044);
+}
+
+std::optional<std::string_view> Connection::getInterface() const {
     return m_interface;
 }
 
-void Connection::setInterface (const std::string& interface) {
+void Connection::setInterface (std::string_view interface) {
+    LOG_TRACE("Checking if interface {} exists", interface);
+
     if (interface == "lo")
         throw std::runtime_error("Cannot use the loopback interface");
 
@@ -94,11 +119,13 @@ std::vector<std::string> Connection::fetchInterfaces() {
     return interfaces;
 }
 
-const std::string& Connection::getMAC() const {
+std::string_view Connection::getMAC() const {
     return m_mac;
 }
 
-void Connection::setMAC(const std::string& mac) {
+void Connection::setMAC(std::string_view mac) {
+    LOG_TRACE("Checking MAC address: {}", mac);
+
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");
 
@@ -109,8 +136,9 @@ void Connection::setMAC(const std::string& mac) {
             "fA-F]{4}\\.[0-9a-fA-F]"
             "{4}\\.[0-9a-fA-F]{4})$");
 
-    if (regex_match(mac, pattern))
-        m_mac = boost::algorithm::to_lower_copy(mac);
+    // regex_match cannot work with std::string_view
+    if (std::string tempString{mac} ; regex_match(tempString, pattern))
+        m_mac = boost::algorithm::to_lower_copy(tempString);
     else
         throw std::runtime_error("Invalid MAC address");
 }
@@ -206,4 +234,22 @@ void Connection::setFQDN(const std::string& fqdn) {
 
 const Network& Connection::getNetwork() const {
     return m_network;
+}
+
+std::uint16_t Connection::getMTU() const {
+    return m_mtu;
+}
+
+void Connection::setMTU(std::uint16_t mtu) {
+    // RFC791 states that 576 would be the practical minimum for Internet (IPv4)
+    // networks, but we consider the rules for IPv6 here to keep compatibility.
+    // RFC2460 says that IPv6 requires a minimum of 1280 bytes.
+    //
+    // https://www.rfc-editor.org/rfc/rfc791
+    // https://www.rfc-editor.org/rfc/rfc2460
+    // TODO: Check if Infiniband networks have a minimum requirement
+    if (mtu < 1280)
+        throw std::runtime_error("MTU size must be higher or equal to 1280");
+
+    m_mtu = mtu;
 }

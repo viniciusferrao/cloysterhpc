@@ -64,7 +64,7 @@ void Shell::configureFirewall() {
                 "firewall-cmd --permanent --zone=trusted --change-interface={}"
                 , m_cluster->getHeadnode()
                             .getConnection(Network::Profile::Management)
-                            .getInterface()));
+                            .getInterface().value()));
 
         // If we have IB, also add its interface as trusted
         if (m_cluster->getOFED())
@@ -72,7 +72,7 @@ void Shell::configureFirewall() {
                     "firewall-cmd --permanent --zone=trusted --change-interface={}"
                     , m_cluster->getHeadnode()
                                 .getConnection(Network::Profile::Application)
-                                .getInterface()));
+                                .getInterface().value()));
 
         runCommand("firewall-cmd --reload");
     }
@@ -137,7 +137,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
         if (connection.getNetwork().getProfile() == Network::Profile::External)
             continue;
 
-        auto interface = connection.getInterface();
+        auto interface = connection.getInterface().value();
 
         runCommand(fmt::format(
                 "nmcli device set {} managed yes", interface));
@@ -145,7 +145,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 "nmcli device set {} autoconnect yes", interface));
         runCommand(fmt::format(
                 "nmcli connection add con-name {} ifname {} type {} "
-                "mtu 1500 ipv4.method manual ipv4.address {}/{} "
+                "mtu {} ipv4.method manual ipv4.address {}/{} "
                 "ipv4.gateway {} ipv4.dns \"{}\" "
                 "ipv4.dns-search {} ipv6.method disabled",
                 magic_enum::enum_name(
@@ -153,6 +153,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 interface,
                 magic_enum::enum_name(
                         connection.getNetwork().getType()),
+                connection.getMTU(),
                 connection.getAddress(),
                 connection.getNetwork().cidr.at(
                         connection.getNetwork().getSubnetMask()),
@@ -351,4 +352,5 @@ void Shell::install() {
     provisioner->addNodes();
     provisioner->setNodesImage();
     provisioner->setNodesBoot();
+    provisioner->resetNodes();
 }

@@ -19,12 +19,13 @@
 class Node : public Server {
 public:
     Node(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
-         const std::string& address, const std::string& mac, std::optional<BMC> bmc = std::nullopt);
+         std::string_view mac, const std::string& address, std::optional<BMC> bmc = std::nullopt);
 
-    // FIXME: We need to rely on the definition on base class
-    [[nodiscard]] const std::list<Connection> &getConnection() const noexcept;
-    void addConnection(const Network& network, const std::string& address,
-                       const std::string& mac) override;
+    Node(OS& os, CPU& cpu, std::string_view hostname,
+         std::list<Connection>&& connections, std::optional<BMC> bmc = std::nullopt);
+
+//    // FIXME: We need to rely on the definition on base class
+//    [[nodiscard]] const std::list<Connection> &getConnection() const noexcept;
 };
 
 #endif // CLOYSTER_NODE_H

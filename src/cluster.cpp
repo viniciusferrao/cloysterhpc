@@ -243,17 +243,17 @@ const std::vector<Node>& Cluster::getNodes() const {
 
 void Cluster::addNode(OS& os, CPU& cpu, std::string_view hostname,
                       const Network& network,
-                      const std::string& address,
-                      const std::string& mac) {
-//    m_nodes.emplace_back(os, std::optional<BMC>(), name, network, address, mac);
-    m_nodes.emplace_back(os, cpu, hostname, network, address, mac);
+                      std::string_view mac,
+                      const std::string& address) {
+    m_nodes.emplace_back(os, cpu, hostname, network, mac, address);
 }
 
 void Cluster::addNode(OS& os, CPU& cpu, std::string_view hostname,
                       const Network& network,
+                      std::string_view mac,
                       const std::string& address,
-                      const std::string& mac, BMC& bmc) {
-    m_nodes.emplace_back(os, cpu, hostname, network, address, mac, bmc);
+                      BMC& bmc) {
+    m_nodes.emplace_back(os, cpu, hostname, network, mac, address, bmc);
 }
 
 #ifdef _DEBUG_
@@ -336,7 +336,7 @@ void Cluster::fillTestData () {
         fmt::format("{0}.{1}", this->m_headnode.getHostname(),
                     getDomainName()));
 
-    OFED ofed(OFED::Kind::Inbox);
+    setOFED(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("Execution");
 
@@ -346,6 +346,9 @@ void Cluster::fillTestData () {
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
                "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
                { "172.26.0.1" });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+               "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
+               { "172.27.255.254" });
 #if 0
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
                "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
@@ -362,9 +365,13 @@ void Cluster::fillTestData () {
 #endif
 
     m_headnode.addConnection(getNetwork(Network::Profile::External),
-                             "ens160", "172.16.144.50");
+                             "ens160", "de:ad:be:ff:00:00", "172.16.144.50");
     m_headnode.addConnection(getNetwork(Network::Profile::Management),
-                             "ens224", "172.26.255.254");
+                             "ens224", "de:ad:be:ff:00:01", "172.26.255.254");
+    // It's ethernet, we know, but consider as Infiniband
+    m_headnode.addConnection(getNetwork(Network::Profile::Application),
+                             "ens256", "de:ad:be:ff:00:02", "172.27.255.254");
+
 #if 0
     m_headnode.addConnection(getNetwork(Network::Profile::Service),
                              "ens224", "192.168.22.8");
@@ -377,8 +384,12 @@ void Cluster::fillTestData () {
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
               OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     CPU nodeCPU(2, 4, 2);
-    addNode(nodeOS, nodeCPU, "n01", getNetwork(Network::Profile::Management), "172.26.0.1", "00:0c:29:9b:0c:75");
-    addNode(nodeOS, nodeCPU, "n02", getNetwork(Network::Profile::Management), "172.26.0.2", "de:ad:be:ff:00:00");
+
+    // TODO: Pass network connection as object
+    addNode(nodeOS, nodeCPU, "n01", getNetwork(Network::Profile::Management), "00:0c:29:9b:0c:75", "172.26.0.1");
+    addNode(nodeOS, nodeCPU, "n02", getNetwork(Network::Profile::Management), "de:ad:be:ff:00:00", "172.26.0.2");
+
+//    Connection connection(getNetwork(Network::Profile::Application)),
 
     /* Bad and old data */
     xCATDynamicRangeStart = "192.168.20.1";

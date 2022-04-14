@@ -4,23 +4,23 @@
 #include "node.h"
 
 Node::Node(OS& os, CPU& cpu, std::string_view hostname, const Network& network,
-           const std::string& address, const std::string& mac,
-           std::optional<BMC> bmc) {
+           std::string_view mac, const std::string& address, std::optional<BMC> bmc) {
     setOS(os);
     setCPU(cpu);
     setHostname(hostname);
-    addConnection(network, address, mac);
+    addConnection(network, {}, mac, address);
     m_bmc = bmc;
 }
 
-const std::list<Connection>& Node::getConnection() const noexcept {
-    return m_connection;
+Node::Node(OS& os, CPU& cpu, std::string_view hostname,
+           std::list<Connection>&& connections, std::optional<BMC> bmc) {
+    setOS(os);
+    setCPU(cpu);
+    setHostname(hostname);
+    m_connection = std::move(connections);
+    m_bmc = bmc;
 }
 
-void Node::addConnection(const Network& network,
-                         const std::string& address,
-                         const std::string& mac) {
-    m_connection.emplace_back(network);
-    m_connection.back().setMAC(mac);
-    m_connection.back().setAddress(address);
-}
+//const std::list<Connection>& Node::getConnection() const noexcept {
+//    return m_connection;
+//}

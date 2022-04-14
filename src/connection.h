@@ -15,11 +15,13 @@ class Connection {
 private:
     const Network& m_network;
 
-    std::string m_interface;
+    std::optional<std::string> m_interface;
     std::string m_mac;
     // TODO: Use std::vector to support more than one IP address per interface
     //std::vector<struct in_addr> m_address;
     struct in_addr m_address {};
+    // TODO: MTU is a network parameter
+    std::uint16_t m_mtu {1500};
 
     // TODO: This may not be here
     std::string m_hostname; // Remove
@@ -28,15 +30,22 @@ private:
 public:
     Connection() = delete;
     explicit Connection(const Network& network);
-    Connection(const Network& network, const std::string&, const std::string&);
+    Connection(const Network& network, const std::string& interface,
+               const std::string& address);
+    Connection(const Network& network,
+               std::optional<std::string_view> interface,
+               std::string_view mac, const std::string& address);
 
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
-    [[nodiscard]] std::string getInterface() const;
-    void setInterface(const std::string&);
+    [[nodiscard]] std::optional<std::string_view> getInterface() const;
+    void setInterface(std::string_view interface);
     [[nodiscard]] static std::vector<std::string> fetchInterfaces();
 
-    [[nodiscard]] const std::string &getMAC() const;
-    void setMAC(const std::string&);
+    [[nodiscard]] std::string_view getMAC() const;
+    void setMAC(std::string_view mac);
+
+    [[nodiscard]] std::uint16_t getMTU() const;
+    void setMTU(std::uint16_t mtu);
 
     [[nodiscard]] const std::string getAddress() const;
     void setAddress(const std::string&);

@@ -39,13 +39,14 @@ public:
     //const std::unique_ptr<Connection>& getConnection() const;
     [[nodiscard]] const std::list<Connection>& getConnections() const;
     void addConnection(const Network& network);
-    virtual void addConnection(const Network& network,
-                               const std::string& interface,
-                               const std::string& address);
+    void addConnection(const Network& network,
+                       std::optional<std::string_view> interface,
+                       std::string_view mac,
+                       const std::string& address);
     void addConnection(Connection&& connection);
 
-    //[[nodiscard]] const Connection& getConnection(Network::Profile) const;
-    [[nodiscard]] Connection& getConnection(Network::Profile);
+    [[nodiscard]] const Connection& getConnection(Network::Profile) const;
+//    [[nodiscard]] Connection& getConnection(Network::Profile);
 
     [[nodiscard]] const CPU& getCPU() const noexcept;
     void setCPU(const CPU& cpu);

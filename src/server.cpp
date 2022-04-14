@@ -63,10 +63,11 @@ void Server::addConnection(const Network& network) {
 }
 
 void Server::addConnection(const Network& network,
-                             const std::string& interface,
-                             const std::string& address) {
+                           std::optional<std::string_view>  interface,
+                           std::string_view mac,
+                           const std::string& address) {
 
-    m_connection.emplace_back(network, interface, address);
+    m_connection.emplace_back(network, interface, mac, address);
 }
 
 void Server::addConnection(Connection&& connection) {
@@ -81,16 +82,8 @@ void Server::addConnection(Connection&& connection) {
 //    throw; /* Cannot find a connection with profile */
 //}
 
-Connection& Server::getConnection(Network::Profile profile) {
-//    auto it = std::find_if(
-//            m_connection.begin(), m_connection.end(),
-//            [&](const Connection& x){
-//        return x.getNetwork().getProfile() == profile;
-//    });
-//
-//    return *it;
-
-    for (auto& connection : m_connection) {
+const Connection& Server::getConnection(Network::Profile profile) const {
+    for (const auto& connection : m_connection) {
         if (connection.getNetwork().getProfile() == profile) {
             return connection;
         }

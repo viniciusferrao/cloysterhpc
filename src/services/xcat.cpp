@@ -37,7 +37,7 @@ void XCAT::installPackages () {
 void XCAT::setup() {
     setDHCPInterfaces(m_cluster->getHeadnode()
                                 .getConnection(Network::Profile::Management)
-                                .getInterface());
+                                .getInterface().value());
     setDomain(m_cluster->getDomainName());
 }
 
@@ -102,6 +102,26 @@ void XCAT::configureTimeService() {
                       .getAddress()));
 }
 
+void XCAT::configureInfiniband() {
+    if (const auto& ofed = m_cluster->getOFED())
+        switch (ofed->getKind()) {
+            case OFED::Kind::Inbox:
+                m_stateless.otherpkgs.emplace_back("@infiniband");
+
+                break;
+
+            case OFED::Kind::Mellanox:
+                throw std::logic_error("MLNX OFED is not yet supported");
+
+                break;
+
+            case OFED::Kind::Oracle:
+                throw std::logic_error("Oracle RDMA release is not yet supported");
+
+                break;
+        }
+}
+
 void XCAT::configureSLURM() {
     m_stateless.otherpkgs.emplace_back("ohpc-slurm-client");
 
@@ -114,8 +134,13 @@ void XCAT::configureSLURM() {
                       .getAddress()));
 
     // TODO: Enable "if" disallow login on compute nodes
+    // TODO: Consider pam_slurm_adopt.so
+    //  * https://github.com/openhpc/ohpc/issues/1022
+    //  * https://slurm.schedmd.com/pam_slurm_adopt.html
     m_stateless.postinstall.emplace_back(
-            "echo \"account required pam_slurm.so\" >> "
+            "echo \"# Block queue evasion\" >> "
+            "$IMG_ROOTIMGDIR/etc/pam.d/sshd\n"
+            "echo \"account    required     pam_slurm.so\" >> "
             "$IMG_ROOTIMGDIR/etc/pam.d/sshd\n"
             "\n");
 
@@ -126,7 +151,7 @@ void XCAT::configureSLURM() {
             "\n");
 
     m_stateless.synclists.emplace_back(
-            // Stateless config
+            // Stateless config: we don't need slurm.conf to be synced.
             //"/etc/slurm/slurm.conf -> /etc/slurm/slurm.conf\n"
             "/etc/munge/munge.key -> /etc/munge/munge.key\n"
             "\n");
@@ -267,6 +292,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType) {
     createDirectoryTree();
     configureOpenHPC();
     configureTimeService();
+    configureInfiniband();
     configureSLURM();
 
     generateOtherPkgListFile();
@@ -280,30 +306,40 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType) {
     packimage();
 }
 
-void XCAT::addNode(std::string_view hostname, std::string_view arch,
-                   std::string_view address, std::string_view mac,
-                   const std::optional<BMC>& bmc) {
-
+void XCAT::addNode(const Node& node) {
     std::string command = fmt::format(
-            "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
-            "netboot=xnba", hostname, arch, address, mac);
+        "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
+        "netboot=xnba "
+        , node.getHostname()
+        , magic_enum::enum_name(node.getOS().getArch())
+        , node.getConnection(Network::Profile::Management).getAddress()
+        , node.getConnection(Network::Profile::Management).getMAC()
+    );
 
-    if (bmc.has_value())
-        command += fmt::format(" bmc={} bmcusername={} bmcpassword={} mgt=ipmi "
-                               "cons=ipmi serialport=0 serialspeed=115200",
-                               bmc.value().m_address, bmc.value().m_username,
-                               bmc.value().m_password);
+    if (const auto& bmc = node.getBMC())
+        command += fmt::format(
+            "bmc={} bmcusername={} bmcpassword={} mgt=ipmi "
+            "cons=ipmi serialport=0 serialspeed=115200 ",
+            bmc->m_address, bmc->m_username, bmc->m_password
+        );
+
+    // FIXME:
+    //  *********************************************************************
+    //  * This is __BAD__ implementation. We cannot use try/catch as return *
+    //  *********************************************************************
+    try {
+        command += fmt::format(
+            "nicips.ib0={} nictypes.ib0=\"InfiniBand\" nicnetworks.ib0=ib0 "
+            , node.getConnection(Network::Profile::Application).getAddress()
+        );
+    } catch (...) {}
 
     cloyster::runCommand(command);
 }
 
 void XCAT::addNodes() {
     for (const auto& node : m_cluster->getNodes())
-        addNode(node.getHostname(),
-                magic_enum::enum_name(node.getOS().getArch()),
-                node.getConnection().front().getAddress(),
-                node.getConnection().front().getMAC(),
-                node.getBMC());
+        addNode(node);
 
     // TODO: Create separate functions
     cloyster::runCommand("makehosts");
@@ -322,6 +358,10 @@ void XCAT::setNodesBoot() {
     // TODO: Do proper checking if a given node have BMC support, and then issue
     //  rsetboot only on the compatible machines instead of running in compute.
     cloyster::runCommand("rsetboot compute net");
+}
+
+void XCAT::resetNodes() {
+    cloyster::runCommand("rpower compute reset");
 }
 
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType) {
