@@ -4,6 +4,7 @@
 
 #include "newt.h"
 
+#include "../functions.h"
 #include <cstring> /* strlen() */
 #include <cstdio> /* sprintf() */
 #include <newt.h>
@@ -60,6 +61,65 @@ bool Newt::hasEmptyField(const struct newtWinEntry *entries) {
     }
 
     return false;
+}
+
+/**
+  * Show a progress message dialog
+  * @param title
+  * @param message
+  * @param command
+  * @param fPercent A function to transform a line
+  * into a percent (a 0 to 100 value)
+  */
+bool Newt::progressMenu(const char* title,
+                  const char* message,
+                  cloyster::CommandProxy&& cmd,
+                  std::function<double(std::string)> fPercent)
+{
+
+    std::string text;
+
+    auto* form = newtForm(nullptr, nullptr, 0);
+
+    auto* progress = newtScale(10, -1, 61, 1000);
+    auto* label = newtTextbox(-1, -1, 61, 1, NEWT_TEXTBOX_WRAP);
+    newtTextboxSetText(label, text.c_str());
+
+    char* dtitle = strdup(title);
+
+    newtGrid grid = newtCreateGrid(1, 3);
+    newtComponent b1;
+    newtGrid buttonGrid = newtButtonBar(const_cast<char*>(TUIText::Buttons::cancel), &b1, NULL);
+    newtGridSetField(grid, 0, 0, NEWT_GRID_COMPONENT, progress,
+                     1, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX);
+    newtGridSetField(grid, 0, 1, NEWT_GRID_COMPONENT, label,
+                     1, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX | NEWT_GRID_FLAG_GROWY);
+    newtGridSetField(grid, 0, 2, NEWT_GRID_SUBGRID, buttonGrid,
+                     0, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX);
+    newtGridWrappedWindow(grid, dtitle);
+
+    newtFormAddComponents(form, progress, label, b1,  nullptr);
+    newtFormWatchFd(form, cmd.pipe_stream.pipe().native_source(), NEWT_FD_READ);
+    newtScaleSet(progress, 0);
+    newtDrawForm(form);
+
+    newtExitStruct es = {};
+    newtFormRun(form, &es);
+    while (es.reason == 2) {
+
+        auto last_line = cmd.getline();
+        if (!last_line)
+            break;
+
+        newtTextboxSetText(label, last_line->c_str());
+        newtScaleSet(progress, unsigned(fPercent(*last_line) * 10));
+
+        newtFormRun(form, &es);
+    }
+
+    newtFormDestroy(form);
+    return es.u.co != b1;
+
 }
 
 void Newt::helpMessage (const char* message) {

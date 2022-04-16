@@ -15,6 +15,7 @@
 #include <boost/lexical_cast.hpp>
 #include "view.h"
 #include "../services/log.h"
+#include "../functions.h"
 
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
@@ -205,6 +206,19 @@ public:
 #endif
         __builtin_unreachable();
     }
+
+    /**
+     * Show a progress message dialog
+     * @param title
+     * @param message
+     * @param command
+     * @param fPercent A function to transform a line
+     * into a percent (a 0 to 100 value)
+     */
+    bool progressMenu(const char* title,
+                      const char* message,
+                      cloyster::CommandProxy&&,
+                      std::function<double(std::string)> fPercent);
 
     // TODO:
     //  * Add C++20 concepts; limit by some types.

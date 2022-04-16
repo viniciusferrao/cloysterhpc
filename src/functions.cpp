@@ -93,6 +93,22 @@ int parseArguments(int argc, char **argv) {
 #endif
 }
 
+CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
+{
+    if (!cloyster::dryRun || overrideDryRun) {
+        LOG_TRACE("Running command: {}", command);
+        boost::process::ipstream pipe_stream;
+        boost::process::child child(command, boost::process::std_out > pipe_stream);
+
+        return CommandProxy{.valid = true,
+                            .child = std::move(child),
+                            .pipe_stream = std::move(pipe_stream)};
+    }
+
+    return CommandProxy{};
+}
+
+
 // FIXME: Maybe std::optional here is irrelevant? Look at the next overload.
 int runCommand(const std::string& command,
                //std::optional<std::list<std::string>>& output,

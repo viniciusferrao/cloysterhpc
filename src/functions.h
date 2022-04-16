@@ -6,8 +6,42 @@
 #include <vector>
 #include <list>
 #include <filesystem>
+#include <boost/process/pipe.hpp>
+#include <boost/process/child.hpp>
 
 namespace cloyster {
+
+
+/**
+ * A command proxy, to us to be able to get the
+ * command output while the command is running
+ *
+ * We will use this in the progress dialog
+ */
+struct CommandProxy {
+    bool valid = false;
+    boost::process::child child;
+    boost::process::ipstream pipe_stream;
+
+    std::optional<std::string> getline() {
+        if (!valid)
+            return std::nullopt;
+
+        std::string line;
+
+        while (pipe_stream.good()) {
+            if (std::getline(pipe_stream, line)) {
+                return std::make_optional(line);
+            }
+        }
+
+        if (!pipe_stream.good()) {
+            this->valid = false;
+        }
+
+        return std::nullopt;
+    }
+};
 
 // Globals
 extern bool dryRun;
@@ -22,6 +56,9 @@ int runCommand(const std::string& command,
                bool overrideDryRun = false);
 int runCommand(const std::string& command,
                bool overrideDryRun = false);
+
+CommandProxy runCommandIter(const std::string& command,
+                            bool overrideDryRun = false);
 
 /* environment variables helper functions */
 std::string getEnvironmentVariable(const std::string&);
