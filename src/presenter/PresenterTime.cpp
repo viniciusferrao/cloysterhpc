@@ -25,20 +25,18 @@ PresenterTime::PresenterTime(
     LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone());
 
     // Timeserver settings
-    // FIXME: Fix the interface hack to show only one time "time server"
+    // FIXME: We left std::to_array if we want to manage the input on the view,
+    //        making setTimeservers a little clunky.
     auto timeservers = std::to_array<
             std::pair<std::string, std::string>>({
-                 {Messages::Timeservers::field, "0.br.pool.ntp.org"},
-                 {"", "1.br.pool.ntp.org"},
-                 {"", "2.br.pool.ntp.org"}
+                 {Messages::Timeservers::field, "0.br.pool.ntp.org"}
             });
 
-    // TODO: Set timeservers
     timeservers = m_view->fieldMenu(Messages::title,
                                     Messages::Timeservers::question,
                                     timeservers,
                                     Messages::Timeservers::help);
 
-//  m_model->getTimezone().setTimeservers(timeservers);
-//  LOG_INFO("Timeservers set to {}", m_model->getTimezone().getTimeservers());
+    m_model->getTimezone().setTimeservers(timeservers[0].second);
+    LOG_INFO("Timeservers set to {}", fmt::join(m_model->getTimezone().getTimeservers(), ", "));
 }

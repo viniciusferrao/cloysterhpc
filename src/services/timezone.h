@@ -12,6 +12,7 @@ class Timezone {
 private:
     std::string m_timezone;
     std::list<std::string> m_availableTimezones;
+    // TODO: IP/hostname parsing
     std::vector<std::string> m_timeservers;
 
 public:
@@ -26,6 +27,7 @@ public:
     std::list<std::string> fetchAvailableTimezones();
 
     void setTimeservers(const std::vector<std::string>& timeservers);
+    void setTimeservers(const std::string& timeservers);
     std::vector<std::string> getTimeservers();
 };
 

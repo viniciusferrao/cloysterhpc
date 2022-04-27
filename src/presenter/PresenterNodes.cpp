@@ -51,16 +51,19 @@ PresenterNodes::PresenterNodes(
     m_model->setISOPath(fields[i++].second);
 
     // Number of nodes
-    // TODO: Do something (set) the information acquired
+    // TODO: Set racks and startNumber to create things like: r01n01
     auto nodes = std::to_array<
             std::pair<std::string, std::string>>({
-                 {Messages::Quantity::racks, "2"},
+            //     {Messages::Quantity::racks, "2"},
                  {Messages::Quantity::nodes, "5"},
-                 {Messages::Quantity::startNumber, "7"}
+            //     {Messages::Quantity::startNumber, "7"}
             });
 
-    m_view->fieldMenu(Messages::title,
-                      Messages::Quantity::question,
-                      nodes,
-                      Messages::Quantity::help);
+    i = 0;
+    nodes = m_view->fieldMenu(Messages::title,
+                              Messages::Quantity::question,
+                              nodes,
+                              Messages::Quantity::help);
+
+    m_model->nodeQuantity = boost::lexical_cast<std::size_t>(nodes[i++].second);
 }

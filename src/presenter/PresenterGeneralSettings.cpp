@@ -20,7 +20,7 @@ PresenterGeneralSettings::PresenterGeneralSettings(
     generalSettings = m_view->fieldMenu(Messages::title, Messages::General::question,
                                         generalSettings, Messages::General::help);
 
-    std::size_t i {0};
+    std::size_t i{0};
     m_model->setName(generalSettings[i++].second);
     LOG_INFO("Set cluster name: {}", m_model->getName());
 

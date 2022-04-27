@@ -38,6 +38,7 @@ public:
     void setHostname(const std::string& hostname);
     void setHostname(std::string_view hostname);
 
+    // TODO: FQDN should be optional if the domain isn't available
     [[nodiscard]] const std::string& getFQDN() const noexcept;
     void setFQDN(const std::string& fqdn);
 

@@ -44,7 +44,7 @@ PresenterMailSystem::PresenterMailSystem(
                                            fields,
                                            Messages::Relay::help);
 
-                std::size_t i {0};
+                std::size_t i{0};
                 mailSystem.setHostname(fields[i++].second);
                 mailSystem.setPort(boost::lexical_cast<uint16_t>(fields[i++].second));
 

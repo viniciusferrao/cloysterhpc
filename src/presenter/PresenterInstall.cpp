@@ -25,7 +25,7 @@ PresenterInstall::PresenterInstall(std::unique_ptr<Cluster>& model,
     Call<PresenterInstructions>();
 #endif
 
-#if 0 // Set general settings
+#if 1 // Set general settings
     Call<PresenterGeneralSettings>();
 #endif
 

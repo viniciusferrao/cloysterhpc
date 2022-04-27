@@ -21,9 +21,10 @@ PresenterHostId::PresenterHostId(
                                             Messages::help);
 
     m_model->getHeadnode().setHostname(answers[0].second);
-    LOG_TRACE("Returned hostname: {}", answers[0].second);
-    LOG_ASSERT(answers[0].second == m_model->getHeadnode().getHostname(),
-               "Failed setting hostname");
+    // FIXME: This assert never happens since the setter may throw
+//    LOG_TRACE("Returned hostname: {}", answers[0].second);
+//    LOG_ASSERT(answers[0].second == m_model->getHeadnode().getHostname(),
+//               "Failed setting hostname");
 
     m_model->setDomainName(answers[1].second);
     LOG_TRACE("Hostname set to: {}", m_model->getHeadnode().getHostname());

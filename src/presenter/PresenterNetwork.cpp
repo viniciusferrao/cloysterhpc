@@ -10,7 +10,7 @@
 //  * Lifecycle may be a problem: what happens if any function throws after
 //  adding the Network or Connection? A ghost object will exist without proper
 //  data.
-//  * If an exception is thrown inside the constructor, the destruction will not
+//  * If an exception is thrown inside the constructor, the destructor will not
 //  be called, leaving garbage on the model.
 //  * Try and catch blocks should be added to avoid all those conditions.
 //
@@ -34,6 +34,13 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
     LOG_TRACE("Added connection to {} network",
               magic_enum::enum_name(profile));
 
+    // TODO: This should be on the header and be constexpr (if possible)
+    m_view->message(Messages::title, fmt::format(
+            "We will now ask questions about your {} ({}) network interface",
+            magic_enum::enum_name(profile),
+            magic_enum::enum_name(type)).c_str()
+            );
+
     createNetwork();
 }
 
@@ -53,8 +60,10 @@ void PresenterNetwork::createNetwork()
                 {Messages::IP::gateway, Network::fetchGateway(interface)},
                 // Nameserver definitions
                 {Messages::Domain::name, Network::fetchDomainName()},
-                // TODO: Make it comma or space separated to easy the development
-                {Messages::Domain::servers, fmt::format("{}", Network::fetchNameservers()[0])}
+                {Messages::Domain::servers,
+                        fmt::format("{}",
+                                    fmt::join(Network::fetchNameservers(),
+                                              ", "))}
             });
 
     // TODO: Can we use move semantics?
@@ -84,7 +93,12 @@ void PresenterNetwork::createNetwork()
     // FIXME: Shouldn't m_network be unavailable after move? Is it being moved?
     LOG_TRACE("Added {} connection on headnode: {} -> {}",
               magic_enum::enum_name(m_network.getProfile()),
-              m_model->getHeadnode().getConnection(m_network.getProfile()).getInterface().value(),
-              m_model->getHeadnode().getConnection(m_network.getProfile()).getAddress()
+              m_model->getHeadnode()
+                      .getConnection(m_network.getProfile())
+                      .getInterface()
+                      .value(),
+              m_model->getHeadnode()
+                      .getConnection(m_network.getProfile())
+                      .getAddress()
     );
 }

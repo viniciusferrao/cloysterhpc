@@ -20,37 +20,29 @@
 #endif
 
 // Globals definition
-bool cloyster::dryRun = true;
+bool cloyster::dryRun = false;
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
     Log::init();
     LOG_INFO("{} Started", productName);
 
-    int rc; /* return code */
-
-    //Cluster* model = new Cluster();
     auto model = std::make_unique<Cluster>();
 
 #ifdef _DEBUG_
-    model->fillTestData();
+    //model->fillTestData();
 #endif
 
-    //View* view = new Newt();
-    //auto view = std::make_unique<Newt>();
-
-    //PresenterInstall* presenter = new PresenterInstall(model, view);
-    //auto presenter = std::make_unique<PresenterInstall>(model, view);
+    auto view = std::make_unique<Newt>();
+    auto presenter = std::make_unique<PresenterInstall>(model, view);
 
 #ifdef _DEBUG_
     model->printData();
 #endif
 
-    //Execution* engine = new Shell();
-    //cloyster::runCommand("ls -la");
+    LOG_TRACE("Starting execution engine");
     std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
     executionEngine->install();
-    //delete engine;
 
 #if 0 /* Porting TerminalUI */
     /* .conf file manipulation */

@@ -57,6 +57,23 @@ void Timezone::setTimeservers(const std::vector<std::string>& timeservers) {
         m_timeservers.emplace_back(timeserver);
 }
 
+// TODO: Check for correctness in timeservers (use hostname/IP check)
+// std::stringstream does not support string_view
+void Timezone::setTimeservers(const std::string& timeservers) {
+    std::stringstream stream{timeservers};
+
+    while (stream.good()) {
+        std::string substring;
+        std::getline(stream, substring, ',');
+
+        // Remove spaces from substring
+        substring.erase(std::remove(
+                substring.begin(), substring.end(), ' '), substring.end());
+
+        m_timeservers.emplace_back(substring);
+    }
+}
+
 std::vector<std::string> Timezone::getTimeservers() {
     return m_timeservers;
 }

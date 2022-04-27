@@ -19,15 +19,16 @@ Newt::Newt()
     newtGetScreenSize(&m_cols, &m_rows);
     m_suggestedWidth = m_cols / 2;
     m_dataWidth = m_suggestedWidth * 2 / 3;
+
     // Line count: title, box top border, padding, text message (var),
     // padding (before list), padding (after list), button (4), padding,
     // box bottom border, shadow, status.
     m_maxListHeight = m_rows - 14;
 
-    /* Push the title to the top left corner */
+    // Push the title to the top left corner
     newtDrawRootText(0, 0, TUIText::title);
 
-    /* Add the default help line in the bottom */
+    // Add the default help line in the bottom
     newtPushHelpLine(TUIText::helpLine);
     newtRefresh();
 }

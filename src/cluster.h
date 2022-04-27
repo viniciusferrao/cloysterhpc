@@ -19,28 +19,27 @@ class Cluster {
 public:
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
     enum class Provisioner { xCAT };
-    enum class Directory { None, FreeIPA };
 
 private:
     std::string_view m_name;
     std::string_view m_companyName;
     std::string_view m_adminMail;
     Headnode m_headnode;
-    Provisioner m_provisioner;
+    Provisioner m_provisioner{Provisioner::xCAT};
     std::optional<OFED> m_ofed;
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};
     std::optional<Postfix> m_mailSystem{};
     std::vector<Node> m_nodes;
 
-    bool m_firewall{};
-    SELinuxMode m_selinux{}; /* Control nodes SELinux settings */
+    bool m_firewall{false};
+    SELinuxMode m_selinux{SELinuxMode::Disabled};
     Timezone m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
     std::list<Network> m_network;
 
-    bool m_updateSystem {};
+    bool m_updateSystem{false};
     std::filesystem::path m_isoPath;
 
 public:
@@ -104,16 +103,11 @@ public:
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */
-    std::string xCATDynamicRangeStart;
-    std::string xCATDynamicRangeEnd;
-    std::string directoryAdminPassword;
-    std::string directoryManagerPassword;
-    bool directoryDisableDNSSEC {};
+    std::size_t nodeQuantity;
     std::string nodePrefix;
-    size_t nodePadding;
+    std::size_t nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
-    bool remoteAccess {};
 
     //Cluster();
     //~Cluster();

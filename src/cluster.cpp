@@ -112,6 +112,11 @@ void Cluster::setDomainName(const std::string& domainName) {
         throw;
 
     m_domainName = domainName;
+
+    // Force FQDN update if domainName is changed:
+    m_headnode.setFQDN(fmt::format("{}.{}",
+                                   m_headnode.getHostname(),
+                                   m_domainName));
 }
 
 std::list<Network>& Cluster::getNetworks() {
@@ -305,22 +310,14 @@ void Cluster::printData () {
     printNetworks(m_network);
 
     LOG_TRACE("Provisioner: {}", static_cast<int>(getProvisioner()));
-
-    LOG_TRACE("xCATDynamicRangeStart: {}", xCATDynamicRangeStart);
-    LOG_TRACE("xCATDynamicRangeEnd: {}", xCATDynamicRangeEnd);
-
-    LOG_TRACE("Directory Admin Password: {}", directoryAdminPassword);
-    LOG_TRACE("Directory Manager Password: {}", directoryManagerPassword);
-    LOG_TRACE("Directory Disable DNSSEC: {}", (directoryDisableDNSSEC ? "true" : "false"));
-
-    LOG_TRACE("nodePrefix: {}", nodePrefix);
-    LOG_TRACE("nodePadding: {}", nodePadding);
-    LOG_TRACE("nodeStartIP: {}", nodeStartIP);
-    LOG_TRACE("nodeRootPassword: {}", nodeRootPassword);
+//    LOG_TRACE("nodePrefix: {}", nodePrefix);
+//    LOG_TRACE("nodePadding: {}", nodePadding);
+//    LOG_TRACE("nodeStartIP: {}", nodeStartIP);
+//    LOG_TRACE("nodeRootPassword: {}", nodeRootPassword);
     LOG_TRACE("nodeISOPath: {}", getISOPath().string());
 
     LOG_TRACE("Update system: {}", (isUpdateSystem() ? "true" : "false"));
-    LOG_TRACE("Remote access: {}", (remoteAccess ? "true" : "false"));
+//    LOG_TRACE("Remote access: {}", (remoteAccess ? "true" : "false"));
 
     LOG_TRACE("Firewall: {}", (isFirewall() ? "true" : "false"));
     LOG_TRACE("SELinux: {}", static_cast<int>(getSELinux()));
@@ -403,15 +400,9 @@ void Cluster::fillTestData () {
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
 
     /* Bad and old data */
-    xCATDynamicRangeStart = "192.168.20.1";
-    xCATDynamicRangeEnd = "192.168.20.254";
-    directoryAdminPassword = "pwdAdmin";
-    directoryManagerPassword = "pwdManager";
-    directoryDisableDNSSEC = true;
     nodePrefix = "n";
     nodePadding = 2;
     nodeStartIP = "172.26.0.1";
     nodeRootPassword = "pwdNodeRoot";
-    remoteAccess = true;
 }
 #endif
