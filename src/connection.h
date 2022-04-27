@@ -45,6 +45,14 @@ public:
                std::optional<std::string_view> interface,
                std::optional<std::string_view> mac, const std::string& address);
 
+    Connection(const Connection& other);
+    Connection& operator=(const Connection& other) = delete;
+
+    Connection(Connection&& other) noexcept;
+    Connection& operator=(Connection&& other) = delete;
+
+    ~Connection() = default;
+
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
     [[nodiscard]] std::optional<std::string_view> getInterface() const;
     void setInterface(std::string_view interface);

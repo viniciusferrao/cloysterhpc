@@ -70,11 +70,18 @@ public:
     Network(Profile, Type, const std::string& address, const std::string& subnetMask,
             const std::string& gateway, const uint16_t& vlan, const std::string& domainName,
             const std::vector<std::string>& nameserver);
-    ~Network();
+
+    Network(const Network& other) = default;
+    Network& operator=(const Network& other) = delete;
+
+    Network(Network&& other) noexcept;
+    Network& operator=(Network&& other) = delete;
+
+    ~Network() = default;
 
     // We cannot set or change Profile/Type after instantiation
-    [[nodiscard]] const Profile& getProfile () const;
-    [[nodiscard]] const Type& getType () const;
+    [[nodiscard]] const Profile& getProfile() const;
+    [[nodiscard]] const Type& getType() const;
 
     [[nodiscard]] std::string getAddress() const;
     void setAddress(const std::string&);

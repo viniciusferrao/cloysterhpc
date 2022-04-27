@@ -57,6 +57,20 @@ Connection::Connection(const Network& network,
         setMTU(2044);
 }
 
+Connection::Connection(const Connection& other)
+    : m_network{other.m_network}
+    , m_interface{other.m_interface}
+    , m_mac{other.m_mac}
+    , m_address{other.m_address}
+{}
+
+Connection::Connection(Connection&& other) noexcept
+    : m_network{other.m_network}
+    , m_interface{std::move(other.m_interface)}
+    , m_mac{std::move(other.m_mac)}
+    , m_address{other.m_address}
+{}
+
 std::optional<std::string_view> Connection::getInterface() const {
     return m_interface;
 }

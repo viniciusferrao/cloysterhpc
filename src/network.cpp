@@ -36,8 +36,28 @@ Network::Network(Profile profile, Type type, const std::string& address,
     setDomainName(domainName);
     setNameservers(nameserver);
 }
-
-Network::~Network() = default;
+/*
+Network::Network(const Network& other)
+        : m_profile{other.m_profile}
+        , m_type{other.m_type}
+        , m_address{other.m_address}
+        , m_subnetMask{other.m_subnetMask}
+        , m_gateway{other.m_gateway}
+        , m_vlan{other.m_vlan}
+        , m_domainName{other.m_domainName}
+        , m_nameservers{other.m_nameservers}
+{}
+*/
+Network::Network(Network&& other) noexcept
+        : m_profile{other.m_profile}
+        , m_type{other.m_type}
+        , m_address{other.m_address}
+        , m_subnetMask{other.m_subnetMask}
+        , m_gateway{other.m_gateway}
+        , m_vlan{other.m_vlan}
+        , m_domainName{std::move(other.m_domainName)}
+        , m_nameservers{std::move(other.m_nameservers)}
+{}
 
 const Network::Profile& Network::getProfile () const {
     return m_profile;

@@ -51,7 +51,6 @@ void PresenterNetwork::createNetwork()
     const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
-    // TODO: Nameservers should be std::vector due to it's random nature
     auto networkDetails = std::to_array<
             std::pair<std::string, std::string>>({
                 {Messages::IP::address, Connection::fetchAddress(interface)},
