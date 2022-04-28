@@ -263,7 +263,7 @@ void Cluster::addNode(std::string_view hostname,
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
-#ifdef _DEBUG_
+#ifndef _NDEBUG_
 void Cluster::printNetworks(const std::list<Network>& networkType)
 {
 
@@ -293,9 +293,12 @@ void Cluster::printNetworks(const std::list<Network>& networkType)
         }
     }
 }
-#endif
 
-#ifndef _NDEBUG_
+void Cluster::printConnections() {
+    for (std::size_t i{0} ; const auto& connection : getHeadnode().getConnections())
+        connection.dumpConnection();
+}
+
 void Cluster::printData () {
     LOG_TRACE("Dump cluster data:");
     LOG_TRACE("Cluster attributes defined:");
@@ -308,6 +311,7 @@ void Cluster::printData () {
     LOG_TRACE("FQDN: {}", this->m_headnode.getFQDN());
 
     printNetworks(m_network);
+    printConnections();
 
     LOG_TRACE("Provisioner: {}", static_cast<int>(getProvisioner()));
 //    LOG_TRACE("nodePrefix: {}", nodePrefix);

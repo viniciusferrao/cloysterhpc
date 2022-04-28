@@ -270,3 +270,19 @@ void Connection::setMTU(std::uint16_t mtu) {
 
     m_mtu = mtu;
 }
+
+#ifndef _NDEBUG_
+void Connection::dumpConnection() const {
+    LOG_DEBUG("Dumping Connection Info:")
+    LOG_DEBUG("Connection with Network: {} ({})"
+              , magic_enum::enum_name(m_network.getProfile())
+              , magic_enum::enum_name(m_network.getType()));
+
+    LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
+    LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
+    LOG_DEBUG("IP Address: {}", getAddress());
+
+    LOG_DEBUG("===================================")
+
+}
+#endif

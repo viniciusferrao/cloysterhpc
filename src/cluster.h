@@ -98,8 +98,9 @@ public:
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
                  std::list<Connection>&& connections);
 
-#ifdef _DEBUG_
+#ifndef _NDEBUG_
     void printNetworks(const std::list<Network>&);
+    void printConnections();
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */

@@ -75,6 +75,11 @@ public:
     void setFQDN(const std::string&);
 
     [[nodiscard]] const Network& getNetwork() const;
+
+#ifndef _NDEBUG_
+    void dumpConnection() const;
+#endif
+
 };
 
 #endif /* CONNECTION_H */
