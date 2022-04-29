@@ -22,7 +22,11 @@
  */
 class Connection {
 private:
-    const Network& m_network;
+    //FIXME: Why this cannot be a reference? When creating the network over a
+    //       presenter it ended up referencing to an unknown location. It may be
+    //       related to lifecycle, since the object has become out of scope, but
+    //       we aren't sure.
+    const Network m_network;
 
     std::optional<std::string> m_interface;
     std::optional<std::string> m_mac;

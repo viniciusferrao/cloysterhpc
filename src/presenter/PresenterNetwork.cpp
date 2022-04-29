@@ -28,11 +28,11 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
                                    , m_connection(m_network)
 {
     LOG_TRACE("Added {} network with type {}",
-              magic_enum::enum_name(profile),
-              magic_enum::enum_name(type));
+              magic_enum::enum_name(m_network.getProfile()),
+              magic_enum::enum_name(m_network.getType()));
 
     LOG_TRACE("Added connection to {} network",
-              magic_enum::enum_name(profile));
+              magic_enum::enum_name(m_connection.getNetwork().getProfile()));
 
     // TODO: This should be on the header and be constexpr (if possible)
     m_view->message(Messages::title, fmt::format(
