@@ -68,7 +68,7 @@ void PresenterNetwork::createNetwork()
     // TODO: Can we use move semantics?
     networkDetails = networkAddress(networkDetails);
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     networkConfirmation(networkDetails);
 #endif
 

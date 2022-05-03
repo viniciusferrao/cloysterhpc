@@ -133,7 +133,7 @@ std::string Network::fetchSubnetMask(const std::string& interface) {
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
             LOG_TRACE("Got subnet mask address {} from interface {}",
                       inet_ntoa(sa->sin_addr), interface);
 #endif
@@ -182,7 +182,7 @@ std::string Network::fetchGateway(const std::string &interface) {
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
             LOG_TRACE("Got gateway address {} from interface {}",
                       inet_ntoa(sa->sin_addr), interface);
 #endif
@@ -288,7 +288,7 @@ std::vector<std::string> Network::fetchNameservers() {
     return nameservers;
 }
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
 void Network::dumpNetwork() const {
     LOG_DEBUG("Profile: {}", magic_enum::enum_name(m_profile));
     LOG_DEBUG("Type: {}", magic_enum::enum_name(m_type));

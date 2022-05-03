@@ -49,7 +49,7 @@ private:
             static constexpr const char* servers = "Nameservers";
         };
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
         struct Debug {
             static constexpr const char* attributes = "The following network attributes were detected";
         };
@@ -77,7 +77,7 @@ private:
                 Messages::Details::help);
     }
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     // TODO: Better implementation
     // Tested with T = std::array<std::pair<std::string, std::string>, N>
     template <typename T>

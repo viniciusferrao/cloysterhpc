@@ -1,7 +1,7 @@
 #include "os.h"
 #include "include/magic_enum.hpp"
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
 #include "services/log.h"
 #endif
 
@@ -217,7 +217,7 @@ std::string OS::getValueFromKey (const std::string& line) {
     return value;
 }
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
 void OS::printData() const {
     LOG_TRACE("Architecture: {}", magic_enum::enum_name(m_arch));
     LOG_TRACE("Family: {}", magic_enum::enum_name(m_family));

@@ -195,7 +195,7 @@ std::string Connection::fetchAddress(const std::string& interface)
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
             LOG_TRACE("Got address {} from interface {}",
                       inet_ntoa(sa->sin_addr), interface);
 #endif
@@ -271,7 +271,7 @@ void Connection::setMTU(std::uint16_t mtu) {
     m_mtu = mtu;
 }
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
 void Connection::dumpConnection() const {
     LOG_DEBUG("Dumping Connection Info:")
     LOG_DEBUG("Connection with Network: {} ({})"

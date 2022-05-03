@@ -98,7 +98,7 @@ public:
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
                  std::list<Connection>&& connections);
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     void printNetworks(const std::list<Network>&);
     void printConnections();
 #endif
@@ -113,7 +113,7 @@ public:
     //Cluster();
     //~Cluster();
 
-#ifdef _DEBUG_
+#ifndef NDEBUG
     void printData ();
     void fillTestData ();
 #endif

@@ -106,7 +106,7 @@ public:
     void setNameservers(const std::vector<std::string>& nameservers);
     [[nodiscard]] static std::vector<std::string> fetchNameservers();
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     void dumpNetwork() const;
 #endif
 };

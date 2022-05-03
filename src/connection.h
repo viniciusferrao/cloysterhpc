@@ -80,7 +80,7 @@ public:
 
     [[nodiscard]] const Network& getNetwork() const;
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     void dumpConnection() const;
 #endif
 

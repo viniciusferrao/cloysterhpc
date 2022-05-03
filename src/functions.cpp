@@ -123,11 +123,7 @@ int runCommand(const std::string& command,
         std::string line;
 
         while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
-
-#ifndef _NDEBUG_
             LOG_TRACE("{}", line);
-#endif
-
             output.emplace_back(line);
         }
 
@@ -167,15 +163,14 @@ std::string readConfig(const std::string &filename) {
     }
 
     catch (boost::property_tree::ini_parser_error& ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
+        LOG_ERROR("Error: {}", ex.what())
     }
 
     std::string value = tree.get<std::string>("headnode.LANG",
                                               "en_US.utf8");
-#ifdef _DEBUG_
-    std::cout << "Read configFile variables:" << std::endl;
-    std::cout << "LANG: " << value << std::endl;
-#endif
+
+    LOG_TRACE("Read configFile variables:")
+    LOG_TRACE("LANG: {}", value)
 
     return value;
 }
@@ -236,7 +231,7 @@ void changeValueInConfigurationFile(const std::string& filename,
     try {
         boost::property_tree::ini_parser::read_ini(filename, tree);
     } catch(boost::property_tree::ini_parser_error& ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
+        LOG_ERROR("Error: {}", ex.what());
     }
 
     tree.put(key, value);

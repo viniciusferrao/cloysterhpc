@@ -1,10 +1,6 @@
 #ifndef OS_H
 #define OS_H
 
-#ifdef __JETBRAINS_IDE__
-#define _DEBUG_
-#endif
-
 #include <string>
 #include "const.h"
 
@@ -63,7 +59,7 @@ public:
     void setVersion(const std::string&);
 
     /* DEBUG functions */
-#ifndef _NDEBUG_
+#ifndef NDEBUG
     void printData() const;
 #endif
 };

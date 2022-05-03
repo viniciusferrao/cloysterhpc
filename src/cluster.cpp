@@ -12,7 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-#ifdef _DEBUG_
+#ifndef NDEBUG
 #include <fmt/format.h>
 #endif
 
@@ -263,7 +263,7 @@ void Cluster::addNode(std::string_view hostname,
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
-#ifndef _NDEBUG_
+#ifndef NDEBUG
 void Cluster::printNetworks(const std::list<Network>& networkType)
 {
 
