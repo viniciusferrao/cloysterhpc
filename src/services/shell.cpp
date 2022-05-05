@@ -134,7 +134,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
 
     for (auto const& connection : std::as_const(connections)) {
         /* For now, we just skip the external network to avoid disconnects */
-        if (connection.getNetwork().getProfile() == Network::Profile::External)
+        if (connection.getNetwork()->getProfile() == Network::Profile::External)
             continue;
 
         auto interface = connection.getInterface().value();
@@ -149,17 +149,17 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
                 "ipv4.gateway {} ipv4.dns \"{}\" "
                 "ipv4.dns-search {} ipv6.method disabled",
                 magic_enum::enum_name(
-                        connection.getNetwork().getProfile()),
+                        connection.getNetwork()->getProfile()),
                 interface,
                 magic_enum::enum_name(
-                        connection.getNetwork().getType()),
+                        connection.getNetwork()->getType()),
                 connection.getMTU(),
                 connection.getAddress(),
-                connection.getNetwork().cidr.at(
-                        connection.getNetwork().getSubnetMask()),
-                connection.getNetwork().getGateway(),
-                fmt::join(connection.getNetwork().getNameservers(), " "),
-                connection.getNetwork().getDomainName()));
+                connection.getNetwork()->cidr.at(
+                        connection.getNetwork()->getSubnetMask()),
+                connection.getNetwork()->getGateway(),
+                fmt::join(connection.getNetwork()->getNameservers(), " "),
+                connection.getNetwork()->getDomainName()));
         runCommand(fmt::format(
                 "nmcli device connect {}", interface));
     }
@@ -208,9 +208,9 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
     cloyster::backupFile(filename);
 
     for (const auto& connection : std::as_const(connections)) {
-        if ((connection.getNetwork().getProfile() ==
+        if ((connection.getNetwork()->getProfile() ==
              Network::Profile::Management) ||
-            (connection.getNetwork().getProfile() ==
+            (connection.getNetwork()->getProfile() ==
              Network::Profile::Service)) {
 
             // Configure server as local stratum (serve time without sync)
@@ -220,8 +220,8 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
                     filename,
                     fmt::format("allow {}/{}\n",
                               connection.getAddress(),
-                              connection.getNetwork().cidr.at(
-                                  connection.getNetwork().getSubnetMask())));
+                              connection.getNetwork()->cidr.at(
+                                  connection.getNetwork()->getSubnetMask())));
         }
     }
 

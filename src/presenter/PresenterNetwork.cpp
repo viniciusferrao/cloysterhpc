@@ -24,15 +24,15 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
                                    Network::Profile profile,
                                    Network::Type type)
                                    : Presenter(model, view)
-                                   , m_network(profile, type)
-                                   , m_connection(m_network)
+                                   , m_network(std::make_unique<Network>(profile, type))
+                                   , m_connection(m_network.get())
 {
     LOG_TRACE("Added {} network with type {}",
-              magic_enum::enum_name(m_network.getProfile()),
-              magic_enum::enum_name(m_network.getType()));
+              magic_enum::enum_name(m_network->getProfile()),
+              magic_enum::enum_name(m_network->getType()));
 
     LOG_TRACE("Added connection to {} network",
-              magic_enum::enum_name(m_connection.getNetwork().getProfile()));
+              magic_enum::enum_name(m_connection.getNetwork()->getProfile()));
 
     // TODO: This should be on the header and be constexpr (if possible)
     m_view->message(Messages::title, fmt::format(
@@ -44,11 +44,10 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
     createNetwork();
 }
 
-void PresenterNetwork::createNetwork()
-{
+void PresenterNetwork::createNetwork() {
     // Get the network interface
-    const auto& aux = Connection::fetchInterfaces();
-    const auto& interface = networkInterfaceSelection(aux);
+    const auto &aux = Connection::fetchInterfaces();
+    const auto &interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
     auto networkDetails = std::to_array<
@@ -75,19 +74,17 @@ void PresenterNetwork::createNetwork()
     // Set the gathered data
     std::size_t i = 0;
     m_connection.setAddress(networkDetails[i++].second);
-    m_network.setSubnetMask(networkDetails[i++].second);
-    m_network.setAddress(networkDetails[i++].second);
-    m_network.setGateway(networkDetails[i++].second);
+    m_network->setSubnetMask(networkDetails[i++].second);
+    m_network->setAddress(networkDetails[i++].second);
+    m_network->setGateway(networkDetails[i++].second);
 
     // Domain Data
-    m_network.setDomainName(networkDetails[i++].second);
-    m_network.setNameservers({networkDetails[i++].second}); // This is a std::array
+    m_network->setDomainName(networkDetails[i++].second);
+    m_network->setNameservers({networkDetails[i++].second}); // This is a std::array
 
-    // FIXME: Workarround to fix missing data on m_network inside Connection.
-    //  * Since we don't use a reference anymore the object is just copied and
-    //    we have to recopy it to refer the data. Implementation should fix the
-    //    reference or just use std::unique_ptr<> and store it on the heap.
-    //m_connection.m_network = m_network;
+#ifndef NDEBUG
+    [[maybe_unused]] const auto& profile = m_network->getProfile();
+#endif
 
     // Move the data
     m_model->addNetwork(std::move(m_network));
@@ -95,15 +92,15 @@ void PresenterNetwork::createNetwork()
     m_model->getHeadnode().addConnection(std::move(m_connection));
     LOG_TRACE("Hopefully we have moved m_connection to m_model");
 
-    // FIXME: Shouldn't m_network be unavailable after move? Is it being moved?
+    // Check moved data
     LOG_TRACE("Added {} connection on headnode: {} -> {}",
-              magic_enum::enum_name(m_network.getProfile()),
+              magic_enum::enum_name(profile),
               m_model->getHeadnode()
-                      .getConnection(m_network.getProfile())
+                      .getConnection(profile)
                       .getInterface()
                       .value(),
               m_model->getHeadnode()
-                      .getConnection(m_network.getProfile())
+                      .getConnection(profile)
                       .getAddress()
     );
 }

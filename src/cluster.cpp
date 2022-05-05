@@ -119,14 +119,14 @@ void Cluster::setDomainName(const std::string& domainName) {
                                    m_domainName));
 }
 
-std::list<Network>& Cluster::getNetworks() {
+std::list<std::unique_ptr<Network>>& Cluster::getNetworks() {
     return m_network;
 }
 
 Network& Cluster::getNetwork(Network::Profile profile) {
     for (auto& network : m_network) {
-        if (network.getProfile() == profile) {
-            return network;
+        if (network->getProfile() == profile) {
+            return *network;
         }
     }
     throw std::runtime_error(fmt::format(
@@ -152,15 +152,15 @@ const std::list<Network> Cluster::getNet(Network::Profile profile) {
 #endif
 
 void Cluster::addNetwork() {
-    m_network.emplace_back(Network());
+    m_network.emplace_back(std::make_unique<Network>());
 }
 
 void Cluster::addNetwork(Network::Profile profile) {
-    m_network.emplace_back(Network(profile));
+    m_network.emplace_back(std::make_unique<Network>(profile));
 }
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type) {
-    m_network.emplace_back(Network(profile, type));
+    m_network.emplace_back(std::make_unique<Network>(profile, type));
 }
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
@@ -171,13 +171,13 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
                              const std::string& domainName,
                              const std::vector<std::string>& nameserver) {
 
-    m_network.emplace_back(Network(
+    m_network.emplace_back(std::make_unique<Network>(
                 profile, type, address, subnetMask, gateway, vlan, domainName,
                 nameserver));
 }
 
-void Cluster::addNetwork(Network&& network) {
-    m_network.emplace_back(network);
+void Cluster::addNetwork(std::unique_ptr<Network>&& network) {
+    m_network.emplace_back(std::move(network));
 }
 
 bool Cluster::isUpdateSystem() const {
@@ -264,7 +264,7 @@ void Cluster::addNode(std::string_view hostname,
 }
 
 #ifndef NDEBUG
-void Cluster::printNetworks(const std::list<Network>& networkType)
+void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks) const
 {
 
     LOG_TRACE("Dump network data:");
@@ -274,20 +274,20 @@ void Cluster::printNetworks(const std::list<Network>& networkType)
     for (auto const &network : networkType) {
         i = 0;
 #else
-    for (size_t i = 0; auto const &network : networkType) {
+    for (size_t i = 0; auto const &network : networks) {
 #endif
         LOG_TRACE("Network [{}]", i++);
-        LOG_TRACE("Profile: {}", magic_enum::enum_name(network.getProfile()));
-        LOG_TRACE("Address: {}", network.getAddress());
-        LOG_TRACE("Subnet Mask: {}", network.getSubnetMask());
-        LOG_TRACE("Gateway: {}", network.getGateway());
-        LOG_TRACE("VLAN: {}", network.getVLAN());
-        LOG_TRACE("Domain Name: {}", network.getDomainName());
+        LOG_TRACE("Profile: {}", magic_enum::enum_name(network->getProfile()));
+        LOG_TRACE("Address: {}", network->getAddress());
+        LOG_TRACE("Subnet Mask: {}", network->getSubnetMask());
+        LOG_TRACE("Gateway: {}", network->getGateway());
+        LOG_TRACE("VLAN: {}", network->getVLAN());
+        LOG_TRACE("Domain Name: {}", network->getDomainName());
 #if __cplusplus < 202002L
         j = 0;
         for (auto const &nameserver: network.getNameserver()) {
 #else
-        for (size_t j = 0; auto const &nameserver: network.getNameservers()) {
+        for (size_t j = 0; auto const &nameserver: network->getNameservers()) {
 #endif
             LOG_TRACE("Nameserver [{}]: {}", j++, nameserver);
         }
@@ -390,12 +390,12 @@ void Cluster::fillTestData () {
 
     // TODO: Pass network connection as object
     std::list<Connection> connections1{
-        {getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75", "172.26.0.1" },
-        {getNetwork(Network::Profile::Application), "ens256", {}, "172.27.0.1" }
+        {&getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75", "172.26.0.1" },
+        {&getNetwork(Network::Profile::Application), "ens256", {}, "172.27.0.1" }
     };
 
     std::list<Connection> connections2{
-        {getNetwork(Network::Profile::Management), {}, "de:ad:be:ff:00:00", "172.26.0.2" }
+        {&getNetwork(Network::Profile::Management), {}, "de:ad:be:ff:00:00", "172.26.0.2" }
     };
 
     BMC bmc{"172.25.0.2", "ADMIN", "ADMIN"};

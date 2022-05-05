@@ -38,8 +38,8 @@ public:
     void setFQDN(const std::string& fqdn);
 
     [[nodiscard]] const std::list<Connection>& getConnections() const;
-    void addConnection(const Network& network);
-    void addConnection(const Network& network,
+    void addConnection(Network& network);
+    void addConnection(Network& network,
                        std::optional<std::string_view> interface,
                        std::string_view mac,
                        const std::string& address);

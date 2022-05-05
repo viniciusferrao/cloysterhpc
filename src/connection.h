@@ -22,10 +22,12 @@
  */
 class Connection {
 private:
-    //FIXME: unique_ptr?
+    //FIXME: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c12-dont-make-data-members-const-or-references
+    Network* m_network;
+    //gsl::not_null<Network*> m_network;
     //std::unique_ptr<Network> m_network;
-    std::reference_wrapper<const Network> m_network;
-    
+    //std::reference_wrapper<const Network> m_network;
+
     std::optional<std::string> m_interface;
     std::optional<std::string> m_mac;
     // TODO: Use std::vector to support more than one IP address per interface
@@ -40,10 +42,10 @@ private:
 
 public:
     Connection() = delete;
-    explicit Connection(const Network& network);
-    Connection(const Network& network, const std::string& interface,
+    explicit Connection(Network* network);
+    Connection(Network* network, const std::string& interface,
                const std::string& address);
-    Connection(const Network& network,
+    Connection(Network* network,
                std::optional<std::string_view> interface,
                std::optional<std::string_view> mac, const std::string& address);
 
@@ -76,7 +78,7 @@ public:
     [[nodiscard]] const std::string& getFQDN() const;
     void setFQDN(const std::string&);
 
-    [[nodiscard]] const Network& getNetwork() const;
+    [[nodiscard]] Network* getNetwork() const;
 
 #ifndef NDEBUG
     void dumpConnection() const;

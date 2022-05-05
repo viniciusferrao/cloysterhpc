@@ -66,16 +66,16 @@ const std::list<Connection>& Server::getConnections() const {
     return m_connection;
 }
 
-void Server::addConnection(const Network& network) {
-    m_connection.emplace_back(network);
+void Server::addConnection(Network& network) {
+    m_connection.emplace_back(&network);
 }
 
-void Server::addConnection(const Network& network,
-                           std::optional<std::string_view>  interface,
+void Server::addConnection(Network& network,
+                           std::optional<std::string_view> interface,
                            std::string_view mac,
                            const std::string& address) {
 
-    m_connection.emplace_back(network, interface, mac, address);
+    m_connection.emplace_back(&network, interface, mac, address);
 }
 
 void Server::addConnection(Connection&& connection) {
@@ -92,7 +92,7 @@ void Server::addConnection(Connection&& connection) {
 
 const Connection& Server::getConnection(Network::Profile profile) const {
     for (const auto& connection : m_connection) {
-        if (connection.getNetwork().getProfile() == profile) {
+        if (connection.getNetwork()->getProfile() == profile) {
             return connection;
         }
     }

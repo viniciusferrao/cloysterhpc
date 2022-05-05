@@ -19,7 +19,7 @@
 
 class PresenterNetwork : public Presenter {
 private:
-    Network m_network;
+    std::unique_ptr<Network> m_network;
     Connection m_connection;
 
     struct Messages {

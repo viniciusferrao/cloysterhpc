@@ -37,7 +37,7 @@ private:
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
-    std::list<Network> m_network;
+    std::list<std::unique_ptr<Network>> m_network;
 
     bool m_updateSystem{false};
     std::filesystem::path m_isoPath;
@@ -62,7 +62,7 @@ public:
     void setLocale(const std::string& locale);
     [[nodiscard]] const std::string& getDomainName() const;
     void setDomainName(const std::string& domainName);
-    std::list<Network>& getNetworks();
+    std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
     void addNetwork();
     void addNetwork(Network::Profile profile);
@@ -70,7 +70,7 @@ public:
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
                     const std::string&, const std::string&, const uint16_t&,
                     const std::string&, const std::vector<std::string>&);
-    void addNetwork(Network&& network);
+    void addNetwork(std::unique_ptr<Network>&& network);
 
     bool isUpdateSystem() const;
     void setUpdateSystem(bool);
@@ -98,7 +98,7 @@ public:
                  std::list<Connection>&& connections);
 
 #ifndef NDEBUG
-    void printNetworks(const std::list<Network>&);
+    void printNetworks(const std::list<std::unique_ptr<Network>>& networks) const;
     void printConnections();
     void printData();
     void fillTestData();

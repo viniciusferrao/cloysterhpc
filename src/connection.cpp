@@ -19,15 +19,15 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-Connection::Connection(const Network& network)
+Connection::Connection(Network* network)
                        : m_network(network) {
 
-    if (network.getType() == Network::Type::Infiniband)
+    if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
 }
 
 // TODO: Remove this constructor
-Connection::Connection(const Network& network,
+Connection::Connection(Network* network,
                        const std::string& interface,
                        const std::string& address)
                        : m_network(network) {
@@ -35,11 +35,11 @@ Connection::Connection(const Network& network,
     setInterface(interface);
     setAddress(address);
 
-    if (network.getType() == Network::Type::Infiniband)
+    if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
 }
 
-Connection::Connection(const Network& network,
+Connection::Connection(Network* network,
                        std::optional<std::string_view> interface,
                        std::optional<std::string_view> mac,
                        const std::string& address)
@@ -53,7 +53,7 @@ Connection::Connection(const Network& network,
 
     setAddress(address);
 
-    if (network.getType() == Network::Type::Infiniband)
+    if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
 }
 
@@ -249,7 +249,9 @@ void Connection::setFQDN(const std::string& fqdn) {
     m_fqdn = fqdn;
 }
 
-const Network& Connection::getNetwork() const {
+// TODO: Check if this return is a best practice; Network is a unique_ptr;
+//  * should we use gsl::not_null in the return type.
+Network* Connection::getNetwork() const {
     return m_network;
 }
 
@@ -275,8 +277,8 @@ void Connection::setMTU(std::uint16_t mtu) {
 void Connection::dumpConnection() const {
     LOG_DEBUG("Dumping Connection Info:")
     LOG_DEBUG("Connection with Network: {} ({})"
-              , magic_enum::enum_name(m_network.get().getProfile())
-              , magic_enum::enum_name(m_network.get().getType()));
+              , magic_enum::enum_name(m_network->getProfile())
+              , magic_enum::enum_name(m_network->getType()));
 
     LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
     LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
