@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
+#include <gsl/gsl-lite.hpp>
+
 /* Each server can have one and only one connection to a given network, although
  * it can have more than one address on the same interface. This may seem
  * incorrect, but it is standard TCP networking.
@@ -22,11 +24,8 @@
  */
 class Connection {
 private:
-    //FIXME: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c12-dont-make-data-members-const-or-references
-    Network* m_network;
-    //gsl::not_null<Network*> m_network;
-    //std::unique_ptr<Network> m_network;
-    //std::reference_wrapper<const Network> m_network;
+    // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c12-dont-make-data-members-const-or-references
+    gsl::not_null<Network*> m_network;
 
     std::optional<std::string> m_interface;
     std::optional<std::string> m_mac;

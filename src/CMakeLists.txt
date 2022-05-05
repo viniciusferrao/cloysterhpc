@@ -38,7 +38,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # Library: spdlog
-find_package(spdlog)
+find_package(spdlog REQUIRED)
+
+# Library: gsl-lite
+find_package(gsl-lite REQUIRED)
 
 # Generate a dummy binary
 # TODO: Create a custom build target
@@ -71,6 +74,7 @@ target_link_libraries(main
     spdlog::spdlog
     resolv
     ${STDC++FS}
+    gsl::gsl-lite
 )
 
 # Set target locations to the root folder of the project in /bin and /lib.
