@@ -54,8 +54,8 @@ public:
     };
 
 private:
-    const Profile m_profile;
-    const Type m_type;
+    Profile m_profile;
+    Type m_type;
     struct in_addr m_address{};
     struct in_addr m_subnetMask{};
     struct in_addr m_gateway{};
@@ -72,10 +72,10 @@ public:
             const std::vector<std::string>& nameserver);
 
     Network(const Network& other) = default;
-    Network& operator=(const Network& other) = delete;
+    Network& operator=(const Network& other) = default;
 
-    Network(Network&& other) noexcept;
-    Network& operator=(Network&& other) = delete;
+    Network(Network&& other) = default;
+    Network& operator=(Network&& other) = default;
 
     ~Network() = default;
 

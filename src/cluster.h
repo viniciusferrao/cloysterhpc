@@ -1,7 +1,7 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-#include <string> /* std::string */
+#include <string>
 #include <optional>
 #include <memory>
 #include <filesystem>
@@ -43,26 +43,25 @@ private:
     std::filesystem::path m_isoPath;
 
 public:
-    // If we want to change things inside the headnode it must be passed as a
-    // reference, or else a simple setter will fail.
-    Headnode& getHeadnode();
+    [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
-    const std::string_view& getName() const;
-    void setName(const std::string_view &name);
-    const std::string_view& getCompanyName() const;
-    void setCompanyName(const std::string_view &companyName);
-    const std::string_view& getAdminMail() const;
-    void setAdminMail(const std::string_view &adminMail);
-    bool isFirewall() const;
+
+    [[nodiscard]] std::string_view getName() const;
+    void setName(std::string_view name);
+    [[nodiscard]] std::string_view getCompanyName() const;
+    void setCompanyName(std::string_view companyName);
+    [[nodiscard]] std::string_view getAdminMail() const;
+    void setAdminMail(std::string_view adminMail);
+    [[nodiscard]] bool isFirewall() const;
     void setFirewall(bool firewall);
-    SELinuxMode getSELinux() const;
+    [[nodiscard]] SELinuxMode getSELinux() const;
     void setSELinux(SELinuxMode);
-    Timezone& getTimezone();
+    [[nodiscard]] Timezone& getTimezone();
     void setTimezone(const std::string& tz);
-    const std::string& getLocale() const;
-    void setLocale(const std::string &locale);
-    const std::string& getDomainName() const;
-    void setDomainName(const std::string &domainName);
+    [[nodiscard]] const std::string& getLocale() const;
+    void setLocale(const std::string& locale);
+    [[nodiscard]] const std::string& getDomainName() const;
+    void setDomainName(const std::string& domainName);
     std::list<Network>& getNetworks();
     Network& getNetwork(Network::Profile profile);
     void addNetwork();
@@ -101,6 +100,8 @@ public:
 #ifndef NDEBUG
     void printNetworks(const std::list<Network>&);
     void printConnections();
+    void printData();
+    void fillTestData();
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */
@@ -110,13 +111,6 @@ public:
     std::string nodeStartIP;
     std::string nodeRootPassword;
 
-    //Cluster();
-    //~Cluster();
-
-#ifndef NDEBUG
-    void printData ();
-    void fillTestData ();
-#endif
 };
 
 #endif /* CLUSTER_H */

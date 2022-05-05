@@ -8,12 +8,12 @@
 #include <regex>
 #include <memory>
 
-#if __cpp_lib_starts_ends_with < 201711L
-#include <boost/algorithm/string.hpp>
-#endif
-
 #ifndef NDEBUG
 #include <fmt/format.h>
+#endif
+
+#if __cpp_lib_starts_ends_with < 201711L
+#include <boost/algorithm/string.hpp>
 #endif
 
 // The rule of zero
@@ -28,27 +28,27 @@ const Headnode& Cluster::getHeadnode() const {
     return m_headnode;
 }
 
-const std::string_view& Cluster::getName() const {
+std::string_view Cluster::getName() const {
     return m_name;
 }
 
-void Cluster::setName(const std::string_view &name) {
+void Cluster::setName(std::string_view name) {
     m_name = name;
 }
 
-const std::string_view& Cluster::getCompanyName() const {
+std::string_view Cluster::getCompanyName() const {
     return m_companyName;
 }
 
-void Cluster::setCompanyName(const std::string_view &companyName) {
+void Cluster::setCompanyName(std::string_view companyName) {
     m_companyName = companyName;
 }
 
-const std::string_view& Cluster::getAdminMail() const {
+std::string_view Cluster::getAdminMail() const {
     return m_adminMail;
 }
 
-void Cluster::setAdminMail(const std::string_view &adminMail) {
+void Cluster::setAdminMail(std::string_view adminMail) {
     m_adminMail = adminMail;
 }
 
@@ -80,7 +80,7 @@ const std::string& Cluster::getLocale() const {
     return m_locale;
 }
 
-void Cluster::setLocale(const std::string &locale) {
+void Cluster::setLocale(const std::string& locale) {
     m_locale = locale;
 }
 

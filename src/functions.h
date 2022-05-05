@@ -10,7 +10,8 @@
 #include <boost/process/child.hpp>
 
 namespace cloyster {
-
+// Globals
+extern bool dryRun;
 
 /**
  * A command proxy, to us to be able to get the
@@ -42,12 +43,6 @@ struct CommandProxy {
         return std::nullopt;
     }
 };
-
-// Globals
-extern bool dryRun;
-
-/* getopt */
-int parseArguments(int, char**);
 
 /* shell execution */
 int runCommand(const std::string& command,

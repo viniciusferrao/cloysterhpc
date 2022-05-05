@@ -24,9 +24,9 @@ XCAT::XCAT(const std::unique_ptr<Cluster> &cluster)
 
 /* TODO: Implement a repos class to properly do this */
 void XCAT::configureRepositories() {
-    cloyster::runCommand("wget -P /etc/yum.repos.d "
+    cloyster::runCommand("wget -NP /etc/yum.repos.d "
                       "https://xcat.org/files/xcat/repos/yum/latest/xcat-core/xcat-core.repo");
-    cloyster::runCommand("wget -P /etc/yum.repos.d "
+    cloyster::runCommand("wget -NP /etc/yum.repos.d "
                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/rh8/x86_64/xcat-dep.repo");
 }
 
@@ -367,6 +367,8 @@ void XCAT::resetNodes() {
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType) {
     std::string osimage;
 
+    // FIXME: If there's no nodes defined this switch will fail, it should
+    //  instead generate an image for future use.
     switch(m_cluster->getNodes()[0].getOS().getDistro()) {
         case OS::Distro::RHEL:
             osimage += "rhels";

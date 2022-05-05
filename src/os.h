@@ -58,7 +58,6 @@ public:
     [[nodiscard]] std::string getVersion() const;
     void setVersion(const std::string&);
 
-    /* DEBUG functions */
 #ifndef NDEBUG
     void printData() const;
 #endif

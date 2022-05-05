@@ -22,12 +22,10 @@
  */
 class Connection {
 private:
-    //FIXME: Why this cannot be a reference? When creating the network over a
-    //       presenter it ended up referencing to an unknown location. It may be
-    //       related to lifecycle, since the object has become out of scope, but
-    //       we aren't sure.
-    const Network m_network;
-
+    //FIXME: unique_ptr?
+    //std::unique_ptr<Network> m_network;
+    std::reference_wrapper<const Network> m_network;
+    
     std::optional<std::string> m_interface;
     std::optional<std::string> m_mac;
     // TODO: Use std::vector to support more than one IP address per interface
@@ -49,11 +47,11 @@ public:
                std::optional<std::string_view> interface,
                std::optional<std::string_view> mac, const std::string& address);
 
-    Connection(const Connection& other);
-    Connection& operator=(const Connection& other) = delete;
-
-    Connection(Connection&& other) noexcept;
-    Connection& operator=(Connection&& other) = delete;
+//    Connection(const Connection& other) = default;
+//    Connection& operator=(const Connection& other) = delete;
+//
+//    Connection(Connection&& other) = default;
+//    Connection& operator=(Connection&& other) = delete;
 
     ~Connection() = default;
 

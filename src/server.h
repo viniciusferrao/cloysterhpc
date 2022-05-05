@@ -20,11 +20,6 @@ protected:
     std::optional<BMC> m_bmc{};
     std::string m_fqdn; // TODO: Remove?
 
-//public:
-//    std::string vendor;
-//    unsigned processors;
-//    unsigned memory;
-
 protected:
     Server() = default;
     Server(std::string_view hostname, OS& os, CPU& cpu,

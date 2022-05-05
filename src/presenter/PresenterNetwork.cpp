@@ -83,6 +83,12 @@ void PresenterNetwork::createNetwork()
     m_network.setDomainName(networkDetails[i++].second);
     m_network.setNameservers({networkDetails[i++].second}); // This is a std::array
 
+    // FIXME: Workarround to fix missing data on m_network inside Connection.
+    //  * Since we don't use a reference anymore the object is just copied and
+    //    we have to recopy it to refer the data. Implementation should fix the
+    //    reference or just use std::unique_ptr<> and store it on the heap.
+    //m_connection.m_network = m_network;
+
     // Move the data
     m_model->addNetwork(std::move(m_network));
     LOG_TRACE("Hopefully we have moved m_network to m_model");

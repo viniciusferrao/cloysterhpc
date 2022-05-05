@@ -57,19 +57,19 @@ Connection::Connection(const Network& network,
         setMTU(2044);
 }
 
-Connection::Connection(const Connection& other)
-    : m_network{other.m_network}
-    , m_interface{other.m_interface}
-    , m_mac{other.m_mac}
-    , m_address{other.m_address}
-{}
-
-Connection::Connection(Connection&& other) noexcept
-    : m_network{other.m_network}
-    , m_interface{std::move(other.m_interface)}
-    , m_mac{std::move(other.m_mac)}
-    , m_address{other.m_address}
-{}
+//Connection::Connection(const Connection& other)
+//    : m_network{other.m_network}
+//    , m_interface{other.m_interface}
+//    , m_mac{other.m_mac}
+//    , m_address{other.m_address}
+//{}
+//
+//Connection::Connection(Connection&& other) noexcept
+//    : m_network{other.m_network}
+//    , m_interface{std::move(other.m_interface)}
+//    , m_mac{std::move(other.m_mac)}
+//    , m_address{other.m_address}
+//{}
 
 std::optional<std::string_view> Connection::getInterface() const {
     return m_interface;
@@ -275,8 +275,8 @@ void Connection::setMTU(std::uint16_t mtu) {
 void Connection::dumpConnection() const {
     LOG_DEBUG("Dumping Connection Info:")
     LOG_DEBUG("Connection with Network: {} ({})"
-              , magic_enum::enum_name(m_network.getProfile())
-              , magic_enum::enum_name(m_network.getType()));
+              , magic_enum::enum_name(m_network.get().getProfile())
+              , magic_enum::enum_name(m_network.get().getType()));
 
     LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
     LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
