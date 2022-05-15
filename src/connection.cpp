@@ -251,7 +251,7 @@ void Connection::setFQDN(const std::string& fqdn) {
 
 // TODO: Check if this return is a best practice; Network is a unique_ptr;
 //  * should we use gsl::not_null in the return type.
-Network* Connection::getNetwork() const {
+const Network* Connection::getNetwork() const {
     return m_network;
 }
 

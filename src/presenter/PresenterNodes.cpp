@@ -66,4 +66,36 @@ PresenterNodes::PresenterNodes(
                               Messages::Quantity::help);
 
     m_model->nodeQuantity = boost::lexical_cast<std::size_t>(nodes[i++].second);
+
+    // FIXME: This code is just a mess
+    //  * Hardcoded data
+    //  * No proper verification/passing of parameters
+    //  * Nodes should be encapsulated
+    //  * OS and CPU are copied constantly (that should be references)
+    //  * We need a proper node building object instead
+    // TODO: Support more OSes than Oracle Linux 8.5; we are hard coding the OS:
+    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
+              OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+    // TODO: Fetch CPU data
+    CPU nodeCPU(1, 1, 1);
+
+    for (std::size_t node{0} ; node < m_model->nodeQuantity ; ++node) {
+        std::list<Connection> nodeConnections{
+                {
+                    &m_model->getNetwork(Network::Profile::Management)
+                             , {}
+                             , "00:00:00:00:00:01"
+                             , m_model->nodeStartIP // FIXME: Increment value
+                }
+        };
+
+        m_model->addNode(
+                fmt::format("{}{:0>{}}\n", m_model->nodePrefix, node, m_model->nodePadding),
+                nodeOS,
+                nodeCPU,
+                std::move(nodeConnections)
+                // std::optional<BMC>
+        );
+    }
+
 }

@@ -15,7 +15,7 @@ constexpr const char* productName = PRODUCT_NAME;
 #define INSTALL_PATH "/opt/cloysterhpc"
 constexpr const char* installPath = INSTALL_PATH;
 
-#ifdef _DUMMY_
+#if defined(_DUMMY_) || defined(__APPLE__)
 #define CHROOT "chroot"
 [[maybe_unused]] constexpr const char* chroot = CHROOT;
 #else

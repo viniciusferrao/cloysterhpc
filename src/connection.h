@@ -68,16 +68,16 @@ public:
     void setMTU(std::uint16_t mtu);
 
     [[nodiscard]] const std::string getAddress() const;
-    void setAddress(const std::string&);
+    void setAddress(const std::string& address);
     [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
     [[nodiscard]] const std::string& getHostname() const;
-    void setHostname(const std::string&);
+    void setHostname(const std::string& hostname);
 
     [[nodiscard]] const std::string& getFQDN() const;
-    void setFQDN(const std::string&);
+    void setFQDN(const std::string& fqdn);
 
-    [[nodiscard]] Network* getNetwork() const;
+    [[nodiscard]] const Network* getNetwork() const;
 
 #ifndef NDEBUG
     void dumpConnection() const;

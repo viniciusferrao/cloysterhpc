@@ -84,15 +84,15 @@ public:
     [[nodiscard]] const Type& getType() const;
 
     [[nodiscard]] std::string getAddress() const;
-    void setAddress(const std::string&);
+    void setAddress(const std::string& address);
     [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
     [[nodiscard]] std::string getSubnetMask() const;
-    void setSubnetMask(const std::string&);
+    void setSubnetMask(const std::string& subnetMask);
     [[nodiscard]] static std::string fetchSubnetMask(const std::string& interface);
 
     [[nodiscard]] std::string getGateway() const;
-    void setGateway(const std::string&);
+    void setGateway(const std::string& gateway);
     [[nodiscard]] static std::string fetchGateway(const std::string& interface);
 
     [[nodiscard]] std::uint16_t getVLAN() const;
