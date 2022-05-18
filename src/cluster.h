@@ -21,9 +21,9 @@ public:
     enum class Provisioner { xCAT };
 
 private:
-    std::string_view m_name;
-    std::string_view m_companyName;
-    std::string_view m_adminMail;
+    std::string m_name;
+    std::string m_companyName;
+    std::string m_adminMail;
     Headnode m_headnode;
     Provisioner m_provisioner{Provisioner::xCAT};
     std::optional<OFED> m_ofed;

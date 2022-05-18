@@ -4,6 +4,7 @@
 
 #include "slurm.h"
 #include "../cluster.h"
+#include "../services/log.h"
 
 using cloyster::runCommand;
 
@@ -18,28 +19,34 @@ void SLURM::installServer() {
 }
 
 void SLURM::configureServer() {
-    cloyster::removeFile("/etc/slurm/slurm.conf");
+    const std::string configurationFile{"/etc/slurm/slurm.conf"};
+    cloyster::removeFile(configurationFile);
 
-    std::string nodesDeclaration{};
+    // Ensure that the directory exists
+    // TODO: This may be made on cloyster::addStringToFile?
+    cloyster::createDirectory("/etc/slurm");
+
+    std::vector<std::string> nodes;
+    nodes.reserve(m_cluster.getNodes().size());
 
     for (const auto& node : m_cluster.getNodes())
-        nodesDeclaration += fmt::format(
-            "NodeName={} Sockets={} CoresPerSocket={} ThreadsPerCore={} State=UNKNOWN\n"
-            , node.getHostname()
-            , node.getCPU().getSockets()
-            , node.getCPU().getCoresPerSocket()
-            , node.getCPU().getThreadsPerCore()
-        );
+        nodes.emplace_back(fmt::format(
+                "NodeName={} Sockets={} CoresPerSocket={} ThreadsPerCore={} State=UNKNOWN"
+                , node.getHostname()
+                , node.getCPU().getSockets()
+                , node.getCPU().getCoresPerSocket()
+                , node.getCPU().getThreadsPerCore()
+        ));
 
-    std::string conf = fmt::format(
+    const auto& conf{fmt::format(
             #include "../tmpl/slurm.conf.tmpl"
             , fmt::arg("clusterName", m_cluster.getName())
             , fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN())
             , fmt::arg("partitionName", getDefaultQueue())
-            , fmt::arg("nodesDeclaration", nodesDeclaration)
-    );
+            , fmt::arg("nodesDeclaration", fmt::join(nodes, "\n"))
+    )};
 
-    cloyster::addStringToFile("/etc/slurm/slurm.conf", conf);
+    cloyster::addStringToFile(configurationFile, conf);
 
 }
 

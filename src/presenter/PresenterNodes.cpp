@@ -79,23 +79,20 @@ PresenterNodes::PresenterNodes(
     // TODO: Fetch CPU data
     CPU nodeCPU(1, 1, 1);
 
-    for (std::size_t node{0} ; node < m_model->nodeQuantity ; ++node) {
-        std::list<Connection> nodeConnections{
-                {
-                    &m_model->getNetwork(Network::Profile::Management)
-                             , {}
-                             , "00:00:00:00:00:01"
-                             , m_model->nodeStartIP // FIXME: Increment value
-                }
-        };
+    for (std::size_t node{1} ; node <= m_model->nodeQuantity ; ++node) {
+        std::list<Connection> nodeConnections;
+        auto& connection = nodeConnections.emplace_back(&m_model->getNetwork(Network::Profile::Management));
+        connection.setMAC("00:00:00:00:00:01");
+        connection.setAddress(m_model->nodeStartIP);
+
+        auto nodeName = fmt::format("{}{:0>{}}", m_model->nodePrefix, node, m_model->nodePadding);
 
         m_model->addNode(
-                fmt::format("{}{:0>{}}\n", m_model->nodePrefix, node, m_model->nodePadding),
+                nodeName,
                 nodeOS,
                 nodeCPU,
                 std::move(nodeConnections)
                 // std::optional<BMC>
         );
     }
-
 }

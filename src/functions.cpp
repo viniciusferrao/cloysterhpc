@@ -110,7 +110,7 @@ void createDirectory(const std::filesystem::path& path) {
 
 /* Remove file */
 void removeFile(std::string_view filename) {
-    LOG_TRACE("Checking if file {} already exists on filesystem:", filename);
+    LOG_TRACE("Checking if file {} already exists on filesystem", filename);
     if (std::filesystem::exists(filename)) {
         LOG_TRACE("Already exists");
         std::filesystem::remove(filename);

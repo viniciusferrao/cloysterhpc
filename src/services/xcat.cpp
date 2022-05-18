@@ -307,6 +307,8 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType) {
 }
 
 void XCAT::addNode(const Node& node) {
+    LOG_TRACE("Adding node {} to xCAT", node.getHostname());
+
     std::string command = fmt::format(
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
         "netboot=xnba "

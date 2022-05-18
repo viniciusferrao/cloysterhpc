@@ -19,7 +19,7 @@ public:
 
 private:
     Kind m_kind = Kind::None;
-    std::string_view m_defaultQueue;
+    std::string m_defaultQueue;
 
 protected:
     const Cluster& m_cluster;

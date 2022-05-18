@@ -129,6 +129,7 @@ Network& Cluster::getNetwork(Network::Profile profile) {
             return *network;
         }
     }
+
     throw std::runtime_error(fmt::format(
             "Cannot get any network with the profile {}",
             magic_enum::enum_name(profile)));
@@ -274,7 +275,7 @@ void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks)
     for (auto const &network : networkType) {
         i = 0;
 #else
-    for (size_t i = 0; auto const &network : networks) {
+    for (size_t i = 0; auto const& network : networks) {
 #endif
         LOG_TRACE("Network [{}]", i++);
         LOG_TRACE("Profile: {}", magic_enum::enum_name(network->getProfile()));
@@ -287,7 +288,7 @@ void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks)
         j = 0;
         for (auto const &nameserver: network.getNameserver()) {
 #else
-        for (size_t j = 0; auto const &nameserver: network->getNameservers()) {
+        for (size_t j = 0; auto const& nameserver: network->getNameservers()) {
 #endif
             LOG_TRACE("Nameserver [{}]: {}", j++, nameserver);
         }
