@@ -248,7 +248,7 @@ public:
             // TODO: Check is there's a way to hide &
             field[i].value = &fieldEntries[i];
 
-            // TODO: Fix this hack to enable password fields
+            // FIXME: Fix this hack to enable password fields
             if (items[i].first.find("Password") != std::string::npos ||
                 items[i].first.find("password") != std::string::npos)
                 field[i].flags = NEWT_FLAG_PASSWORD;

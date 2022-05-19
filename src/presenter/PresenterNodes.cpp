@@ -83,7 +83,7 @@ PresenterNodes::PresenterNodes(
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(&m_model->getNetwork(Network::Profile::Management));
         // FIXME: Get/fetch real MAC Addresses
-        connection.setMAC(fmt::format("00:00:00:00:00:{:2}", node));
+        connection.setMAC(fmt::format("00:00:00:00:00:{:02x}", node));
         // FIXME: Properly generate and set only once (without increment)
         connection.setAddress(m_model->nodeStartIP);
         connection.incrementAddress(node - 1);
