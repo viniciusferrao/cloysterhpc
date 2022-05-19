@@ -10,9 +10,9 @@
 struct BMC {
     enum class kind { IPMI };
 
-    std::string_view m_address;
-    std::string_view m_username;
-    std::string_view m_password;
+    std::string m_address;
+    std::string m_username;
+    std::string m_password;
     int m_serialPort{0};
     int m_serialSpeed{115200};
 };

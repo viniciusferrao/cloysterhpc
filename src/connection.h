@@ -69,6 +69,7 @@ public:
 
     [[nodiscard]] const std::string getAddress() const;
     void setAddress(const std::string& address);
+    void incrementAddress(const std::size_t increment = 1) noexcept;
     [[nodiscard]] static std::string fetchAddress(const std::string& interface);
 
     [[nodiscard]] const std::string& getHostname() const;

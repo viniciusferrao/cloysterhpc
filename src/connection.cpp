@@ -172,6 +172,10 @@ void Connection::setAddress (const std::string& address) {
                 "Invalid IP address {} cannot be set", address));
 }
 
+void Connection::incrementAddress(const std::size_t increment) noexcept {
+    m_address.s_addr += increment;
+}
+
 std::string Connection::fetchAddress(const std::string& interface)
 {
     struct ifaddrs *ifaddr, *ifa;

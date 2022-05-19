@@ -9,6 +9,8 @@
 #include <boost/process/pipe.hpp>
 #include <boost/process/child.hpp>
 
+#include <boost/asio.hpp>
+
 namespace cloyster {
 // Globals
 extern bool dryRun;
