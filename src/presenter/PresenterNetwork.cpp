@@ -3,6 +3,7 @@
 //
 
 #include "PresenterNetwork.h"
+#include <boost/algorithm/string.hpp>
 
 // FIXME: I don't like this code, it's ugly.
 //  *** The following ideas were implemented, although not properly tested, so
@@ -80,7 +81,13 @@ void PresenterNetwork::createNetwork() {
 
     // Domain Data
     m_network->setDomainName(networkDetails[i++].second);
-    m_network->setNameservers({networkDetails[i++].second}); // This is a std::array
+
+    std::vector<std::string> nameservers;
+    // We accept comma and/or space delimited strings even with extra spaces
+    boost::split(nameservers, networkDetails[i++].second,
+                 [](char c){return (c == ' ' || c == ',');},
+                 boost::token_compress_on);
+    m_network->setNameservers(nameservers); // TODO: std::move
 
 #ifndef NDEBUG
     [[maybe_unused]] const auto& profile = m_network->getProfile();

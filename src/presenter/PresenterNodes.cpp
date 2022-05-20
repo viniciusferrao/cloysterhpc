@@ -73,6 +73,7 @@ PresenterNodes::PresenterNodes(
     //  * Nodes should be encapsulated
     //  * OS and CPU are copied constantly (that should be references)
     //  * We need a proper node building object instead
+
     // TODO: Support more OSes than Oracle Linux 8.5; we are hard coding the OS:
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
               OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
@@ -82,13 +83,26 @@ PresenterNodes::PresenterNodes(
     for (std::size_t node{1} ; node <= m_model->nodeQuantity ; ++node) {
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(&m_model->getNetwork(Network::Profile::Management));
+
+        auto nodeName = fmt::format("{}{:0>{}}", m_model->nodePrefix, node, m_model->nodePadding);
+
         // FIXME: Get/fetch real MAC Addresses
-        connection.setMAC(fmt::format("00:00:00:00:00:{:02x}", node));
+        auto mac = std::to_array<
+                std::pair<std::string, std::string>>({
+                         {fmt::format("{}", nodeName), ""},
+                });
+
+        mac = m_view->fieldMenu(Messages::title,
+                                Messages::MAC::question,
+                                mac,
+                                Messages::MAC::help);
+
+        //connection.setMAC(fmt::format("00:00:00:00:00:{:02x}", node));
+        connection.setMAC(mac[0].second);
+
         // FIXME: Properly generate and set only once (without increment)
         connection.setAddress(m_model->nodeStartIP);
         connection.incrementAddress(node - 1);
-
-        auto nodeName = fmt::format("{}{:0>{}}", m_model->nodePrefix, node, m_model->nodePadding);
 
         m_model->addNode(
                 nodeName,

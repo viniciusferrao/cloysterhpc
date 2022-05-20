@@ -38,6 +38,11 @@ private:
             static constexpr const char* startNumber = "Node start number";
         };
 
+        struct MAC {
+            static constexpr const char* question = "Enter the MAC address for node";
+            static constexpr const char* help = Presenter::Messages::Placeholder::help;
+        };
+
     };
 
 public:
