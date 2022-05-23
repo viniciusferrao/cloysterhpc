@@ -19,7 +19,8 @@ PresenterNodes::PresenterNodes(
                  {Messages::Nodes::padding, "2"},
                  {Messages::Nodes::startIP, "172.31.22.45"},
                  {Messages::Nodes::rootPassword, "p@ssw0rd"},
-                 {Messages::Nodes::ISOPath, "/root/iso/rhel-8.5-dvd1.iso"}
+                 //{Messages::Nodes::confirmRootPassword, "p@ssw0rd"},
+                 //{Messages::Nodes::DiscImagePath, "/root/iso/rhel-8.5-dvd1.iso"}
             });
 
     retry:
@@ -48,7 +49,8 @@ PresenterNodes::PresenterNodes(
     m_model->nodePadding = boost::lexical_cast<std::size_t>(fields[i++].second);
     m_model->nodeStartIP = fields[i++].second;
     m_model->nodeRootPassword = fields[i++].second;
-    m_model->setISOPath(fields[i++].second);
+    //m_model->setDiscImage(fields[i++].second);
+    m_model->setDiscImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
     // Number of nodes
     // TODO: Set racks and startNumber to create things like: r01n01

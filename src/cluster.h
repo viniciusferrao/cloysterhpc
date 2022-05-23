@@ -14,6 +14,7 @@
 #include "queuesystem/slurm.h"
 #include "queuesystem/pbs.h"
 #include "mailsystem/postfix.h"
+#include "discImage.h"
 
 class Cluster {
 public:
@@ -40,7 +41,7 @@ private:
     std::list<std::unique_ptr<Network>> m_network;
 
     bool m_updateSystem{false};
-    std::filesystem::path m_isoPath;
+    DiscImage m_discImage;
 
 public:
     [[nodiscard]] Headnode& getHeadnode();
@@ -87,8 +88,8 @@ public:
     std::optional<Postfix>& getMailSystem();
     void setMailSystem(Postfix::Profile profile);
 
-    const std::filesystem::path &getISOPath() const;
-    void setISOPath(const std::filesystem::path &isoPath);
+    const std::filesystem::path& getDiscImage() const;
+    void setDiscImage(const std::filesystem::path& discImagePath);
 
     // TODO: Add std::optional to BMC with std::nullopt as default initializer
     [[nodiscard]] const std::vector<Node>& getNodes() const;

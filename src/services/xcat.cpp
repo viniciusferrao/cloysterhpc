@@ -51,8 +51,8 @@ void XCAT::setDomain(std::string_view domain) {
     cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-void XCAT::copycds(const std::filesystem::path& isopath) {
-    cloyster::runCommand(fmt::format("copycds {}", isopath.string()));
+void XCAT::copycds(const std::filesystem::path& discImage) {
+    cloyster::runCommand(fmt::format("copycds {}", discImage.string()));
 }
 
 void XCAT::genimage() {
@@ -285,7 +285,7 @@ void XCAT::customizeImage() {
  * stateless image with default services.
  */
 void XCAT::createImage(ImageType imageType, NodeType nodeType) {
-    copycds(m_cluster->getISOPath());
+    copycds(m_cluster->getDiscImage());
     generateOSImageName(imageType, nodeType);
     generateOSImagePath(imageType, nodeType);
 

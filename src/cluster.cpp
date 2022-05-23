@@ -235,12 +235,12 @@ void Cluster::setMailSystem(Postfix::Profile profile) {
     m_mailSystem = Postfix(profile);
 }
 
-const std::filesystem::path& Cluster::getISOPath() const {
-    return m_isoPath;
+const std::filesystem::path& Cluster::getDiscImage() const {
+    return m_discImage.getPath();
 }
 
-void Cluster::setISOPath(const std::filesystem::path& isoPath) {
-    m_isoPath = isoPath;
+void Cluster::setDiscImage(const std::filesystem::path& discImagePath) {
+    m_discImage.setPath(discImagePath);
 }
 
 const std::vector<Node>& Cluster::getNodes() const {
@@ -319,7 +319,7 @@ void Cluster::printData () {
 //    LOG_TRACE("nodePadding: {}", nodePadding);
 //    LOG_TRACE("nodeStartIP: {}", nodeStartIP);
 //    LOG_TRACE("nodeRootPassword: {}", nodeRootPassword);
-    LOG_TRACE("nodeISOPath: {}", getISOPath().string());
+    LOG_TRACE("nodeDiscImage: {}", getDiscImage().string());
 
     LOG_TRACE("Update system: {}", (isUpdateSystem() ? "true" : "false"));
 //    LOG_TRACE("Remote access: {}", (remoteAccess ? "true" : "false"));
@@ -384,7 +384,7 @@ void Cluster::fillTestData () {
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
-    setISOPath("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    setDiscImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
               OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     CPU nodeCPU(2, 4, 2);

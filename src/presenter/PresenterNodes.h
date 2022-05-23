@@ -21,7 +21,8 @@ private:
             static constexpr const char* padding = "Padding";
             static constexpr const char* startIP = "Compute node first IP";
             static constexpr const char* rootPassword = "Compute node root password";
-            static constexpr const char* ISOPath = "ISO path of Node OS";
+            static constexpr const char* confirmRootPassword = "Confirm compute node root password";
+            static constexpr const char* DiscImagePath = "Disc image path of node OS";
         };
 
         struct Error {

@@ -58,6 +58,7 @@ void Timezone::setTimeservers(const std::vector<std::string>& timeservers) {
 }
 
 // TODO: Check for correctness in timeservers (use hostname/IP check)
+// TODO: Remove std::stringstream
 // std::stringstream does not support string_view
 void Timezone::setTimeservers(const std::string& timeservers) {
     std::stringstream stream{timeservers};
