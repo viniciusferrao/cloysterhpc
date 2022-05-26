@@ -82,14 +82,14 @@ std::string readConfig(const std::string &filename) {
     }
 
     catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what())
+        LOG_ERROR("Error: {}", ex.what());
     }
 
     std::string value = tree.get<std::string>("headnode.LANG",
                                               "en_US.utf8");
 
-    LOG_TRACE("Read configFile variables:")
-    LOG_TRACE("LANG: {}", value)
+    LOG_TRACE("Read configFile variables:");
+    LOG_TRACE("LANG: {}", value);
 
     return value;
 }
@@ -114,7 +114,7 @@ void removeFile(std::string_view filename) {
     if (std::filesystem::exists(filename)) {
         LOG_TRACE("Already exists");
         std::filesystem::remove(filename);
-        LOG_TRACE("File {} deleted", filename)
+        LOG_TRACE("File {} deleted", filename);
     } else {
         LOG_TRACE("File does not exist");
     }
