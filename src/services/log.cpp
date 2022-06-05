@@ -5,11 +5,21 @@
 #include "log.h"
 
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <memory>
+#include <boost/algorithm/string.hpp>
 
 void Log::init(Level level) {
+    const auto& pattern{"%^[%Y-%m-%d %H:%M:%S.%e] %v%$"};
+
     auto stderrSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
-    stderrSink->set_pattern("%^[%Y-%m-%d %H:%M:%S.%e] %v%$");
+    stderrSink->set_pattern(pattern);
+
+    const auto& logfile = fmt::format(
+            "{}.log", boost::to_lower_copy(std::string{productName}));
+
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
+    fileSink->set_pattern(pattern);
 
     std::vector<spdlog::sink_ptr> sinks{stderrSink};
     auto logger = std::make_shared<spdlog::logger>(

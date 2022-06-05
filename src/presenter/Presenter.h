@@ -33,10 +33,10 @@ protected:
               , m_view(view)
     {}
 
-    template<class C, typename... T>
-    void Call(T&&... t)
+    template<class C, typename... Args>
+    void Call(Args&&... args)
     {
-        C(m_model, m_view, t...);
+        C(m_model, m_view, std::forward<Args>(args)...);
     }
 };
 

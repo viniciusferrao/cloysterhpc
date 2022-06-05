@@ -10,7 +10,7 @@ const std::filesystem::path& DiscImage::getPath() const {
 
 void DiscImage::setPath(const std::filesystem::path& path) {
     if (path.extension() != ".iso")
-        throw std::runtime_error("Disc Imagem must have ISO extension");
+        throw std::runtime_error("Disc Image must have ISO extension");
 
     m_path = path;
 }

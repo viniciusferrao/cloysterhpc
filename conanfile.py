@@ -12,8 +12,8 @@ class CloysterHPC(ConanFile):
     requires = (
         "boost/1.79.0",
         "fmt/8.1.1",
-        "spdlog/1.9.2",
-        "magic_enum/0.7.3",
+        "spdlog/1.10.0",
+        "magic_enum/0.8.0",
         "gsl-lite/0.40.0"
 #        "catch2/2.13.7",
 #        "docopt.cpp/0.6.2",

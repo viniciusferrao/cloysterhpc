@@ -20,7 +20,7 @@ PresenterInstall::PresenterInstall(std::unique_ptr<Cluster>& model,
                                    : Presenter(model, view)
 {
 
-#if 0 // Welcome messages
+#if 1 // Welcome messages
     Call<PresenterWelcome>();
     Call<PresenterInstructions>();
 #endif
