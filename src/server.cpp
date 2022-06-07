@@ -25,7 +25,7 @@ const std::string& Server::getHostname() const noexcept {
 
 // FIXME: A trigger to update FQDN should be made if hostname is changed
 void Server::setHostname(const std::string& hostname) {
-    LOG_TRACE("Running hostname checks against: {}", hostname);
+    LOG_DEBUG("Running hostname checks against: {}", hostname);
 
     if (hostname.size() > 63)
         throw std::runtime_error("Hostname cannot be bigger than 63 characters");

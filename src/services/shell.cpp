@@ -374,7 +374,7 @@ void Shell::install() {
 
     installDevelopmentComponents();
 
-    LOG_TRACE("Setting up the provisioner: {}",
+    LOG_DEBUG("Setting up the provisioner: {}",
               magic_enum::enum_name(m_cluster->getProvisioner()));
     //std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
@@ -384,7 +384,7 @@ void Shell::install() {
             break;
     }
 
-    LOG_INFO("Setting up compute node images...\n This may take a while");
+    LOG_INFO("Setting up compute node images... This may take a while");
     provisioner->configureRepositories();
     provisioner->installPackages();
     provisioner->setup();

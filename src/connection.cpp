@@ -76,7 +76,7 @@ std::optional<std::string_view> Connection::getInterface() const {
 }
 
 void Connection::setInterface (std::string_view interface) {
-    LOG_TRACE("Checking if interface {} exists", interface);
+    LOG_DEBUG("Checking if interface {} exists", interface);
 
     if (interface == "lo")
         throw std::runtime_error("Cannot use the loopback interface");
@@ -141,7 +141,7 @@ std::optional<std::string_view> Connection::getMAC() const {
 }
 
 void Connection::setMAC(std::string_view mac) {
-    LOG_TRACE("Checking MAC address: {}", mac);
+    LOG_DEBUG("Checking MAC address: {}", mac);
 
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");

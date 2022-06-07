@@ -31,7 +31,7 @@ void Timezone::setSystemTimezone()
 
 std::list<std::string> Timezone::fetchAvailableTimezones()
 {
-    LOG_TRACE("Fetching available system timezones");
+    LOG_DEBUG("Fetching available system timezones");
     std::list<std::string> output;
 
 // TODO: Remove this hack

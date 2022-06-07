@@ -27,12 +27,12 @@ PresenterInfiniband::PresenterInfiniband(
                                  magic_enum::enum_names<OFED::Kind>(),
                                  Messages::OFED::help)).value()
         );
-        LOG_INFO("Set OFED stack as: {}", magic_enum::enum_name<OFED::Kind>(m_model->getOFED()->getKind()));
+        LOG_DEBUG("Set OFED stack as: {}", magic_enum::enum_name<OFED::Kind>(m_model->getOFED()->getKind()));
 
         try {
             Call<PresenterNetwork>(Network::Profile::Application, Network::Type::Infiniband);
         } catch (const std::exception& ex) {
-            LOG_WARN("Failed to add {} network: {}",
+            LOG_ERROR("Failed to add {} network: {}",
                      magic_enum::enum_name(Network::Profile::Application),
                      ex.what());
         }

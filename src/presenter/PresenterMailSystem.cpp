@@ -24,7 +24,7 @@ PresenterMailSystem::PresenterMailSystem(
         auto& mailSystem = m_model->getMailSystem().value();
         const auto& mailSystemProfile = mailSystem.getProfile();
 
-        LOG_INFO("Enabled Postfix with profile: {}",
+        LOG_DEBUG("Enabled Postfix with profile: {}",
                  magic_enum::enum_name<Postfix::Profile>(mailSystemProfile));
 
         switch (mailSystemProfile) {
@@ -48,7 +48,7 @@ PresenterMailSystem::PresenterMailSystem(
                 mailSystem.setHostname(fields[i++].second);
                 mailSystem.setPort(boost::lexical_cast<uint16_t>(fields[i++].second));
 
-                LOG_INFO("Set Postfix Relay: {}:{}",
+                LOG_DEBUG("Set Postfix Relay: {}:{}",
                          mailSystem.getHostname().value(),
                          mailSystem.getPort().value());
 
@@ -75,7 +75,7 @@ PresenterMailSystem::PresenterMailSystem(
                 mailSystem.setUsername(fields[i++].second);
                 mailSystem.setPassword(fields[i++].second);
 
-                LOG_INFO("Set Postfix SASL: {}:{}\nUsername: {} | Password: {}",
+                LOG_DEBUG("Set Postfix SASL: {}:{}\nUsername: {} | Password: {}",
                          mailSystem.getHostname().value(),
                          mailSystem.getPort().value(),
                          mailSystem.getUsername().value(),
@@ -86,6 +86,6 @@ PresenterMailSystem::PresenterMailSystem(
         }
 
     } else {
-        LOG_INFO("Postfix wasn't enabled");
+        LOG_DEBUG("Postfix wasn't enabled");
     }
 }

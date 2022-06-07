@@ -22,12 +22,12 @@ PresenterHostId::PresenterHostId(
 
     m_model->getHeadnode().setHostname(answers[0].second);
     // FIXME: This assert never happens since the setter may throw
-//    LOG_TRACE("Returned hostname: {}", answers[0].second);
+//    LOG_DEBUG("Returned hostname: {}", answers[0].second);
 //    LOG_ASSERT(answers[0].second == m_model->getHeadnode().getHostname(),
 //               "Failed setting hostname");
 
     m_model->setDomainName(answers[1].second);
-    LOG_TRACE("Hostname set to: {}", m_model->getHeadnode().getHostname());
-    LOG_TRACE("Domain name set to: {}", m_model->getDomainName());
-    LOG_TRACE("FQDN: {}", m_model->getHeadnode().getFQDN());
+    LOG_DEBUG("Hostname set to: {}", m_model->getHeadnode().getHostname());
+    LOG_DEBUG("Domain name set to: {}", m_model->getDomainName());
+    LOG_DEBUG("FQDN: {}", m_model->getHeadnode().getFQDN());
 }

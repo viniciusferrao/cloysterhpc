@@ -10,5 +10,5 @@ PresenterInstructions::PresenterInstructions(
         : Presenter(model, view) {
 
     m_view->message(Messages::Instructions::message);
-    LOG_TRACE("Install instructions displayed");
+    LOG_DEBUG("Install instructions displayed");
 }

@@ -22,7 +22,7 @@ PresenterTime::PresenterTime(
     m_model->setTimezone(selectedTimezone);
 
     // FIXME: Horrible call; getTimezone() two times? Srsly?
-    LOG_TRACE("Timezone set to: {}", m_model->getTimezone().getTimezone());
+    LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone());
 
     // Timeserver settings
     // FIXME: We left std::to_array if we want to manage the input on the view,
@@ -38,5 +38,6 @@ PresenterTime::PresenterTime(
                                     Messages::Timeservers::help);
 
     m_model->getTimezone().setTimeservers(timeservers[0].second);
-    LOG_INFO("Timeservers set to {}", fmt::join(m_model->getTimezone().getTimeservers(), ", "));
+    LOG_DEBUG("Timeservers set to {}",
+              fmt::join(m_model->getTimezone().getTimeservers(), ", "));
 }

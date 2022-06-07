@@ -24,5 +24,5 @@ PresenterLocale::PresenterLocale(
             Messages::help);
 
     m_model->setLocale(selectedLocale);
-    LOG_TRACE("Locale set to: {}", m_model->getLocale());
+    LOG_DEBUG("Locale set to: {}", m_model->getLocale());
 }

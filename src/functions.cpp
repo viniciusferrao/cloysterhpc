@@ -15,7 +15,7 @@ namespace cloyster {
 CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
 {
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_INFO("Running command: {}", command);
+        LOG_DEBUG("Running command: {}", command);
         boost::process::ipstream pipe_stream;
         boost::process::child child(command, boost::process::std_out > pipe_stream);
 
@@ -35,7 +35,7 @@ int runCommand(const std::string& command,
                bool overrideDryRun) {
 
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_INFO("Running command: {}", command);
+        LOG_DEBUG("Running command: {}", command);
         boost::process::ipstream pipe_stream;
         boost::process::child child(command, boost::process::std_out > pipe_stream);
 
@@ -47,7 +47,7 @@ int runCommand(const std::string& command,
         }
 
         child.wait();
-        LOG_TRACE("Exit code: {}", child.exit_code());
+        LOG_DEBUG("Exit code: {}", child.exit_code());
         return child.exit_code();
     }
     else
@@ -105,18 +105,18 @@ void writeConfig(const std::string &filename) {
 
 void createDirectory(const std::filesystem::path& path) {
     std::filesystem::create_directories(path);
-    LOG_TRACE("Created directory: {}", path.string());
+    LOG_DEBUG("Created directory: {}", path.string());
 }
 
 /* Remove file */
 void removeFile(std::string_view filename) {
-    LOG_TRACE("Checking if file {} already exists on filesystem", filename);
+    LOG_DEBUG("Checking if file {} already exists on filesystem", filename);
     if (std::filesystem::exists(filename)) {
-        LOG_TRACE("Already exists");
+        LOG_DEBUG("Already exists");
         std::filesystem::remove(filename);
-        LOG_TRACE("File {} deleted", filename);
+        LOG_DEBUG("File {} deleted", filename);
     } else {
-        LOG_TRACE("File does not exist");
+        LOG_DEBUG("File does not exist");
     }
 }
 
@@ -131,7 +131,7 @@ void backupFile(const std::string_view &filename) {
     if (!file.is_open()) {
         // Backup the file
         std::filesystem::copy_file(filename, backupFile);
-        LOG_TRACE("Created a backup copy of {} on {}", filename, backupFile);
+        LOG_DEBUG("Created a backup copy of {} on {}", filename, backupFile);
     }
 }
 
@@ -169,7 +169,7 @@ void addStringToFile(std::string_view filename, std::string_view string) {
                 fmt::format("Error opening file: {}", filename));
 
     file << string;
-    LOG_TRACE("Added line(s):\n{}\n => to file: {}", string, filename);
+    LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename);
 }
 
 } // namespace cloyster

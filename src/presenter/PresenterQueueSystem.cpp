@@ -36,7 +36,7 @@ PresenterQueueSystem::PresenterQueueSystem(
 
                 const auto &slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->setDefaultQueue(fieldsSLURM[0].second);
-                LOG_INFO("Set SLURM default queue: {}", slurm->getDefaultQueue());
+                LOG_DEBUG("Set SLURM default queue: {}", slurm->getDefaultQueue());
 
                 break;
             }
@@ -51,7 +51,7 @@ PresenterQueueSystem::PresenterQueueSystem(
                 const auto &pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
                         magic_enum::enum_cast<PBS::ExecutionPlace>(execution).value());
-                LOG_INFO("Set PBS Execution Place: {}",
+                LOG_DEBUG("Set PBS Execution Place: {}",
                          magic_enum::enum_name<PBS::ExecutionPlace>(pbs->getExecutionPlace()));
 
                 break;

@@ -28,11 +28,11 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
                                    , m_network(std::make_unique<Network>(profile, type))
                                    , m_connection(m_network.get())
 {
-    LOG_TRACE("Added {} network with type {}",
+    LOG_DEBUG("Added {} network with type {}",
               magic_enum::enum_name(m_network->getProfile()),
               magic_enum::enum_name(m_network->getType()));
 
-    LOG_TRACE("Added connection to {} network",
+    LOG_DEBUG("Added connection to {} network",
               magic_enum::enum_name(m_connection.getNetwork()->getProfile()));
 
     // TODO: This should be on the header and be constexpr (if possible)
@@ -100,7 +100,7 @@ void PresenterNetwork::createNetwork() {
     LOG_TRACE("Hopefully we have moved m_connection to m_model");
 
     // Check moved data
-    LOG_TRACE("Added {} connection on headnode: {} -> {}",
+    LOG_DEBUG("Added {} connection on headnode: {} -> {}",
               magic_enum::enum_name(profile),
               m_model->getHeadnode()
                       .getConnection(profile)
