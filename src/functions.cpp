@@ -15,7 +15,7 @@ namespace cloyster {
 CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
 {
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_TRACE("Running command: {}", command);
+        LOG_INFO("Running command: {}", command);
         boost::process::ipstream pipe_stream;
         boost::process::child child(command, boost::process::std_out > pipe_stream);
 
@@ -35,7 +35,7 @@ int runCommand(const std::string& command,
                bool overrideDryRun) {
 
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_TRACE("Running command: {}", command);
+        LOG_INFO("Running command: {}", command);
         boost::process::ipstream pipe_stream;
         boost::process::child child(command, boost::process::std_out > pipe_stream);
 

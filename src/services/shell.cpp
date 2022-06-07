@@ -31,9 +31,13 @@ void Shell::disableSELinux() {
 
     cloyster::backupFile(filename);
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
+
+    LOG_WARN("SELinux has been disabled");
 }
 
 void Shell::configureSELinuxMode() {
+    LOG_INFO("Setting up SELinux");
+
     switch (m_cluster->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
             runCommand("setenforce 0");
@@ -56,6 +60,8 @@ void Shell::configureSELinuxMode() {
 //    external connection as trusted. This way we don't need to check if a given
 //    network exists on the cluster.
 void Shell::configureFirewall() {
+    LOG_INFO("Setting up firewall");
+
     if (m_cluster->isFirewall()) {
         runCommand("systemctl enable --now firewalld");
 
@@ -81,12 +87,16 @@ void Shell::configureFirewall() {
 }
 
 void Shell::configureFQDN() {
+    LOG_INFO("Setting up hostname");
+
     runCommand(fmt::format("hostnamectl set-hostname {}",
                            m_cluster->getHeadnode().getFQDN()));
 }
 
 // TODO: Proper file parsing
 void Shell::configureHostsFile() {
+    LOG_INFO("Setting up additional entries on hosts file");
+
     auto& headnode = m_cluster->getHeadnode();
 
     const auto& ip = headnode.getConnection(Network::Profile::External).getAddress();
@@ -101,15 +111,21 @@ void Shell::configureHostsFile() {
 }
 
 void Shell::configureTimezone() {
+    LOG_INFO("Setting up timezone");
+
     runCommand(fmt::format("timedatectl set-timezone {}",
                            m_cluster->getTimezone().getTimezone()));
 }
 
 void Shell::configureLocale() {
+    LOG_INFO("Setting up locale");
+
     runCommand(fmt::format("localectl set-locale {}", m_cluster->getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride() {
+    LOG_INFO("Disabling DNS override on NetworkManager");
+
     std::string_view filename =
             CHROOT"/etc/NetworkManager/conf.d/90-dns-none.conf";
 
@@ -130,6 +146,8 @@ void Shell::disableNetworkManagerDNSOverride() {
  * will be providing the service.
  */
 void Shell::configureNetworks(const std::list<Connection>& connections) {
+    LOG_INFO("Setting up networks");
+
     runCommand("systemctl enable --now NetworkManager");
 
     for (auto const& connection : std::as_const(connections)) {
@@ -168,15 +186,21 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
 }
 
 void Shell::runSystemUpdate() {
-    if (m_cluster->isUpdateSystem())
+    if (m_cluster->isUpdateSystem()) {
+        LOG_INFO("Checking if system updates are available");
         runCommand("dnf -y update");
+    }
 }
 
 void Shell::installRequiredPackages() {
+    LOG_INFO("Installing required system packages");
+
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
 void Shell::configureRepositories() {
+    LOG_INFO("Setting up additional repositories");
+
     runCommand("dnf -y install "
                "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install "
@@ -196,10 +220,14 @@ void Shell::configureRepositories() {
 }
 
 void Shell::installOpenHPCBase() {
+    LOG_INFO("Installing base OpenHPC packages");
+
     runCommand("dnf -y install ohpc-base");
 }
 
 void Shell::configureTimeService (const std::list<Connection>& connections) {
+    LOG_INFO("Setting up time services")
+
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 
@@ -229,6 +257,8 @@ void Shell::configureTimeService (const std::list<Connection>& connections) {
 }
 
 void Shell::configureQueueSystem() {
+    LOG_INFO("Setting up the queue system");
+
     if (const auto& queue = m_cluster->getQueueSystem()) {
         switch (queue.value()->getKind()) {
             case QueueSystem::Kind::None: {
@@ -261,12 +291,16 @@ void Shell::configureQueueSystem() {
 }
 
 void Shell::configureInfiniband() {
-    if (const auto& ofed = m_cluster->getOFED())
+    if (const auto& ofed = m_cluster->getOFED()) {
+        LOG_INFO("Setting up Infiniband support");
         ofed->install();
+    }
 }
 
 /* TODO: Restrict by networks */
 void Shell::configureNetworkFileSystem() {
+    LOG_INFO("Setting up the Network File System");
+
     std::string_view filename = CHROOT"/etc/exports";
 
     cloyster::backupFile(filename);
@@ -279,6 +313,8 @@ void Shell::configureNetworkFileSystem() {
 }
 
 void Shell::removeMemlockLimits() {
+    LOG_INFO("Removing memlock limits on headnode");
+
     std::string_view filename = CHROOT"/etc/security/limits.conf";
 
     cloyster::backupFile(filename);
@@ -290,6 +326,9 @@ void Shell::removeMemlockLimits() {
  *  specifics of the system: Infiniband, PSM, etc.
  */
 void Shell::installDevelopmentComponents() {
+    LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
+             "MPI stacks");
+
     runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc "
                "valgrind-ohpc");
 
@@ -345,6 +384,7 @@ void Shell::install() {
             break;
     }
 
+    LOG_INFO("Setting up compute node images...\n This may take a while");
     provisioner->configureRepositories();
     provisioner->installPackages();
     provisioner->setup();

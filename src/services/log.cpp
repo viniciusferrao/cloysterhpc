@@ -21,7 +21,7 @@ void Log::init(Level level) {
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
     fileSink->set_pattern(pattern);
 
-    std::vector<spdlog::sink_ptr> sinks{stderrSink};
+    std::vector<spdlog::sink_ptr> sinks{stderrSink, fileSink};
     auto logger = std::make_shared<spdlog::logger>(
             productName, sinks.begin(), sinks.end());
 
