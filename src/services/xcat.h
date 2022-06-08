@@ -1,5 +1,10 @@
-#ifndef XCAT_H
-#define XCAT_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_XCAT_H_
+#define CLOYSTERHPC_XCAT_H_
 
 #include "provisioner.h"
 #include "execution.h"
@@ -65,4 +70,4 @@ public:
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };
 
-#endif /* XCAT_H */
+#endif // CLOYSTERHPC_XCAT_H_

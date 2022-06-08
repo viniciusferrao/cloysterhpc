@@ -1,5 +1,10 @@
-#ifndef NETWORK_H
-#define NETWORK_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_NETWORK_H_
+#define CLOYSTERHPC_NETWORK_H_
 
 #include <string>
 #include <vector>
@@ -111,5 +116,5 @@ public:
 #endif
 };
 
-#endif /* NETWORK_H */
+#endif // CLOYSTERHPC_NETWORK_H_
 

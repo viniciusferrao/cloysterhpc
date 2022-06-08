@@ -1,5 +1,10 @@
-#ifndef OS_H
-#define OS_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_OS_H_
+#define CLOYSTERHPC_OS_H_
 
 #include <string>
 #include "const.h"
@@ -63,4 +68,4 @@ public:
 #endif
 };
 
-#endif /* OS_H */
+#endif // CLOYSTERHPC_OS_H_

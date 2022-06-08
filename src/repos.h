@@ -1,7 +1,12 @@
-#ifndef REPOS_H
-#define REPOS_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#include <string> /* std::string */
+#ifndef CLOYSTERHPC_REPOS_H_
+#define CLOYSTERHPC_REPOS_H_
+
+#include <string>
 
 struct repofile {
     std::string id;
@@ -98,4 +103,4 @@ public:
     void disable (const std::string&);
 };
 
-#endif /* REPOS_H */
+#endif // CLOYSTERHPC_REPOS_H_

@@ -1,5 +1,10 @@
-#ifndef HEADNODE_H
-#define HEADNODE_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_HEADNODE_H_
+#define CLOYSTERHPC_HEADNODE_H_
 
 #include <string>
 #include <list>
@@ -27,4 +32,4 @@ public:
     void setBootTarget(BootTarget bootTarget);
 };
 
-#endif /* HEADNODE_H */
+#endif // CLOYSTERHPC_HEADNODE_H_

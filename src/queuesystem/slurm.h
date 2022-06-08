@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 11/02/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_SLURM_H
-#define CLOYSTERHPC_SLURM_H
+#ifndef CLOYSTERHPC_SLURM_H_
+#define CLOYSTERHPC_SLURM_H_
 
 #include "queuesystem.h"
 
@@ -20,4 +21,4 @@ public:
     void startServer();
 };
 
-#endif //CLOYSTERHPC_SLURM_H
+#endif // CLOYSTERHPC_SLURM_H_

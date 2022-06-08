@@ -1,6 +1,7 @@
-//
-// Created by Vinícius Ferrão on 24/11/21.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "PresenterInstall.h"
 #include "PresenterWelcome.h"

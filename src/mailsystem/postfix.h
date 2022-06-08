@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 19/02/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_POSTFIX_H
-#define CLOYSTERHPC_POSTFIX_H
+#ifndef CLOYSTERHPC_POSTFIX_H_
+#define CLOYSTERHPC_POSTFIX_H_
 
 #include <string>
 #include <optional>
@@ -38,4 +39,4 @@ public:
     explicit Postfix(Profile profile);
 };
 
-#endif //CLOYSTERHPC_POSTFIX_H
+#endif // CLOYSTERHPC_POSTFIX_H_

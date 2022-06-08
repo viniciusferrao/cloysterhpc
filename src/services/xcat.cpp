@@ -1,3 +1,8 @@
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "xcat.h"
 #include "execution.h"
 #include "shell.h"

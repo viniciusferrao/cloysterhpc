@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 31/10/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTER_EXECUTION_H
-#define CLOYSTER_EXECUTION_H
+#ifndef CLOYSTERHPC_EXECUTION_H_
+#define CLOYSTERHPC_EXECUTION_H_
 
 #include <string>
 
@@ -17,4 +18,4 @@ public:
     virtual void install() = 0;
 };
 
-#endif //CLOYSTER_EXECUTION_H
+#endif // CLOYSTERHPC_EXECUTION_H_

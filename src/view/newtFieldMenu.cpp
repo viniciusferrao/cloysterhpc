@@ -1,6 +1,7 @@
-//
-// Created by Vinícius Ferrão on 30/10/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 // This file is empty since the method is now a template
 

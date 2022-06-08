@@ -1,5 +1,10 @@
-#ifndef CONNECTION_H
-#define CONNECTION_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_CONNECTION_H_
+#define CLOYSTERHPC_CONNECTION_H_
 
 #include "network.h"
 
@@ -86,4 +91,4 @@ public:
 
 };
 
-#endif /* CONNECTION_H */
+#endif // CLOYSTERHPC_CONNECTION_H_

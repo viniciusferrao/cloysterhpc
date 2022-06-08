@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 02/03/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_PRESENTERMAILSYSTEM_H
-#define CLOYSTERHPC_PRESENTERMAILSYSTEM_H
+#ifndef CLOYSTERHPC_PRESENTERMAILSYSTEM_H_
+#define CLOYSTERHPC_PRESENTERMAILSYSTEM_H_
 
 #include "Presenter.h"
 
@@ -43,4 +44,4 @@ public:
                              std::unique_ptr<Newt>& view);
 };
 
-#endif //CLOYSTERHPC_PRESENTERMAILSYSTEM_H
+#endif // CLOYSTERHPC_PRESENTERMAILSYSTEM_H_

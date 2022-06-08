@@ -1,6 +1,7 @@
-//
-// Created by Vinícius Ferrão on 08/01/22.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "newt.h"
 

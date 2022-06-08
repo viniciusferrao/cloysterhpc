@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 02/03/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_PRESENTER_H
-#define CLOYSTERHPC_PRESENTER_H
+#ifndef CLOYSTERHPC_PRESENTER_H_
+#define CLOYSTERHPC_PRESENTER_H_
 
 #include <memory>
 #include <array>
@@ -40,4 +41,4 @@ protected:
     }
 };
 
-#endif //CLOYSTERHPC_PRESENTER_H
+#endif // CLOYSTERHPC_PRESENTER_H_

@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 06/04/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_BMC_H
-#define CLOYSTERHPC_BMC_H
+#ifndef CLOYSTERHPC_BMC_H_
+#define CLOYSTERHPC_BMC_H_
 
 #include <string>
 
@@ -17,4 +18,4 @@ struct BMC {
     int m_serialSpeed{115200};
 };
 
-#endif //CLOYSTERHPC_BMC_H
+#endif // CLOYSTERHPC_BMC_H_

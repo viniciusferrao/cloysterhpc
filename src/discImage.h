@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 22/05/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_DISCIMAGE_H
-#define CLOYSTERHPC_DISCIMAGE_H
+#ifndef CLOYSTERHPC_DISCIMAGE_H_
+#define CLOYSTERHPC_DISCIMAGE_H_
 
 #include <filesystem>
 #include <array>
@@ -24,4 +25,4 @@ public:
     void setPath(const std::filesystem::path& path);
 };
 
-#endif //CLOYSTERHPC_DISCIMAGE_H
+#endif // CLOYSTERHPC_DISCIMAGE_H_

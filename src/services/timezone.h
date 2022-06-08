@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 11/01/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_TIMEZONE_H
-#define CLOYSTERHPC_TIMEZONE_H
+#ifndef CLOYSTERHPC_TIMEZONE_H_
+#define CLOYSTERHPC_TIMEZONE_H_
 
 #include <string>
 #include <list>
@@ -32,4 +33,4 @@ public:
 };
 
 
-#endif //CLOYSTERHPC_TIMEZONE_H
+#endif // CLOYSTERHPC_TIMEZONE_H_

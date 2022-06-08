@@ -1,5 +1,5 @@
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
+#ifndef CLOYSTERHPC_FUNCTIONS_H_
+#define CLOYSTERHPC_FUNCTIONS_H_
 
 #include <string>
 #include <optional>
@@ -74,4 +74,4 @@ void addStringToFile(std::string_view filename, std::string_view string);
 
 } /* namespace cloyster */
 
-#endif /* FUNCTIONS_H */
+#endif // CLOYSTERHPC_FUNCTIONS_H_

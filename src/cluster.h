@@ -1,5 +1,10 @@
-#ifndef CLUSTER_H
-#define CLUSTER_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_CLUSTER_H_
+#define CLOYSTERHPC_CLUSTER_H_
 
 #include <string>
 #include <optional>
@@ -114,4 +119,4 @@ public:
 
 };
 
-#endif /* CLUSTER_H */
+#endif // CLOYSTERHPC_CLUSTER_H_

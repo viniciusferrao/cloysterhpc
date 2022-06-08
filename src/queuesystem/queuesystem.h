@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 11/02/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_QUEUESYSTEM_H
-#define CLOYSTERHPC_QUEUESYSTEM_H
+#ifndef CLOYSTERHPC_QUEUESYSTEM_H_
+#define CLOYSTERHPC_QUEUESYSTEM_H_
 
 #include <string>
 #include <fmt/format.h>
@@ -35,4 +36,4 @@ public:
     virtual ~QueueSystem() = default;
 };
 
-#endif //CLOYSTERHPC_QUEUESYSTEM_H
+#endif // CLOYSTERHPC_QUEUESYSTEM_H_

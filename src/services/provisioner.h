@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 31/10/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTER_PROVISIONER_H
-#define CLOYSTER_PROVISIONER_H
+#ifndef CLOYSTERHPC_PROVISIONER_H_
+#define CLOYSTERHPC_PROVISIONER_H_
 
 #include <string>
 
@@ -14,4 +15,4 @@ public:
     //virtual void method () = 0;
 };
 
-#endif //CLOYSTER_PROVISIONER_H
+#endif // CLOYSTERHPC_PROVISIONER_H_

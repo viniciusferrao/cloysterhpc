@@ -1,8 +1,10 @@
-//
-// Created by Vinícius Ferrão on 31/10/21.
-//
-#ifndef CLOYSTER_SHELL_H
-#define CLOYSTER_SHELL_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_SHELL_H_
+#define CLOYSTERHPC_SHELL_H_
 
 #include "../include/magic_enum.hpp"
 
@@ -48,4 +50,4 @@ public:
     void install() override;
 };
 
-#endif //CLOYSTER_SHELL_H
+#endif // CLOYSTERHPC_SHELL_H_

@@ -1,6 +1,8 @@
-//
-// Created by Vinícius Ferrão on 31/10/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "shell.h"
 #include "xcat.h"
 #include "../functions.h"

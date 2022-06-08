@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 30/10/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTER_VIEW_H
-#define CLOYSTER_VIEW_H
+#ifndef CLOYSTERHPC_VIEW_H_
+#define CLOYSTERHPC_VIEW_H_
 
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
@@ -17,4 +18,4 @@ public:
     virtual void helpMessage(const char*) = 0;
 };
 
-#endif //CLOYSTER_VIEW_H
+#endif // CLOYSTERHPC_VIEW_H_

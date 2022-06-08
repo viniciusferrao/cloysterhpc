@@ -1,6 +1,8 @@
-//
-// Created by Vinícius Ferrão on 13/11/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "node.h"
 
 Node::Node(std::string_view hostname, OS& os, CPU& cpu,

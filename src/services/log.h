@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 23/11/21.
-//
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_LOG_H
-#define CLOYSTERHPC_LOG_H
+#ifndef CLOYSTERHPC_LOG_H_
+#define CLOYSTERHPC_LOG_H_
 
 #include "../const.h"
 #include <spdlog/spdlog.h>
@@ -58,4 +59,4 @@ namespace Log {
     void shutdown();
 }
 
-#endif // CLOYSTERHPC_LOG_H
+#endif // CLOYSTERHPC_LOG_H_

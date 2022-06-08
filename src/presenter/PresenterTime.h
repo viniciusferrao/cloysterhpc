@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 02/03/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_PRESENTERTIMEZONE_H
-#define CLOYSTERHPC_PRESENTERTIMEZONE_H
+#ifndef CLOYSTERHPC_PRESENTERTIMEZONE_H_
+#define CLOYSTERHPC_PRESENTERTIMEZONE_H_
 
 #include "Presenter.h"
 
@@ -29,4 +30,4 @@ public:
                   std::unique_ptr<Newt>& view);
 };
 
-#endif //CLOYSTERHPC_PRESENTERTIMEZONE_H
+#endif // CLOYSTERHPC_PRESENTERTIMEZONE_H_

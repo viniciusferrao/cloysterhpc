@@ -1,5 +1,10 @@
-#ifndef SERVER_H
-#define SERVER_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_SERVER_H_
+#define CLOYSTERHPC_SERVER_H_
 
 #include <string>
 #include <list>
@@ -56,4 +61,4 @@ public:
     virtual ~Server() = default;
 };
 
-#endif // SERVER_H
+#endif // CLOYSTERHPC_SERVER_H_

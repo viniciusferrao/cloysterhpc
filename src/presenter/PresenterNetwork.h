@@ -1,9 +1,10 @@
-//
-// Created by Vinícius Ferrão on 07/02/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-#ifndef CLOYSTERHPC_PRESENTERNETWORK_H
-#define CLOYSTERHPC_PRESENTERNETWORK_H
+#ifndef CLOYSTERHPC_PRESENTERNETWORK_H_
+#define CLOYSTERHPC_PRESENTERNETWORK_H_
 
 #include "Presenter.h"
 
@@ -98,4 +99,4 @@ public:
 };
 
 
-#endif //CLOYSTERHPC_PRESENTERNETWORK_H
+#endif // CLOYSTERHPC_PRESENTERNETWORK_H_

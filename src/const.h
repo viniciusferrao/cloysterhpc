@@ -1,10 +1,10 @@
-/* Copyright to be added
- * Description to be added
- * Authores to be added
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef CONST_H
-#define CONST_H
+#ifndef CLOYSTERHPC_CONST_H_
+#define CLOYSTERHPC_CONST_H_
 
 // We strive for constexpr correctness, but we sometimes still need a macro
 namespace cloyster {
@@ -31,4 +31,4 @@ using cloyster::productName;
 using cloyster::productUrl;
 using cloyster::installPath;
 
-#endif /* CONST_H */
+#endif // CLOYSTERHPC_CONST_H_

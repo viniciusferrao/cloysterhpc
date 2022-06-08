@@ -1,8 +1,10 @@
-//
-// Created by Vinícius Ferrão on 13/11/21.
-//
-#ifndef CLOYSTER_NODE_H
-#define CLOYSTER_NODE_H
+/*
+ * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_NODE_H
+#define CLOYSTERHPC_NODE_H
 
 #include <string>
 #include <list>
@@ -18,4 +20,4 @@ public:
          std::list<Connection>&& connections, std::optional<BMC> bmc = std::nullopt);
 };
 
-#endif // CLOYSTER_NODE_H
+#endif // CLOYSTERHPC_NODE_H_
