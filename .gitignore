@@ -1,5 +1,5 @@
 # .gitignore
-# C; C++; macOS; Linux; Executable; Visual Studio Code, VIM.
+# C; C++; CMake; Ninja; macOS; Linux; Executable; Visual Studio Code; VIM; CLion; PVS.
 
 # Code specific
 build/
@@ -10,8 +10,9 @@ release/
 main
 *.log
 
-# Created by https://www.toptal.com/developers/gitignore/api/c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
-# Edit at https://www.toptal.com/developers/gitignore?templates=c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
+
+# Created by https://www.toptal.com/developers/gitignore/api/c,c++,cmake,ninja,macos,linux,executable,visualstudiocode,vim,clion,pvs
+# Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,cmake,ninja,macos,linux,executable,visualstudiocode,vim,clion,pvs
 
 ### C ###
 # Prerequisites
@@ -150,6 +151,9 @@ atlassian-ide-plugin.xml
 # Cursive Clojure plugin
 .idea/replstate.xml
 
+# SonarLint plugin
+.idea/sonarlint/
+
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
@@ -191,6 +195,10 @@ fabric.properties
 # CodeStream plugin
 # https://plugins.jetbrains.com/plugin/12206-codestream
 .idea/codestream.xml
+
+# Azure Toolkit for IntelliJ plugin
+# https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
+.idea/**/azureSettings.xml
 
 ### CMake ###
 CMakeLists.txt.user
@@ -263,6 +271,31 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+### macOS Patch ###
+# iCloud generated files
+*.icloud
+
+### Ninja ###
+.ninja_deps
+.ninja_log
+
+### PVS ###
+# Ignore binary files
+pvsbin/
+bin/
+lib/
+*.bin
+.pvscontext
+# Ignore orphaned and old proofs
+orphaned-proofs.prf
+*.prf~
+# Ignore compiled Lisp files
+*fasl
+# Ignore PVS dump files
+*.dmp
+# Ignore PVS log files
+*.log
+
 ### Vim ###
 # Swap
 [._]*.s[a-v][a-z]
@@ -289,10 +322,13 @@ tags
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-*.code-workspace
+!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
+
+# Built Visual Studio Code Extensions
+*.vsix
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
@@ -300,7 +336,9 @@ tags
 .ionide
 
 # Support for Project snippet scope
-!.vscode/*.code-snippets
+.vscode/*.code-snippets
 
-# End of https://www.toptal.com/developers/gitignore/api/c,vim,c++,linux,macos,clion,executable,visualstudiocode,cmake
+# Ignore code-workspaces
+*.code-workspace
 
+# End of https://www.toptal.com/developers/gitignore/api/c,c++,cmake,ninja,macos,linux,executable,visualstudiocode,vim,clion,pvs
