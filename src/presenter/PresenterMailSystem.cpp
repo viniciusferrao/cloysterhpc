@@ -59,7 +59,7 @@ PresenterMailSystem::PresenterMailSystem(
                 auto fields = std::to_array<
                         std::pair<std::string, std::string>>({
                                 {Messages::SASL::hostname, ""},
-                                {Messages::SASL::port, ""},
+                                {Messages::SASL::port, "587"},
                                 {Messages::SASL::username, ""},
                                 {Messages::SASL::password, ""}
                         });

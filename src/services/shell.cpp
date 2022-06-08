@@ -83,7 +83,11 @@ void Shell::configureFirewall() {
         runCommand("firewall-cmd --reload");
     }
     else
+    {
         runCommand("systemctl disable --now firewalld");
+
+        LOG_WARN("Firewalld has been disabled");
+    }
 }
 
 void Shell::configureFQDN() {
@@ -374,8 +378,10 @@ void Shell::install() {
 
     installDevelopmentComponents();
 
-    LOG_DEBUG("Setting up the provisioner: {}",
-              magic_enum::enum_name(m_cluster->getProvisioner()));
+    const auto& provisionerName {
+        magic_enum::enum_name(m_cluster->getProvisioner())};
+
+    LOG_DEBUG("Setting up the provisioner: {}", provisionerName);
     //std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
@@ -385,12 +391,27 @@ void Shell::install() {
     }
 
     LOG_INFO("Setting up compute node images... This may take a while");
+
+    LOG_INFO("[{}] Setting up repositories", provisionerName);
     provisioner->configureRepositories();
+
+    LOG_INFO("[{}] Installing packages", provisionerName);
     provisioner->installPackages();
+
+    LOG_INFO("[{}] Setting up the provisioner", provisionerName);
     provisioner->setup();
+
+    LOG_INFO("[{}] Creating node images", provisionerName);
     provisioner->createImage();
+
+    LOG_INFO("[{}] Adding compute nodes", provisionerName);
     provisioner->addNodes();
+
+    LOG_INFO("[{}] Setting up image on nodes", provisionerName);
     provisioner->setNodesImage();
+
+    LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
+             provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
 }

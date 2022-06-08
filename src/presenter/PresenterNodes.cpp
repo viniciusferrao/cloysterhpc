@@ -17,9 +17,9 @@ PresenterNodes::PresenterNodes(
             std::pair<std::string, std::string>>({
                  {Messages::Nodes::prefix, "n"},
                  {Messages::Nodes::padding, "2"},
-                 {Messages::Nodes::startIP, "172.31.22.45"},
-                 {Messages::Nodes::rootPassword, "p@ssw0rd"},
-                 //{Messages::Nodes::confirmRootPassword, "p@ssw0rd"},
+                 {Messages::Nodes::startIP, ""},
+                 //{Messages::Nodes::rootPassword, ""},
+                 //{Messages::Nodes::confirmRootPassword, ""},
                  //{Messages::Nodes::DiscImagePath, "/root/iso/rhel-8.5-dvd1.iso"}
             });
 
@@ -50,15 +50,16 @@ PresenterNodes::PresenterNodes(
     m_model->nodeStartIP = fields[i++].second;
     m_model->nodeRootPassword = fields[i++].second;
     //m_model->setDiscImage(fields[i++].second);
+    // FIXME: This cannot be hardcoded; we should support a variety of images
     m_model->setDiscImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
     // Number of nodes
     // TODO: Set racks and startNumber to create things like: r01n01
     auto nodes = std::to_array<
             std::pair<std::string, std::string>>({
-            //     {Messages::Quantity::racks, "2"},
-                 {Messages::Quantity::nodes, "5"},
-            //     {Messages::Quantity::startNumber, "7"}
+            //     {Messages::Quantity::racks, ""},
+                 {Messages::Quantity::nodes, ""},
+            //     {Messages::Quantity::startNumber, ""}
             });
 
     i = 0;

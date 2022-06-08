@@ -12,9 +12,9 @@ PresenterGeneralSettings::PresenterGeneralSettings(
     // Generic settings
     auto generalSettings = std::to_array<
             std::pair<std::string, std::string>>({
-                {Messages::General::clusterName, "cl0yst3r"},
-                {Messages::General::companyName, "Profiterolis Corp"},
-                {Messages::General::adminEmail, "root@example.com"}
+                {Messages::General::clusterName, ""},
+                {Messages::General::companyName, ""},
+                {Messages::General::adminEmail, ""}
             });
 
     generalSettings = m_view->fieldMenu(Messages::title, Messages::General::question,

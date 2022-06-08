@@ -12,8 +12,8 @@ PresenterHostId::PresenterHostId(
     // Should this be a std::vector instead?
     // std::vector<std::string> aux = networkHostnameSelection({"Hostname", "Domain name"});
     const auto& entries = std::to_array<std::pair<std::string, std::string>>({
-            {Messages::hostname, "headnode"},
-            {Messages::domainName, "example.com"}
+            {Messages::hostname, ""},
+            {Messages::domainName, ""}
     });
 
     const auto& answers = m_view->fieldMenu(Messages::title,

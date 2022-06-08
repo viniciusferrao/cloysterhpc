@@ -6,20 +6,17 @@
 #define CLOYSTERHPC_PRESENTERWELCOME_H
 
 #include "Presenter.h"
+#include "../const.h"
 
 class PresenterWelcome : public Presenter {
 private:
     struct Messages {
         struct Welcome {
             static constexpr const char *message =
-                "Welcome to the guided installer of CloysterHPC!\n\nLorem ipsum dolor " \
-                "sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt " \
-                "ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud " \
-                "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " \
-                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum " \
-                "dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non " \
-                "proident, sunt in culpa qui officia deserunt mollit anim id est laborum." \
-                "\n";
+                "Welcome to the guided installer of " PRODUCT_NAME ".\n\n" PRODUCT_NAME " is a software program to "
+                "guide the user to set up an HPC clustered environment. It asks for specific questions to get a basic "
+                "HPC cluster up and running as quick as possible.\n\nFor more information about the software, feature "
+                "requests or bug reports please check its repository at " PRODUCT_URL;
         };
     };
 
