@@ -8,7 +8,7 @@
 
 #include "Presenter.h"
 
-#include "../include/magic_enum.hpp"
+#include <magic_enum.hpp>
 #include <boost/lexical_cast.hpp>
 
 class PresenterInstall : public Presenter {

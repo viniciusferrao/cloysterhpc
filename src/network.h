@@ -11,7 +11,7 @@
 #include <arpa/inet.h>
 #include <unordered_map>
 
-#include "include/magic_enum.hpp"
+#include <magic_enum.hpp>
 
 /* TODO: Refactoring is necessary
  *  m_domainName is also available here since non-default networks may

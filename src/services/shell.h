@@ -6,7 +6,7 @@
 #ifndef CLOYSTERHPC_SHELL_H_
 #define CLOYSTERHPC_SHELL_H_
 
-#include "../include/magic_enum.hpp"
+#include <magic_enum.hpp>
 
 #include "execution.h"
 #include "../cluster.h"

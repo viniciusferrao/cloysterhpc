@@ -13,7 +13,7 @@
 #include "../network.h"
 #include "../services/log.h"
 
-#include "../include/magic_enum.hpp"
+#include <magic_enum.hpp>
 
 #include <memory>
 #include <utility>

@@ -28,6 +28,16 @@ find_package(Boost REQUIRED
     COMPONENTS system thread
 )
 
+# Library: spdlog
+find_package(spdlog REQUIRED)
+
+# Library: gsl-lite
+find_package(gsl-lite REQUIRED)
+
+# Library: magic_enum
+find_package(magic_enum REQUIRED)
+
+# Add stdc++fs to EL8 systems
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(${os_version_suffix} MATCHES "el8")
         if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
@@ -36,12 +46,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         set(STDC++FS "stdc++fs")
     endif()
 endif()
-
-# Library: spdlog
-find_package(spdlog REQUIRED)
-
-# Library: gsl-lite
-find_package(gsl-lite REQUIRED)
 
 # Generate a dummy binary
 # TODO: Create a custom build target
@@ -73,8 +77,9 @@ target_link_libraries(main
     fmt::fmt
     spdlog::spdlog
     resolv
-    ${STDC++FS}
     gsl::gsl-lite
+    magic_enum::magic_enum
+    ${STDC++FS}
 )
 
 # Set target locations to the root folder of the project in /bin and /lib.

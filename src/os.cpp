@@ -4,7 +4,7 @@
  */
 
 #include "os.h"
-#include "include/magic_enum.hpp"
+#include <magic_enum.hpp>
 
 #ifndef NDEBUG
 #include "services/log.h"
