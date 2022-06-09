@@ -1,22 +1,20 @@
 # CloysterHPC
 
-CloysterHPC is a software that guides the user to set up an HPC clustered
-environment. It asks for specific questions regarding the system to get
-an HPC cluster up and running as quick as possible. That's CloysterHPC.
+CloysterHPC is a software that guides the user to set up
+an [HPC](https://en.wikipedia.org/wiki/High-performance_computing) clustered
+environment. It asks for specific questions regarding the system to get an 
+HPC cluster up and running as quick as possible. That's CloysterHPC.
 
 Its goal is to enhance the installation and maintenance experience, making it
-user-friendly,
-creating an easy-to-use questionnaire built with a familiar user interface,
-for gathering and verifying the required cluster information. For experienced
-users,
-an unattended mode will be available in future releases with a classic
-configuration file.
+user-friendly, creating an easy-to-use questionnaire built with a familiar
+user interface, for gathering and verifying the required cluster information.
+For experienced users, an unattended mode will be available in future releases
+with a classic configuration file.
 
 # User documentation
 
 Documentation about usage is not yet available, but the software
-should be
-self-explanatory since help information is baked directly into it.
+should be self-explanatory since help information is baked directly into it.
 
 # Architecture
 
@@ -78,9 +76,9 @@ automatic.
   like a good fit.
 * We avoid OOP techniques that may add complexity without any visible
   benefits, such as multiple inheritance. Because in this context
-  they are usually a **bad idea**. It's not forbidden to use but it should
+  they are usually a **bad idea**. It's not forbidden to use, but it should
   be used with caution.
-* At the current state there's no need for a database since all the software is
+* At the current state there's no need for a database since the software is
   stateless, and in the future configuration will be stored in a single [INI
   style](https://en.wikipedia.org/wiki/INI_file) or equivalent configuration
   file.
@@ -96,9 +94,8 @@ automatic.
 * We consume a lot of existing software to avoid recreating everything from
   scratch, most evidently: [xCAT](https://xcat.org)
   and [OpenHPC](http://openhpc.community). We also push changes on consumed
-  projects to
-  enhance them, so we directly benefit from the changes.
-* CloysterHPC is not made to run inside a container. It needs _baremetal_
+  projects to enhance them, so we directly benefit from those changes.
+* CloysterHPC is not made to run inside a container. It needs _bare metal_
   access.
 * Why this isn't written in the __whatever__ language since it's more modern?
   -- _Simply because I tend to write better C++ and C code than other languages,
