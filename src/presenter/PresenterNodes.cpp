@@ -30,7 +30,7 @@ PresenterNodes::PresenterNodes(
 
     for (const auto& field : fields) {
         if (field.first == Messages::Nodes::prefix) {
-            if (std::isalpha(field.second[0] == false)) {
+            if (std::isalpha(field.second[0]) == false) {
                 m_view->message(Messages::Error::prefixLetter);
                 goto retry;
             }
@@ -49,7 +49,7 @@ PresenterNodes::PresenterNodes(
     m_model->nodePrefix = fields[i++].second;
     m_model->nodePadding = boost::lexical_cast<std::size_t>(fields[i++].second);
     m_model->nodeStartIP = fields[i++].second;
-    m_model->nodeRootPassword = fields[i++].second;
+    //m_model->nodeRootPassword = fields[i++].second;
     //m_model->setDiskImage(fields[i++].second);
     // FIXME: This cannot be hardcoded; we should support a variety of images
     m_model->setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
