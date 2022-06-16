@@ -89,7 +89,7 @@ public:
         std::string newMessage = message;
 
         newMessage += "\n\n";
-        for (auto const& pair : pairs) {
+        for (const auto& pair : pairs) {
             newMessage += fmt::format("{} -> {}\n", pair.first, pair.second);
         }
 

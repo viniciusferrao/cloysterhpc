@@ -37,7 +37,7 @@ private:
 private:
     void setDHCPInterfaces(std::string_view interface);
     void setDomain(std::string_view domain);
-    void copycds(const std::filesystem::path& diskImagePath);
+    void copycds(const std::filesystem::path& diskImage);
     void genimage();
     void packimage();
     void nodeset(std::string_view nodes);

@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef CLOYSTERHPC_DISCIMAGE_H_
-#define CLOYSTERHPC_DISCIMAGE_H_
+#ifndef CLOYSTERHPC_DISKIMAGE_H_
+#define CLOYSTERHPC_DISKIMAGE_H_
 
 #include <filesystem>
 #include <array>
 
-class DiscImage {
+class DiskImage {
 private:
     std::filesystem::path m_path;
     static constexpr auto m_knownImageFilename{std::to_array<const char*>(
@@ -25,4 +25,4 @@ public:
     void setPath(const std::filesystem::path& path);
 };
 
-#endif // CLOYSTERHPC_DISCIMAGE_H_
+#endif // CLOYSTERHPC_DISKIMAGE_H_

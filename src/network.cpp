@@ -242,7 +242,7 @@ std::string Network::fetchDomainName() {
  */
 std::vector<std::string> Network::getNameservers() const {
     std::vector<std::string> returnVector;
-    for (auto const& nameserver : std::as_const(m_nameservers))
+    for (const auto& nameserver : std::as_const(m_nameservers))
         returnVector.emplace_back(inet_ntoa(nameserver));
 
     return returnVector;

@@ -91,7 +91,7 @@ void Server::addConnection(Connection&& connection) {
 }
 
 //const Connection& Server::getConnection(Network::Profile profile) const {
-//    for (auto const& connection : std::as_const(m_connection)) {
+//    for (const auto& connection : std::as_const(m_connection)) {
 //        if (connection.getNetwork().getProfile() == profile)
 //            return connection;
 //    }

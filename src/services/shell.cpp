@@ -156,7 +156,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
 
     runCommand("systemctl enable --now NetworkManager");
 
-    for (auto const& connection : std::as_const(connections)) {
+    for (const auto& connection : std::as_const(connections)) {
         /* For now, we just skip the external network to avoid disconnects */
         if (connection.getNetwork()->getProfile() == Network::Profile::External)
             continue;
@@ -272,7 +272,7 @@ void Shell::configureQueueSystem() {
             }
 
             case QueueSystem::Kind::SLURM: {
-                const auto &slurm = dynamic_cast<SLURM*>(queue.value().get());
+                const auto& slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->installServer();
                 slurm->configureServer();
                 slurm->enableServer();
@@ -281,7 +281,7 @@ void Shell::configureQueueSystem() {
             }
 
             case QueueSystem::Kind::PBS: {
-                const auto &pbs = dynamic_cast<PBS*>(queue.value().get());
+                const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
 
                 runCommand("dnf -y install openpbs-server-ohpc");
                 runCommand("systemctl enable --now pbs");

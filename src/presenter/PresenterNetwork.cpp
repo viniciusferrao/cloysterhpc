@@ -48,8 +48,8 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
 
 void PresenterNetwork::createNetwork() {
     // Get the network interface
-    const auto &aux = Connection::fetchInterfaces();
-    const auto &interface = networkInterfaceSelection(aux);
+    const auto& aux = Connection::fetchInterfaces();
+    const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
     auto networkDetails = std::to_array<

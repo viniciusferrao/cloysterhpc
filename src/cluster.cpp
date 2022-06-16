@@ -240,12 +240,12 @@ void Cluster::setMailSystem(Postfix::Profile profile) {
     m_mailSystem = Postfix(profile);
 }
 
-const std::filesystem::path& Cluster::getDiscImage() const {
-    return m_discImage.getPath();
+const std::filesystem::path& Cluster::getDiskImage() const {
+    return m_diskImage.getPath();
 }
 
-void Cluster::setDiscImage(const std::filesystem::path& discImagePath) {
-    m_discImage.setPath(discImagePath);
+void Cluster::setDiskImage(const std::filesystem::path& diskImagePath) {
+    m_diskImage.setPath(diskImagePath);
 }
 
 const std::vector<Node>& Cluster::getNodes() const {
@@ -277,10 +277,10 @@ void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks)
 
 #if __cplusplus < 202002L
     size_t i, j;
-    for (auto const &network : networkType) {
+    for (const auto& network : networkType) {
         i = 0;
 #else
-    for (size_t i = 0; auto const& network : networks) {
+    for (size_t i = 0; const auto& network : networks) {
 #endif
         LOG_DEBUG("Network [{}]", i++);
         LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()));
@@ -291,9 +291,9 @@ void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks)
         LOG_DEBUG("Domain Name: {}", network->getDomainName());
 #if __cplusplus < 202002L
         j = 0;
-        for (auto const &nameserver: network.getNameserver()) {
+        for (const auto& nameserver: network.getNameserver()) {
 #else
-        for (size_t j = 0; auto const& nameserver: network->getNameservers()) {
+        for (size_t j = 0; const auto& nameserver: network->getNameservers()) {
 #endif
             LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver);
         }
@@ -324,7 +324,7 @@ void Cluster::printData () {
 //    LOG_DEBUG("nodePadding: {}", nodePadding);
 //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP);
 //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword);
-    LOG_DEBUG("nodeDiscImage: {}", getDiscImage().string());
+    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string());
 
     LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"));
 //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"));
@@ -389,7 +389,7 @@ void Cluster::fillTestData () {
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
-    setDiscImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
               OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     CPU nodeCPU(2, 4, 2);

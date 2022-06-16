@@ -35,7 +35,7 @@ PresenterQueueSystem::PresenterQueueSystem(
                                                 fieldsSLURM,
                                                 Messages::SLURM::help);
 
-                const auto &slurm = dynamic_cast<SLURM*>(queue.value().get());
+                const auto& slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->setDefaultQueue(fieldsSLURM[0].second);
                 LOG_DEBUG("Set SLURM default queue: {}", slurm->getDefaultQueue());
 
@@ -43,13 +43,13 @@ PresenterQueueSystem::PresenterQueueSystem(
             }
 
             case QueueSystem::Kind::PBS: {
-                const auto &execution = m_view->listMenu(
+                const auto& execution = m_view->listMenu(
                         Messages::PBS::title,
                         Messages::PBS::question,
                         magic_enum::enum_names<PBS::ExecutionPlace>(),
                         Messages::PBS::help);
 
-                const auto &pbs = dynamic_cast<PBS*>(queue.value().get());
+                const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
                         magic_enum::enum_cast<PBS::ExecutionPlace>(execution).value());
                 LOG_DEBUG("Set PBS Execution Place: {}",

@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "discImage.h"
+#include "diskImage.h"
 
-const std::filesystem::path& DiscImage::getPath() const {
+const std::filesystem::path& DiskImage::getPath() const {
     return m_path;
 }
 
-void DiscImage::setPath(const std::filesystem::path& path) {
+void DiskImage::setPath(const std::filesystem::path& path) {
     if (path.extension() != ".iso")
-        throw std::runtime_error("Disc Image must have ISO extension");
+        throw std::runtime_error("Disk Image must have ISO extension");
 
     m_path = path;
 }
 
-bool DiscImage::isKnownImage() {
+bool DiskImage::isKnownImage() {
     for (const auto& image : m_knownImageFilename)
         if (m_path.filename() == image)
             return true;

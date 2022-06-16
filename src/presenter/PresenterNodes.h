@@ -23,7 +23,7 @@ private:
             static constexpr const char* startIP = "Compute node first IP";
             static constexpr const char* rootPassword = "Compute node root password";
             static constexpr const char* confirmRootPassword = "Confirm compute node root password";
-            static constexpr const char* DiscImagePath = "Disc image path of node OS";
+            static constexpr const char* DiskImagePath = "Disk image path of node OS";
         };
 
         struct Error {
