@@ -11,6 +11,7 @@
 #include "view/newt.h"
 #include "services/shell.h"
 #include "presenter/PresenterInstall.h"
+#include "verification.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -21,6 +22,9 @@ bool cloyster::dryRun = false;
 
 int main(int argc, char** argv) {
     // TODO: Parse command line options for log levels
+
+    cloyster::checkEffectiveUserId();
+
     Log::init();
     LOG_INFO("{} Started", productName);
 

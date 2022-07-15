@@ -2,19 +2,15 @@
 <project version="4">
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="CloysterDev RHEL8 (741029af-50c2-49ba-bd13-2f0d627d07e5)">
+      <paths name="Cloyster (65ca4cee-85bc-4506-b331-9be1189681bc)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.tfA4oiCZbb" local="$PROJECT_DIR$" />
+            <mapping deploy="/tmp/tmp.BbjyLgEy8H" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-minsizerel" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-relwithdebinfo" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-vm-rhel8" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-vm-oracle" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-vm-rhel8" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-gnu11" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-vm-oracle" />
           </excludedPaths>
         </serverdata>
       </paths>
