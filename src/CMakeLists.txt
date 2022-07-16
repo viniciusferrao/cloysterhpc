@@ -66,7 +66,7 @@ file(GLOB SOURCE_FILES
         services/*.cpp
         view/*.cpp)
 message(STATUS "Source files found are ${SOURCE_FILES}")
-add_executable(main ${SOURCE_FILES})
+add_executable(main ${SOURCE_FILES} verification.cpp verification.h)
 
 target_link_libraries(main
     PRIVATE project_options
