@@ -27,8 +27,8 @@ constexpr const char* installPath = INSTALL_PATH;
 
 } // namespace cloyster
 
+using cloyster::installPath;
 using cloyster::productName;
 using cloyster::productUrl;
-using cloyster::installPath;
 
 #endif // CLOYSTERHPC_CONST_H_

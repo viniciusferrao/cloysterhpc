@@ -4,21 +4,21 @@
  */
 
 #include "PresenterInstall.h"
-#include "PresenterWelcome.h"
-#include "PresenterInstructions.h"
 #include "PresenterGeneralSettings.h"
-#include "PresenterTime.h"
-#include "PresenterLocale.h"
 #include "PresenterHostId.h"
-#include "PresenterNetwork.h"
 #include "PresenterInfiniband.h"
+#include "PresenterInstructions.h"
+#include "PresenterLocale.h"
+#include "PresenterMailSystem.h"
+#include "PresenterNetwork.h"
 #include "PresenterNodes.h"
 #include "PresenterQueueSystem.h"
-#include "PresenterMailSystem.h"
+#include "PresenterTime.h"
+#include "PresenterWelcome.h"
 
-PresenterInstall::PresenterInstall(std::unique_ptr<Cluster>& model,
-                                   std::unique_ptr<Newt>& view)
-                                   : Presenter(model, view)
+PresenterInstall::PresenterInstall(
+    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
+    : Presenter(model, view)
 {
 
 #if 1 // Welcome messages
@@ -49,15 +49,15 @@ PresenterInstall::PresenterInstall(std::unique_ptr<Cluster>& model,
         Call<PresenterNetwork>();
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-                 magic_enum::enum_name(Network::Profile::External), ex.what());
+            magic_enum::enum_name(Network::Profile::External), ex.what());
     }
 
     try {
         Call<PresenterNetwork>(Network::Profile::Management);
-        //PresenterNetwork network(model, view, Network::Profile::Management);
+        // PresenterNetwork network(model, view, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-                 magic_enum::enum_name(Network::Profile::Management), ex.what());
+            magic_enum::enum_name(Network::Profile::Management), ex.what());
     }
 #endif
 

@@ -6,13 +6,14 @@
 #include "newt.h"
 
 #include "../functions.h"
-#include <cstring> /* strlen() */
 #include <cstdio> /* sprintf() */
+#include <cstring> /* strlen() */
 #include <newt.h>
 
 Newt::Newt()
     : m_flexDown(2)
-    , m_flexUp(2) {
+    , m_flexUp(2)
+{
     newtInit();
     newtCls();
 
@@ -34,11 +35,10 @@ Newt::Newt()
     newtRefresh();
 }
 
-Newt::~Newt() {
-    newtFinished();
-}
+Newt::~Newt() { newtFinished(); }
 
-void Newt::abort() {
+void Newt::abort()
+{
     // TODO: We should only destroy the view and not terminate the application
     this->~Newt();
     LOG_WARN("{}", TUIText::abort);
@@ -46,18 +46,20 @@ void Newt::abort() {
 }
 
 // TODO: Remove this method; this check must be done outside the view
-bool Newt::hasEmptyField(const struct newtWinEntry *entries) {
+bool Newt::hasEmptyField(const struct newtWinEntry* entries)
+{
     /* This may result in a buffer overflow if the string is > 63 chars */
     char message[63] = {};
 
     /* This for loop will check for empty values on the entries, and it will
      * return true if any value is empty based on the length of the string.
      */
-    for (unsigned i = 0 ; entries[i].text ; i++) {
+    for (unsigned i = 0; entries[i].text; i++) {
         if (strlen(*entries[i].value) == 0) {
             sprintf(message, "%s cannot be empty\n", entries[i].text);
 
-            newtWinMessage(nullptr, const_cast<char *>(TUIText::Buttons::ok), message);
+            newtWinMessage(
+                nullptr, const_cast<char*>(TUIText::Buttons::ok), message);
             return true;
         }
     }
@@ -66,17 +68,15 @@ bool Newt::hasEmptyField(const struct newtWinEntry *entries) {
 }
 
 /**
-  * Show a progress message dialog
-  * @param title
-  * @param message
-  * @param command
-  * @param fPercent A function to transform a line
-  * into a percent (a 0 to 100 value)
-  */
-bool Newt::progressMenu(const char* title,
-                  const char* message,
-                  cloyster::CommandProxy&& cmd,
-                  std::function<double(std::string)> fPercent)
+ * Show a progress message dialog
+ * @param title
+ * @param message
+ * @param command
+ * @param fPercent A function to transform a line
+ * into a percent (a 0 to 100 value)
+ */
+bool Newt::progressMenu(const char* title, const char* message,
+    cloyster::CommandProxy&& cmd, std::function<double(std::string)> fPercent)
 {
 
     std::string text;
@@ -91,16 +91,17 @@ bool Newt::progressMenu(const char* title,
 
     newtGrid grid = newtCreateGrid(1, 3);
     newtComponent b1;
-    newtGrid buttonGrid = newtButtonBar(const_cast<char*>(TUIText::Buttons::cancel), &b1, NULL);
-    newtGridSetField(grid, 0, 0, NEWT_GRID_COMPONENT, progress,
-                     1, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX);
-    newtGridSetField(grid, 0, 1, NEWT_GRID_COMPONENT, label,
-                     1, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX | NEWT_GRID_FLAG_GROWY);
-    newtGridSetField(grid, 0, 2, NEWT_GRID_SUBGRID, buttonGrid,
-                     0, 1, 0, 0, 0, NEWT_GRID_FLAG_GROWX);
+    newtGrid buttonGrid
+        = newtButtonBar(const_cast<char*>(TUIText::Buttons::cancel), &b1, NULL);
+    newtGridSetField(grid, 0, 0, NEWT_GRID_COMPONENT, progress, 1, 1, 0, 0, 0,
+        NEWT_GRID_FLAG_GROWX);
+    newtGridSetField(grid, 0, 1, NEWT_GRID_COMPONENT, label, 1, 1, 0, 0, 0,
+        NEWT_GRID_FLAG_GROWX | NEWT_GRID_FLAG_GROWY);
+    newtGridSetField(grid, 0, 2, NEWT_GRID_SUBGRID, buttonGrid, 0, 1, 0, 0, 0,
+        NEWT_GRID_FLAG_GROWX);
     newtGridWrappedWindow(grid, dtitle);
 
-    newtFormAddComponents(form, progress, label, b1,  nullptr);
+    newtFormAddComponents(form, progress, label, b1, nullptr);
     newtFormWatchFd(form, cmd.pipe_stream.pipe().native_source(), NEWT_FD_READ);
     newtScaleSet(progress, 0);
     newtDrawForm(form);
@@ -121,12 +122,11 @@ bool Newt::progressMenu(const char* title,
 
     newtFormDestroy(form);
     return es.u.co != b1;
-
 }
 
-void Newt::helpMessage (const char* message) {
+void Newt::helpMessage(const char* message)
+{
     newtBell();
     newtWinMessage(const_cast<char*>(TUIText::Help::title),
-                   const_cast<char*>(TUIText::Buttons::ok),
-                   const_cast<char*>(message));
+        const_cast<char*>(TUIText::Buttons::ok), const_cast<char*>(message));
 }

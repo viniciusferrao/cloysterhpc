@@ -5,26 +5,28 @@
 
 #include "log.h"
 
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <memory>
 #include <boost/algorithm/string.hpp>
+#include <memory>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
-void Log::init(Level level) {
-    const auto& pattern{"%^[%Y-%m-%d %H:%M:%S.%e] %v%$"};
+void Log::init(Level level)
+{
+    const auto& pattern { "%^[%Y-%m-%d %H:%M:%S.%e] %v%$" };
 
     auto stderrSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
     stderrSink->set_pattern(pattern);
 
     const auto& logfile = fmt::format(
-            "{}.log", boost::to_lower_copy(std::string{productName}));
+        "{}.log", boost::to_lower_copy(std::string { productName }));
 
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
+    auto fileSink
+        = std::make_shared<spdlog::sinks::basic_file_sink_st>(logfile);
     fileSink->set_pattern(pattern);
 
-    std::vector<spdlog::sink_ptr> sinks{stderrSink, fileSink};
+    std::vector<spdlog::sink_ptr> sinks { stderrSink, fileSink };
     auto logger = std::make_shared<spdlog::logger>(
-            productName, sinks.begin(), sinks.end());
+        productName, sinks.begin(), sinks.end());
 
     switch (level) {
         case Log::Level::Trace:
@@ -60,6 +62,4 @@ void Log::init(Level level) {
     spdlog::register_logger(logger);
 }
 
-void Log::shutdown() {
-    spdlog::shutdown();
-}
+void Log::shutdown() { spdlog::shutdown(); }

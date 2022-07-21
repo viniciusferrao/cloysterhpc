@@ -11,10 +11,9 @@ PBS::PBS(const Cluster& cluster)
     setKind(QueueSystem::Kind::PBS);
 }
 
-void PBS::setExecutionPlace(ExecutionPlace executionPlace) {
+void PBS::setExecutionPlace(ExecutionPlace executionPlace)
+{
     m_executionPlace = executionPlace;
 }
 
-PBS::ExecutionPlace PBS::getExecutionPlace(void) {
-    return m_executionPlace;
-}
+PBS::ExecutionPlace PBS::getExecutionPlace(void) { return m_executionPlace; }

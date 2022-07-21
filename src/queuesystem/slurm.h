@@ -10,7 +10,7 @@
 
 class SLURM : public QueueSystem {
 private:
-    bool m_accounting{false};
+    bool m_accounting { false };
 
 public:
     explicit SLURM(const Cluster& cluster);

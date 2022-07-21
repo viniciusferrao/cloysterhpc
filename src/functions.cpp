@@ -8,9 +8,9 @@
 #include <cstdlib> /* getenv() */
 #include <iostream>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <fmt/format.h>
 
 #include "services/log.h"
@@ -22,31 +22,33 @@ CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
     if (!cloyster::dryRun || overrideDryRun) {
         LOG_DEBUG("Running command: {}", command);
         boost::process::ipstream pipe_stream;
-        boost::process::child child(command, boost::process::std_out > pipe_stream);
+        boost::process::child child(
+            command, boost::process::std_out > pipe_stream);
 
-        return CommandProxy{.valid = true,
-                            .child = std::move(child),
-                            .pipe_stream = std::move(pipe_stream)};
+        return CommandProxy { .valid = true,
+            .child = std::move(child),
+            .pipe_stream = std::move(pipe_stream) };
     }
 
-    return CommandProxy{};
+    return CommandProxy {};
 }
-
 
 // FIXME: Maybe std::optional here is irrelevant? Look at the next overload.
 int runCommand(const std::string& command,
-               //std::optional<std::list<std::string>>& output,
-               std::list<std::string>& output,
-               bool overrideDryRun) {
+    // std::optional<std::list<std::string>>& output,
+    std::list<std::string>& output, bool overrideDryRun)
+{
 
     if (!cloyster::dryRun || overrideDryRun) {
         LOG_DEBUG("Running command: {}", command);
         boost::process::ipstream pipe_stream;
-        boost::process::child child(command, boost::process::std_out > pipe_stream);
+        boost::process::child child(
+            command, boost::process::std_out > pipe_stream);
 
         std::string line;
 
-        while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
+        while (
+            pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
             LOG_TRACE("{}", line);
             output.emplace_back(line);
         }
@@ -54,32 +56,33 @@ int runCommand(const std::string& command,
         child.wait();
         LOG_DEBUG("Exit code: {}", child.exit_code());
         return child.exit_code();
-    }
-    else
-    {
+    } else {
         LOG_WARN("Dry Run: {}", command);
         return 0;
     }
 }
 
-int runCommand(const std::string& command, bool overrideDryRun) {
+int runCommand(const std::string& command, bool overrideDryRun)
+{
     // FIXME: Why we can't pass std::nullopt instead?
     std::list<std::string> discard;
-    //std::optional<std::list<std::string>> discard;
+    // std::optional<std::list<std::string>> discard;
     return runCommand(command, discard, overrideDryRun);
 }
 
 /* Returns a specific environment variable when requested.
-* If the variable is not set it will return as an empty string. That's by
-* design and not considered a bug right now.
-*/
-std::string getEnvironmentVariable(const std::string &key) {
-    char *value = getenv(key.c_str());
+ * If the variable is not set it will return as an empty string. That's by
+ * design and not considered a bug right now.
+ */
+std::string getEnvironmentVariable(const std::string& key)
+{
+    char* value = getenv(key.c_str());
     return value == nullptr ? std::string("") : std::string(value);
 }
 
 /* Read .conf file */
-std::string readConfig(const std::string &filename) {
+std::string readConfig(const std::string& filename)
+{
     boost::property_tree::ptree tree;
 
     try {
@@ -90,8 +93,7 @@ std::string readConfig(const std::string &filename) {
         LOG_ERROR("Error: {}", ex.what());
     }
 
-    std::string value = tree.get<std::string>("headnode.LANG",
-                                              "en_US.utf8");
+    std::string value = tree.get<std::string>("headnode.LANG", "en_US.utf8");
 
     LOG_TRACE("Read configFile variables:");
     LOG_TRACE("LANG: {}", value);
@@ -100,7 +102,8 @@ std::string readConfig(const std::string &filename) {
 }
 
 /* Write .conf file function */
-void writeConfig(const std::string &filename) {
+void writeConfig(const std::string& filename)
+{
     boost::property_tree::ptree tree;
 
     tree.put("headnode.LANG", getEnvironmentVariable("LANG"));
@@ -108,13 +111,15 @@ void writeConfig(const std::string &filename) {
     boost::property_tree::write_ini(filename, tree);
 }
 
-void createDirectory(const std::filesystem::path& path) {
+void createDirectory(const std::filesystem::path& path)
+{
     std::filesystem::create_directories(path);
     LOG_DEBUG("Created directory: {}", path.string());
 }
 
 /* Remove file */
-void removeFile(std::string_view filename) {
+void removeFile(std::string_view filename)
+{
     LOG_DEBUG("Checking if file {} already exists on filesystem", filename);
     if (std::filesystem::exists(filename)) {
         LOG_DEBUG("Already exists");
@@ -126,7 +131,8 @@ void removeFile(std::string_view filename) {
 }
 
 /* Backup file */
-void backupFile(const std::string_view &filename) {
+void backupFile(const std::string_view& filename)
+{
     const auto& backupFile = fmt::format("{}/backup{}", installPath, filename);
 
     // Create the directory structure
@@ -146,15 +152,14 @@ void backupFile(const std::string_view &filename) {
  *  - Replace boost with glib's GKeyFile?
  *  - http://www.gtkbook.com/gtkbook/keyfile.html
  */
-void changeValueInConfigurationFile(const std::string& filename,
-                                    const std::string& key,
-                                    std::string_view value)
+void changeValueInConfigurationFile(
+    const std::string& filename, const std::string& key, std::string_view value)
 {
     boost::property_tree::ptree tree;
 
     try {
         boost::property_tree::ini_parser::read_ini(filename, tree);
-    } catch(boost::property_tree::ini_parser_error& ex) {
+    } catch (boost::property_tree::ini_parser_error& ex) {
         LOG_ERROR("Error: {}", ex.what());
     }
 
@@ -162,16 +167,17 @@ void changeValueInConfigurationFile(const std::string& filename,
     boost::property_tree::write_ini(filename, tree);
 }
 
-void addStringToFile(std::string_view filename, std::string_view string) {
+void addStringToFile(std::string_view filename, std::string_view string)
+{
 #ifdef _LIBCPP_VERSION
     std::ofstream file(filename, std::ios_base::app);
 #else
-    std::ofstream file(std::string{filename}, std::ios_base::app);
+    std::ofstream file(std::string { filename }, std::ios_base::app);
 #endif
 
     if (!file.is_open())
         throw std::runtime_error(
-                fmt::format("Error opening file: {}", filename));
+            fmt::format("Error opening file: {}", filename));
 
     file << string;
     LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename);

@@ -7,17 +7,17 @@
 
 using cloyster::runCommand;
 
-OFED::OFED(Kind kind) : m_kind(kind) {}
-
-void OFED::setKind(Kind kind) {
-    m_kind = kind;
+OFED::OFED(Kind kind)
+    : m_kind(kind)
+{
 }
 
-OFED::Kind OFED::getKind() const {
-    return m_kind;
-}
+void OFED::setKind(Kind kind) { m_kind = kind; }
 
-void OFED::install() const {
+OFED::Kind OFED::getKind() const { return m_kind; }
+
+void OFED::install() const
+{
     switch (m_kind) {
         case OFED::Kind::Inbox:
             runCommand("dnf -y groupinstall \"Infiniband Support\"");

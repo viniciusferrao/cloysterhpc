@@ -4,32 +4,33 @@
  */
 
 #include "shell.h"
-#include "xcat.h"
 #include "../functions.h"
 #include "log.h"
+#include "xcat.h"
 
-#include <memory>
-#include <fmt/format.h>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <boost/process.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <fmt/format.h>
+#include <memory>
 
 #include "../cluster.h"
 
 using cloyster::runCommand;
 
-Shell::Shell(const std::unique_ptr<Cluster> &cluster)
-            : m_cluster(cluster)
+Shell::Shell(const std::unique_ptr<Cluster>& cluster)
+    : m_cluster(cluster)
 {
     // Initialize directory tree
     cloyster::createDirectory(installPath);
-    cloyster::createDirectory(std::string{installPath} + "/backup");
+    cloyster::createDirectory(std::string { installPath } + "/backup");
 }
 
-void Shell::disableSELinux() {
+void Shell::disableSELinux()
+{
     runCommand("setenforce 0");
 
-    const auto filename = CHROOT"/etc/sysconfig/selinux";
+    const auto filename = CHROOT "/etc/sysconfig/selinux";
 
     cloyster::backupFile(filename);
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
@@ -37,7 +38,8 @@ void Shell::disableSELinux() {
     LOG_WARN("SELinux has been disabled");
 }
 
-void Shell::configureSELinuxMode() {
+void Shell::configureSELinuxMode()
+{
     LOG_INFO("Setting up SELinux");
 
     switch (m_cluster->getSELinux()) {
@@ -61,7 +63,8 @@ void Shell::configureSELinuxMode() {
 //  * Perhaps we could loop through connections and add everything except the
 //    external connection as trusted. This way we don't need to check if a given
 //    network exists on the cluster.
-void Shell::configureFirewall() {
+void Shell::configureFirewall()
+{
     LOG_INFO("Setting up firewall");
 
     if (m_cluster->isFirewall()) {
@@ -69,78 +72,85 @@ void Shell::configureFirewall() {
 
         // Add the management interface as trusted
         runCommand(fmt::format(
-                "firewall-cmd --permanent --zone=trusted --change-interface={}"
-                , m_cluster->getHeadnode()
-                            .getConnection(Network::Profile::Management)
-                            .getInterface().value()));
+            "firewall-cmd --permanent --zone=trusted --change-interface={}",
+            m_cluster->getHeadnode()
+                .getConnection(Network::Profile::Management)
+                .getInterface()
+                .value()));
 
         // If we have IB, also add its interface as trusted
         if (m_cluster->getOFED())
             runCommand(fmt::format(
-                    "firewall-cmd --permanent --zone=trusted --change-interface={}"
-                    , m_cluster->getHeadnode()
-                                .getConnection(Network::Profile::Application)
-                                .getInterface().value()));
+                "firewall-cmd --permanent --zone=trusted --change-interface={}",
+                m_cluster->getHeadnode()
+                    .getConnection(Network::Profile::Application)
+                    .getInterface()
+                    .value()));
 
         runCommand("firewall-cmd --reload");
-    }
-    else
-    {
+    } else {
         runCommand("systemctl disable --now firewalld");
 
         LOG_WARN("Firewalld has been disabled");
     }
 }
 
-void Shell::configureFQDN() {
+void Shell::configureFQDN()
+{
     LOG_INFO("Setting up hostname");
 
-    runCommand(fmt::format("hostnamectl set-hostname {}",
-                           m_cluster->getHeadnode().getFQDN()));
+    runCommand(fmt::format(
+        "hostnamectl set-hostname {}", m_cluster->getHeadnode().getFQDN()));
 }
 
 // TODO: Proper file parsing
-void Shell::configureHostsFile() {
+void Shell::configureHostsFile()
+{
     LOG_INFO("Setting up additional entries on hosts file");
 
     auto& headnode = m_cluster->getHeadnode();
 
-    const auto& ip = headnode.getConnection(Network::Profile::External).getAddress();
+    const auto& ip
+        = headnode.getConnection(Network::Profile::External).getAddress();
     const auto& fqdn = headnode.getFQDN();
     const auto& hostname = headnode.getHostname();
 
-    std::string_view filename = CHROOT"/etc/hosts";
+    std::string_view filename = CHROOT "/etc/hosts";
 
     cloyster::backupFile(filename);
-    cloyster::addStringToFile(filename,
-                            fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
+    cloyster::addStringToFile(
+        filename, fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
-void Shell::configureTimezone() {
+void Shell::configureTimezone()
+{
     LOG_INFO("Setting up timezone");
 
-    runCommand(fmt::format("timedatectl set-timezone {}",
-                           m_cluster->getTimezone().getTimezone()));
+    runCommand(fmt::format(
+        "timedatectl set-timezone {}", m_cluster->getTimezone().getTimezone()));
 }
 
-void Shell::configureLocale() {
+void Shell::configureLocale()
+{
     LOG_INFO("Setting up locale");
 
     runCommand(fmt::format("localectl set-locale {}", m_cluster->getLocale()));
 }
 
-void Shell::disableNetworkManagerDNSOverride() {
+void Shell::disableNetworkManagerDNSOverride()
+{
     LOG_INFO("Disabling DNS override on NetworkManager");
 
-    std::string_view filename =
-            CHROOT"/etc/NetworkManager/conf.d/90-dns-none.conf";
+    std::string_view filename
+        = CHROOT "/etc/NetworkManager/conf.d/90-dns-none.conf";
 
     // TODO: We should not violently remove the file, we may need to backup if
     //  the file exists, and remove after the copy
     cloyster::removeFile(filename);
     // TODO: Would be better handled with a .conf function
-    cloyster::addStringToFile(filename, "[main]\n"
-                                        "dns=none\n");
+    cloyster::addStringToFile(filename,
+        "[main]\n"
+        "dns=none\n");
 
     runCommand("systemctl restart NetworkManager");
 }
@@ -151,7 +161,8 @@ void Shell::disableNetworkManagerDNSOverride() {
  * At the end of execution we disable DNS override since the headnode machine
  * will be providing the service.
  */
-void Shell::configureNetworks(const std::list<Connection>& connections) {
+void Shell::configureNetworks(const std::list<Connection>& connections)
+{
     LOG_INFO("Setting up networks");
 
     runCommand("systemctl enable --now NetworkManager");
@@ -163,54 +174,54 @@ void Shell::configureNetworks(const std::list<Connection>& connections) {
 
         auto interface = connection.getInterface().value();
 
-        runCommand(fmt::format(
-                "nmcli device set {} managed yes", interface));
-        runCommand(fmt::format(
-                "nmcli device set {} autoconnect yes", interface));
-        runCommand(fmt::format(
-                "nmcli connection add con-name {} ifname {} type {} "
-                "mtu {} ipv4.method manual ipv4.address {}/{} "
-                "ipv4.gateway {} ipv4.dns \"{}\" "
-                "ipv4.dns-search {} ipv6.method disabled",
-                magic_enum::enum_name(
-                        connection.getNetwork()->getProfile()),
+        runCommand(fmt::format("nmcli device set {} managed yes", interface));
+        runCommand(
+            fmt::format("nmcli device set {} autoconnect yes", interface));
+        runCommand(
+            fmt::format("nmcli connection add con-name {} ifname {} type {} "
+                        "mtu {} ipv4.method manual ipv4.address {}/{} "
+                        "ipv4.gateway {} ipv4.dns \"{}\" "
+                        "ipv4.dns-search {} ipv6.method disabled",
+                magic_enum::enum_name(connection.getNetwork()->getProfile()),
                 interface,
-                magic_enum::enum_name(
-                        connection.getNetwork()->getType()),
-                connection.getMTU(),
-                connection.getAddress(),
+                magic_enum::enum_name(connection.getNetwork()->getType()),
+                connection.getMTU(), connection.getAddress(),
                 connection.getNetwork()->cidr.at(
-                        connection.getNetwork()->getSubnetMask()),
+                    connection.getNetwork()->getSubnetMask()),
                 connection.getNetwork()->getGateway(),
                 fmt::join(connection.getNetwork()->getNameservers(), " "),
                 connection.getNetwork()->getDomainName()));
-        runCommand(fmt::format(
-                "nmcli device connect {}", interface));
+        runCommand(fmt::format("nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();
 }
 
-void Shell::runSystemUpdate() {
+void Shell::runSystemUpdate()
+{
     if (m_cluster->isUpdateSystem()) {
         LOG_INFO("Checking if system updates are available");
         runCommand("dnf -y update");
     }
 }
 
-void Shell::installRequiredPackages() {
+void Shell::installRequiredPackages()
+{
     LOG_INFO("Installing required system packages");
 
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Shell::configureRepositories() {
+void Shell::configureRepositories()
+{
     LOG_INFO("Setting up additional repositories");
 
     runCommand("dnf -y install "
-               "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm");
+               "https://dl.fedoraproject.org/pub/epel/"
+               "epel-release-latest-8.noarch.rpm");
     runCommand("dnf -y install "
-               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm");
+               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
+               "ohpc-release-2-1.el8.x86_64.rpm");
 
     switch (m_cluster->getHeadnode().getOS().getDistro()) {
         case OS::Distro::RHEL:
@@ -225,44 +236,45 @@ void Shell::configureRepositories() {
     }
 }
 
-void Shell::installOpenHPCBase() {
+void Shell::installOpenHPCBase()
+{
     LOG_INFO("Installing base OpenHPC packages");
 
     runCommand("dnf -y install ohpc-base");
 }
 
-void Shell::configureTimeService (const std::list<Connection>& connections) {
+void Shell::configureTimeService(const std::list<Connection>& connections)
+{
     LOG_INFO("Setting up time services")
 
     if (runCommand("rpm -q chrony"))
         runCommand("dnf -y install chrony");
 
-    std::string_view filename = CHROOT"/etc/chrony.conf";
+    std::string_view filename = CHROOT "/etc/chrony.conf";
 
     cloyster::backupFile(filename);
 
     for (const auto& connection : std::as_const(connections)) {
-        if ((connection.getNetwork()->getProfile() ==
-             Network::Profile::Management) ||
-            (connection.getNetwork()->getProfile() ==
-             Network::Profile::Service)) {
+        if ((connection.getNetwork()->getProfile()
+                == Network::Profile::Management)
+            || (connection.getNetwork()->getProfile()
+                == Network::Profile::Service)) {
 
             // Configure server as local stratum (serve time without sync)
             cloyster::addStringToFile(filename, "local stratum 10\n");
 
-            cloyster::addStringToFile(
-                    filename,
-                    fmt::format("allow {}/{}\n",
-                              connection.getAddress(),
-                              connection.getNetwork()->cidr.at(
-                                  connection.getNetwork()->getSubnetMask())));
+            cloyster::addStringToFile(filename,
+                fmt::format("allow {}/{}\n", connection.getAddress(),
+                    connection.getNetwork()->cidr.at(
+                        connection.getNetwork()->getSubnetMask())));
         }
     }
 
     runCommand("systemctl enable --now chronyd");
 }
 
-void Shell::configureQueueSystem() {
+void Shell::configureQueueSystem()
+{
     LOG_INFO("Setting up the queue system");
 
     if (const auto& queue = m_cluster->getQueueSystem()) {
@@ -286,9 +298,10 @@ void Shell::configureQueueSystem() {
                 runCommand("dnf -y install openpbs-server-ohpc");
                 runCommand("systemctl enable --now pbs");
                 runCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
-                runCommand(fmt::format("qmgr -c \"set server resources_default.place={}\"",
-                                       magic_enum::enum_name<PBS::ExecutionPlace>(
-                                               pbs->getExecutionPlace())));
+                runCommand(fmt::format(
+                    "qmgr -c \"set server resources_default.place={}\"",
+                    magic_enum::enum_name<PBS::ExecutionPlace>(
+                        pbs->getExecutionPlace())));
                 runCommand("qmgr -c \"set server job_history_enable=True\"");
                 break;
             }
@@ -296,7 +309,8 @@ void Shell::configureQueueSystem() {
     }
 }
 
-void Shell::configureInfiniband() {
+void Shell::configureInfiniband()
+{
     if (const auto& ofed = m_cluster->getOFED()) {
         LOG_INFO("Setting up Infiniband support");
         ofed->install();
@@ -304,34 +318,38 @@ void Shell::configureInfiniband() {
 }
 
 /* TODO: Restrict by networks */
-void Shell::configureNetworkFileSystem() {
+void Shell::configureNetworkFileSystem()
+{
     LOG_INFO("Setting up the Network File System");
 
-    std::string_view filename = CHROOT"/etc/exports";
+    std::string_view filename = CHROOT "/etc/exports";
 
     cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
-                      "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-                      "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\n");
+        "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
+        "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\n");
 
     runCommand("exportfs -a");
     runCommand("systemctl enable --now nfs-server");
 }
 
-void Shell::removeMemlockLimits() {
+void Shell::removeMemlockLimits()
+{
     LOG_INFO("Removing memlock limits on headnode");
 
-    std::string_view filename = CHROOT"/etc/security/limits.conf";
+    std::string_view filename = CHROOT "/etc/security/limits.conf";
 
     cloyster::backupFile(filename);
-    cloyster::addStringToFile(filename, "* soft memlock unlimited\n"
-                                        "* hard memlock unlimited\n");
+    cloyster::addStringToFile(filename,
+        "* soft memlock unlimited\n"
+        "* hard memlock unlimited\n");
 }
 
 /* TODO: Third party libraries and some logic to install stacks according to
  *  specifics of the system: Infiniband, PSM, etc.
  */
-void Shell::installDevelopmentComponents() {
+void Shell::installDevelopmentComponents()
+{
     LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
              "MPI stacks");
 
@@ -351,7 +369,8 @@ void Shell::installDevelopmentComponents() {
  * headnode. The last part will do provisioner related settings and image
  * creation for network booting
  */
-void Shell::install() {
+void Shell::install()
+{
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
@@ -380,11 +399,11 @@ void Shell::install() {
 
     installDevelopmentComponents();
 
-    const auto& provisionerName {
-        magic_enum::enum_name(m_cluster->getProvisioner())};
+    const auto& provisionerName { magic_enum::enum_name(
+        m_cluster->getProvisioner()) };
 
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName);
-    //std::unique_ptr<Provisioner> provisioner;
+    // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
@@ -413,7 +432,7 @@ void Shell::install() {
     provisioner->setNodesImage();
 
     LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
-             provisionerName);
+        provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
 }

@@ -8,13 +8,13 @@
 
 #include "Presenter.h"
 
-#include <magic_enum.hpp>
 #include <boost/lexical_cast.hpp>
+#include <magic_enum.hpp>
 
 class PresenterInstall : public Presenter {
 public:
-    PresenterInstall(std::unique_ptr<Cluster>& model,
-                     std::unique_ptr<Newt>& view);
+    PresenterInstall(
+        std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
 
 #endif // CLOYSTERHPC_PRESENTERINSTALL_H_

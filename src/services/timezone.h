@@ -6,8 +6,9 @@
 #ifndef CLOYSTERHPC_TIMEZONE_H_
 #define CLOYSTERHPC_TIMEZONE_H_
 
-#include <string>
 #include <list>
+#include <string>
+#include <vector>
 
 class Timezone {
 private:
@@ -31,6 +32,5 @@ public:
     void setTimeservers(const std::string& timeservers);
     std::vector<std::string> getTimeservers();
 };
-
 
 #endif // CLOYSTERHPC_TIMEZONE_H_

@@ -12,25 +12,34 @@ class PresenterMailSystem : public Presenter {
 private:
     struct Messages {
         static constexpr const char* title = "Mail system settings";
-        static constexpr const char* question = "Do you want to enable Postfix mail system?";
-        static constexpr const char* help = Presenter::Messages::Placeholder::help;
+        static constexpr const char* question
+            = "Do you want to enable Postfix mail system?";
+        static constexpr const char* help
+            = Presenter::Messages::Placeholder::help;
 
         struct Profile {
-            static constexpr const char* question = "Choose a profile for mail delivery";
-            static constexpr const char* help = Presenter::Messages::Placeholder::help;
+            static constexpr const char* question
+                = "Choose a profile for mail delivery";
+            static constexpr const char* help
+                = Presenter::Messages::Placeholder::help;
         };
 
         struct Relay {
-            static constexpr const char* question = "Enter the destination MTA information to relay messages";
-            static constexpr const char* help = Presenter::Messages::Placeholder::help;
+            static constexpr const char* question
+                = "Enter the destination MTA information to relay messages";
+            static constexpr const char* help
+                = Presenter::Messages::Placeholder::help;
 
             static constexpr const char* hostname = "Hostname of the MTA";
             static constexpr const char* port = "Port";
         };
 
         struct SASL {
-            static constexpr const char* question = "Enter the mail server and user information to deliver messages";
-            static constexpr const char* help = Presenter::Messages::Placeholder::help;
+            static constexpr const char* question
+                = "Enter the mail server and user information to deliver "
+                  "messages";
+            static constexpr const char* help
+                = Presenter::Messages::Placeholder::help;
 
             static constexpr const char* hostname = "Hostname of the MTA";
             static constexpr const char* port = "Port";
@@ -40,8 +49,8 @@ private:
     };
 
 public:
-    PresenterMailSystem(std::unique_ptr<Cluster>& model,
-                             std::unique_ptr<Newt>& view);
+    PresenterMailSystem(
+        std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
 
 #endif // CLOYSTERHPC_PRESENTERMAILSYSTEM_H_

@@ -6,20 +6,20 @@
 #ifndef CLOYSTERHPC_CLUSTER_H_
 #define CLOYSTERHPC_CLUSTER_H_
 
-#include <string>
-#include <optional>
-#include <memory>
 #include <filesystem>
+#include <memory>
+#include <optional>
+#include <string>
 
-#include "headnode.h"
-#include "node.h"
-#include "network.h"
-#include "ofed.h"
-#include "services/timezone.h"
-#include "queuesystem/slurm.h"
-#include "queuesystem/pbs.h"
-#include "mailsystem/postfix.h"
 #include "diskImage.h"
+#include "headnode.h"
+#include "mailsystem/postfix.h"
+#include "network.h"
+#include "node.h"
+#include "ofed.h"
+#include "queuesystem/pbs.h"
+#include "queuesystem/slurm.h"
+#include "services/timezone.h"
 
 class Cluster {
 public:
@@ -31,21 +31,21 @@ private:
     std::string m_companyName;
     std::string m_adminMail;
     Headnode m_headnode;
-    Provisioner m_provisioner{Provisioner::xCAT};
+    Provisioner m_provisioner { Provisioner::xCAT };
     std::optional<OFED> m_ofed;
-    std::optional<std::unique_ptr<QueueSystem>> m_queueSystem{};
-    std::optional<Postfix> m_mailSystem{};
+    std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
+    std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
 
-    bool m_firewall{false};
-    SELinuxMode m_selinux{SELinuxMode::Disabled};
+    bool m_firewall { false };
+    SELinuxMode m_selinux { SELinuxMode::Disabled };
     Timezone m_timezone;
     std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
     std::list<std::unique_ptr<Network>> m_network;
 
-    bool m_updateSystem{false};
+    bool m_updateSystem { false };
     DiskImage m_diskImage;
 
 public:
@@ -74,8 +74,8 @@ public:
     void addNetwork(Network::Profile profile);
     void addNetwork(Network::Profile profile, Network::Type type);
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
-                    const std::string&, const std::string&, const uint16_t&,
-                    const std::string&, const std::vector<std::string>&);
+        const std::string&, const std::string&, const uint16_t&,
+        const std::string&, const std::vector<std::string>&);
     void addNetwork(std::unique_ptr<Network>&& network);
 
     bool isUpdateSystem() const;
@@ -99,12 +99,13 @@ public:
     // TODO: Add std::optional to BMC with std::nullopt as default initializer
     [[nodiscard]] const std::vector<Node>& getNodes() const;
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
-                 std::list<Connection>&& connections, BMC& bmc);
+        std::list<Connection>&& connections, BMC& bmc);
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
-                 std::list<Connection>&& connections);
+        std::list<Connection>&& connections);
 
 #ifndef NDEBUG
-    void printNetworks(const std::list<std::unique_ptr<Network>>& networks) const;
+    void printNetworks(
+        const std::list<std::unique_ptr<Network>>& networks) const;
     void printConnections();
     void printData();
     void fillTestData();
@@ -116,7 +117,6 @@ public:
     std::size_t nodePadding;
     std::string nodeStartIP;
     std::string nodeRootPassword;
-
 };
 
 #endif // CLOYSTERHPC_CLUSTER_H_

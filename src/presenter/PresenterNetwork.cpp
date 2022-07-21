@@ -21,50 +21,46 @@
 //  attributes we just copy them to the right place or even better, we move it.
 //  After the end of this class the temporary objects will be destroyed anyway.
 
-PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster> &model,
-                                   std::unique_ptr<Newt> &view,
-                                   Network::Profile profile,
-                                   Network::Type type)
-                                   : Presenter(model, view)
-                                   , m_network(std::make_unique<Network>(profile, type))
-                                   , m_connection(m_network.get())
+PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster>& model,
+    std::unique_ptr<Newt>& view, Network::Profile profile, Network::Type type)
+    : Presenter(model, view)
+    , m_network(std::make_unique<Network>(profile, type))
+    , m_connection(m_network.get())
 {
     LOG_DEBUG("Added {} network with type {}",
-              magic_enum::enum_name(m_network->getProfile()),
-              magic_enum::enum_name(m_network->getType()));
+        magic_enum::enum_name(m_network->getProfile()),
+        magic_enum::enum_name(m_network->getType()));
 
     LOG_DEBUG("Added connection to {} network",
-              magic_enum::enum_name(m_connection.getNetwork()->getProfile()));
+        magic_enum::enum_name(m_connection.getNetwork()->getProfile()));
 
     // TODO: This should be on the header and be constexpr (if possible)
-    m_view->message(Messages::title, fmt::format(
+    m_view->message(Messages::title,
+        fmt::format(
             "We will now ask questions about your {} ({}) network interface",
-            magic_enum::enum_name(profile),
-            magic_enum::enum_name(type)).c_str()
-            );
+            magic_enum::enum_name(profile), magic_enum::enum_name(type))
+            .c_str());
 
     createNetwork();
 }
 
-void PresenterNetwork::createNetwork() {
+void PresenterNetwork::createNetwork()
+{
     // Get the network interface
     const auto& aux = Connection::fetchInterfaces();
     const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
-    auto networkDetails = std::to_array<
-            std::pair<std::string, std::string>>({
-                {Messages::IP::address, Connection::fetchAddress(interface)},
-                {Messages::IP::subnetMask, Network::fetchSubnetMask(interface)},
-                {Messages::IP::network, Network::fetchAddress(interface)},
-                {Messages::IP::gateway, Network::fetchGateway(interface)},
-                // Nameserver definitions
-                {Messages::Domain::name, Network::fetchDomainName()},
-                {Messages::Domain::servers,
-                        fmt::format("{}",
-                                    fmt::join(Network::fetchNameservers(),
-                                              ", "))}
-            });
+    auto networkDetails = std::to_array<std::pair<std::string, std::string>>(
+        { { Messages::IP::address, Connection::fetchAddress(interface) },
+            { Messages::IP::subnetMask, Network::fetchSubnetMask(interface) },
+            { Messages::IP::network, Network::fetchAddress(interface) },
+            { Messages::IP::gateway, Network::fetchGateway(interface) },
+            // Nameserver definitions
+            { Messages::Domain::name, Network::fetchDomainName() },
+            { Messages::Domain::servers,
+                fmt::format(
+                    "{}", fmt::join(Network::fetchNameservers(), ", ")) } });
 
     // TODO: Can we use move semantics?
     networkDetails = networkAddress(networkDetails);
@@ -85,9 +81,10 @@ void PresenterNetwork::createNetwork() {
 
     std::vector<std::string> nameservers;
     // We accept comma and/or space delimited strings even with extra spaces
-    boost::split(nameservers, networkDetails[i++].second,
-                 [](char c){return (c == ' ' || c == ',');},
-                 boost::token_compress_on);
+    boost::split(
+        nameservers, networkDetails[i++].second,
+        [](char c) { return (c == ' ' || c == ','); },
+        boost::token_compress_on);
     m_network->setNameservers(nameservers); // TODO: std::move
 
 #ifndef NDEBUG
@@ -102,13 +99,7 @@ void PresenterNetwork::createNetwork() {
 
     // Check moved data
     LOG_DEBUG("Added {} connection on headnode: {} -> {}",
-              magic_enum::enum_name(profile),
-              m_model->getHeadnode()
-                      .getConnection(profile)
-                      .getInterface()
-                      .value(),
-              m_model->getHeadnode()
-                      .getConnection(profile)
-                      .getAddress()
-    );
+        magic_enum::enum_name(profile),
+        m_model->getHeadnode().getConnection(profile).getInterface().value(),
+        m_model->getHeadnode().getConnection(profile).getAddress());
 }

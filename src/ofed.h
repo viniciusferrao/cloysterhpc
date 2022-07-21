@@ -13,7 +13,7 @@ public:
     enum class Kind { Inbox, Mellanox, Oracle };
 
 private:
-    Kind m_kind{Kind::Inbox};
+    Kind m_kind { Kind::Inbox };
 
 public:
     OFED() = default;
@@ -24,6 +24,5 @@ public:
 
     void install() const;
 };
-
 
 #endif // CLOYSTERHPC_OFED_H_

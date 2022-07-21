@@ -6,12 +6,12 @@
 #include "cluster.h"
 #include "functions.h"
 #include "headnode.h"
-#include "services/xcat.h"
 #include "services/log.h"
+#include "services/xcat.h"
 
 #include <iostream>
-#include <regex>
 #include <memory>
+#include <regex>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
@@ -22,89 +22,62 @@
 #endif
 
 // The rule of zero
-//Cluster::Cluster() = default;
-//Cluster::~Cluster() = default;
+// Cluster::Cluster() = default;
+// Cluster::~Cluster() = default;
 
-Headnode& Cluster::getHeadnode() {
-    return m_headnode;
-}
+Headnode& Cluster::getHeadnode() { return m_headnode; }
 
-const Headnode& Cluster::getHeadnode() const {
-    return m_headnode;
-}
+const Headnode& Cluster::getHeadnode() const { return m_headnode; }
 
-std::string_view Cluster::getName() const {
-    return m_name;
-}
+std::string_view Cluster::getName() const { return m_name; }
 
-void Cluster::setName(std::string_view name) {
-    m_name = name;
-}
+void Cluster::setName(std::string_view name) { m_name = name; }
 
-std::string_view Cluster::getCompanyName() const {
-    return m_companyName;
-}
+std::string_view Cluster::getCompanyName() const { return m_companyName; }
 
-void Cluster::setCompanyName(std::string_view companyName) {
+void Cluster::setCompanyName(std::string_view companyName)
+{
     m_companyName = companyName;
 }
 
-std::string_view Cluster::getAdminMail() const {
-    return m_adminMail;
-}
+std::string_view Cluster::getAdminMail() const { return m_adminMail; }
 
-void Cluster::setAdminMail(std::string_view adminMail) {
+void Cluster::setAdminMail(std::string_view adminMail)
+{
     m_adminMail = adminMail;
 }
 
-bool Cluster::isFirewall() const {
-    return m_firewall;
-}
+bool Cluster::isFirewall() const { return m_firewall; }
 
-void Cluster::setFirewall(bool firewall) {
-    m_firewall = firewall;
-}
+void Cluster::setFirewall(bool firewall) { m_firewall = firewall; }
 
-Cluster::SELinuxMode Cluster::getSELinux() const {
-    return m_selinux;
-}
+Cluster::SELinuxMode Cluster::getSELinux() const { return m_selinux; }
 
-void Cluster::setSELinux(Cluster::SELinuxMode mode) {
-    m_selinux = mode;
-}
+void Cluster::setSELinux(Cluster::SELinuxMode mode) { m_selinux = mode; }
 
-Timezone& Cluster::getTimezone() {
-    return m_timezone;
-}
+Timezone& Cluster::getTimezone() { return m_timezone; }
 
-void Cluster::setTimezone(const std::string& tz) {
-    m_timezone.setTimezone(tz);
-}
+void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
-const std::string& Cluster::getLocale() const {
-    return m_locale;
-}
+const std::string& Cluster::getLocale() const { return m_locale; }
 
-void Cluster::setLocale(const std::string& locale) {
-    m_locale = locale;
-}
+void Cluster::setLocale(const std::string& locale) { m_locale = locale; }
 
-const std::string& Cluster::getDomainName() const {
-    return m_domainName;
-}
+const std::string& Cluster::getDomainName() const { return m_domainName; }
 
 /* TODO: Fix logic, split domain to a vector after each dot (.) to check for
  *  correctness
  */
-void Cluster::setDomainName(const std::string& domainName) {
+void Cluster::setDomainName(const std::string& domainName)
+{
     if (domainName.size() > 255)
         throw;
 
 #if __cpp_lib_starts_ends_with >= 201711L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
 #else
-    if (boost::algorithm::starts_with(domainName, "-") or
-        boost::algorithm::ends_with(domainName, "-"))
+    if (boost::algorithm::starts_with(domainName, "-")
+        or boost::algorithm::ends_with(domainName, "-"))
 #endif
         throw std::runtime_error("Invalid domain name");
 
@@ -119,24 +92,25 @@ void Cluster::setDomainName(const std::string& domainName) {
     m_domainName = domainName;
 
     // Force FQDN update if domainName is changed:
-    m_headnode.setFQDN(fmt::format("{}.{}",
-                                   m_headnode.getHostname(),
-                                   m_domainName));
+    m_headnode.setFQDN(
+        fmt::format("{}.{}", m_headnode.getHostname(), m_domainName));
 }
 
-std::list<std::unique_ptr<Network>>& Cluster::getNetworks() {
+std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
+{
     return m_network;
 }
 
-Network& Cluster::getNetwork(Network::Profile profile) {
+Network& Cluster::getNetwork(Network::Profile profile)
+{
     for (auto& network : m_network) {
         if (network->getProfile() == profile) {
             return *network;
         }
     }
 
-    throw std::runtime_error(fmt::format(
-            "Cannot get any network with the profile {}",
+    throw std::runtime_error(
+        fmt::format("Cannot get any network with the profile {}",
             magic_enum::enum_name(profile)));
 }
 
@@ -157,120 +131,114 @@ const std::list<Network> Cluster::getNet(Network::Profile profile) {
 }
 #endif
 
-void Cluster::addNetwork() {
+void Cluster::addNetwork()
+{
     m_network.emplace_back(std::make_unique<Network>());
 }
 
-void Cluster::addNetwork(Network::Profile profile) {
+void Cluster::addNetwork(Network::Profile profile)
+{
     m_network.emplace_back(std::make_unique<Network>(profile));
 }
 
-void Cluster::addNetwork(Network::Profile profile, Network::Type type) {
+void Cluster::addNetwork(Network::Profile profile, Network::Type type)
+{
     m_network.emplace_back(std::make_unique<Network>(profile, type));
 }
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
-                             const std::string& address,
-                             const std::string& subnetMask,
-                             const std::string& gateway,
-                             const uint16_t& vlan,
-                             const std::string& domainName,
-                             const std::vector<std::string>& nameserver) {
+    const std::string& address, const std::string& subnetMask,
+    const std::string& gateway, const uint16_t& vlan,
+    const std::string& domainName, const std::vector<std::string>& nameserver)
+{
 
-    m_network.emplace_back(std::make_unique<Network>(
-                profile, type, address, subnetMask, gateway, vlan, domainName,
-                nameserver));
+    m_network.emplace_back(std::make_unique<Network>(profile, type, address,
+        subnetMask, gateway, vlan, domainName, nameserver));
 }
 
-void Cluster::addNetwork(std::unique_ptr<Network>&& network) {
+void Cluster::addNetwork(std::unique_ptr<Network>&& network)
+{
     m_network.emplace_back(std::move(network));
 }
 
-bool Cluster::isUpdateSystem() const {
-    return m_updateSystem;
-}
+bool Cluster::isUpdateSystem() const { return m_updateSystem; }
 
-void Cluster::setUpdateSystem(bool updateSystem) {
+void Cluster::setUpdateSystem(bool updateSystem)
+{
     m_updateSystem = updateSystem;
 }
 
-Cluster::Provisioner Cluster::getProvisioner() const {
-    return m_provisioner;
-}
+Cluster::Provisioner Cluster::getProvisioner() const { return m_provisioner; }
 
-void Cluster::setProvisioner(Cluster::Provisioner provisioner) {
+void Cluster::setProvisioner(Cluster::Provisioner provisioner)
+{
     m_provisioner = provisioner;
 }
 
-std::optional<OFED> Cluster::getOFED() const {
-    return m_ofed;
-}
+std::optional<OFED> Cluster::getOFED() const { return m_ofed; }
 
-void Cluster::setOFED(OFED::Kind kind) {
-    m_ofed = OFED(kind);
-}
+void Cluster::setOFED(OFED::Kind kind) { m_ofed = OFED(kind); }
 
-std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem() {
+std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
+{
     return m_queueSystem;
 }
 
-void Cluster::setQueueSystem(QueueSystem::Kind kind) {
+void Cluster::setQueueSystem(QueueSystem::Kind kind)
+{
     switch (kind) {
         case QueueSystem::Kind::None:
             m_queueSystem = std::nullopt;
             break;
 
         case QueueSystem::Kind::SLURM:
-            //m_queueSystem = std::unique_ptr<QueueSystem>(new SLURM());
+            // m_queueSystem = std::unique_ptr<QueueSystem>(new SLURM());
             m_queueSystem = std::make_unique<SLURM>(*this);
             break;
 
         case QueueSystem::Kind::PBS:
-            //m_queueSystem = std::unique_ptr<QueueSystem>(new PBS());
+            // m_queueSystem = std::unique_ptr<QueueSystem>(new PBS());
             m_queueSystem = std::make_unique<PBS>(*this);
             break;
     }
 }
 
-std::optional<Postfix>& Cluster::getMailSystem() {
-    return m_mailSystem;
-}
+std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(Postfix::Profile profile) {
+void Cluster::setMailSystem(Postfix::Profile profile)
+{
     m_mailSystem = Postfix(profile);
 }
 
-const std::filesystem::path& Cluster::getDiskImage() const {
+const std::filesystem::path& Cluster::getDiskImage() const
+{
     return m_diskImage.getPath();
 }
 
-void Cluster::setDiskImage(const std::filesystem::path& diskImagePath) {
+void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
+{
     m_diskImage.setPath(diskImagePath);
 }
 
-const std::vector<Node>& Cluster::getNodes() const {
-    return m_nodes;
-}
+const std::vector<Node>& Cluster::getNodes() const { return m_nodes; }
 
-void Cluster::addNode(std::string_view hostname,
-                      OS& os,
-                      CPU& cpu,
-                      std::list<Connection>&& connections) {
+void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
+    std::list<Connection>&& connections)
+{
 
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections));
 }
 
-void Cluster::addNode(std::string_view hostname,
-                      OS& os,
-                      CPU& cpu,
-                      std::list<Connection>&& connections,
-                      BMC& bmc) {
+void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
+    std::list<Connection>&& connections, BMC& bmc)
+{
 
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
 #ifndef NDEBUG
-void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks) const
+void Cluster::printNetworks(
+    const std::list<std::unique_ptr<Network>>& networks) const
 {
 
     LOG_DEBUG("Dump network data:");
@@ -291,21 +259,24 @@ void Cluster::printNetworks(const std::list<std::unique_ptr<Network>>& networks)
         LOG_DEBUG("Domain Name: {}", network->getDomainName());
 #if __cplusplus < 202002L
         j = 0;
-        for (const auto& nameserver: network.getNameserver()) {
+        for (const auto& nameserver : network.getNameserver()) {
 #else
-        for (size_t j = 0; const auto& nameserver: network->getNameservers()) {
+        for (size_t j = 0; const auto& nameserver : network->getNameservers()) {
 #endif
             LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver);
         }
     }
 }
 
-void Cluster::printConnections() {
-    for (std::size_t i{0} ; const auto& connection : getHeadnode().getConnections())
+void Cluster::printConnections()
+{
+    for (std::size_t i { 0 };
+         const auto& connection : getHeadnode().getConnections())
         connection.dumpConnection();
 }
 
-void Cluster::printData () {
+void Cluster::printData()
+{
     LOG_DEBUG("Dump cluster data:");
     LOG_DEBUG("Cluster attributes defined:");
     LOG_DEBUG("OS Data:")
@@ -320,44 +291,44 @@ void Cluster::printData () {
     printConnections();
 
     LOG_DEBUG("Provisioner: {}", static_cast<int>(getProvisioner()));
-//    LOG_DEBUG("nodePrefix: {}", nodePrefix);
-//    LOG_DEBUG("nodePadding: {}", nodePadding);
-//    LOG_DEBUG("nodeStartIP: {}", nodeStartIP);
-//    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword);
+    //    LOG_DEBUG("nodePrefix: {}", nodePrefix);
+    //    LOG_DEBUG("nodePadding: {}", nodePadding);
+    //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP);
+    //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword);
     LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string());
 
     LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"));
-//    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"));
+    //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"));
 
     LOG_DEBUG("Firewall: {}", (isFirewall() ? "true" : "false"));
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
-void Cluster::fillTestData () {
+void Cluster::fillTestData()
+{
     setName("Cloyster");
     setFirewall(true);
     setSELinux(SELinuxMode::Disabled);
     setTimezone("America/Sao_Paulo");
     setLocale("en_US.UTF-8");
-    this->m_headnode.setHostname(std::string_view{"headnode"});
+    this->m_headnode.setHostname(std::string_view { "headnode" });
     setDomainName("cluster.example.tld");
-    this->m_headnode.setFQDN(
-        fmt::format("{0}.{1}", this->m_headnode.getHostname(),
-                    getDomainName()));
+    this->m_headnode.setFQDN(fmt::format(
+        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
     setOFED(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
-               "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
-               "home.ferrao.net.br", { "172.16.144.1" });
+        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+        "home.ferrao.net.br", { "172.16.144.1" });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
-               "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
-               { "172.26.0.1" });
+        "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
+        { "172.26.0.1" });
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-               "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
-               { "172.27.255.254" });
+        "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
+        { "172.27.255.254" });
 #if 0
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
                "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
@@ -373,13 +344,13 @@ void Cluster::fillTestData () {
                "ib2.cluster.example.com", { "0.0.0.0" });
 #endif
 
-    m_headnode.addConnection(getNetwork(Network::Profile::External),
-                             "ens160", "de:ad:be:ff:00:00", "172.16.144.50");
-    m_headnode.addConnection(getNetwork(Network::Profile::Management),
-                             "ens224", "de:ad:be:ff:00:01", "172.26.255.254");
+    m_headnode.addConnection(getNetwork(Network::Profile::External), "ens160",
+        "de:ad:be:ff:00:00", "172.16.144.50");
+    m_headnode.addConnection(getNetwork(Network::Profile::Management), "ens224",
+        "de:ad:be:ff:00:01", "172.26.255.254");
     // It's ethernet, we know, but consider as Infiniband
     m_headnode.addConnection(getNetwork(Network::Profile::Application),
-                             "ens256", "de:ad:be:ff:00:02", "172.27.255.254");
+        "ens256", "de:ad:be:ff:00:02", "172.27.255.254");
 
 #if 0
     m_headnode.addConnection(getNetwork(Network::Profile::Service),
@@ -391,20 +362,22 @@ void Cluster::fillTestData () {
 
     setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-              OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     CPU nodeCPU(2, 4, 2);
 
     // TODO: Pass network connection as object
-    std::list<Connection> connections1{
-        {&getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75", "172.26.0.1" },
-        {&getNetwork(Network::Profile::Application), "ens256", {}, "172.27.0.1" }
+    std::list<Connection> connections1 {
+        { &getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75",
+            "172.26.0.1" },
+        { &getNetwork(Network::Profile::Application), "ens256", {},
+            "172.27.0.1" }
     };
 
-    std::list<Connection> connections2{
-        {&getNetwork(Network::Profile::Management), {}, "de:ad:be:ff:00:00", "172.26.0.2" }
-    };
+    std::list<Connection> connections2 { { &getNetwork(
+                                               Network::Profile::Management),
+        {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
-    BMC bmc{"172.25.0.2", "ADMIN", "ADMIN"};
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
 
     addNode("n01", nodeOS, nodeCPU, std::move(connections1));
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);

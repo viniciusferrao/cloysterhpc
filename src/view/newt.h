@@ -6,17 +6,17 @@
 #ifndef CLOYSTERHPC_NEWT_H_
 #define CLOYSTERHPC_NEWT_H_
 
-#include <vector>
+#include "../functions.h"
+#include "../services/log.h"
+#include "view.h"
+#include <boost/lexical_cast.hpp>
+#include <fmt/format.h>
+#include <iostream>
+#include <newt.h>
 #include <string>
 #include <string_view>
 #include <variant>
-#include <iostream>
-#include <newt.h>
-#include <fmt/format.h>
-#include <boost/lexical_cast.hpp>
-#include "view.h"
-#include "../services/log.h"
-#include "../functions.h"
+#include <vector>
 
 /* This is just a prototype about making the View as an Interface to be easily
  * swapped in the future if needed. There's much more organization to do before
@@ -27,13 +27,16 @@ private:
     struct TUIText {
 
 #if __cpp_lib_constexpr_string >= 201907L
-        static constexpr const char* title =
-                fmt::format("{} Installer", productName).c_str();
+        static constexpr const char* title
+            = fmt::format("{} Installer", productName).c_str();
 #else
         static constexpr const char* title = PRODUCT_NAME " Installer";
 #endif
-        static constexpr const char* helpLine = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  <F12> disabled";
-        static constexpr const char* abort = "Installation aborted due to operator request";
+        static constexpr const char* helpLine
+            = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  "
+              "<F12> disabled";
+        static constexpr const char* abort
+            = "Installation aborted due to operator request";
 
         struct Buttons {
             static constexpr const char* ok = "OK";
@@ -57,9 +60,9 @@ protected:
     int m_dataWidth;
     int m_maxListHeight;
 
-    void abort () override;
-    void helpMessage (const char*) override;
-    bool hasEmptyField (const struct newtWinEntry*);
+    void abort() override;
+    void helpMessage(const char*) override;
+    bool hasEmptyField(const struct newtWinEntry*);
 
 public:
     Newt();
@@ -69,7 +72,7 @@ public:
 
     Newt(Newt&&) = delete;
     Newt& operator=(Newt&&) = delete;
-    
+
     ~Newt() override;
 
     void message(const char*);
@@ -81,9 +84,9 @@ public:
     // TODO:
     //  * Better template?
     //  * The name "okCancelMessage" of this function is not ideal
-    template<std::size_t N>
+    template <std::size_t N>
     void okCancelMessage(const char* title, const char* message,
-                         const std::array<std::pair<std::string, std::string>, N>& pairs)
+        const std::array<std::pair<std::string, std::string>, N>& pairs)
     {
         int returnValue;
         std::string newMessage = message;
@@ -94,9 +97,9 @@ public:
         }
 
         returnValue = newtWinChoice(const_cast<char*>(title),
-                                    const_cast<char*>(TUIText::Buttons::ok),
-                                    const_cast<char*>(TUIText::Buttons::cancel),
-                                    const_cast<char*>(newMessage.c_str()));
+            const_cast<char*>(TUIText::Buttons::ok),
+            const_cast<char*>(TUIText::Buttons::cancel),
+            const_cast<char*>(newMessage.c_str()));
 
         switch (returnValue) {
             case 0:
@@ -111,19 +114,19 @@ public:
         }
     }
 
-    template<std::size_t N>
+    template <std::size_t N>
     void okCancelMessage(const char* message,
-                         const std::array<std::pair<std::string, std::string>, N>& pairs) {
+        const std::array<std::pair<std::string, std::string>, N>& pairs)
+    {
         okCancelMessage(nullptr, message, pairs);
     }
 
     // TODO:
     //  * Add C++20 concepts; limit by some types.
     //  * Optimize for std::string_view and std::string.
-    template<typename T>
-    std::string listMenu (const char* title, const char* message,
-                          const T& items,
-                          const char* helpMessage)
+    template <typename T>
+    std::string listMenu(const char* title, const char* message, const T& items,
+        const char* helpMessage)
     {
         int returnValue;
         // TODO: Initial value of selector should be available on function
@@ -146,22 +149,16 @@ public:
         LOG_TRACE("Pushed back nullptr");
 
 #if 1
-        // goto implementation
-        question:
+    // goto implementation
+    question:
         returnValue = newtWinMenu(const_cast<char*>(title),
-                                  const_cast<char*>(message),
-                                  m_suggestedWidth,
-                                  m_flexDown,
-                                  m_flexUp,
-                                  m_maxListHeight,
-                                  const_cast<char**>(cStrings.data()),
-                                  &selector,
-                                  const_cast<char*>(TUIText::Buttons::ok),
-                                  const_cast<char*>(TUIText::Buttons::cancel),
-                                  const_cast<char*>(TUIText::Buttons::help),
-                                  nullptr);
+            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
+            m_maxListHeight, const_cast<char**>(cStrings.data()), &selector,
+            const_cast<char*>(TUIText::Buttons::ok),
+            const_cast<char*>(TUIText::Buttons::cancel),
+            const_cast<char*>(TUIText::Buttons::help), nullptr);
 
-        switch(returnValue) {
+        switch (returnValue) {
             case 0:
                 /* F12 is pressed, and we don't care; continue to case 1 */
             case 1:
@@ -177,33 +174,28 @@ public:
         }
 #else
         // gotoless implementation
-    for (;;) {
-        returnValue = newtWinMenu(const_cast<char*>(title),
-                                  const_cast<char*>(message),
-                                  m_suggestedWidth,
-                                  m_flexUp,
-                                  m_flexDown,
-                                  m_maxListHeight,
-                                  const_cast<char**>(cStrings.data()),
-                                  &selector,
-                                  const_cast<char*>(TUIText::Buttons::ok),
-                                  const_cast<char*>(TUIText::Buttons::cancel),
-                                  const_cast<char*>(TUIText::Buttons::help),
-                                  NULL);
+        for (;;) {
+            returnValue = newtWinMenu(const_cast<char*>(title),
+                const_cast<char*>(message), m_suggestedWidth, m_flexUp,
+                m_flexDown, m_maxListHeight,
+                const_cast<char**>(cStrings.data()), &selector,
+                const_cast<char*>(TUIText::Buttons::ok),
+                const_cast<char*>(TUIText::Buttons::cancel),
+                const_cast<char*>(TUIText::Buttons::help), NULL);
 
-        switch(returnValue) {
-            case 0:
-                /* F12 is pressed, and we don't care; continue to case 1 */
-            case 1:
-                return items[selector];
-            case 2:
-                abortInstall();
-            case 3:
-                this->helpMessage(helpMessage);
-                continue;
+            switch (returnValue) {
+                case 0:
+                    /* F12 is pressed, and we don't care; continue to case 1 */
+                case 1:
+                    return items[selector];
+                case 2:
+                    abortInstall();
+                case 3:
+                    this->helpMessage(helpMessage);
+                    continue;
+            }
+            break; // for (;;)
         }
-        break; // for (;;)
-    }
 #endif
         __builtin_unreachable();
     }
@@ -216,19 +208,16 @@ public:
      * @param fPercent A function to transform a line
      * into a percent (a 0 to 100 value)
      */
-    bool progressMenu(const char* title,
-                      const char* message,
-                      cloyster::CommandProxy&&,
-                      std::function<double(std::string)> fPercent);
+    bool progressMenu(const char* title, const char* message,
+        cloyster::CommandProxy&&, std::function<double(std::string)> fPercent);
 
     // TODO:
     //  * Add C++20 concepts; limit by some types.
     //  * Optimize for std::string_view and std::string.
     //  * std::optional on second pair
-    template<typename T>
-    T fieldMenu(const char* title, const char* message,
-                const T& items,
-                const char* helpMessage)
+    template <typename T>
+    T fieldMenu(const char* title, const char* message, const T& items,
+        const char* helpMessage)
     {
         int returnValue;
 
@@ -236,12 +225,11 @@ public:
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
         auto field = std::make_unique<newtWinEntry[]>(arraySize + 1);
 
-        // This "for loop" will populate newtWinEntry with the necessary data to be
-        // displayed on the interface.
-        // Please note that field[i].value is a char** because it's passing data by
-        // reference in C style, since the data can be modified by the newt form,
-        // it's not an array of char*
-        for (std::size_t i = 0 ; i < arraySize ; i++) {
+        // This "for loop" will populate newtWinEntry with the necessary data to
+        // be displayed on the interface. Please note that field[i].value is a
+        // char** because it's passing data by reference in C style, since the
+        // data can be modified by the newt form, it's not an array of char*
+        for (std::size_t i = 0; i < arraySize; i++) {
             field[i].text = const_cast<char*>(items[i].first.c_str());
             fieldEntries[i] = const_cast<char*>((items[i].second).c_str());
             LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
@@ -250,8 +238,8 @@ public:
             field[i].value = &fieldEntries[i];
 
             // FIXME: Fix this hack to enable password fields
-            if (items[i].first.find("Password") != std::string::npos ||
-                items[i].first.find("password") != std::string::npos)
+            if (items[i].first.find("Password") != std::string::npos
+                || items[i].first.find("password") != std::string::npos)
                 field[i].flags = NEWT_FLAG_PASSWORD;
             else
                 field[i].flags = 0;
@@ -263,20 +251,14 @@ public:
 
         T returnArray;
 
-        question:
+    question:
         returnValue = newtWinEntries(const_cast<char*>(title),
-                                     const_cast<char*>(message),
-                                     m_suggestedWidth,
-                                     m_flexDown,
-                                     m_flexUp,
-                                     m_dataWidth,
-                                     field.get(),
-                                     const_cast<char*>(TUIText::Buttons::ok),
-                                     const_cast<char*>(TUIText::Buttons::cancel),
-                                     const_cast<char*>(TUIText::Buttons::help),
-                                     nullptr);
+            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
+            m_dataWidth, field.get(), const_cast<char*>(TUIText::Buttons::ok),
+            const_cast<char*>(TUIText::Buttons::cancel),
+            const_cast<char*>(TUIText::Buttons::help), nullptr);
 
-        switch(returnValue) {
+        switch (returnValue) {
             case 0:
                 /* F12 is pressed, and we don't care; continue to case 1 */
             case 1:
@@ -288,10 +270,9 @@ public:
                 //        that was triggering an exception on the presenter, so
                 //        basically the std::variant is useless here, we always
                 //        return std:string.
-                for (std::size_t i = 0 ; field[i].text ; i++) {
-                    returnArray[i] =
-                            std::make_pair<std::string, std::string>(
-                                    field[i].text, *field[i].value);
+                for (std::size_t i = 0; field[i].text; i++) {
+                    returnArray[i] = std::make_pair<std::string, std::string>(
+                        field[i].text, *field[i].value);
                 }
 
                 return returnArray;
@@ -303,14 +284,13 @@ public:
                 goto question;
             default:
                 throw std::runtime_error(
-                        "Invalid return value from fields on newt library");
+                    "Invalid return value from fields on newt library");
         }
         throw std::runtime_error("Invalid return path on newt library");
     }
 
-    bool yesNoQuestion(const char* title, const char* message,
-                       const char* helpMessage);
-
+    bool yesNoQuestion(
+        const char* title, const char* message, const char* helpMessage);
 };
 
 #endif // CLOYSTERHPC_NEWT_H_

@@ -1,13 +1,13 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include <string>
-#include <optional>
-#include <vector>
-#include <list>
-#include <filesystem>
-#include <boost/process/pipe.hpp>
 #include <boost/process/child.hpp>
+#include <boost/process/pipe.hpp>
+#include <filesystem>
+#include <list>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include <boost/asio.hpp>
 
@@ -26,7 +26,8 @@ struct CommandProxy {
     boost::process::child child;
     boost::process::ipstream pipe_stream;
 
-    std::optional<std::string> getline() {
+    std::optional<std::string> getline()
+    {
         if (!valid)
             return std::nullopt;
 
@@ -48,14 +49,12 @@ struct CommandProxy {
 
 /* shell execution */
 int runCommand(const std::string& command,
-               //std::optional<std::list<std::string>>& output,
-               std::list<std::string>& output,
-               bool overrideDryRun = false);
-int runCommand(const std::string& command,
-               bool overrideDryRun = false);
+    // std::optional<std::list<std::string>>& output,
+    std::list<std::string>& output, bool overrideDryRun = false);
+int runCommand(const std::string& command, bool overrideDryRun = false);
 
-CommandProxy runCommandIter(const std::string& command,
-                            bool overrideDryRun = false);
+CommandProxy runCommandIter(
+    const std::string& command, bool overrideDryRun = false);
 
 /* environment variables helper functions */
 std::string getEnvironmentVariable(const std::string&);
@@ -68,8 +67,8 @@ void writeConfig(const std::string&);
 void createDirectory(const std::filesystem::path& path);
 void removeFile(std::string_view filename);
 void backupFile(const std::string_view& filename);
-void changeValueInConfigurationFile(const std::string&, const std::string&,
-                                    std::string_view);
+void changeValueInConfigurationFile(
+    const std::string&, const std::string&, std::string_view);
 void addStringToFile(std::string_view filename, std::string_view string);
 
 } /* namespace cloyster */

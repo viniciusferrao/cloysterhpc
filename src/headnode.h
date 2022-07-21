@@ -6,14 +6,14 @@
 #ifndef CLOYSTERHPC_HEADNODE_H_
 #define CLOYSTERHPC_HEADNODE_H_
 
-#include <string>
 #include <list>
 #include <memory>
+#include <string>
 
-#include "server.h"
-#include "network.h"
 #include "connection.h"
+#include "network.h"
 #include "os.h"
+#include "server.h"
 
 class Headnode : public Server {
 public:

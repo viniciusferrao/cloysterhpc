@@ -6,8 +6,8 @@
 #ifndef CLOYSTERHPC_POSTFIX_H_
 #define CLOYSTERHPC_POSTFIX_H_
 
-#include <string>
 #include <optional>
+#include <string>
 
 class Postfix {
 public:
@@ -15,10 +15,10 @@ public:
 
 private:
     Profile m_profile;
-    std::optional<std::string> m_hostname{};
-    std::optional<std::uint16_t> m_port{};
-    std::optional<std::string> m_username{};
-    std::optional<std::string> m_password{};
+    std::optional<std::string> m_hostname {};
+    std::optional<std::uint16_t> m_port {};
+    std::optional<std::string> m_username {};
+    std::optional<std::string> m_password {};
 
 public:
     [[nodiscard]] const Profile& getProfile() const;

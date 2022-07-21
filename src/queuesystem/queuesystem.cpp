@@ -6,20 +6,17 @@
 #include "queuesystem.h"
 
 QueueSystem::QueueSystem(const Cluster& cluster)
-    : m_cluster(cluster) {}
-
-void QueueSystem::setKind(Kind kind) {
-    m_kind = kind;
+    : m_cluster(cluster)
+{
 }
 
-QueueSystem::Kind QueueSystem::getKind(void) {
-    return m_kind;
-}
+void QueueSystem::setKind(Kind kind) { m_kind = kind; }
 
-void QueueSystem::setDefaultQueue(std::string_view defaultQueue) {
+QueueSystem::Kind QueueSystem::getKind(void) { return m_kind; }
+
+void QueueSystem::setDefaultQueue(std::string_view defaultQueue)
+{
     m_defaultQueue = defaultQueue;
 }
 
-std::string_view QueueSystem::getDefaultQueue(void) {
-    return m_defaultQueue;
-}
+std::string_view QueueSystem::getDefaultQueue(void) { return m_defaultQueue; }

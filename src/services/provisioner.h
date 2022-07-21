@@ -12,7 +12,7 @@ class Provisioner {
 public:
     virtual ~Provisioner() = default;
 
-    //virtual void method () = 0;
+    // virtual void method () = 0;
 };
 
 #endif // CLOYSTERHPC_PROVISIONER_H_

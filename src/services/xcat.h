@@ -6,17 +6,17 @@
 #ifndef CLOYSTERHPC_XCAT_H_
 #define CLOYSTERHPC_XCAT_H_
 
-#include "provisioner.h"
-#include "execution.h"
-#include "shell.h"
 #include "../const.h"
 #include "../services/log.h"
+#include "execution.h"
+#include "provisioner.h"
+#include "shell.h"
 
 #include <magic_enum.hpp>
 
-#include <string>
-#include <memory>
 #include <filesystem>
+#include <memory>
+#include <string>
 
 class XCAT : public Provisioner {
 private:
@@ -24,7 +24,7 @@ private:
     enum class NodeType { Compute, Service };
 
 private:
-    const std::unique_ptr<Cluster> &m_cluster;
+    const std::unique_ptr<Cluster>& m_cluster;
 
     struct {
         std::vector<std::string_view> otherpkgs = {};
@@ -55,14 +55,13 @@ private:
     void generateOSImageName(ImageType, NodeType);
     void generateOSImagePath(ImageType, NodeType);
 
-
 public:
     void configureRepositories();
     void installPackages();
     void setup();
 
-    void createImage(ImageType = ImageType::Netboot,
-                     NodeType = NodeType::Compute);
+    void createImage(
+        ImageType = ImageType::Netboot, NodeType = NodeType::Compute);
     void addNodes();
     void setNodesImage();
     void setNodesBoot();

@@ -7,16 +7,16 @@
 #include "network.h"
 #include "services/log.h"
 
-#include <string>
 #include <regex>
 #include <set>
+#include <string>
 
 #include <boost/algorithm/string.hpp>
 #include <utility>
 
 #include <arpa/inet.h> /* inet_*() functions */
-#include <ifaddrs.h> /* getifaddrs() */
 #include <cstring>
+#include <ifaddrs.h> /* getifaddrs() */
 
 #include <fmt/format.h>
 
@@ -25,17 +25,18 @@
 #endif
 
 Connection::Connection(Network* network)
-                       : m_network(network) {
+    : m_network(network)
+{
 
     if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
 }
 
 // TODO: Remove this constructor
-Connection::Connection(Network* network,
-                       const std::string& interface,
-                       const std::string& address)
-                       : m_network(network) {
+Connection::Connection(
+    Network* network, const std::string& interface, const std::string& address)
+    : m_network(network)
+{
 
     setInterface(interface);
     setAddress(address);
@@ -45,10 +46,10 @@ Connection::Connection(Network* network,
 }
 
 Connection::Connection(Network* network,
-                       std::optional<std::string_view> interface,
-                       std::optional<std::string_view> mac,
-                       const std::string& address)
-                       : m_network(network) {
+    std::optional<std::string_view> interface,
+    std::optional<std::string_view> mac, const std::string& address)
+    : m_network(network)
+{
 
     if (interface.has_value())
         setInterface(interface.value());
@@ -62,25 +63,27 @@ Connection::Connection(Network* network,
         setMTU(2044);
 }
 
-//Connection::Connection(const Connection& other)
-//    : m_network{other.m_network}
-//    , m_interface{other.m_interface}
-//    , m_mac{other.m_mac}
-//    , m_address{other.m_address}
+// Connection::Connection(const Connection& other)
+//     : m_network{other.m_network}
+//     , m_interface{other.m_interface}
+//     , m_mac{other.m_mac}
+//     , m_address{other.m_address}
 //{}
 //
-//Connection::Connection(Connection&& other) noexcept
-//    : m_network{other.m_network}
-//    , m_interface{std::move(other.m_interface)}
-//    , m_mac{std::move(other.m_mac)}
-//    , m_address{other.m_address}
+// Connection::Connection(Connection&& other) noexcept
+//     : m_network{other.m_network}
+//     , m_interface{std::move(other.m_interface)}
+//     , m_mac{std::move(other.m_mac)}
+//     , m_address{other.m_address}
 //{}
 
-std::optional<std::string_view> Connection::getInterface() const {
+std::optional<std::string_view> Connection::getInterface() const
+{
     return m_interface;
 }
 
-void Connection::setInterface (std::string_view interface) {
+void Connection::setInterface(std::string_view interface)
+{
     LOG_DEBUG("Checking if interface {} exists", interface);
 
     if (interface == "lo")
@@ -91,10 +94,10 @@ void Connection::setInterface (std::string_view interface) {
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1)
-        throw std::runtime_error(fmt::format(
-                "Cannot get interface: {}\n", std::strerror(errno)));
+        throw std::runtime_error(
+            fmt::format("Cannot get interface: {}\n", std::strerror(errno)));
 
-    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
@@ -113,15 +116,16 @@ void Connection::setInterface (std::string_view interface) {
     throw std::runtime_error("Cannot find network interface");
 }
 
-std::vector<std::string> Connection::fetchInterfaces() {
+std::vector<std::string> Connection::fetchInterfaces()
+{
     struct ifaddrs *ifaddr, *ifa;
     std::vector<std::string> interfaces;
 
     if (getifaddrs(&ifaddr) == -1)
-        throw std::runtime_error(fmt::format(
-                "Cannot get interfaces: {}\n", std::strerror(errno)));
+        throw std::runtime_error(
+            fmt::format("Cannot get interfaces: {}\n", std::strerror(errno)));
 
-    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
@@ -141,43 +145,44 @@ std::vector<std::string> Connection::fetchInterfaces() {
     return interfaces;
 }
 
-std::optional<std::string_view> Connection::getMAC() const {
-    return m_mac;
-}
+std::optional<std::string_view> Connection::getMAC() const { return m_mac; }
 
-void Connection::setMAC(std::string_view mac) {
+void Connection::setMAC(std::string_view mac)
+{
     LOG_DEBUG("Checking MAC address: {}", mac);
 
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");
 
     // TODO: Make it easier to read and consider the Cisco MAC identifier
-    const std::regex pattern(
-            "^([0-9A-Fa-f]{2}[:-]){5}"
-            "([0-9A-Fa-f]{2})|([0-9a-"
-            "fA-F]{4}\\.[0-9a-fA-F]"
-            "{4}\\.[0-9a-fA-F]{4})$");
+    const std::regex pattern("^([0-9A-Fa-f]{2}[:-]){5}"
+                             "([0-9A-Fa-f]{2})|([0-9a-"
+                             "fA-F]{4}\\.[0-9a-fA-F]"
+                             "{4}\\.[0-9a-fA-F]{4})$");
 
     // regex_match cannot work with std::string_view
-    if (std::string tempString{mac} ; regex_match(tempString, pattern))
+    if (std::string tempString { mac }; regex_match(tempString, pattern))
         m_mac = boost::algorithm::to_lower_copy(tempString);
     else
         throw std::runtime_error("Invalid MAC address");
 }
 
-const std::string Connection::getAddress() const {
+const std::string Connection::getAddress() const
+{
     if (inet_ntoa(m_address) == nullptr)
         throw std::runtime_error("Member address variable is not defined");
     return inet_ntoa(m_address);
 }
 
-void Connection::setAddress (const std::string& address) {
+void Connection::setAddress(const std::string& address)
+{
     if (inet_aton(address.c_str(), &this->m_address) == 0)
-        throw std::runtime_error(fmt::format(
-                "Invalid IP address {} cannot be set", address));
+        throw std::runtime_error(
+            fmt::format("Invalid IP address {} cannot be set", address));
 }
 
-void Connection::incrementAddress(const std::size_t increment) noexcept {
+void Connection::incrementAddress(const std::size_t increment) noexcept
+{
     m_address.s_addr += increment;
 }
 
@@ -186,10 +191,10 @@ std::string Connection::fetchAddress(const std::string& interface)
     struct ifaddrs *ifaddr, *ifa;
 
     if (getifaddrs(&ifaddr) == -1)
-        throw std::runtime_error(fmt::format(
-                "Cannot get interfaces: {}", std::strerror(errno)));
+        throw std::runtime_error(
+            fmt::format("Cannot get interfaces: {}", std::strerror(errno)));
 
-    for (ifa = ifaddr ; ifa != nullptr ; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (ifa->ifa_addr == nullptr)
             continue;
 
@@ -199,14 +204,14 @@ std::string Connection::fetchAddress(const std::string& interface)
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
             auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
-            //freeifaddrs(ifaddr);
+            // freeifaddrs(ifaddr);
 
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
 #ifndef NDEBUG
             LOG_TRACE("Got address {} from interface {}",
-                      inet_ntoa(sa->sin_addr), interface);
+                inet_ntoa(sa->sin_addr), interface);
 #endif
 
             return inet_ntoa(sa->sin_addr);
@@ -216,23 +221,21 @@ std::string Connection::fetchAddress(const std::string& interface)
     freeifaddrs(ifaddr);
     return {};
     throw std::runtime_error(fmt::format(
-            "Interface {} does not have an IP address defined", interface));
+        "Interface {} does not have an IP address defined", interface));
 }
 
-const std::string& Connection::getHostname() const {
-    return m_hostname;
-}
+const std::string& Connection::getHostname() const { return m_hostname; }
 
-void Connection::setHostname(const std::string& hostname) {
+void Connection::setHostname(const std::string& hostname)
+{
     if (hostname.size() > 63)
-        throw std::range_error(
-                "Hostname cannot be bigger than 64 characters");
+        throw std::range_error("Hostname cannot be bigger than 64 characters");
 
 #if __cpp_lib_starts_ends_with >= 201711L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
 #else
-    if (boost::algorithm::starts_with(hostname, "-") or
-        boost::algorithm::ends_with(hostname, "-"))
+    if (boost::algorithm::starts_with(hostname, "-")
+        or boost::algorithm::ends_with(hostname, "-"))
 #endif
         throw std::runtime_error("Hostname cannot start or end with dashes");
 
@@ -246,29 +249,25 @@ void Connection::setHostname(const std::string& hostname) {
     m_hostname = hostname;
 }
 
-const std::string& Connection::getFQDN() const {
-    return m_fqdn;
-}
+const std::string& Connection::getFQDN() const { return m_fqdn; }
 
-void Connection::setFQDN(const std::string& fqdn) {
+void Connection::setFQDN(const std::string& fqdn)
+{
     if (fqdn.size() > 255)
         throw std::runtime_error(
-                "Full qualified domain name cannot exceed 255 characters");
+            "Full qualified domain name cannot exceed 255 characters");
 
     m_fqdn = fqdn;
 }
 
 // TODO: Check if this return is a best practice; Network is a unique_ptr;
 //  * should we use gsl::not_null in the return type.
-const Network* Connection::getNetwork() const {
-    return m_network;
-}
+const Network* Connection::getNetwork() const { return m_network; }
 
-std::uint16_t Connection::getMTU() const {
-    return m_mtu;
-}
+std::uint16_t Connection::getMTU() const { return m_mtu; }
 
-void Connection::setMTU(std::uint16_t mtu) {
+void Connection::setMTU(std::uint16_t mtu)
+{
     // RFC791 states that 576 would be the practical minimum for Internet (IPv4)
     // networks, but we consider the rules for IPv6 here to keep compatibility.
     // RFC2460 says that IPv6 requires a minimum of 1280 bytes.
@@ -283,17 +282,17 @@ void Connection::setMTU(std::uint16_t mtu) {
 }
 
 #ifndef NDEBUG
-void Connection::dumpConnection() const {
+void Connection::dumpConnection() const
+{
     LOG_DEBUG("Dumping Connection Info:")
-    LOG_DEBUG("Connection with Network: {} ({})"
-              , magic_enum::enum_name(m_network->getProfile())
-              , magic_enum::enum_name(m_network->getType()));
+    LOG_DEBUG("Connection with Network: {} ({})",
+        magic_enum::enum_name(m_network->getProfile()),
+        magic_enum::enum_name(m_network->getType()));
 
     LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
     LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
     LOG_DEBUG("IP Address: {}", getAddress());
 
     LOG_DEBUG("===================================")
-
 }
 #endif

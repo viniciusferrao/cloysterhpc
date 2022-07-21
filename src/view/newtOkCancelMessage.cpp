@@ -5,18 +5,20 @@
 
 #include "newt.h"
 
-void Newt::okCancelMessage(const char* message) {
+void Newt::okCancelMessage(const char* message)
+{
     Newt::okCancelMessage(nullptr, message);
 }
 
-void Newt::okCancelMessage(const char* title, const char* message) {
+void Newt::okCancelMessage(const char* title, const char* message)
+{
     int returnValue;
 
     /* Information about the installation scheme */
     returnValue = newtWinChoice(const_cast<char*>(title),
-                                const_cast<char*>(TUIText::Buttons::ok),
-                                const_cast<char*>(TUIText::Buttons::cancel),
-                                const_cast<char*>(message));
+        const_cast<char*>(TUIText::Buttons::ok),
+        const_cast<char*>(TUIText::Buttons::cancel),
+        const_cast<char*>(message));
 
     switch (returnValue) {
         case 0:
@@ -32,4 +34,3 @@ void Newt::okCancelMessage(const char* title, const char* message) {
 }
 
 // TODO: Primitive implementation, make it better.
-

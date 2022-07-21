@@ -10,7 +10,7 @@
 
 class PBS : public QueueSystem {
 public:
-    enum class ExecutionPlace {Shared, Scatter};
+    enum class ExecutionPlace { Shared, Scatter };
 
 private:
     ExecutionPlace m_executionPlace = ExecutionPlace::Shared;

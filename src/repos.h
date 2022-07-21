@@ -16,19 +16,16 @@ struct repofile {
     std::string metalink;
     bool gpgcheck;
     std::string gpgkey;
-    std::string gpgkeyContent;    
+    std::string gpgkeyContent;
 };
 
 namespace ol {
-    repofile ol8_base_latest = {
-        "ol8_baseos_latest",
-        true,
-        "Oracle Linux 8 BaseOS Latest ($basearch)",
-        "https://yum$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/$basearch/",
-        "",
-        true,
-        "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle",
-        R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
+repofile ol8_base_latest
+    = { "ol8_baseos_latest", true, "Oracle Linux 8 BaseOS Latest ($basearch)",
+          "https://yum$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/"
+          "$basearch/",
+          "", true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle",
+          R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
             Version: GnuPG v2.0.14 (GNU/Linux)
 
             mQINBFyr9g0BEADVpB339zKe27a0LAQn4jWDYfX4ttCgYbX1sgyOKclO2ZMxdLIF
@@ -80,8 +77,7 @@ namespace ol {
             sFEvovilr7kFbspDGrP49wh0evtRDPmqfjMLiiaRxOXefOjbh8XqrfNGDTCQzdE=
             =dTZ0
             -----END PGP PUBLIC KEY BLOCK-----
-            )PGPKEY"
-    };
+            )PGPKEY" };
 }
 
 class Repos {
@@ -97,10 +93,11 @@ private:
     std::string m_gpgkeyPath; /* Location of the keyfile on filesystem */
 
 public:
-    void createConfigurationFile (const std::string&, bool, const std::string&, const std::string&,
-        const std::string&, bool, const std::string&, const std::string&);
-    void enable (const std::string&);
-    void disable (const std::string&);
+    void createConfigurationFile(const std::string&, bool, const std::string&,
+        const std::string&, const std::string&, bool, const std::string&,
+        const std::string&);
+    void enable(const std::string&);
+    void disable(const std::string&);
 };
 
 #endif // CLOYSTERHPC_REPOS_H_

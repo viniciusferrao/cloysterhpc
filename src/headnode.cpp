@@ -6,9 +6,9 @@
 #include "headnode.h"
 #include "services/log.h"
 
-#include <iostream>
-#include <fstream>
 #include <algorithm> /* std::remove */
+#include <fstream>
+#include <iostream>
 #include <map> /* std::map */
 #include <regex>
 
@@ -22,14 +22,17 @@
  * running the software. We always consider that the software runs from the
  * server that will become the cluster headnode.
  */
-//Headnode::Headnode () = default;
+// Headnode::Headnode () = default;
 
-Headnode::Headnode() : m_bootTarget(BootTarget::Text) {
+Headnode::Headnode()
+    : m_bootTarget(BootTarget::Text)
+{
     discoverNames();
 }
 
-void Headnode::discoverNames() {
-    struct utsname system {};
+void Headnode::discoverNames()
+{
+    struct utsname system { };
     uname(&system);
 
     std::string hostname = system.nodename;
@@ -37,10 +40,9 @@ void Headnode::discoverNames() {
     setFQDN(hostname);
 }
 
-Headnode::BootTarget Headnode::getBootTarget() const {
-    return m_bootTarget;
-}
+Headnode::BootTarget Headnode::getBootTarget() const { return m_bootTarget; }
 
-void Headnode::setBootTarget(Headnode::BootTarget bootTarget) {
+void Headnode::setBootTarget(Headnode::BootTarget bootTarget)
+{
     m_bootTarget = bootTarget;
 }

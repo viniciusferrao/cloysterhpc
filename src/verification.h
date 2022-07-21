@@ -12,5 +12,4 @@ void checkEffectiveUserId();
 
 }
 
-#endif //CLOYSTERHPC_VERIFICATION_H_
-
+#endif // CLOYSTERHPC_VERIFICATION_H_

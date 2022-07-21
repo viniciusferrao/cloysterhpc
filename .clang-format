@@ -1,0 +1,9 @@
+---
+BasedOnStyle: WebKit
+ColumnLimit: 80
+IndentCaseLabels: true
+#InsertBraces: true
+Standard: c++20
+
+...
+

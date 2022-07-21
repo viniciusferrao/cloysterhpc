@@ -8,13 +8,13 @@
 
 #include <magic_enum.hpp>
 
-#include "execution.h"
 #include "../cluster.h"
+#include "execution.h"
 #include "provisioner.h"
 
 class Shell : public Execution {
 private:
-    const std::unique_ptr<Cluster> &m_cluster;
+    const std::unique_ptr<Cluster>& m_cluster;
 
 private:
     void configureSELinuxMode();
@@ -32,10 +32,10 @@ private:
 
     void configureRepositories();
     void installOpenHPCBase();
-    void configureTimeService (const std::list<Connection>&);
+    void configureTimeService(const std::list<Connection>&);
     void configureQueueSystem();
     void configureInfiniband();
-    void configureNetworkFileSystem ();
+    void configureNetworkFileSystem();
 
     void removeMemlockLimits();
     void installDevelopmentComponents();
@@ -46,7 +46,7 @@ private:
 public:
     // FIXME: Guideline: Don’t use a const unique_ptr& as a parameter;
     //  use widget* instead.
-    explicit Shell(const std::unique_ptr<Cluster> &cluster);
+    explicit Shell(const std::unique_ptr<Cluster>& cluster);
     void install() override;
 };
 

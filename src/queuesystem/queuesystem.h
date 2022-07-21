@@ -6,8 +6,8 @@
 #ifndef CLOYSTERHPC_QUEUESYSTEM_H_
 #define CLOYSTERHPC_QUEUESYSTEM_H_
 
-#include <string>
 #include <fmt/format.h>
+#include <string>
 
 #include "../functions.h"
 

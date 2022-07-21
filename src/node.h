@@ -6,18 +6,19 @@
 #ifndef CLOYSTERHPC_NODE_H
 #define CLOYSTERHPC_NODE_H
 
-#include <string>
 #include <list>
+#include <string>
 
-#include "server.h"
-#include "network.h"
 #include "connection.h"
+#include "network.h"
 #include "os.h"
+#include "server.h"
 
 class Node : public Server {
 public:
     Node(std::string_view hostname, OS& os, CPU& cpu,
-         std::list<Connection>&& connections, std::optional<BMC> bmc = std::nullopt);
+        std::list<Connection>&& connections,
+        std::optional<BMC> bmc = std::nullopt);
 };
 
 #endif // CLOYSTERHPC_NODE_H_

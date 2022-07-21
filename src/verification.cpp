@@ -5,11 +5,13 @@
 
 #include "verification.h"
 
-#include <unistd.h>
 #include <stdexcept>
+#include <unistd.h>
 
-void cloyster::checkEffectiveUserId() {
+void cloyster::checkEffectiveUserId()
+{
     if (geteuid() != 0) {
-        throw std::runtime_error("This program must be run with root privileges");
+        throw std::runtime_error(
+            "This program must be run with root privileges");
     }
 }

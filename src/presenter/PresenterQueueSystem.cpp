@@ -6,22 +6,18 @@
 #include "PresenterQueueSystem.h"
 
 PresenterQueueSystem::PresenterQueueSystem(
-        std::unique_ptr<Cluster>& model,
-        std::unique_ptr<Newt>& view)
-        : Presenter(model, view) {
+    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
+    : Presenter(model, view)
+{
 
-    m_model->setQueueSystem(
-            magic_enum::enum_cast<QueueSystem::Kind>(
-                    m_view->listMenu(Messages::title,
-                                     Messages::question,
-                                     magic_enum::enum_names<QueueSystem::Kind>(),
-                                     Messages::help)).value());
+    m_model->setQueueSystem(magic_enum::enum_cast<QueueSystem::Kind>(
+        m_view->listMenu(Messages::title, Messages::question,
+            magic_enum::enum_names<QueueSystem::Kind>(), Messages::help))
+                                .value());
 
     // TODO: Placeholder data
-    auto fieldsSLURM = std::to_array<
-            std::pair<std::string, std::string>>({
-                    {Messages::SLURM::partition, "execution"}
-            });
+    auto fieldsSLURM = std::to_array<std::pair<std::string, std::string>>(
+        { { Messages::SLURM::partition, "execution" } });
 
     if (auto& queue = m_model->getQueueSystem()) {
         switch (queue.value()->getKind()) {
@@ -31,29 +27,30 @@ PresenterQueueSystem::PresenterQueueSystem(
 
             case QueueSystem::Kind::SLURM: {
                 fieldsSLURM = m_view->fieldMenu(Messages::SLURM::title,
-                                                Messages::SLURM::question,
-                                                fieldsSLURM,
-                                                Messages::SLURM::help);
+                    Messages::SLURM::question, fieldsSLURM,
+                    Messages::SLURM::help);
 
                 const auto& slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->setDefaultQueue(fieldsSLURM[0].second);
-                LOG_DEBUG("Set SLURM default queue: {}", slurm->getDefaultQueue());
+                LOG_DEBUG(
+                    "Set SLURM default queue: {}", slurm->getDefaultQueue());
 
                 break;
             }
 
             case QueueSystem::Kind::PBS: {
-                const auto& execution = m_view->listMenu(
-                        Messages::PBS::title,
-                        Messages::PBS::question,
-                        magic_enum::enum_names<PBS::ExecutionPlace>(),
-                        Messages::PBS::help);
+                const auto& execution = m_view->listMenu(Messages::PBS::title,
+                    Messages::PBS::question,
+                    magic_enum::enum_names<PBS::ExecutionPlace>(),
+                    Messages::PBS::help);
 
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
-                        magic_enum::enum_cast<PBS::ExecutionPlace>(execution).value());
+                    magic_enum::enum_cast<PBS::ExecutionPlace>(execution)
+                        .value());
                 LOG_DEBUG("Set PBS Execution Place: {}",
-                         magic_enum::enum_name<PBS::ExecutionPlace>(pbs->getExecutionPlace()));
+                    magic_enum::enum_name<PBS::ExecutionPlace>(
+                        pbs->getExecutionPlace()));
 
                 break;
             }

@@ -15,12 +15,11 @@ SLURM::SLURM(const Cluster& cluster)
     setKind(QueueSystem::Kind::SLURM);
 }
 
-void SLURM::installServer() {
-    runCommand("dnf -y install ohpc-slurm-server");
-}
+void SLURM::installServer() { runCommand("dnf -y install ohpc-slurm-server"); }
 
-void SLURM::configureServer() {
-    const std::string configurationFile{"/etc/slurm/slurm.conf"};
+void SLURM::configureServer()
+{
+    const std::string configurationFile { "/etc/slurm/slurm.conf" };
     cloyster::removeFile(configurationFile);
 
     // Ensure that the directory exists
@@ -31,32 +30,31 @@ void SLURM::configureServer() {
     nodes.reserve(m_cluster.getNodes().size());
 
     for (const auto& node : m_cluster.getNodes())
-        nodes.emplace_back(fmt::format(
-                "NodeName={} Sockets={} CoresPerSocket={} ThreadsPerCore={} State=UNKNOWN"
-                , node.getHostname()
-                , node.getCPU().getSockets()
-                , node.getCPU().getCoresPerSocket()
-                , node.getCPU().getThreadsPerCore()
-        ));
+        nodes.emplace_back(
+            fmt::format("NodeName={} Sockets={} CoresPerSocket={} "
+                        "ThreadsPerCore={} State=UNKNOWN",
+                node.getHostname(), node.getCPU().getSockets(),
+                node.getCPU().getCoresPerSocket(),
+                node.getCPU().getThreadsPerCore()));
 
-    const auto& conf{fmt::format(
-            #include "../tmpl/slurm.conf.tmpl"
-            , fmt::arg("clusterName", m_cluster.getName())
-            , fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN())
-            , fmt::arg("partitionName", getDefaultQueue())
-            , fmt::arg("nodesDeclaration", fmt::join(nodes, "\n"))
-    )};
+    const auto& conf { fmt::format(
+#include "../tmpl/slurm.conf.tmpl"
+        , fmt::arg("clusterName", m_cluster.getName()),
+        fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN()),
+        fmt::arg("partitionName", getDefaultQueue()),
+        fmt::arg("nodesDeclaration", fmt::join(nodes, "\n"))) };
 
     cloyster::addStringToFile(configurationFile, conf);
-
 }
 
-void SLURM::enableServer() {
+void SLURM::enableServer()
+{
     runCommand("systemctl enable --now munge");
     runCommand("systemctl enable --now slurmctld");
 }
 
-void SLURM::startServer() {
+void SLURM::startServer()
+{
     runCommand("systemctl start munge");
     runCommand("systemctl start slurmctld");
 }

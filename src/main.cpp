@@ -5,13 +5,13 @@
 
 #include <cstdlib>
 
-#include "services/log.h"
-#include "const.h"
 #include "cluster.h"
-#include "view/newt.h"
-#include "services/shell.h"
+#include "const.h"
 #include "presenter/PresenterInstall.h"
+#include "services/log.h"
+#include "services/shell.h"
 #include "verification.h"
+#include "view/newt.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -20,7 +20,8 @@
 // Globals definitions
 bool cloyster::dryRun = false;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     // TODO: Parse command line options for log levels
 
     cloyster::checkEffectiveUserId();
@@ -33,7 +34,7 @@ int main(int argc, char** argv) {
     auto presenter = std::make_unique<PresenterInstall>(model, view);
 
 #ifndef NDEBUG
-    //model->fillTestData();
+    //    model->fillTestData();
     model->printData();
 #endif
 
