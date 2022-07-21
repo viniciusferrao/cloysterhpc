@@ -1,19 +1,15 @@
-//
-// Created by Lucas B. Gracioso on 15/07/22.
-//
+/*
+ * Copyright 2022 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "verification.h"
 
-#include <iostream>
-#include <atomic>
+#include <unistd.h>
+#include <stdexcept>
 
-namespace cloyster {
-
-    void checkEffectiveUserId() {
-        if (geteuid() != 0) {
-            throw std::runtime_error("This program must run with root privileges");
-        }
+void cloyster::checkEffectiveUserId() {
+    if (geteuid() != 0) {
+        throw std::runtime_error("This program must be run with root privileges");
     }
-
 }
-
