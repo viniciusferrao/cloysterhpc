@@ -86,9 +86,9 @@ void Network::setAddress(const std::string& address)
 
 std::string Network::fetchAddress(const std::string& interface)
 {
-    struct in_addr addr {};
-    struct in_addr netmask {};
-    struct in_addr network {};
+    struct in_addr addr { };
+    struct in_addr netmask { };
+    struct in_addr network { };
 
     // TODO: Fix exceptions
     if (inet_aton(Connection::fetchAddress(interface).c_str(), &addr) == 0)
