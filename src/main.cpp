@@ -20,7 +20,10 @@
 // Globals definitions
 bool cloyster::dryRun = false;
 
-int main(int argc, char** argv)
+/**
+ * @brief The entrypoint.
+ */
+int main(const int argc, const char** argv)
 {
     // TODO: Parse command line options for log levels
 
