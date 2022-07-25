@@ -53,6 +53,12 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 * License headers **must** be included in all files.
 * We use [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to keep the coding style consistent.
   ``.clang-format`` file is shipped within the source, please use it.
+* The code is written in modern C++ (specifically C++20) and is **not** using any deprecated features.
+  We will **not** support any deprecated features.
+* External libraries are not only allowed but stimulated. Don't reinvent the wheel.
+* Prefer STL functions over external libraries functions where is possible.
+  This happens a lot with [Boost](https://www.boost.org/).
+* Remember to check [compiler compatibility](https://en.cppreference.com/w/cpp/compiler_support) for language features and library features.
 
 
 ## <a name="commit"></a> Commit Message Format
