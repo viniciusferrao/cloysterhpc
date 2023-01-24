@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.18.2)
 
 # We hardcode to clang since we may need to use an i18n library that mandates
 # clang to generate translation files
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_C_COMPILER gcc)
+set(CMAKE_CXX_COMPILER g++)
 
 project(CloysterHPC
         VERSION 0.1
@@ -29,12 +29,12 @@ add_library(project_options INTERFACE)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if(${os_version_suffix} MATCHES "el8")
         # If we match Enterprise Linux 8 we will compile with C++20, but we need
-        # to provide gcc-toolset-11 to make it work. C++17 is too "old" now.
+        # to provide gcc-toolset-12 to make it work. C++17 is too "old" now.
         target_compile_features(project_options INTERFACE cxx_std_20)
         if(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
             include_directories(SYSTEM
-                    /opt/rh/gcc-toolset-11/root/usr/include/c++/11
-                    /opt/rh/gcc-toolset-11/root/usr/include/c++/11/x86_64-redhat-linux)
+                    /opt/rh/gcc-toolset-11/root/usr/include/c++/12
+                    /opt/rh/gcc-toolset-11/root/usr/include/c++/12/x86_64-redhat-linux)
             target_compile_options(project_options INTERFACE -nostdinc++)
         endif()
     endif()

@@ -59,7 +59,7 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset and packages
-dnf -y install git cmake ccache ninja-build llvm-toolset gcc-toolset-11\*
+dnf -y install git cmake ccache ninja-build llvm-toolset gcc-toolset-12\*
 pip3 install conan
 
 # Required libraries

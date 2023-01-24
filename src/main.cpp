@@ -18,7 +18,7 @@
 #endif
 
 // Globals definitions
-bool cloyster::dryRun = false;
+bool cloyster::dryRun = true;
 
 /**
  * @brief The entrypoint.

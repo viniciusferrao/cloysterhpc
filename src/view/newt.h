@@ -25,13 +25,8 @@
 class Newt : public View {
 private:
     struct TUIText {
-
-#if __cpp_lib_constexpr_string >= 201907L
-        static constexpr const char* title
-            = fmt::format("{} Installer", productName).c_str();
-#else
+        // TODO: Get rid of the macro: https://stackoverflow.com/q/75216821
         static constexpr const char* title = PRODUCT_NAME " Installer";
-#endif
         static constexpr const char* helpLine
             = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  "
               "<F12> disabled";
