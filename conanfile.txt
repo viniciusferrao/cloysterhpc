@@ -1,0 +1,14 @@
+# Docs at https://docs.conan.io/en/latest/reference/conanfile_txt.html
+
+[requires]
+catch2/3.2.1
+cli11/2.3.2
+fmt/9.1.0
+spdlog/1.11.0
+boost/1.81.0
+magic_enum/0.8.2
+gsl-lite/0.40.0
+
+[generators]
+cmake_find_package_multi
+
