@@ -16,6 +16,8 @@
 #include <fmt/format.h>
 #include <sys/utsname.h>
 
+#include <algorithm>
+
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
