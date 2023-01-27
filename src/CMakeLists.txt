@@ -1,23 +1,8 @@
 # Library: newt
-if (newt_LIBRARIES AND newt_INCLUDE_DIRS)
-    set (newt_FIND_QUIETLY TRUE)
-endif (newt_LIBRARIES AND newt_INCLUDE_DIRS)
-
-find_path (newt_INCLUDE_DIRS NAMES newt.h)
-find_library (newt_LIBRARIES NAMES newt)
-
-include (FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(newt DEFAULT_MSG
-    newt_LIBRARIES
-    newt_INCLUDE_DIRS
-)
-
-mark_as_advanced(newt_INCLUDE_DIRS newt_LIBRARIES)
-include_directories(${newt_INCLUDE_DIRS})
+find_package(newt REQUIRED)
 
 # Library: fmt
 find_package(fmt CONFIG REQUIRED)
-#include_directories(${fmt_INCLUDE_DIRS})
 
 # Library: CLI11
 find_package(CLI11 CONFIG REQUIRED)
@@ -60,7 +45,7 @@ add_executable(main ${SOURCE_FILES})
 target_link_libraries(
   main
   PUBLIC project_options project_warnings
-  PRIVATE ${newt_LIBRARIES} fmt::fmt CLI11::CLI11 Boost::headers Boost::system Boost::thread spdlog::spdlog gsl::gsl-lite magic_enum::magic_enum resolv ${STDC++FS})
+  PRIVATE ${NEWT_LIBRARY} fmt::fmt CLI11::CLI11 Boost::headers Boost::system Boost::thread spdlog::spdlog gsl::gsl-lite magic_enum::magic_enum resolv ${STDC++FS})
 
 target_include_directories(main PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
 
@@ -73,18 +58,3 @@ set_target_properties(main
     LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 )
-
-# Default config
-#find_package(fmt CONFIG REQUIRED)
-#find_package(spdlog CONFIG REQUIRED)
-#find_package(CLI11 CONFIG REQUIRED)
-
-# Generic test that uses conan libs
-#add_executable(intro main.cpp)
-#target_link_libraries(
-#  intro
-#  PUBLIC project_options project_warnings
-#  PRIVATE CLI11::CLI11 fmt::fmt spdlog::spdlog)
-#
-#target_include_directories(intro PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
-

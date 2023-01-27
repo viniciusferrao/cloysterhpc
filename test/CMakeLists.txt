@@ -1,8 +1,14 @@
-cmake_minimum_required(VERSION 3.15...3.23)
+cmake_minimum_required(VERSION 3.16...3.25)
 
 project(CmakeConfigPackageTests LANGUAGES CXX)
 
 # ---- Test as standalone project the exported config package ----
+# This variable is set by project() in CMake 3.21+
+string(
+  COMPARE EQUAL
+          "${CMAKE_SOURCE_DIR}"
+          "${PROJECT_SOURCE_DIR}"
+          PROJECT_IS_TOP_LEVEL)
 
 if(PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
   enable_testing()

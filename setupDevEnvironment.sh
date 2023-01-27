@@ -59,13 +59,15 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset and packages
-dnf -y install git cmake ccache ninja-build llvm-toolset gcc-toolset-12\*
-pip3 install conan
+dnf -y install git cmake ccache llvm-toolset compiler-rt gcc-toolset-12\*
+pip3 install --user conan
 
 # Required libraries
 dnf -y install newt-devel
 
 echo
 echo Development tools, packages and libraries were installed on your system.
+echo Please remeber to source or activate the environment file with the correct
+echo compiler: \"source rhel-gcc-toolset-12.sh\"
 echo To proceed with the compilation please refer to the README.md file.
 echo

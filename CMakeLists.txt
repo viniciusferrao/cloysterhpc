@@ -22,6 +22,7 @@ set(WARNINGS_AS_ERRORS_DEVELOPER_DEFAULT FALSE)
 
 # Override default options if you want to enable DEVELOPER MODE but do the checks
 # on the IDE instead
+set(ENABLE_TESTING OFF)
 set(ENABLE_CLANG_TIDY_DEVELOPER_DEFAULT OFF)
 set(ENABLE_CPPCHECK_DEVELOPER_DEFAULT OFF)
 
@@ -48,6 +49,9 @@ project(
   DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer"
   HOMEPAGE_URL "https://github.com/viniciusferrao/cloysterhpc"
   LANGUAGES CXX C)
+
+# Include module path for packages that we need to find or build
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 # This variable is set by project() in CMake 3.21+
 string(
@@ -143,8 +147,7 @@ add_subdirectory(configured_files)
 add_subdirectory(src)
 
 # Adding the tests:
-#option(ENABLE_TESTING "Enable the tests" ${PROJECT_IS_TOP_LEVEL})
-option(ENABLE_TESTING "Enable the tests" OFF)
+option(ENABLE_TESTING "Enable the tests" ${PROJECT_IS_TOP_LEVEL})
 if(ENABLE_TESTING)
   enable_testing()
   message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
