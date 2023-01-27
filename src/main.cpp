@@ -12,6 +12,7 @@
 #include "services/shell.h"
 #include "verification.h"
 #include "view/newt.h"
+#include <CLI/CLI.hpp>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -23,27 +24,58 @@ bool cloyster::dryRun = true;
 /**
  * @brief The entrypoint.
  */
-int main(const int argc, const char** argv)
+int main(int argc, const char** argv)
 {
-    // TODO: Parse command line options for log levels
-
-    cloyster::checkEffectiveUserId();
-
     Log::init();
     LOG_INFO("{} Started", productName);
 
-    auto model = std::make_unique<Cluster>();
-    auto view = std::make_unique<Newt>();
-    auto presenter = std::make_unique<PresenterInstall>(model, view);
+    // TODO: Parse command line options for log levels
 
-#ifndef NDEBUG
-    //    model->fillTestData();
-    model->printData();
-#endif
+    CLI::App app{ productName };
 
-    LOG_TRACE("Starting execution engine");
-    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
-    executionEngine->install();
+    bool show_version = false;
+    app.add_flag("-v,--version", show_version, "Show version information");
+
+    bool runAsRoot = false;
+    app.add_flag("-r, --root", runAsRoot, "Run with root permissions");
+
+    bool dryRun = true;
+    app.add_flag("-d, --dryrun", dryRun, "Perform a dry run installation");
+
+    bool enableTUI = false;
+    app.add_flag("-t, --tui", enableTUI, "Enable TUI");
+
+    CLI11_PARSE(app, argc, argv);
+
+    if (show_version) {
+        fmt::print("{}: Version {}\n", productName, productVersion);
+        return EXIT_SUCCESS;
+    }
+
+    if(runAsRoot)
+        cloyster::checkEffectiveUserId();
+
+    if (dryRun) {
+        fmt::print("Dry run enabled.\n");
+        cloyster::dryRun = dryRun;
+    }
+
+//    auto model = std::make_unique<Cluster>();
+//    if (enableTUI) {
+//        // Entrypoint; if the view is constructed it will start the TUI.
+//        auto view = std::make_unique<Newt>();
+//        auto presenter = std::make_unique<PresenterInstall>(model, view);
+//    }
+//
+//
+//#ifndef NDEBUG
+//    //    model->fillTestData();
+//    model->printData();
+//#endif
+//
+//    LOG_TRACE("Starting execution engine");
+//    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
+//    executionEngine->install();
 
     LOG_INFO("{} is ending", productName);
     Log::shutdown();

@@ -61,7 +61,7 @@
 namespace Log {
 enum class Level { Trace, Debug, Info, Warn, Error, Critical, Off };
 
-void init(Level = Level::Trace);
+void init(Level = Level::Debug);
 void shutdown();
 }
 
