@@ -26,15 +26,11 @@ bool cloyster::dryRun = true;
  */
 int main(int argc, const char** argv)
 {
-    Log::init();
-    LOG_INFO("{} Started", productName);
-
-    // TODO: Parse command line options for log levels
-
     CLI::App app{ productName };
 
-    bool show_version = false;
-    app.add_flag("-v,--version", show_version, "Show version information");
+
+    bool showVersion = false;
+    app.add_flag("-v,--version", showVersion, "Show version information");
 
     bool runAsRoot = false;
     app.add_flag("-r, --root", runAsRoot, "Run with root permissions");
@@ -45,9 +41,32 @@ int main(int argc, const char** argv)
     bool enableTUI = false;
     app.add_flag("-t, --tui", enableTUI, "Enable TUI");
 
+    std::optional<std::string> logLevelInput;
+    app.add_option("-l, --log-level", logLevelInput, (fmt::format("Available log levels: {}", fmt::join(magic_enum::enum_names<Log::Level>(), ", "))) );
+
     CLI11_PARSE(app, argc, argv);
 
-    if (show_version) {
+    Log::Level logLevel = Log::Level::Info;
+    if (logLevelInput) {
+        if (std::regex_match(logLevelInput.value(), std::regex("^[0-9]+$")))
+            logLevel = magic_enum::enum_cast<Log::Level>(stoi(logLevelInput.value())).value();
+        else
+            logLevel = magic_enum::enum_cast<Log::Level>(logLevelInput.value()).value();
+    }
+
+    try {
+        Log::init(logLevel);
+        LOG_INFO("{} Started", productName);
+    } catch (const std::exception& ex) {
+        fmt::print("Invalid log level: {}\n{}", logLevelInput.value(), ex.what());
+        return EXIT_FAILURE;
+    }
+
+#ifndef NDEBUG
+    fmt::print("Log level set to: {}", magic_enum::enum_name<Log::Level>(logLevel));
+#endif
+
+    if (showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
         return EXIT_SUCCESS;
     }
@@ -60,22 +79,22 @@ int main(int argc, const char** argv)
         cloyster::dryRun = dryRun;
     }
 
-//    auto model = std::make_unique<Cluster>();
-//    if (enableTUI) {
-//        // Entrypoint; if the view is constructed it will start the TUI.
-//        auto view = std::make_unique<Newt>();
-//        auto presenter = std::make_unique<PresenterInstall>(model, view);
-//    }
-//
-//
-//#ifndef NDEBUG
-//    //    model->fillTestData();
-//    model->printData();
-//#endif
-//
-//    LOG_TRACE("Starting execution engine");
-//    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
-//    executionEngine->install();
+    auto model = std::make_unique<Cluster>();
+    if (enableTUI) {
+        // Entrypoint; if the view is constructed it will start the TUI.
+        auto view = std::make_unique<Newt>();
+        auto presenter = std::make_unique<PresenterInstall>(model, view);
+    }
+
+
+#ifndef NDEBUG
+    //    model->fillTestData();
+    model->printData();
+#endif
+
+    LOG_TRACE("Starting execution engine");
+    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
+    executionEngine->install();
 
     LOG_INFO("{} is ending", productName);
     Log::shutdown();
