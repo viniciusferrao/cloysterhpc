@@ -13,13 +13,11 @@
 #include "verification.h"
 #include "view/newt.h"
 #include <CLI/CLI.hpp>
+#include "cloyster.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
 #endif
-
-// Globals definitions
-bool cloyster::dryRun = false;
 
 /**
  * @brief The entrypoint.
@@ -28,25 +26,19 @@ int main(int argc, const char** argv)
 {
     CLI::App app { productName };
 
-    bool showVersion = false;
-    app.add_flag("-v, --version", showVersion, "Show version information");
+    app.add_flag("-v, --version", cloyster::showVersion, "Show version information");
 
-    bool runAsRoot = false;
-    app.add_flag("-r, --root", runAsRoot, "Run with root permissions");
+    app.add_flag("-r, --root", cloyster::runAsRoot, "Run with root permissions");
 
-    bool dryRun = false;
-    app.add_flag("-d, --dry", dryRun, "Perform a dry run installation");
+    app.add_flag("-d, --dry", cloyster::dryRun, "Perform a dry run installation");
 
-    bool enableTUI = false;
-    app.add_flag("-t, --tui", enableTUI, "Enable TUI");
+    app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
-    bool enableCLI = false;
-    app.add_flag("-c, --cli", enableCLI, "Enable CLI");
+    app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
 
-    bool runAsDaemon = false;
-    app.add_flag("-D, --daemon", runAsDaemon, "Run as a daemon");
+    app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
 
-    std::string logLevelInput = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
+    cloyster::logLevelInput = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
     constexpr std::size_t logLevels { magic_enum::enum_count<Log::Level>() };
 
     const std::vector<std::string> logLevelVector = []() {
@@ -55,7 +47,7 @@ int main(int argc, const char** argv)
             logLevelNames.end() };
     }();
 
-    app.add_option("-l, --log-level", logLevelInput,
+    app.add_option("-l, --log-level", cloyster::logLevelInput,
            [&logLevelVector]() {
                std::string result { "Available log levels:" };
 
@@ -75,50 +67,50 @@ int main(int argc, const char** argv)
 
     CLI11_PARSE(app, argc, argv)
 
-    Log::init([&logLevelInput]() {
-        if (std::regex_match(logLevelInput, std::regex("^[0-9]+$")))
-            return magic_enum::enum_cast<Log::Level>(stoi(logLevelInput))
+    std::string logLevelInput = cloyster::logLevelInput;
+    Log::init([&, logLevelInput ]() {
+        if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$")))
+            return magic_enum::enum_cast<Log::Level>(stoi(cloyster::logLevelInput))
                 .value();
         else
             return magic_enum::enum_cast<Log::Level>(
-                logLevelInput, magic_enum::case_insensitive)
+                cloyster::logLevelInput, magic_enum::case_insensitive)
                 .value();
     }());
 
 #ifndef NDEBUG
-    fmt::print("Log level set to: {}\n", logLevelInput);
+    fmt::print("Log level set to: {}\n", cloyster::logLevelInput);
 #endif
 
 
     LOG_INFO("{} Started", productName);
 
-    if (showVersion) {
+    if (cloyster::showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
         return EXIT_SUCCESS;
     }
 
-    if (runAsRoot)
+    if (cloyster::runAsRoot)
         cloyster::checkEffectiveUserId();
 
-    if (dryRun) {
+    if (cloyster::dryRun) {
         fmt::print("Dry run enabled.\n");
-        cloyster::dryRun = dryRun;
     }
 
     //@TODO implement CLI feature
-    if (enableCLI) {
+    if (cloyster::enableCLI) {
         fmt::print("CLI feature not implemented.\n");
         return EXIT_FAILURE;
     }
 
     //@TODO implement run as daemon feature
-    if (runAsDaemon) {
+    if (cloyster::runAsDaemon) {
         fmt::print("Daemon feature not implemented.\n");
         return EXIT_FAILURE;
     }
 
     auto model = std::make_unique<Cluster>();
-    if (enableTUI) {
+    if (cloyster::enableTUI) {
         // Entrypoint; if the view is constructed it will start the TUI.
         auto view = std::make_unique<Newt>();
         auto presenter = std::make_unique<PresenterInstall>(model, view);
