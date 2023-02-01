@@ -17,33 +17,34 @@
 #endif
 
 // Define some macros to ease the logging process
-#define LOG_INFO(...)                                                          \
+#define LOG_CRITICAL(...)                                                      \
     if (spdlog::get(productName) != nullptr) {                                 \
-        spdlog::get(productName)->info(__VA_ARGS__);                           \
-    }
-#define LOG_WARN(...)                                                          \
-    if (spdlog::get(productName) != nullptr) {                                 \
-        spdlog::get(productName)->warn(__VA_ARGS__);                           \
+        spdlog::get(productName)->critical(__VA_ARGS__);                       \
     }
 #define LOG_ERROR(...)                                                         \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->error(__VA_ARGS__);                          \
     }
-#define LOG_CRITICAL(...)                                                      \
+#define LOG_WARN(...)                                                          \
     if (spdlog::get(productName) != nullptr) {                                 \
-        spdlog::get(productName)->critical(__VA_ARGS__);                       \
+        spdlog::get(productName)->warn(__VA_ARGS__);                           \
+    }
+#define LOG_INFO(...)                                                          \
+    if (spdlog::get(productName) != nullptr) {                                 \
+        spdlog::get(productName)->info(__VA_ARGS__);                           \
     }
 
 // Available only with DEBUG builds
 #ifndef NDEBUG
-#define LOG_TRACE(...)                                                         \
-    if (spdlog::get(productName) != nullptr) {                                 \
-        spdlog::get(productName)->trace(__VA_ARGS__);                          \
-    }
 #define LOG_DEBUG(...)                                                         \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->debug(__VA_ARGS__);                          \
     }
+#define LOG_TRACE(...)                                                         \
+    if (spdlog::get(productName) != nullptr) {                                 \
+        spdlog::get(productName)->trace(__VA_ARGS__);                          \
+    }
+
 #define LOG_ASSERT(x, msg)                                                     \
     if ((x)) {                                                                 \
     } else {                                                                   \
@@ -59,9 +60,10 @@
 #endif
 
 namespace Log {
-enum class Level { Trace, Debug, Info, Warn, Error, Critical, Off };
+enum class Level { Off, Critical, Error, Warn, Info, Debug, Trace };
 
-void init(Level = Level::Debug);
+void init(std::size_t level);
+void init(Level level = Level::Info);
 void shutdown();
 }
 
