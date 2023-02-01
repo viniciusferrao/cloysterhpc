@@ -32,7 +32,7 @@ constexpr const char* installPath = INSTALL_PATH;
 
 using cloyster::installPath;
 using cloyster::productName;
-using cloyster::productVersion;
 using cloyster::productUrl;
+using cloyster::productVersion;
 
 #endif // CLOYSTERHPC_CONST_H_

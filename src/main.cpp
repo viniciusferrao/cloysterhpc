@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 
+#include "cloyster.h"
 #include "cluster.h"
 #include "const.h"
 #include "presenter/PresenterInstall.h"
@@ -13,7 +14,6 @@
 #include "verification.h"
 #include "view/newt.h"
 #include <CLI/CLI.hpp>
-#include "cloyster.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -26,11 +26,14 @@ int main(int argc, const char** argv)
 {
     CLI::App app { productName };
 
-    app.add_flag("-v, --version", cloyster::showVersion, "Show version information");
+    app.add_flag(
+        "-v, --version", cloyster::showVersion, "Show version information");
 
-    app.add_flag("-r, --root", cloyster::runAsRoot, "Run with root permissions");
+    app.add_flag(
+        "-r, --root", cloyster::runAsRoot, "Run with root permissions");
 
-    app.add_flag("-d, --dry", cloyster::dryRun, "Perform a dry run installation");
+    app.add_flag(
+        "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
 
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
@@ -38,11 +41,14 @@ int main(int argc, const char** argv)
 
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
 
-    cloyster::logLevelInput = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
+    cloyster::logLevelInput
+        = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
     constexpr std::size_t logLevels { magic_enum::enum_count<Log::Level>() };
 
     const std::vector<std::string> logLevelVector = []() {
-        constexpr auto& logLevelNames { magic_enum::enum_names<Log::Level>() };
+        constexpr const auto& logLevelNames {
+            magic_enum::enum_names<Log::Level>()
+        };
         return std::vector<std::string> { logLevelNames.begin(),
             logLevelNames.end() };
     }();
@@ -69,7 +75,8 @@ int main(int argc, const char** argv)
 
     Log::init([]() {
         if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
-            return magic_enum::enum_cast<Log::Level>(stoi(cloyster::logLevelInput))
+            return magic_enum::enum_cast<Log::Level>(
+                stoi(cloyster::logLevelInput))
                 .value();
         } else {
             return magic_enum::enum_cast<Log::Level>(
@@ -79,9 +86,8 @@ int main(int argc, const char** argv)
     }());
 
 #ifndef NDEBUG
-    fmt::print("Log level set to: {}\n", cloyster::logLevelInput);
+    LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput);
 #endif
-
 
     LOG_INFO("{} Started", productName);
 
@@ -116,9 +122,6 @@ int main(int argc, const char** argv)
         auto view = std::make_unique<Newt>();
         auto presenter = std::make_unique<PresenterInstall>(model, view);
     }
-
-
-
 
 #ifndef NDEBUG
     //    model->fillTestData();
