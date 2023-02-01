@@ -16,7 +16,7 @@ namespace cloyster {
     bool enableTUI = false;
     bool enableCLI = false;
     bool runAsDaemon = false;
-    static std::string logLevelInput = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
+    std::string logLevelInput = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
 }
 
 
