@@ -12,6 +12,9 @@ namespace cloyster {
 #define PRODUCT_NAME "CloysterHPC"
 constexpr const char* productName = PRODUCT_NAME;
 
+#define PRODUCT_VERSION "0.1 Alpha"
+constexpr const char* productVersion = PRODUCT_VERSION;
+
 #define PRODUCT_URL "http://github.com/viniciusferrao/cloysterhpc"
 constexpr const char* productUrl = PRODUCT_URL;
 
@@ -30,5 +33,6 @@ constexpr const char* installPath = INSTALL_PATH;
 using cloyster::installPath;
 using cloyster::productName;
 using cloyster::productUrl;
+using cloyster::productVersion;
 
 #endif // CLOYSTERHPC_CONST_H_
