@@ -67,15 +67,15 @@ int main(int argc, const char** argv)
 
     CLI11_PARSE(app, argc, argv)
 
-    std::string logLevelInput = cloyster::logLevelInput;
-    Log::init([&, logLevelInput ]() {
-        if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$")))
+    Log::init([]() {
+        if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
             return magic_enum::enum_cast<Log::Level>(stoi(cloyster::logLevelInput))
                 .value();
-        else
+        } else {
             return magic_enum::enum_cast<Log::Level>(
                 cloyster::logLevelInput, magic_enum::case_insensitive)
                 .value();
+        }
     }());
 
 #ifndef NDEBUG
@@ -90,8 +90,9 @@ int main(int argc, const char** argv)
         return EXIT_SUCCESS;
     }
 
-    if (cloyster::runAsRoot)
+    if (cloyster::runAsRoot) {
         cloyster::checkEffectiveUserId();
+    }
 
     if (cloyster::dryRun) {
         fmt::print("Dry run enabled.\n");
