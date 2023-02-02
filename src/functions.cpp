@@ -120,6 +120,12 @@ void createDirectory(const std::filesystem::path& path)
 /* Remove file */
 void removeFile(std::string_view filename)
 {
+    if (cloyster::dryRun) {
+        LOG_INFO(
+            "Would remove file {}", filename);
+        return;
+    }
+
     LOG_DEBUG("Checking if file {} already exists on filesystem", filename);
     if (std::filesystem::exists(filename)) {
         LOG_DEBUG("Already exists");
@@ -131,9 +137,15 @@ void removeFile(std::string_view filename)
 }
 
 /* Backup file */
-void backupFile(const std::string_view& filename)
+void backupFile(std::string_view filename)
 {
     const auto& backupFile = fmt::format("{}/backup{}", installPath, filename);
+
+    if (cloyster::dryRun) {
+        LOG_INFO(
+            "Would create a backup copy of {} on {}", filename, backupFile);
+        return;
+    }
 
     // Create the directory structure
     createDirectory(std::filesystem::absolute(backupFile).parent_path());
@@ -157,6 +169,12 @@ void changeValueInConfigurationFile(
 {
     boost::property_tree::ptree tree;
 
+    if (cloyster::dryRun) {
+        LOG_INFO(
+            "Would change a value in configuration file {}", filename);
+        return;
+    }
+
     try {
         boost::property_tree::ini_parser::read_ini(filename, tree);
     } catch (boost::property_tree::ini_parser_error& ex) {
@@ -174,6 +192,13 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #else
     std::ofstream file(std::string { filename }, std::ios_base::app);
 #endif
+
+    if (cloyster::dryRun) {
+        LOG_INFO(
+            "Would add a string in file {}", filename);
+        LOG_TRACE("Added string \"{}\"", string);
+        return;
+    }
 
     if (!file.is_open())
         throw std::runtime_error(
