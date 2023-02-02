@@ -87,7 +87,7 @@ void XCAT::nodeset(std::string_view nodes)
 void XCAT::createDirectoryTree()
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create a directory");
+        LOG_INFO("Would create the directory /install/custom/netboot");
         return;
     }
 

@@ -121,8 +121,7 @@ void createDirectory(const std::filesystem::path& path)
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_INFO(
-            "Would remove file {}", filename);
+        LOG_INFO("Would remove file {}", filename);
         return;
     }
 
@@ -170,8 +169,7 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_INFO(
-            "Would change a value in configuration file {}", filename);
+        LOG_INFO("Would change a value in configuration file {}", filename);
         return;
     }
 
@@ -194,9 +192,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #endif
 
     if (cloyster::dryRun) {
-        LOG_INFO(
-            "Would add a string in file {}", filename);
-        LOG_TRACE("Added string \"{}\"", string);
+        LOG_INFO("Would add a string in file {}", filename);
+        LOG_TRACE("Added: \"{}\"", string);
         return;
     }
 
