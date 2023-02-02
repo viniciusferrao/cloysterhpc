@@ -169,7 +169,8 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change a value in configuration file {}", filename);
+        LOG_INFO("Would change the {} on {} in configuration file {}", value,
+            key, filename);
         return;
     }
 
