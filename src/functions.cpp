@@ -121,7 +121,7 @@ void createDirectory(const std::filesystem::path& path)
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would remove file {}", filename);
+        LOG_INFO("Would remove file {}, if exists", filename);
         return;
     }
 
