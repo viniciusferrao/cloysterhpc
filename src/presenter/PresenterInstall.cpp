@@ -14,6 +14,7 @@
 #include "PresenterNodes.h"
 #include "PresenterQueueSystem.h"
 #include "PresenterTime.h"
+#include "PresenterTimeArea.h"
 #include "PresenterWelcome.h"
 
 PresenterInstall::PresenterInstall(
@@ -28,6 +29,10 @@ PresenterInstall::PresenterInstall(
 
 #if 1 // Set general settings
     Call<PresenterGeneralSettings>();
+#endif
+
+#if 1 // Timezone area choice support
+    Call<PresenterTimeArea>();
 #endif
 
 #if 1 // Timezone and locale support

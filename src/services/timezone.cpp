@@ -7,6 +7,9 @@
 #include "../functions.h"
 #include "log.h"
 #include <fmt/format.h>
+#include <iostream>
+#include <map>
+#include <string>
 
 Timezone::Timezone()
     : m_availableTimezones { fetchAvailableTimezones() }
@@ -18,6 +21,10 @@ void Timezone::setTimezone(std::string_view tz) { m_timezone = tz; }
 
 std::string_view Timezone::getTimezone() const { return m_timezone; }
 
+void Timezone::setTimezoneArea(std::string_view tz) { m_timezoneArea = tz; }
+
+std::string_view Timezone::getTimezoneArea() const { return m_timezoneArea; }
+
 void Timezone::setSystemTimezone()
 {
     LOG_DEBUG("Setting system timezone to {}\n", m_timezone);
@@ -25,9 +32,14 @@ void Timezone::setSystemTimezone()
         fmt::format("timedatectl set timezone {}", m_timezone));
 }
 
-std::list<std::string> Timezone::fetchAvailableTimezones()
+std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 {
-    LOG_DEBUG("Fetching available system timezones");
+    return m_availableTimezones;
+}
+
+std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
+{
+    LOG_DEBUG("Fetching available system timezone areas");
     std::list<std::string> output;
 
 // TODO: Remove this hack
@@ -38,12 +50,14 @@ std::list<std::string> Timezone::fetchAvailableTimezones()
         fmt::format("timedatectl list-timezones --no-pager"), output, true);
 #endif
 
-    return output;
-}
+    std::multimap<std::string, std::string> timezones;
 
-std::list<std::string> Timezone::getAvailableTimezones() const
-{
-    return m_availableTimezones;
+    for (std::string const& tz : output) {
+        timezones.insert(std::make_pair(
+            tz.substr(0, tz.find('/')), tz.substr(tz.find('/') + 1)));
+    }
+
+    return timezones;
 }
 
 void Timezone::setTimeservers(const std::vector<std::string>& timeservers)

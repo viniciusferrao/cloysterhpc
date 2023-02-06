@@ -13,11 +13,16 @@ PresenterTime::PresenterTime(
     // Timezone selection
     auto availableTimezones = m_model->getTimezone().getAvailableTimezones();
 
-    auto selectedTimezone
-        = m_view->listMenu(Messages::title, Messages::Timezone::question,
-            availableTimezones, Messages::Timezone::help);
+    std::string_view timezoneArea = m_model->getTimezone().getTimezoneArea();
+    std::list<std::string> timezones;
+    for (const auto& item : availableTimezones)
+        if (item.first == timezoneArea)
+            timezones.emplace_back(item.second);
 
-    m_model->setTimezone(selectedTimezone);
+    auto selectedTimezone = m_view->listMenu(Messages::title,
+        Messages::Timezone::question, timezones, Messages::Timezone::help);
+
+    m_model->setTimezone(fmt::format("{}/{}", timezoneArea, selectedTimezone));
 
     // FIXME: Horrible call; getTimezone() two times? Srsly?
     LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone());
