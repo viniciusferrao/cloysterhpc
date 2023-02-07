@@ -9,9 +9,25 @@ PresenterTime::PresenterTime(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
+    // Timezone area selection
+
+    auto availableTimezones = m_model->getTimezone().getAvailableTimezones();
+
+    std::list<std::string> timezoneAreas;
+    for (const auto& tz : availableTimezones)
+        timezoneAreas.emplace_back(tz.first);
+
+    timezoneAreas.unique();
+
+    auto selectedTimezoneArea = m_view->listMenu(Messages::title,
+        Messages::Timezone::question, timezoneAreas, Messages::Timezone::help);
+
+    m_model->getTimezone().setTimezoneArea(selectedTimezoneArea);
+
+    LOG_DEBUG(
+        "Timezone area set to: {}", m_model->getTimezone().getTimezoneArea());
 
     // Timezone selection
-    auto availableTimezones = m_model->getTimezone().getAvailableTimezones();
 
     std::string_view timezoneArea = m_model->getTimezone().getTimezoneArea();
     std::list<std::string> timezones;

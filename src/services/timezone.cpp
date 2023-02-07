@@ -7,7 +7,6 @@
 #include "../functions.h"
 #include "log.h"
 #include <fmt/format.h>
-#include <iostream>
 #include <map>
 #include <string>
 
