@@ -19,26 +19,27 @@ PresenterTime::PresenterTime(
 
     timezoneAreas.unique();
 
-    auto selectedTimezoneArea = m_view->listMenu(Messages::title,
+    auto selectedTimezoneLocationArea = m_view->listMenu(Messages::title,
         Messages::Timezone::question, timezoneAreas, Messages::Timezone::help);
 
-    m_model->getTimezone().setTimezoneArea(selectedTimezoneArea);
-
-    LOG_DEBUG(
-        "Timezone area set to: {}", m_model->getTimezone().getTimezoneArea());
-
-    // Timezone selection
+    m_model->getTimezone().setTimezoneArea(selectedTimezoneLocationArea);
 
     std::string_view timezoneArea = m_model->getTimezone().getTimezoneArea();
-    std::list<std::string> timezones;
+
+    LOG_DEBUG(
+        "Timezone area set to: {}", timezoneArea);
+
+    // Timezone location selection
+
+    std::list<std::string> timezoneLocations;
     for (const auto& item : availableTimezones)
         if (item.first == timezoneArea)
-            timezones.emplace_back(item.second);
+            timezoneLocations.emplace_back(item.second);
 
-    auto selectedTimezone = m_view->listMenu(Messages::title,
-        Messages::Timezone::question, timezones, Messages::Timezone::help);
+    auto selectedTimezoneLocation = m_view->listMenu(Messages::title,
+        Messages::Timezone::question, timezoneLocations, Messages::Timezone::help);
 
-    m_model->setTimezone(fmt::format("{}/{}", timezoneArea, selectedTimezone));
+    m_model->setTimezone(fmt::format("{}/{}", timezoneArea, selectedTimezoneLocation));
 
     // FIXME: Horrible call; getTimezone() two times? Srsly?
     LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone());
