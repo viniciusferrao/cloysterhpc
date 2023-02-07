@@ -38,7 +38,7 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
-    LOG_DEBUG("Fetching available system timezone areas");
+    LOG_DEBUG("Fetching available system timezones");
     std::list<std::string> output;
 
 // TODO: Remove this hack

@@ -34,6 +34,11 @@ Newt::Newt()
     newtDrawRootText(
         0 - static_cast<int>(strlen(TUIText::version)), 0, TUIText::version);
 
+#ifndef NDEBUG
+    newtDrawRootText(0 - static_cast<int>(strlen(TUIText::developmentBuild)), 1,
+        TUIText::developmentBuild);
+#endif
+
     // Add the default help line in the bottom
     newtPushHelpLine(TUIText::helpLine);
     newtRefresh();
