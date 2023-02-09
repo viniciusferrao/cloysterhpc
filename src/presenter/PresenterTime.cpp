@@ -4,20 +4,44 @@
  */
 
 #include "PresenterTime.h"
+#include <set>
 
 PresenterTime::PresenterTime(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
+    // Timezone area selection
 
-    // Timezone selection
     auto availableTimezones = m_model->getTimezone().getAvailableTimezones();
 
-    auto selectedTimezone
-        = m_view->listMenu(Messages::title, Messages::Timezone::question,
-            availableTimezones, Messages::Timezone::help);
+    std::set<std::string> timezoneAreas;
+    for (const auto& tz : availableTimezones)
+        timezoneAreas.insert(tz.first);
 
-    m_model->setTimezone(selectedTimezone);
+    auto selectedTimezoneLocationArea = m_view->listMenu(Messages::title,
+        Messages::Timezone::question, timezoneAreas, Messages::Timezone::help);
+
+    m_model->getTimezone().setTimezoneArea(selectedTimezoneLocationArea);
+
+    std::string_view timezoneArea = m_model->getTimezone().getTimezoneArea();
+
+    LOG_DEBUG("Timezone area set to: {}", timezoneArea);
+
+    // Timezone location selection
+
+    std::list<std::string> timezoneLocations;
+    const auto& [begin, end]
+        = availableTimezones.equal_range(timezoneArea.data());
+    for (auto it = begin; it != end; ++it) {
+        timezoneLocations.emplace_back(it->second);
+    }
+
+    auto selectedTimezoneLocation
+        = m_view->listMenu(Messages::title, Messages::Timezone::question,
+            timezoneLocations, Messages::Timezone::help);
+
+    m_model->setTimezone(
+        fmt::format("{}/{}", timezoneArea, selectedTimezoneLocation));
 
     // FIXME: Horrible call; getTimezone() two times? Srsly?
     LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone());

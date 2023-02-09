@@ -30,6 +30,15 @@ Newt::Newt()
     // Push the title to the top left corner
     newtDrawRootText(0, 0, TUIText::title);
 
+    // Push the product version to the top right corner
+    newtDrawRootText(
+        0 - static_cast<int>(strlen(TUIText::version)), 0, TUIText::version);
+
+#ifndef NDEBUG
+    newtDrawRootText(0 - static_cast<int>(strlen(TUIText::developmentBuild)), 1,
+        TUIText::developmentBuild);
+#endif
+
     // Add the default help line in the bottom
     newtPushHelpLine(TUIText::helpLine);
     newtRefresh();

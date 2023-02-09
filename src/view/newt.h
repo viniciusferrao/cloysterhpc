@@ -27,6 +27,10 @@ private:
     struct TUIText {
         // TODO: Get rid of the macro: https://stackoverflow.com/q/75216821
         static constexpr const char* title = PRODUCT_NAME " Installer";
+        static constexpr const char* version = "Version " PRODUCT_VERSION;
+#ifndef NDEBUG
+        static constexpr const char* developmentBuild = "DEVELOPMENT BUILD";
+#endif
         static constexpr const char* helpLine
             = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  "
               "<F12> disabled";
