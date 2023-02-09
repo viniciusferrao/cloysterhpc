@@ -4,6 +4,7 @@
  */
 
 #include "PresenterTime.h"
+#include <set>
 
 PresenterTime::PresenterTime(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
@@ -13,11 +14,9 @@ PresenterTime::PresenterTime(
 
     auto availableTimezones = m_model->getTimezone().getAvailableTimezones();
 
-    std::list<std::string> timezoneAreas;
+    std::set<std::string> timezoneAreas;
     for (const auto& tz : availableTimezones)
-        timezoneAreas.emplace_back(tz.first);
-
-    timezoneAreas.unique();
+        timezoneAreas.insert(tz.first);
 
     auto selectedTimezoneLocationArea = m_view->listMenu(Messages::title,
         Messages::Timezone::question, timezoneAreas, Messages::Timezone::help);
@@ -31,9 +30,11 @@ PresenterTime::PresenterTime(
     // Timezone location selection
 
     std::list<std::string> timezoneLocations;
-    for (const auto& item : availableTimezones)
-        if (item.first == timezoneArea)
-            timezoneLocations.emplace_back(item.second);
+    const auto& [begin, end]
+        = availableTimezones.equal_range(timezoneArea.data());
+    for (auto it = begin; it != end; ++it) {
+        timezoneLocations.emplace_back(it->second);
+    }
 
     auto selectedTimezoneLocation
         = m_view->listMenu(Messages::title, Messages::Timezone::question,

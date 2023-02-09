@@ -51,7 +51,7 @@ std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 
     std::multimap<std::string, std::string> timezones;
 
-    for (std::string const& tz : output) {
+    for (const std::string& tz : output) {
         timezones.insert(std::make_pair(
             tz.substr(0, tz.find('/')), tz.substr(tz.find('/') + 1)));
     }
