@@ -6,10 +6,10 @@
 #ifndef CLOYSTERHPC_CLOYSTER_H_
 #define CLOYSTERHPC_CLOYSTER_H_
 
-#include <string>
+#include "services/log.h"
 #include <fmt/format.h>
 #include <magic_enum.hpp>
-#include <CLI/CLI.hpp>
+#include <string>
 
 namespace cloyster {
 bool showVersion = false;
@@ -23,4 +23,3 @@ std::string logLevelInput
 }
 
 #endif // CLOYSTERHPC_CLOYSTER_H_
-
