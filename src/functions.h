@@ -66,7 +66,7 @@ void writeConfig(const std::string&);
 /* helper function */
 void createDirectory(const std::filesystem::path& path);
 void removeFile(std::string_view filename);
-void backupFile(const std::string_view& filename);
+void backupFile(std::string_view filename);
 void changeValueInConfigurationFile(
     const std::string&, const std::string&, std::string_view);
 void addStringToFile(std::string_view filename, std::string_view string);

@@ -86,6 +86,11 @@ void XCAT::nodeset(std::string_view nodes)
 
 void XCAT::createDirectoryTree()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create the directory CHROOT/install/custom/netboot");
+        return;
+    }
+
     std::filesystem::create_directories(CHROOT "/install/custom/netboot");
 }
 
@@ -211,6 +216,11 @@ void XCAT::generatePostinstallFile()
 
     for (const auto& entries : std::as_const(m_stateless.postinstall)) {
         cloyster::addStringToFile(filename, entries);
+    }
+
+    if (cloyster::dryRun) {
+        LOG_INFO("Would change file {} permissions", filename);
+        return;
     }
 
     std::filesystem::permissions(filename,
