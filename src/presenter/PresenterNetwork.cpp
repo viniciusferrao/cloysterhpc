@@ -51,16 +51,25 @@ void PresenterNetwork::createNetwork()
     const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
+    std::vector<address> nameservers = Network::fetchNameservers();
+    std::vector<std::string> formattedNameservers;
+    for (int i = 0; i <= nameservers.size(); i++) {
+        formattedNameservers.emplace_back(nameservers[i].to_string());
+    }
+
     auto networkDetails = std::to_array<std::pair<std::string, std::string>>(
-        { { Messages::IP::address, Connection::fetchAddress(interface) },
-            { Messages::IP::subnetMask, Network::fetchSubnetMask(interface) },
-            { Messages::IP::network, Network::fetchAddress(interface) },
-            { Messages::IP::gateway, Network::fetchGateway(interface) },
+        { { Messages::IP::address,
+              Connection::fetchAddress(interface).to_string() },
+            { Messages::IP::subnetMask,
+                Network::fetchSubnetMask(interface).to_string() },
+            { Messages::IP::network,
+                Network::fetchAddress(interface).to_string() },
+            { Messages::IP::gateway,
+                Network::fetchGateway(interface).to_string() },
             // Nameserver definitions
             { Messages::Domain::name, Network::fetchDomainName() },
             { Messages::Domain::servers,
-                fmt::format(
-                    "{}", fmt::join(Network::fetchNameservers(), ", ")) } });
+                fmt::format("{}", fmt::join(formattedNameservers, ", ")) } });
 
     // TODO: Can we use move semantics?
     networkDetails = networkAddress(networkDetails);
@@ -70,21 +79,14 @@ void PresenterNetwork::createNetwork()
 #endif
 
     // Set the gathered data
-    std::size_t i = 0;
-    m_connection.setAddress(networkDetails[i++].second);
-    m_network->setSubnetMask(networkDetails[i++].second);
-    m_network->setAddress(networkDetails[i++].second);
-    m_network->setGateway(networkDetails[i++].second);
+    m_connection.setAddress(Connection::fetchAddress(interface));
+    m_network->setSubnetMask(Network::fetchSubnetMask(interface));
+    m_network->setAddress(Network::fetchAddress(interface));
+    m_network->setGateway(Network::fetchGateway(interface));
 
     // Domain Data
-    m_network->setDomainName(networkDetails[i++].second);
+    m_network->setDomainName(Network::fetchDomainName());
 
-    std::vector<std::string> nameservers;
-    // We accept comma and/or space delimited strings even with extra spaces
-    boost::split(
-        nameservers, networkDetails[i++].second,
-        [](char c) { return (c == ' ' || c == ','); },
-        boost::token_compress_on);
     m_network->setNameservers(nameservers); // TODO: std::move
 
 #ifndef NDEBUG
@@ -101,5 +103,5 @@ void PresenterNetwork::createNetwork()
     LOG_DEBUG("Added {} connection on headnode: {} -> {}",
         magic_enum::enum_name(profile),
         m_model->getHeadnode().getConnection(profile).getInterface().value(),
-        m_model->getHeadnode().getConnection(profile).getAddress());
+        m_model->getHeadnode().getConnection(profile).getAddress().to_string());
 }

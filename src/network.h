@@ -7,11 +7,14 @@
 #define CLOYSTERHPC_NETWORK_H_
 
 #include <arpa/inet.h>
+#include <boost/asio.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <magic_enum.hpp>
+
+using boost::asio::ip::address;
 
 /* TODO: Refactoring is necessary
  *  m_domainName is also available here since non-default networks may
@@ -44,21 +47,20 @@ public:
 private:
     Profile m_profile;
     Type m_type;
-    struct in_addr m_address { };
-    struct in_addr m_subnetMask { };
-    struct in_addr m_gateway { };
+    address m_address {};
+    address m_subnetMask {};
+    address m_gateway {};
     uint16_t m_vlan {};
     std::string m_domainName;
-    std::vector<struct in_addr> m_nameservers;
+    std::vector<address> m_nameservers;
 
 public:
     Network();
     explicit Network(Profile);
     Network(Profile, Type);
-    Network(Profile, Type, const std::string& address,
-        const std::string& subnetMask, const std::string& gateway,
-        const uint16_t& vlan, const std::string& domainName,
-        const std::vector<std::string>& nameserver);
+    Network(Profile, Type, const address& ip, const address& subnetMask,
+        const address& gateway, const uint16_t& vlan,
+        const std::string& domainName, const std::vector<address>& nameserver);
 
     Network(const Network& other) = default;
     Network& operator=(const Network& other) = default;
@@ -72,18 +74,17 @@ public:
     [[nodiscard]] const Profile& getProfile() const;
     [[nodiscard]] const Type& getType() const;
 
-    [[nodiscard]] std::string getAddress() const;
-    void setAddress(const std::string& address);
-    [[nodiscard]] static std::string fetchAddress(const std::string& interface);
+    [[nodiscard]] address getAddress() const;
+    void setAddress(const address& address);
+    [[nodiscard]] static address fetchAddress(const std::string& interface);
 
-    [[nodiscard]] std::string getSubnetMask() const;
-    void setSubnetMask(const std::string& subnetMask);
-    [[nodiscard]] static std::string fetchSubnetMask(
-        const std::string& interface);
+    [[nodiscard]] address getSubnetMask() const;
+    void setSubnetMask(const address& subnetMask);
+    [[nodiscard]] static address fetchSubnetMask(const std::string& interface);
 
-    [[nodiscard]] std::string getGateway() const;
-    void setGateway(const std::string& gateway);
-    [[nodiscard]] static std::string fetchGateway(const std::string& interface);
+    [[nodiscard]] address getGateway() const;
+    void setGateway(const address& gateway);
+    [[nodiscard]] static address fetchGateway(const std::string& interface);
 
     [[nodiscard]] std::uint16_t getVLAN() const;
     void setVLAN(std::uint16_t vlan);
@@ -92,9 +93,9 @@ public:
     void setDomainName(const std::string& domainName);
     [[nodiscard]] static std::string fetchDomainName();
 
-    [[nodiscard]] std::vector<std::string> getNameservers() const;
-    void setNameservers(const std::vector<std::string>& nameservers);
-    [[nodiscard]] static std::vector<std::string> fetchNameservers();
+    [[nodiscard]] std::vector<address> getNameservers() const;
+    void setNameservers(const std::vector<address>& nameservers);
+    [[nodiscard]] static std::vector<address> fetchNameservers();
 
 #ifndef NDEBUG
     void dumpNetwork() const;

@@ -8,6 +8,7 @@
 #include "services/log.h"
 
 #include <arpa/inet.h> /* inet_*() functions */
+#include <boost/asio.hpp>
 #include <ifaddrs.h>
 #include <regex>
 #include <resolv.h>
@@ -34,14 +35,13 @@ Network::Network(Profile profile, Type type)
 {
 }
 
-Network::Network(Profile profile, Type type, const std::string& address,
-    const std::string& subnetMask, const std::string& gateway,
-    const uint16_t& vlan, const std::string& domainName,
-    const std::vector<std::string>& nameserver)
+Network::Network(Profile profile, Type type, const address& ip,
+    const address& subnetMask, const address& gateway, const uint16_t& vlan,
+    const std::string& domainName, const std::vector<address>& nameserver)
     : Network(profile, type)
 {
 
-    setAddress(address);
+    setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);
     setVLAN(vlan);
@@ -71,52 +71,57 @@ const Network::Type& Network::getType() const { return m_type; }
  *  - Overload for different inputs (string and int)
  *  - Check if network address and gateway are inside the mask
  */
-std::string Network::getAddress() const
+address Network::getAddress() const
 {
-    if (inet_ntoa(m_address) == nullptr)
+    if (m_address.is_unspecified())
         throw;
-    return inet_ntoa(m_address);
+
+    return m_address;
 }
 
-void Network::setAddress(const std::string& address)
+void Network::setAddress(const address& address)
 {
-    if (inet_aton(address.c_str(), &this->m_address) == 0)
+    if (!(address.is_v4() xor address.is_v6()))
         throw; // return -1; /* Invalid IP Address */
+
+    m_address = address;
 }
 
-std::string Network::fetchAddress(const std::string& interface)
+address Network::fetchAddress(const std::string& interface)
 {
-    struct in_addr addr { };
-    struct in_addr netmask { };
-    struct in_addr network { };
+    address addr {};
+    address netmask {};
+    address network {};
 
     // TODO: Fix exceptions
-    if (inet_aton(Connection::fetchAddress(interface).c_str(), &addr) == 0)
+    if (Connection::fetchAddress(interface).is_unspecified())
         return {};
     // throw std::runtime_error("Invalid IP address");
-    if (inet_aton(fetchSubnetMask(interface).c_str(), &netmask) == 0)
+    if (fetchSubnetMask(interface).is_unspecified())
         return {};
     // throw std::runtime_error("Invalid subnet mask address");
 
-    network.s_addr = addr.s_addr & netmask.s_addr;
+    network = boost::asio::ip::make_address_v4(
+        addr.to_v4().to_uint() & netmask.to_v4().to_uint());
 
-    return (inet_ntoa(network));
+    return (network);
 }
 
-std::string Network::getSubnetMask() const
+address Network::getSubnetMask() const
 {
-    if (inet_ntoa(m_subnetMask) == nullptr)
+    if (m_subnetMask.is_unspecified())
         throw;
-    return inet_ntoa(m_subnetMask);
+
+    return m_subnetMask;
 }
 
-void Network::setSubnetMask(const std::string& subnetMask)
+void Network::setSubnetMask(const address& subnetMask)
 {
-    if (inet_aton(subnetMask.c_str(), &this->m_subnetMask) == 0)
+    if (!(subnetMask.is_v4() xor subnetMask.is_v6()))
         throw; // return -1; /* Invalid IP Address */
 }
 
-std::string Network::fetchSubnetMask(const std::string& interface)
+address Network::fetchSubnetMask(const std::string& interface)
 {
     struct ifaddrs *ifaddr, *ifa;
 
@@ -133,18 +138,18 @@ std::string Network::fetchSubnetMask(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
-            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_netmask);
-            // freeifaddrs(ifaddr);
+            address result
+                = boost::asio::ip::make_address(ifa->ifa_netmask->sa_data);
 
-            if (inet_ntoa(sa->sin_addr) == nullptr)
+            if (result.is_unspecified())
                 continue;
 
 #ifndef NDEBUG
             LOG_TRACE("Got subnet mask address {} from interface {}",
-                inet_ntoa(sa->sin_addr), interface);
+                result.to_string(), interface);
 #endif
 
-            return inet_ntoa(sa->sin_addr);
+            return result;
         }
     }
 
@@ -154,21 +159,22 @@ std::string Network::fetchSubnetMask(const std::string& interface)
         "Interface {} does not have a netmask address defined", interface));
 }
 
-std::string Network::getGateway() const
+address Network::getGateway() const
 {
-    if (inet_ntoa(m_gateway) == nullptr)
+    if (m_gateway.is_unspecified())
         throw;
-    return inet_ntoa(m_gateway);
+
+    return m_gateway;
 }
 
-void Network::setGateway(const std::string& gateway)
+void Network::setGateway(const address& gateway)
 {
-    if (inet_aton(gateway.c_str(), &this->m_gateway) == 0)
+    if (!(gateway.is_v4() xor gateway.is_v6()))
         throw; // return -1; /* Invalid IP Address */
 }
 
 // FIXME: It's fetching the broadcast address instead
-std::string Network::fetchGateway(const std::string& interface)
+address Network::fetchGateway(const std::string& interface)
 {
     struct ifaddrs *ifaddr, *ifa;
 
@@ -185,18 +191,18 @@ std::string Network::fetchGateway(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
-            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_dstaddr);
-            // freeifaddrs(ifaddr);
+            address result
+                = boost::asio::ip::make_address(ifa->ifa_dstaddr->sa_data);
 
-            if (inet_ntoa(sa->sin_addr) == nullptr)
+            if (result.is_unspecified())
                 continue;
 
 #ifndef NDEBUG
             LOG_TRACE("Got gateway address {} from interface {}",
-                inet_ntoa(sa->sin_addr), interface);
+                result.to_string(), interface);
 #endif
 
-            return inet_ntoa(sa->sin_addr);
+            return result;
         }
     }
 
@@ -252,23 +258,23 @@ std::string Network::fetchDomainName()
 /* TODO: Check return type
  *  - We can't return const (don't know exactly why)
  */
-std::vector<std::string> Network::getNameservers() const
+std::vector<address> Network::getNameservers() const
 {
-    std::vector<std::string> returnVector;
+    std::vector<address> returnVector;
     for (const auto& nameserver : std::as_const(m_nameservers))
-        returnVector.emplace_back(inet_ntoa(nameserver));
+        returnVector.emplace_back(nameserver);
 
     return returnVector;
 }
 
 /* TODO: Test this */
-void Network::setNameservers(const std::vector<std::string>& nameservers)
+void Network::setNameservers(const std::vector<address>& nameservers)
 {
     if (nameservers.empty())
         return;
 
     m_nameservers.reserve(nameservers.size());
-    struct in_addr aux { };
+    struct address aux { };
 
 #if __cplusplus < 202002L
     size_t i = 0;
@@ -277,23 +283,22 @@ void Network::setNameservers(const std::vector<std::string>& nameservers)
     for (std::size_t i = 0; const auto& ns : std::as_const(nameservers)) {
 #endif
         m_nameservers.push_back(aux); // aux may have garbage on it
-        if (inet_aton(ns.c_str(), &this->m_nameservers[i++]) == 0)
-            throw std::runtime_error(
-                fmt::format("Cannot add {} as a nameserver", ns));
     }
 }
 
-std::vector<std::string> Network::fetchNameservers()
+std::vector<address> Network::fetchNameservers()
 {
-    std::vector<std::string> nameservers;
+    std::vector<address> nameservers;
     if (res_init() == -1)
         throw std::runtime_error("Failed to initialize domain name resolution");
 
     nameservers.reserve(static_cast<std::size_t>(_res.nscount));
     for (const auto& ns : _res.nsaddr_list) {
-        if (std::string { inet_ntoa(ns.sin_addr) } == "0.0.0.0")
+        address formattedNs
+            = boost::asio::ip::make_address_v4(ns.sin_addr.s_addr);
+        if (formattedNs.to_string() == "0.0.0.0")
             continue;
-        nameservers.emplace_back(inet_ntoa(ns.sin_addr));
+        nameservers.emplace_back(formattedNs);
     }
 
     return nameservers;
