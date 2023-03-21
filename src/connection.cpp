@@ -176,7 +176,7 @@ const address Connection::getAddress() const
 
 void Connection::setAddress(const address& ip)
 {
-    if (ip.is_v4())
+    if (!ip.is_v4())
         throw std::runtime_error(
             fmt::format("Invalid IP address {} cannot be set", ip.to_string()));
 }
