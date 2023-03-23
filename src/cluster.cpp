@@ -320,32 +320,6 @@ void Cluster::fillTestData()
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("Execution");
 
-    /*    std::list<Network> testNetworkAddresses = {
-            { Network::Profile::External, Network::Type::Ethernet,
-                boost::asio::ip::make_address("172.16.144.0"),
-                boost::asio::ip::make_address("255.255.255.0"),
-                boost::asio::ip::make_address("172.16.144.1"), 0,
-       "home.ferrao.net.br", { boost::asio::ip::make_address("172.16.144.1") }
-       }, { Network::Profile::Management, Network::Type::Ethernet,
-                boost::asio::ip::make_address("172.26.0.0"),
-                boost::asio::ip::make_address("255.255.0.0"),
-                boost::asio::ip::make_address("0.0.0.0"), 0,
-       "cluster.example.tld", { boost::asio::ip::make_address("172.26.0.1") } },
-            { Network::Profile::Application, Network::Type::Infiniband,
-                boost::asio::ip::make_address("172.27.0.0"),
-                boost::asio::ip::make_address("255.255.0.0"),
-                boost::asio::ip::make_address("0.0.0.0"), 0,
-       "ib.cluster.example.tld", {
-       boost::asio::ip::make_address("172.27.255.254") } }
-        };
-
-        for(Network& n : testNetworkAddresses)
-        {
-            addNetwork(n.getProfile(), n.getType(), n.getAddress(),
-       n.getSubnetMask(), n.getGateway(), n.getVLAN(), n.getDomainName(),
-       n.getNameservers());
-        }*/
-
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         boost::asio::ip::make_address("172.16.144.0"),
         boost::asio::ip::make_address("255.255.255.0"),
@@ -378,10 +352,10 @@ void Cluster::fillTestData()
 
     m_headnode.addConnection(getNetwork(Network::Profile::External), "enp0s25",
         "de:ad:be:ff:00:00", boost::asio::ip::make_address("172.16.144.50"));
-    m_headnode.addConnection(getNetwork(Network::Profile::Management), "ib0",
+    m_headnode.addConnection(getNetwork(Network::Profile::Management), "eno1",
         "de:ad:be:ff:00:01", boost::asio::ip::make_address("172.26.255.254"));
     // It's ethernet, we know, but consider as Infiniband
-    m_headnode.addConnection(getNetwork(Network::Profile::Application), "ib1",
+    m_headnode.addConnection(getNetwork(Network::Profile::Application), "eno1",
         "de:ad:be:ff:00:02", boost::asio::ip::make_address("172.27.255.254"));
 
 #if 0

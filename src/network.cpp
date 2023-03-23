@@ -119,6 +119,8 @@ void Network::setSubnetMask(const address& subnetMask)
 {
     if (!(subnetMask.is_v4() xor subnetMask.is_v6()))
         throw; // return -1; /* Invalid IP Address */
+
+    m_subnetMask = subnetMask;
 }
 
 address Network::fetchSubnetMask(const std::string& interface)
@@ -159,18 +161,14 @@ address Network::fetchSubnetMask(const std::string& interface)
         "Interface {} does not have a netmask address defined", interface));
 }
 
-address Network::getGateway() const
-{
-    if (m_gateway.is_unspecified())
-        throw;
-
-    return m_gateway;
-}
+address Network::getGateway() const { return m_gateway; }
 
 void Network::setGateway(const address& gateway)
 {
     if (!(gateway.is_v4() xor gateway.is_v6()))
         throw; // return -1; /* Invalid IP Address */
+
+    m_gateway = gateway;
 }
 
 // FIXME: It's fetching the broadcast address instead

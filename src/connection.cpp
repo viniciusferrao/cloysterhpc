@@ -179,6 +179,8 @@ void Connection::setAddress(const address& ip)
     if (!ip.is_v4())
         throw std::runtime_error(
             fmt::format("Invalid IP address {} cannot be set", ip.to_string()));
+
+    m_address = ip;
 }
 
 void Connection::incrementAddress(const std::size_t increment) noexcept
