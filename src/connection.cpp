@@ -34,7 +34,7 @@ Connection::Connection(Network* network)
 
 // TODO: Remove this constructor
 Connection::Connection(
-    Network* network, const std::string& interface, const address& ip)
+    Network* network, const std::string& interface, const std::string& ip)
     : m_network(network)
 {
 
@@ -47,7 +47,7 @@ Connection::Connection(
 
 Connection::Connection(Network* network,
     std::optional<std::string_view> interface,
-    std::optional<std::string_view> mac, const address& ip)
+    std::optional<std::string_view> mac, const std::string& ip)
     : m_network(network)
 {
 
@@ -176,11 +176,21 @@ const address Connection::getAddress() const
 
 void Connection::setAddress(const address& ip)
 {
-    if (!ip.is_v4())
-        throw std::runtime_error(
-            fmt::format("Invalid IP address {} cannot be set", ip.to_string()));
+    const address unspecifiedAddress = boost::asio::ip::make_address("0.0.0.0");
+
+    if (ip == unspecifiedAddress)
+        throw std::runtime_error("IP address cannot be 0.0.0.0");
 
     m_address = ip;
+}
+
+void Connection::setAddress(const std::string& ip)
+{
+    try {
+        setAddress(boost::asio::ip::make_address(ip));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid IP address");
+    }
 }
 
 void Connection::incrementAddress(const std::size_t increment) noexcept

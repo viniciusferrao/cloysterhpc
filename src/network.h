@@ -58,9 +58,13 @@ public:
     Network();
     explicit Network(Profile);
     Network(Profile, Type);
-    Network(Profile, Type, const address& ip, const address& subnetMask,
-        const address& gateway, const uint16_t& vlan,
+    Network(Profile, Type, const std::string& ip, const std::string& subnetMask,
+        const std::string& gateway, const uint16_t& vlan,
         const std::string& domainName, const std::vector<address>& nameserver);
+    Network(Profile, Type, const std::string& ip, const std::string& subnetMask,
+        const std::string& gateway, const uint16_t& vlan,
+        const std::string& domainName,
+        const std::vector<std::string>& nameserver);
 
     Network(const Network& other) = default;
     Network& operator=(const Network& other) = default;
@@ -75,15 +79,18 @@ public:
     [[nodiscard]] const Type& getType() const;
 
     [[nodiscard]] address getAddress() const;
-    void setAddress(const address& address);
+    void setAddress(const address& ip);
+    void setAddress(const std::string& ip);
     [[nodiscard]] static address fetchAddress(const std::string& interface);
 
     [[nodiscard]] address getSubnetMask() const;
     void setSubnetMask(const address& subnetMask);
+    void setSubnetMask(const std::string& subnetMask);
     [[nodiscard]] static address fetchSubnetMask(const std::string& interface);
 
     [[nodiscard]] address getGateway() const;
     void setGateway(const address& gateway);
+    void setGateway(const std::string& gateway);
     [[nodiscard]] static address fetchGateway(const std::string& interface);
 
     [[nodiscard]] std::uint16_t getVLAN() const;
@@ -95,6 +102,7 @@ public:
 
     [[nodiscard]] std::vector<address> getNameservers() const;
     void setNameservers(const std::vector<address>& nameservers);
+    void setNameservers(const std::vector<std::string>& nameservers);
     [[nodiscard]] static std::vector<address> fetchNameservers();
 
 #ifndef NDEBUG

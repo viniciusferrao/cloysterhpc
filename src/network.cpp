@@ -35,12 +35,26 @@ Network::Network(Profile profile, Type type)
 {
 }
 
-Network::Network(Profile profile, Type type, const address& ip,
-    const address& subnetMask, const address& gateway, const uint16_t& vlan,
-    const std::string& domainName, const std::vector<address>& nameserver)
+Network::Network(Profile profile, Type type, const std::string& ip,
+    const std::string& subnetMask, const std::string& gateway,
+    const uint16_t& vlan, const std::string& domainName,
+    const std::vector<address>& nameserver)
     : Network(profile, type)
 {
+    setAddress(ip);
+    setSubnetMask(subnetMask);
+    setGateway(gateway);
+    setVLAN(vlan);
+    setDomainName(domainName);
+    setNameservers(nameserver);
+}
 
+Network::Network(Profile profile, Type type, const std::string& ip,
+    const std::string& subnetMask, const std::string& gateway,
+    const uint16_t& vlan, const std::string& domainName,
+    const std::vector<std::string>& nameserver)
+    : Network(profile, type)
+{
     setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);
@@ -71,20 +85,25 @@ const Network::Type& Network::getType() const { return m_type; }
  *  - Overload for different inputs (string and int)
  *  - Check if network address and gateway are inside the mask
  */
-address Network::getAddress() const
-{
-    if (m_address.is_unspecified())
-        throw;
+address Network::getAddress() const { return m_address; }
 
-    return m_address;
+void Network::setAddress(const address& ip)
+{
+    const address unspecifiedAddress = boost::asio::ip::make_address("0.0.0.0");
+
+    if (ip == unspecifiedAddress)
+        throw std::runtime_error("IP address cannot be 0.0.0.0");
+
+    m_address = ip;
 }
 
-void Network::setAddress(const address& address)
+void Network::setAddress(const std::string& ip)
 {
-    if (!(address.is_v4() xor address.is_v6()))
-        throw; // return -1; /* Invalid IP Address */
-
-    m_address = address;
+    try {
+        setAddress(boost::asio::ip::make_address(ip));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid IP address");
+    }
 }
 
 address Network::fetchAddress(const std::string& interface)
@@ -107,20 +126,24 @@ address Network::fetchAddress(const std::string& interface)
     return (network);
 }
 
-address Network::getSubnetMask() const
-{
-    if (m_subnetMask.is_unspecified())
-        throw;
-
-    return m_subnetMask;
-}
+address Network::getSubnetMask() const { return m_subnetMask; }
 
 void Network::setSubnetMask(const address& subnetMask)
 {
-    if (!(subnetMask.is_v4() xor subnetMask.is_v6()))
-        throw; // return -1; /* Invalid IP Address */
+    //@TODO Use class network_v4 instead
+    if (!cidr.contains(subnetMask.to_string()))
+        throw std::runtime_error("Invalid subnet mask");
 
     m_subnetMask = subnetMask;
+}
+
+void Network::setSubnetMask(const std::string& subnetMask)
+{
+    try {
+        setSubnetMask(boost::asio::ip::make_address(subnetMask));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid subnet mask");
+    }
 }
 
 address Network::fetchSubnetMask(const std::string& interface)
@@ -163,12 +186,15 @@ address Network::fetchSubnetMask(const std::string& interface)
 
 address Network::getGateway() const { return m_gateway; }
 
-void Network::setGateway(const address& gateway)
-{
-    if (!(gateway.is_v4() xor gateway.is_v6()))
-        throw; // return -1; /* Invalid IP Address */
+void Network::setGateway(const address& gateway) { m_gateway = gateway; }
 
-    m_gateway = gateway;
+void Network::setGateway(const std::string& gateway)
+{
+    try {
+        setGateway(boost::asio::ip::make_address(gateway));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid gateway");
+    }
 }
 
 // FIXME: It's fetching the broadcast address instead
@@ -282,6 +308,17 @@ void Network::setNameservers(const std::vector<address>& nameservers)
 #endif
         m_nameservers.push_back(aux); // aux may have garbage on it
     }
+}
+
+void Network::setNameservers(const std::vector<std::string>& nameservers)
+{
+    std::vector<address> formattedNameservers;
+    for (int i = 0; i < nameservers.size(); i++) {
+        formattedNameservers.emplace_back(
+            boost::asio::ip::make_address(nameservers[i]));
+    }
+
+    setNameservers(formattedNameservers);
 }
 
 std::vector<address> Network::fetchNameservers()

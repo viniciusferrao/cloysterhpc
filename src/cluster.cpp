@@ -147,13 +147,27 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type)
 }
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
-    const address& ip, const address& subnetMask, const address& gateway,
-    const uint16_t& vlan, const std::string& domainName,
-    const std::vector<address>& nameserver)
+    const std::string& ip, const std::string& subnetMask,
+    const std::string& gateway, const uint16_t& vlan,
+    const std::string& domainName, const std::vector<address>& nameserver)
 {
-
     m_network.emplace_back(std::make_unique<Network>(
         profile, type, ip, subnetMask, gateway, vlan, domainName, nameserver));
+}
+
+void Cluster::addNetwork(Network::Profile profile, Network::Type type,
+    const std::string& ip, const std::string& subnetMask,
+    const std::string& gateway, const uint16_t& vlan,
+    const std::string& domainName, const std::vector<std::string>& nameserver)
+{
+    std::vector<address> formattedNameservers;
+    for (int i = 0; i < nameserver.size(); i++) {
+        formattedNameservers.emplace_back(
+            boost::asio::ip::make_address(nameserver[i]));
+    }
+
+    addNetwork(profile, type, ip, subnetMask, gateway, vlan, domainName,
+        formattedNameservers);
 }
 
 void Cluster::addNetwork(std::unique_ptr<Network>&& network)
@@ -321,19 +335,14 @@ void Cluster::fillTestData()
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
-        boost::asio::ip::make_address("172.16.144.0"),
-        boost::asio::ip::make_address("255.255.255.0"),
-        boost::asio::ip::make_address("172.16.144.1"), 0, "home.ferrao.net.br",
+        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+        "home.ferrao.net.br",
         { boost::asio::ip::make_address("172.16.144.1") });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
-        boost::asio::ip::make_address("172.26.0.0"),
-        boost::asio::ip::make_address("255.255.0.0"),
-        boost::asio::ip::make_address("0.0.0.0"), 0, "cluster.example.tld",
+        "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
         { boost::asio::ip::make_address("172.26.0.1") });
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-        boost::asio::ip::make_address("172.27.0.0"),
-        boost::asio::ip::make_address("255.255.0.0"),
-        boost::asio::ip::make_address("0.0.0.0"), 0, "ib.cluster.example.tld",
+        "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
         { boost::asio::ip::make_address("172.27.255.254") });
 #if 0
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
@@ -351,12 +360,12 @@ void Cluster::fillTestData()
 #endif
 
     m_headnode.addConnection(getNetwork(Network::Profile::External), "enp0s25",
-        "de:ad:be:ff:00:00", boost::asio::ip::make_address("172.16.144.50"));
+        "de:ad:be:ff:00:00", "172.16.144.50");
     m_headnode.addConnection(getNetwork(Network::Profile::Management), "eno1",
-        "de:ad:be:ff:00:01", boost::asio::ip::make_address("172.26.255.254"));
+        "de:ad:be:ff:00:01", "172.26.255.254");
     // It's ethernet, we know, but consider as Infiniband
     m_headnode.addConnection(getNetwork(Network::Profile::Application), "eno1",
-        "de:ad:be:ff:00:02", boost::asio::ip::make_address("172.27.255.254"));
+        "de:ad:be:ff:00:02", "172.27.255.254");
 
 #if 0
     m_headnode.addConnection(getNetwork(Network::Profile::Service),
@@ -374,15 +383,13 @@ void Cluster::fillTestData()
     // TODO: Pass network connection as object
     std::list<Connection> connections1 {
         { &getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75",
-            boost::asio::ip::make_address("172.26.0.1") },
-        { &getNetwork(Network::Profile::Application), "eno1", {},
-            boost::asio::ip::make_address("172.27.0.1") }
+            "172.26.0.1" },
+        { &getNetwork(Network::Profile::Application), "eno1", {}, "172.27.0.1" }
     };
 
-    std::list<Connection> connections2 {
-        { &getNetwork(Network::Profile::Management), {}, "de:ad:be:ff:00:00",
-            boost::asio::ip::make_address("172.26.0.2") }
-    };
+    std::list<Connection> connections2 { { &getNetwork(
+                                               Network::Profile::Management),
+        {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
     BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
 

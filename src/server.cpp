@@ -79,9 +79,8 @@ void Server::addConnection(Network& network)
 
 void Server::addConnection(Network& network,
     std::optional<std::string_view> interface, std::string_view mac,
-    const address& ip)
+    const std::string& ip)
 {
-
     m_connection.emplace_back(&network, interface, mac, ip);
 }
 

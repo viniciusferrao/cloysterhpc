@@ -52,9 +52,9 @@ public:
     Connection() = delete;
     explicit Connection(Network* network);
     Connection(
-        Network* network, const std::string& interface, const address& ip);
+        Network* network, const std::string& interface, const std::string& ip);
     Connection(Network* network, std::optional<std::string_view> interface,
-        std::optional<std::string_view> mac, const address& ip);
+        std::optional<std::string_view> mac, const std::string& ip);
 
     //    Connection(const Connection& other) = default;
     //    Connection& operator=(const Connection& other) = delete;
@@ -77,6 +77,7 @@ public:
 
     [[nodiscard]] const address getAddress() const;
     void setAddress(const address& address);
+    void setAddress(const std::string& address);
     void incrementAddress(const std::size_t increment = 1) noexcept;
     [[nodiscard]] static address fetchAddress(const std::string& interface);
 

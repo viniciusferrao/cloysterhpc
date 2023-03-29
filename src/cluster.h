@@ -73,9 +73,12 @@ public:
     void addNetwork();
     void addNetwork(Network::Profile profile);
     void addNetwork(Network::Profile profile, Network::Type type);
-    void addNetwork(Network::Profile profile, Network::Type, const address&,
-        const address&, const address&, const uint16_t&, const std::string&,
-        const std::vector<address>&);
+    void addNetwork(Network::Profile profile, Network::Type, const std::string&,
+        const std::string&, const std::string&, const uint16_t&,
+        const std::string&, const std::vector<address>&);
+    void addNetwork(Network::Profile profile, Network::Type, const std::string&,
+        const std::string&, const std::string&, const uint16_t&,
+        const std::string&, const std::vector<std::string>&);
     void addNetwork(std::unique_ptr<Network>&& network);
 
     bool isUpdateSystem() const;

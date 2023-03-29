@@ -47,7 +47,7 @@ public:
     void addConnection(Network& network);
     void addConnection(Network& network,
         std::optional<std::string_view> interface, std::string_view mac,
-        const address& ip);
+        const std::string& ip);
     void addConnection(Connection&& connection);
 
     [[nodiscard]] const Connection& getConnection(Network::Profile) const;
