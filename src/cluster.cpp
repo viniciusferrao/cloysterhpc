@@ -147,13 +147,27 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type)
 }
 
 void Cluster::addNetwork(Network::Profile profile, Network::Type type,
-    const std::string& address, const std::string& subnetMask,
+    const std::string& ip, const std::string& subnetMask,
+    const std::string& gateway, const uint16_t& vlan,
+    const std::string& domainName, const std::vector<address>& nameserver)
+{
+    m_network.emplace_back(std::make_unique<Network>(
+        profile, type, ip, subnetMask, gateway, vlan, domainName, nameserver));
+}
+
+void Cluster::addNetwork(Network::Profile profile, Network::Type type,
+    const std::string& ip, const std::string& subnetMask,
     const std::string& gateway, const uint16_t& vlan,
     const std::string& domainName, const std::vector<std::string>& nameserver)
 {
+    std::vector<address> formattedNameservers;
+    for (int i = 0; i < nameserver.size(); i++) {
+        formattedNameservers.emplace_back(
+            boost::asio::ip::make_address(nameserver[i]));
+    }
 
-    m_network.emplace_back(std::make_unique<Network>(profile, type, address,
-        subnetMask, gateway, vlan, domainName, nameserver));
+    addNetwork(profile, type, ip, subnetMask, gateway, vlan, domainName,
+        formattedNameservers);
 }
 
 void Cluster::addNetwork(std::unique_ptr<Network>&& network)
@@ -252,9 +266,9 @@ void Cluster::printNetworks(
 #endif
         LOG_DEBUG("Network [{}]", i++);
         LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()));
-        LOG_DEBUG("Address: {}", network->getAddress());
-        LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask());
-        LOG_DEBUG("Gateway: {}", network->getGateway());
+        LOG_DEBUG("Address: {}", network->getAddress().to_string());
+        LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string());
+        LOG_DEBUG("Gateway: {}", network->getGateway().to_string());
         LOG_DEBUG("VLAN: {}", network->getVLAN());
         LOG_DEBUG("Domain Name: {}", network->getDomainName());
 #if __cplusplus < 202002L
@@ -263,7 +277,7 @@ void Cluster::printNetworks(
 #else
         for (size_t j = 0; const auto& nameserver : network->getNameservers()) {
 #endif
-            LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver);
+            LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver.to_string());
         }
     }
 }
@@ -322,13 +336,14 @@ void Cluster::fillTestData()
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
-        "home.ferrao.net.br", { "172.16.144.1" });
+        "home.ferrao.net.br",
+        { boost::asio::ip::make_address("172.16.144.1") });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
         "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
-        { "172.26.0.1" });
+        { boost::asio::ip::make_address("172.26.0.1") });
     addNetwork(Network::Profile::Application, Network::Type::Infiniband,
         "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
-        { "172.27.255.254" });
+        { boost::asio::ip::make_address("172.27.255.254") });
 #if 0
     addNetwork(Network::Profile::Service, Network::Type::Ethernet,
                "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
@@ -344,13 +359,13 @@ void Cluster::fillTestData()
                "ib2.cluster.example.com", { "0.0.0.0" });
 #endif
 
-    m_headnode.addConnection(getNetwork(Network::Profile::External), "ens160",
+    m_headnode.addConnection(getNetwork(Network::Profile::External), "enp0s25",
         "de:ad:be:ff:00:00", "172.16.144.50");
-    m_headnode.addConnection(getNetwork(Network::Profile::Management), "ens224",
+    m_headnode.addConnection(getNetwork(Network::Profile::Management), "eno1",
         "de:ad:be:ff:00:01", "172.26.255.254");
     // It's ethernet, we know, but consider as Infiniband
-    m_headnode.addConnection(getNetwork(Network::Profile::Application),
-        "ens256", "de:ad:be:ff:00:02", "172.27.255.254");
+    m_headnode.addConnection(getNetwork(Network::Profile::Application), "eno1",
+        "de:ad:be:ff:00:02", "172.27.255.254");
 
 #if 0
     m_headnode.addConnection(getNetwork(Network::Profile::Service),
@@ -369,8 +384,7 @@ void Cluster::fillTestData()
     std::list<Connection> connections1 {
         { &getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75",
             "172.26.0.1" },
-        { &getNetwork(Network::Profile::Application), "ens256", {},
-            "172.27.0.1" }
+        { &getNetwork(Network::Profile::Application), "eno1", {}, "172.27.0.1" }
     };
 
     std::list<Connection> connections2 { { &getNetwork(
@@ -385,7 +399,7 @@ void Cluster::fillTestData()
     /* Bad and old data */
     nodePrefix = "n";
     nodePadding = 2;
-    nodeStartIP = "172.26.0.1";
+    nodeStartIP = boost::asio::ip::make_address("172.26.0.1");
     nodeRootPassword = "pwdNodeRoot";
 }
 #endif

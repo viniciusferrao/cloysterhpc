@@ -46,7 +46,7 @@ retry:
     std::size_t i { 0 };
     m_model->nodePrefix = fields[i++].second;
     m_model->nodePadding = boost::lexical_cast<std::size_t>(fields[i++].second);
-    m_model->nodeStartIP = fields[i++].second;
+    m_model->nodeStartIP = boost::asio::ip::make_address(fields[i++].second);
     // m_model->nodeRootPassword = fields[i++].second;
     // m_model->setDiskImage(fields[i++].second);
     //  FIXME: This cannot be hardcoded; we should support a variety of images

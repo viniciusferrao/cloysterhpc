@@ -110,8 +110,9 @@ void Shell::configureHostsFile()
 
     auto& headnode = m_cluster->getHeadnode();
 
-    const auto& ip
-        = headnode.getConnection(Network::Profile::External).getAddress();
+    const auto& ip = headnode.getConnection(Network::Profile::External)
+                         .getAddress()
+                         .to_string();
     const auto& fqdn = headnode.getFQDN();
     const auto& hostname = headnode.getHostname();
 
@@ -174,6 +175,13 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 
         auto interface = connection.getInterface().value();
 
+        std::vector<address> nameservers
+            = connection.getNetwork()->getNameservers();
+        std::vector<std::string> formattedNameservers;
+        for (int i = 0; i < nameservers.size(); i++) {
+            formattedNameservers.emplace_back(nameservers[i].to_string());
+        }
+
         runCommand(fmt::format("nmcli device set {} managed yes", interface));
         runCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
@@ -185,11 +193,11 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                 magic_enum::enum_name(connection.getNetwork()->getProfile()),
                 interface,
                 magic_enum::enum_name(connection.getNetwork()->getType()),
-                connection.getMTU(), connection.getAddress(),
+                connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
-                    connection.getNetwork()->getSubnetMask()),
-                connection.getNetwork()->getGateway(),
-                fmt::join(connection.getNetwork()->getNameservers(), " "),
+                    connection.getNetwork()->getSubnetMask().to_string()),
+                connection.getNetwork()->getGateway().to_string(),
+                fmt::join(formattedNameservers, " "),
                 connection.getNetwork()->getDomainName()));
         runCommand(fmt::format("nmcli device connect {}", interface));
     }
@@ -264,9 +272,10 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
             cloyster::addStringToFile(filename, "local stratum 10\n");
 
             cloyster::addStringToFile(filename,
-                fmt::format("allow {}/{}\n", connection.getAddress(),
+                fmt::format("allow {}/{}\n",
+                    connection.getAddress().to_string(),
                     connection.getNetwork()->cidr.at(
-                        connection.getNetwork()->getSubnetMask())));
+                        connection.getNetwork()->getSubnetMask().to_string())));
         }
     }
 

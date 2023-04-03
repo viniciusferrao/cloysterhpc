@@ -34,12 +34,12 @@ Connection::Connection(Network* network)
 
 // TODO: Remove this constructor
 Connection::Connection(
-    Network* network, const std::string& interface, const std::string& address)
+    Network* network, const std::string& interface, const std::string& ip)
     : m_network(network)
 {
 
     setInterface(interface);
-    setAddress(address);
+    setAddress(ip);
 
     if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
@@ -47,7 +47,7 @@ Connection::Connection(
 
 Connection::Connection(Network* network,
     std::optional<std::string_view> interface,
-    std::optional<std::string_view> mac, const std::string& address)
+    std::optional<std::string_view> mac, const std::string& ip)
     : m_network(network)
 {
 
@@ -57,7 +57,7 @@ Connection::Connection(Network* network,
     if (mac.has_value())
         setMAC(mac.value());
 
-    setAddress(address);
+    setAddress(ip);
 
     if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
@@ -167,26 +167,39 @@ void Connection::setMAC(std::string_view mac)
         throw std::runtime_error("Invalid MAC address");
 }
 
-const std::string Connection::getAddress() const
+const address Connection::getAddress() const
 {
-    if (inet_ntoa(m_address) == nullptr)
+    if (m_address.is_unspecified())
         throw std::runtime_error("Member address variable is not defined");
-    return inet_ntoa(m_address);
+    return m_address;
 }
 
-void Connection::setAddress(const std::string& address)
+void Connection::setAddress(const address& ip)
 {
-    if (inet_aton(address.c_str(), &this->m_address) == 0)
-        throw std::runtime_error(
-            fmt::format("Invalid IP address {} cannot be set", address));
+    const address unspecifiedAddress = boost::asio::ip::make_address("0.0.0.0");
+
+    if (ip == unspecifiedAddress)
+        throw std::runtime_error("IP address cannot be 0.0.0.0");
+
+    m_address = ip;
+}
+
+void Connection::setAddress(const std::string& ip)
+{
+    try {
+        setAddress(boost::asio::ip::make_address(ip));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid IP address");
+    }
 }
 
 void Connection::incrementAddress(const std::size_t increment) noexcept
 {
-    m_address.s_addr += increment;
+    // TODO increment address with boost
+    // m_address.s_addr += increment;
 }
 
-std::string Connection::fetchAddress(const std::string& interface)
+address Connection::fetchAddress(const std::string& interface)
 {
     struct ifaddrs *ifaddr, *ifa;
 
@@ -203,18 +216,18 @@ std::string Connection::fetchAddress(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
-            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
-            // freeifaddrs(ifaddr);
+            address result
+                = boost::asio::ip::make_address(ifa->ifa_addr->sa_data);
 
-            if (inet_ntoa(sa->sin_addr) == nullptr)
+            if (result.is_unspecified())
                 continue;
 
 #ifndef NDEBUG
-            LOG_TRACE("Got address {} from interface {}",
-                inet_ntoa(sa->sin_addr), interface);
+            LOG_TRACE("Got address {} from interface {}", result.to_string(),
+                interface);
 #endif
 
-            return inet_ntoa(sa->sin_addr);
+            return result;
         }
     }
 
@@ -291,7 +304,7 @@ void Connection::dumpConnection() const
 
     LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
     LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
-    LOG_DEBUG("IP Address: {}", getAddress());
+    LOG_DEBUG("IP Address: {}", getAddress().to_string());
 
     LOG_DEBUG("===================================")
 }

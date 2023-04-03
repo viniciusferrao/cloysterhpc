@@ -9,6 +9,7 @@
 #include "network.h"
 
 #include <arpa/inet.h>
+#include <boost/asio.hpp>
 #include <ifaddrs.h>
 #include <memory>
 #include <string>
@@ -27,6 +28,9 @@
  * know MAC addresses in advance if the interface will be configured with static
  * IP addresses
  */
+
+using boost::asio::ip::address;
+
 class Connection {
 private:
     // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c12-dont-make-data-members-const-or-references
@@ -36,7 +40,7 @@ private:
     std::optional<std::string> m_mac;
     // TODO: Use std::vector to support more than one IP address per interface
     // std::vector<struct in_addr> m_address;
-    struct in_addr m_address { };
+    address m_address {};
     // TODO: MTU is a network parameter
     std::uint16_t m_mtu { 1500 };
 
@@ -47,10 +51,10 @@ private:
 public:
     Connection() = delete;
     explicit Connection(Network* network);
-    Connection(Network* network, const std::string& interface,
-        const std::string& address);
+    Connection(
+        Network* network, const std::string& interface, const std::string& ip);
     Connection(Network* network, std::optional<std::string_view> interface,
-        std::optional<std::string_view> mac, const std::string& address);
+        std::optional<std::string_view> mac, const std::string& ip);
 
     //    Connection(const Connection& other) = default;
     //    Connection& operator=(const Connection& other) = delete;
@@ -71,10 +75,11 @@ public:
     [[nodiscard]] std::uint16_t getMTU() const;
     void setMTU(std::uint16_t mtu);
 
-    [[nodiscard]] const std::string getAddress() const;
+    [[nodiscard]] const address getAddress() const;
+    void setAddress(const address& address);
     void setAddress(const std::string& address);
     void incrementAddress(const std::size_t increment = 1) noexcept;
-    [[nodiscard]] static std::string fetchAddress(const std::string& interface);
+    [[nodiscard]] static address fetchAddress(const std::string& interface);
 
     [[nodiscard]] const std::string& getHostname() const;
     void setHostname(const std::string& hostname);

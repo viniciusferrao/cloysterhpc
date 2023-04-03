@@ -124,7 +124,7 @@ int main(int argc, const char** argv)
     }
 
 #ifndef NDEBUG
-    //    model->fillTestData();
+    model->fillTestData();
     model->printData();
 #endif
 

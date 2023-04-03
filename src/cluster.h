@@ -75,6 +75,9 @@ public:
     void addNetwork(Network::Profile profile, Network::Type type);
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
         const std::string&, const std::string&, const uint16_t&,
+        const std::string&, const std::vector<address>&);
+    void addNetwork(Network::Profile profile, Network::Type, const std::string&,
+        const std::string&, const std::string&, const uint16_t&,
         const std::string&, const std::vector<std::string>&);
     void addNetwork(std::unique_ptr<Network>&& network);
 
@@ -115,7 +118,7 @@ public:
     std::size_t nodeQuantity;
     std::string nodePrefix;
     std::size_t nodePadding;
-    std::string nodeStartIP;
+    address nodeStartIP;
     std::string nodeRootPassword;
 };
 

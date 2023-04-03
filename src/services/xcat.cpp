@@ -118,7 +118,8 @@ void XCAT::configureTimeService()
         "echo \"server {} iburst\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
         m_cluster->getHeadnode()
             .getConnection(Network::Profile::Management)
-            .getAddress()));
+            .getAddress()
+            .to_string()));
 }
 
 void XCAT::configureInfiniband()
@@ -153,7 +154,8 @@ void XCAT::configureSLURM()
                     "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
             m_cluster->getHeadnode()
                 .getConnection(Network::Profile::Management)
-                .getAddress()));
+                .getAddress()
+                .to_string()));
 
     // TODO: Enable "if" disallow login on compute nodes
     // TODO: Consider pam_slurm_adopt.so
@@ -203,7 +205,8 @@ void XCAT::generatePostinstallFile()
                     "END\n\n",
             m_cluster->getHeadnode()
                 .getConnection(Network::Profile::Management)
-                .getAddress()));
+                .getAddress()
+                .to_string()));
 
     m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
@@ -351,7 +354,9 @@ void XCAT::addNode(const Node& node)
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
         "netboot=xnba ",
         node.getHostname(), magic_enum::enum_name(node.getOS().getArch()),
-        node.getConnection(Network::Profile::Management).getAddress(),
+        node.getConnection(Network::Profile::Management)
+            .getAddress()
+            .to_string(),
         node.getConnection(Network::Profile::Management).getMAC().value());
 
     if (const auto& bmc = node.getBMC())
@@ -366,7 +371,9 @@ void XCAT::addNode(const Node& node)
     try {
         command += fmt::format(
             "nicips.ib0={} nictypes.ib0=\"InfiniBand\" nicnetworks.ib0=ib0 ",
-            node.getConnection(Network::Profile::Application).getAddress());
+            node.getConnection(Network::Profile::Application)
+                .getAddress()
+                .to_string());
     } catch (...) {
     }
 
