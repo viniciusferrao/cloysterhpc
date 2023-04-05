@@ -8,6 +8,7 @@ spdlog/1.11.0
 boost/1.81.0
 magic_enum/0.8.2
 gsl-lite/0.40.0
+doctest/2.4.10
 
 [generators]
 cmake_find_package_multi
