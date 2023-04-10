@@ -34,7 +34,7 @@ set(TESTFILES        # All .cpp files in tests/
         source/network.cpp
         )
 
-set(TEST_MAIN cloyster_unit_tests)   # Default name for test executable (change if you wish).
+set(TEST_MAIN unit_test)   # Default name for test executable (change if you wish).
 set(TEST_RUNNER_PARAMS "")  # Any arguments to feed the test runner (change as needed).
 
 # --------------------------------------------------------------------------------
