@@ -117,7 +117,7 @@ nature and `root` execution requirements.
 
 ## Running tests
 
-To run tests you need to add the `-DENABLE_TESTING:BOOL=ON` option to CMake to build it.
+To run tests you need to enable `-DENABLE_TESTING` flag with CMake.
 
 ### Recommended VM settings
 
