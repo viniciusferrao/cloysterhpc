@@ -22,7 +22,6 @@ set(WARNINGS_AS_ERRORS_DEVELOPER_DEFAULT FALSE)
 
 # Override default options if you want to enable DEVELOPER MODE but do the checks
 # on the IDE instead
-set(ENABLE_TESTING OFF)
 set(ENABLE_CLANG_TIDY_DEVELOPER_DEFAULT OFF)
 set(ENABLE_CPPCHECK_DEVELOPER_DEFAULT OFF)
 
@@ -147,10 +146,9 @@ add_subdirectory(configured_files)
 add_subdirectory(src)
 
 # Adding the tests:
-option(ENABLE_TESTING "Enable the tests" ${PROJECT_IS_TOP_LEVEL})
+option(ENABLE_TESTING "Enable the tests" OFF)
 if(ENABLE_TESTING)
-  enable_testing()
-  message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
+  message(AUTHOR_WARNING "Building Tests.")
   add_subdirectory(test)
 endif()
 

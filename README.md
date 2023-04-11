@@ -115,6 +115,10 @@ preliminar testing.
 We recommend to build and run this software in a virtual machine due to its
 nature and `root` execution requirements.
 
+## Running tests
+
+To run tests you need to enable `-DENABLE_TESTING` flag with CMake.
+
 ### Recommended VM settings
 
 * EL8 based system with **minimal** package selection
