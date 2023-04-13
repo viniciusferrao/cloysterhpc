@@ -325,16 +325,24 @@ void Cluster::fillData(std::string answerfilePath)
         boost::property_tree::ptree tree;
 
         try {
-        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
+            boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
         }
 
         catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what());
+            LOG_ERROR("Error: {}", ex.what());
         }
 
-        //std::string clusterName = tree.get<std::string>("cluster_name");
+        auto clusterName = tree.get<std::string>("information.cluster_name");
+        auto companyName = tree.get<std::string>("information.company_name");
+        auto administratorEmail = tree.get<std::string>("information.administrator_email");
 
-        LOG_TRACE("Read answerfile variables");
+        LOG_TRACE("Read answerfile variables:");
+        LOG_TRACE("Cluster name: {}", clusterName);
+
+        setName(clusterName);
+        setCompanyName(companyName);
+        setAdminMail(administratorEmail);
+
 }
 
 void Cluster::fillTestData()

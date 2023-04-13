@@ -71,6 +71,8 @@ int main(int argc, const char** argv)
         // OR (INT in [0 - 6])
         ->option_text(" ");
 
+    app.add_option("-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
+
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
@@ -117,11 +119,18 @@ int main(int argc, const char** argv)
     }
 
     auto model = std::make_unique<Cluster>();
+
+    if (!cloyster::answerfile.empty()) {
+        LOG_TRACE("Answerfile: {}", cloyster::answerfile);
+        model->fillData(cloyster::answerfile);
+    }
+
     if (cloyster::enableTUI) {
         // Entrypoint; if the view is constructed it will start the TUI.
         auto view = std::make_unique<Newt>();
         auto presenter = std::make_unique<PresenterInstall>(model, view);
     }
+
 
 #ifndef NDEBUG
     model->fillTestData();
