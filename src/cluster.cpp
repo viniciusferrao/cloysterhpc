@@ -9,6 +9,8 @@
 #include "services/log.h"
 #include "services/xcat.h"
 
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <memory>
 #include <regex>
@@ -318,6 +320,23 @@ void Cluster::printData()
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
+void Cluster::fillData(std::string answerfilePath)
+{
+        boost::property_tree::ptree tree;
+
+        try {
+        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
+        }
+
+        catch (boost::property_tree::ini_parser_error& ex) {
+        LOG_ERROR("Error: {}", ex.what());
+        }
+
+        //std::string clusterName = tree.get<std::string>("cluster_name");
+
+        LOG_TRACE("Read answerfile variables");
+}
+
 void Cluster::fillTestData()
 {
     setName("Cloyster");
@@ -335,7 +354,7 @@ void Cluster::fillTestData()
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
-        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+            "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
         "home.ferrao.net.br",
         { boost::asio::ip::make_address("172.16.144.1") });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,

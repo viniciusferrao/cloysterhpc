@@ -106,6 +106,8 @@ public:
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections);
 
+    void fillData(std::string answerfilePath);
+
 #ifndef NDEBUG
     void printNetworks(
         const std::list<std::unique_ptr<Network>>& networks) const;
