@@ -9,6 +9,8 @@
 #include "services/log.h"
 #include "services/xcat.h"
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <iostream>
@@ -122,9 +124,9 @@ const std::list<Network> Cluster::getNet(Network::Profile profile) {
 
     switch (profile) {
         case Network::Profile::External:
-            return m_network.external;
+            return m_network_external;
         case Network::Profile::Management:
-            return m_network.management;
+            return m_network_management;
         case Network::Profile::Service:
             return m_network.service;
         case Network::Profile::Application:
@@ -369,56 +371,70 @@ void Cluster::fillData(std::string answerfilePath)
 
     // Management Network
     auto managementNetworkInterface
-        = tree.get<std::string>("management_network.interface");
+        = tree.get<std::string>("network_management.interface");
     auto managementNetworkIpAddress
-        = tree.get<std::string>("management_network.ip_address");
+        = tree.get<std::string>("network_management.ip_address");
     auto managementNetworkSubnetMask
-        = tree.get<std::string>("management_network.subnet_mask");
+        = tree.get<std::string>("network_management.subnet_mask");
     auto managementNetworkAddress
-        = tree.get<std::string>("management_network.network_address");
+        = tree.get<std::string>("network_management.network_address");
     auto managementNetworkGateway
-        = tree.get<std::string>("management_network.gateway");
+        = tree.get<std::string>("network_management.gateway");
     auto managementNetworkDomainName
-        = tree.get<std::string>("management_network.domain_name");
-    auto managementNetworkNameservers
-        = tree.get<std::string>("management_network.nameservers");
-    //@TODO Read nameservers list
+        = tree.get<std::string>("network_management.domain_name");
     auto managementNetworkMacAddress
-        = tree.get<std::string>("management_network.mac_address");
+        = tree.get<std::string>("network_management.mac_address");
+
+    std::vector<std::string> managementNetworkNameservers;
+    boost::split(managementNetworkNameservers,
+        tree.get<std::string>("network_management.nameservers"),
+        boost::is_any_of(", "), boost::token_compress_on);
+    std::vector<boost::asio::ip::address> formattedManagementNetworkNameservers;
+
+    for (const std::string& nameserver : managementNetworkNameservers) {
+        formattedManagementNetworkNameservers.emplace_back(
+            boost::asio::ip::make_address(nameserver));
+    }
 
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
         managementNetworkIpAddress, managementNetworkSubnetMask,
         managementNetworkGateway, 0, managementNetworkDomainName,
-        { boost::asio::ip::make_address(
-            "172.26.0.1") }); //@TODO change nameservers to managementNetworkNameservers variable
+        formattedManagementNetworkNameservers);
 
-    m_headnode.addConnection(getNetwork(Network::Profile::Management), managementNetworkInterface   ,
-        "de:ad:be:ff:00:01", "172.26.255.254");
+    m_headnode.addConnection(getNetwork(Network::Profile::Management),
+        managementNetworkInterface, "de:ad:be:ff:00:01", "172.26.255.254");
 
     // External Network
     auto externalNetworkInterface
-        = tree.get<std::string>("external_network.interface");
+        = tree.get<std::string>("network_external.interface");
     auto externalNetworkIpAddress
-        = tree.get<std::string>("external_network.ip_address");
+        = tree.get<std::string>("network_external.ip_address");
     auto externalNetworkSubnetMask
-        = tree.get<std::string>("external_network.subnet_mask");
+        = tree.get<std::string>("network_external.subnet_mask");
     auto externalNetworkAddress
-        = tree.get<std::string>("external_network.network_address");
+        = tree.get<std::string>("network_external.network_address");
     auto externalNetworkGateway
-        = tree.get<std::string>("external_network.gateway");
+        = tree.get<std::string>("network_external.gateway");
     auto externalNetworkDomainName
-        = tree.get<std::string>("external_network.domain_name");
-    auto externalNetworkNameservers
-        = tree.get<std::string>("external_network.nameservers");
-    //@TODO Read nameservers list
+        = tree.get<std::string>("network_external.domain_name");
     auto externalNetworkMacAddress
-        = tree.get<std::string>("external_network.mac_address");
+        = tree.get<std::string>("network_external.mac_address");
+
+    std::vector<std::string> externalNetworkNameservers;
+    boost::split(externalNetworkNameservers,
+        tree.get<std::string>("network_external.nameservers"),
+        boost::is_any_of(", "), boost::token_compress_on);
+    std::vector<boost::asio::ip::address> formattedExternalNetworkNameservers;
+
+    for (const std::string& nameserver : externalNetworkNameservers) {
+        formattedExternalNetworkNameservers.emplace_back(
+            boost::asio::ip::make_address(nameserver));
+    }
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         externalNetworkIpAddress, externalNetworkSubnetMask,
         externalNetworkGateway, 0, externalNetworkDomainName,
-        { boost::asio::ip::make_address(
-            "172.16.144.1") }); //@TODO change nameservers to externalNetworkNameservers variable
+        formattedExternalNetworkNameservers);
 
     m_headnode.addConnection(getNetwork(Network::Profile::External),
         externalNetworkInterface, externalNetworkMacAddress,
@@ -442,7 +458,6 @@ void Cluster::fillData(std::string answerfilePath)
     auto nodesFirstIp = tree.get<std::string>("nodes.node_first_ip");
     auto nodesQuantity = tree.get<std::string>("nodes.node_quantity");
     //@TODO Add nodes
-
 }
 
 void Cluster::fillTestData()
