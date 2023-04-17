@@ -440,8 +440,44 @@ void Cluster::fillData(std::string answerfilePath)
         externalNetworkInterface, externalNetworkMacAddress,
         externalNetworkAddress);
 
-    // Infiniband Network
-    //@TODO If infiniband network is specified in the file, it must be added too
+    // Infiniband (Application) Network
+    if (tree.count("network_application") != 0) {
+        auto applicationNetworkInterface
+            = tree.get<std::string>("network_application.interface");
+        auto applicationNetworkIpAddress
+            = tree.get<std::string>("network_application.ip_address");
+        auto applicationNetworkSubnetMask
+            = tree.get<std::string>("network_application.subnet_mask");
+        auto applicationNetworkAddress
+            = tree.get<std::string>("network_application.network_address");
+        auto applicationNetworkGateway
+            = tree.get<std::string>("network_application.gateway");
+        auto applicationNetworkDomainName
+            = tree.get<std::string>("network_application.domain_name");
+        auto applicationNetworkMacAddress
+            = tree.get<std::string>("network_application.mac_address");
+
+        std::vector<std::string> applicationNetworkNameservers;
+        boost::split(applicationNetworkNameservers,
+            tree.get<std::string>("network_application.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+        std::vector<boost::asio::ip::address>
+            formattedApplicationNetworkNameservers;
+
+        for (const std::string& nameserver : applicationNetworkNameservers) {
+            formattedApplicationNetworkNameservers.emplace_back(
+                boost::asio::ip::make_address(nameserver));
+        }
+
+        addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+            applicationNetworkIpAddress, applicationNetworkSubnetMask,
+            applicationNetworkGateway, 0, applicationNetworkDomainName,
+            formattedExternalNetworkNameservers);
+
+        m_headnode.addConnection(getNetwork(Network::Profile::Application),
+            applicationNetworkInterface, applicationNetworkMacAddress,
+            applicationNetworkAddress);
+    }
 
     // System
     setUpdateSystem(true);
