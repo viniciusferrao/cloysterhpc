@@ -322,26 +322,126 @@ void Cluster::printData()
 
 void Cluster::fillData(std::string answerfilePath)
 {
-        boost::property_tree::ptree tree;
+    boost::property_tree::ptree tree;
 
-        try {
-            boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
-        }
+    try {
+        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
+    }
 
-        catch (boost::property_tree::ini_parser_error& ex) {
-            LOG_ERROR("Error: {}", ex.what());
-        }
+    catch (boost::property_tree::ini_parser_error& ex) {
+        LOG_ERROR("Error: {}", ex.what());
+    }
 
-        auto clusterName = tree.get<std::string>("information.cluster_name");
-        auto companyName = tree.get<std::string>("information.company_name");
-        auto administratorEmail = tree.get<std::string>("information.administrator_email");
+    LOG_TRACE("Read answerfile variables:");
 
-        LOG_TRACE("Read answerfile variables:");
-        LOG_TRACE("Cluster name: {}", clusterName);
+    // Information
+    auto clusterName = tree.get<std::string>("information.cluster_name");
+    auto companyName = tree.get<std::string>("information.company_name");
+    auto administratorEmail
+        = tree.get<std::string>("information.administrator_email");
 
-        setName(clusterName);
-        setCompanyName(companyName);
-        setAdminMail(administratorEmail);
+    LOG_TRACE("Cluster name: {}", clusterName);
+
+    setName(clusterName);
+    setCompanyName(companyName);
+    setAdminMail(administratorEmail);
+
+    // Time
+    auto timezone = tree.get<std::string>("time.timezone");
+    auto timeserver = tree.get<std::string>("time.timeserver");
+    auto locale = tree.get<std::string>("time.locale");
+
+    setTimezone(timezone);
+    setLocale(locale);
+
+    // Hostname
+    auto hostname = tree.get<std::string>("hostname.hostname");
+    auto domainName = tree.get<std::string>("hostname.domain_name");
+
+    this->m_headnode.setHostname(hostname);
+    setDomainName(domainName);
+    this->m_headnode.setFQDN(fmt::format(
+        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
+
+    setOFED(OFED::Kind::Inbox);
+    setQueueSystem(QueueSystem::Kind::SLURM);
+    m_queueSystem.value()->setDefaultQueue("Execution");
+
+    // Management Network
+    auto managementNetworkInterface
+        = tree.get<std::string>("management_network.interface");
+    auto managementNetworkIpAddress
+        = tree.get<std::string>("management_network.ip_address");
+    auto managementNetworkSubnetMask
+        = tree.get<std::string>("management_network.subnet_mask");
+    auto managementNetworkAddress
+        = tree.get<std::string>("management_network.network_address");
+    auto managementNetworkGateway
+        = tree.get<std::string>("management_network.gateway");
+    auto managementNetworkDomainName
+        = tree.get<std::string>("management_network.domain_name");
+    auto managementNetworkNameservers
+        = tree.get<std::string>("management_network.nameservers");
+    //@TODO Read nameservers list
+    auto managementNetworkMacAddress
+        = tree.get<std::string>("management_network.mac_address");
+
+    addNetwork(Network::Profile::Management, Network::Type::Ethernet,
+        managementNetworkIpAddress, managementNetworkSubnetMask,
+        managementNetworkGateway, 0, managementNetworkDomainName,
+        { boost::asio::ip::make_address(
+            "172.26.0.1") }); //@TODO change nameservers to managementNetworkNameservers variable
+
+    m_headnode.addConnection(getNetwork(Network::Profile::Management), managementNetworkInterface   ,
+        "de:ad:be:ff:00:01", "172.26.255.254");
+
+    // External Network
+    auto externalNetworkInterface
+        = tree.get<std::string>("external_network.interface");
+    auto externalNetworkIpAddress
+        = tree.get<std::string>("external_network.ip_address");
+    auto externalNetworkSubnetMask
+        = tree.get<std::string>("external_network.subnet_mask");
+    auto externalNetworkAddress
+        = tree.get<std::string>("external_network.network_address");
+    auto externalNetworkGateway
+        = tree.get<std::string>("external_network.gateway");
+    auto externalNetworkDomainName
+        = tree.get<std::string>("external_network.domain_name");
+    auto externalNetworkNameservers
+        = tree.get<std::string>("external_network.nameservers");
+    //@TODO Read nameservers list
+    auto externalNetworkMacAddress
+        = tree.get<std::string>("external_network.mac_address");
+
+    addNetwork(Network::Profile::External, Network::Type::Ethernet,
+        externalNetworkIpAddress, externalNetworkSubnetMask,
+        externalNetworkGateway, 0, externalNetworkDomainName,
+        { boost::asio::ip::make_address(
+            "172.16.144.1") }); //@TODO change nameservers to externalNetworkNameservers variable
+
+    m_headnode.addConnection(getNetwork(Network::Profile::External),
+        externalNetworkInterface, externalNetworkMacAddress,
+        externalNetworkAddress);
+
+    // Infiniband Network
+    //@TODO If infiniband network is specified in the file, it must be added too
+
+    // System
+    setUpdateSystem(true);
+    setProvisioner(Provisioner::xCAT);
+
+    setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
+        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+    CPU nodeCPU(2, 4, 2);
+
+    // Nodes
+    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
+    auto nodesPadding = tree.get<std::string>("nodes.padding");
+    auto nodesFirstIp = tree.get<std::string>("nodes.node_first_ip");
+    auto nodesQuantity = tree.get<std::string>("nodes.node_quantity");
+    //@TODO Add nodes
 
 }
 
@@ -362,7 +462,7 @@ void Cluster::fillTestData()
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
-            "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
         "home.ferrao.net.br",
         { boost::asio::ip::make_address("172.16.144.1") });
     addNetwork(Network::Profile::Management, Network::Type::Ethernet,
