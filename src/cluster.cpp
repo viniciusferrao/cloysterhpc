@@ -472,7 +472,7 @@ void Cluster::fillData(std::string answerfilePath)
         addNetwork(Network::Profile::Application, Network::Type::Infiniband,
             applicationNetworkIpAddress, applicationNetworkSubnetMask,
             applicationNetworkGateway, 0, applicationNetworkDomainName,
-            formattedExternalNetworkNameservers);
+            formattedApplicationNetworkNameservers);
 
         m_headnode.addConnection(getNetwork(Network::Profile::Application),
             applicationNetworkInterface, applicationNetworkMacAddress,
@@ -484,16 +484,33 @@ void Cluster::fillData(std::string answerfilePath)
     setProvisioner(Provisioner::xCAT);
 
     setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+
+    // Nodes
+    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
+    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
+    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
+
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
         OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     CPU nodeCPU(2, 4, 2);
 
-    // Nodes
-    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
-    auto nodesPadding = tree.get<std::string>("nodes.padding");
-    auto nodesFirstIp = tree.get<std::string>("nodes.node_first_ip");
-    auto nodesQuantity = tree.get<std::string>("nodes.node_quantity");
-    //@TODO Add nodes
+    std::vector<std::string> nodes;
+    boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),
+        boost::is_any_of(", "), boost::token_compress_on);
+
+    int nodeValue = 0;
+    for (const std::string& node : nodes) {
+        nodeValue++;
+        std::list<Connection> nodeConnections;
+        auto& connection = nodeConnections.emplace_back(
+            &getNetwork(Network::Profile::Management));
+
+        auto nodeName = fmt::format("{}", nodesPrefix, nodeValue);
+
+        connection.setMAC(node);
+        connection.setAddress(nodesStartIp);
+        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+    }
 }
 
 void Cluster::fillTestData()
