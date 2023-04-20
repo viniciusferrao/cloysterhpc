@@ -483,7 +483,9 @@ void Cluster::fillData(std::string answerfilePath)
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
-    setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    std::filesystem::path diskImage
+        = tree.get<std::string>("system.disk_image");
+    setDiskImage(diskImage);
 
     // Nodes
     auto nodesPrefix = tree.get<std::string>("nodes.prefix");
