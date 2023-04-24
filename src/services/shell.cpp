@@ -366,11 +366,11 @@ void Shell::installDevelopmentComponents()
                "valgrind-ohpc");
 
     /* Compiler and MPI stacks */
-    runCommand("dnf -y install openmpi4-gnu9-ohpc mpich-ofi-gnu9-ohpc "
-               "mpich-ucx-gnu9-ohpc mvapich2-gnu9-ohpc");
+    runCommand("dnf -y install openmpi4-gnu12-ohpc mpich-ofi-gnu12-ohpc "
+               "mpich-ucx-gnu12-ohpc mvapich2-gnu12-ohpc");
 
     /* Default OpenHPC environment */
-    runCommand("dnf -y install lmod-defaults-gnu9-openmpi4-ohpc");
+    runCommand("dnf -y install lmod-defaults-gnu12-openmpi4-ohpc");
 }
 
 /* This method is the entrypoint of shell based cluster install
