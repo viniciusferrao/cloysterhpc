@@ -167,12 +167,7 @@ void Connection::setMAC(std::string_view mac)
         throw std::runtime_error("Invalid MAC address");
 }
 
-const address Connection::getAddress() const
-{
-    if (m_address.is_unspecified())
-        throw std::runtime_error("Member address variable is not defined");
-    return m_address;
-}
+const address Connection::getAddress() const { return m_address; }
 
 void Connection::setAddress(const address& ip)
 {

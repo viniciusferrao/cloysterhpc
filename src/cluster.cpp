@@ -370,70 +370,115 @@ void Cluster::fillData(std::string answerfilePath)
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     // Management Network
-    auto managementNetworkInterface
-        = tree.get<std::string>("network_management.interface");
+    std::unique_ptr<Network> managementNetwork = std::make_unique<Network>(
+        Network::Profile::Management, Network::Type::Ethernet);
+
     auto managementNetworkIpAddress
         = tree.get<std::string>("network_management.ip_address");
+    managementNetwork->setAddress(managementNetworkIpAddress);
+
     auto managementNetworkSubnetMask
         = tree.get<std::string>("network_management.subnet_mask");
-    auto managementNetworkAddress
-        = tree.get<std::string>("network_management.network_address");
-    auto managementNetworkGateway
-        = tree.get<std::string>("network_management.gateway");
-    auto managementNetworkDomainName
-        = tree.get<std::string>("network_management.domain_name");
-    auto managementNetworkMacAddress
-        = tree.get<std::string>("network_management.mac_address");
+    managementNetwork->setSubnetMask(managementNetworkSubnetMask);
 
-    std::vector<std::string> managementNetworkNameservers;
-    boost::split(managementNetworkNameservers,
-        tree.get<std::string>("network_management.nameservers"),
-        boost::is_any_of(", "), boost::token_compress_on);
-    std::vector<boost::asio::ip::address> formattedManagementNetworkNameservers;
-
-    for (const std::string& nameserver : managementNetworkNameservers) {
-        formattedManagementNetworkNameservers.emplace_back(
-            boost::asio::ip::make_address(nameserver));
+    if (tree.count("network_management.gateway") != 0) {
+        auto managementNetworkGateway
+            = tree.get<std::string>("network_management.gateway");
+        managementNetwork->setGateway(managementNetworkGateway);
     }
 
-    addNetwork(Network::Profile::Management, Network::Type::Ethernet,
-        managementNetworkIpAddress, managementNetworkSubnetMask,
-        managementNetworkGateway, 0, managementNetworkDomainName,
-        formattedManagementNetworkNameservers);
+    auto managementNetworkDomainName
+        = tree.get<std::string>("network_management.domain_name");
+    managementNetwork->setDomainName(managementNetworkDomainName);
 
-    m_headnode.addConnection(getNetwork(Network::Profile::Management),
-        managementNetworkInterface, managementNetworkMacAddress,
-        managementNetworkAddress);
+    if (tree.count("network_management.nameservers") != 0) {
+        std::vector<std::string> managementNetworkNameservers;
+        boost::split(managementNetworkNameservers,
+            tree.get<std::string>("network_management.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        managementNetwork->setNameservers(managementNetworkNameservers);
+    }
+
+    addNetwork(std::move(managementNetwork));
+    auto managementConnection
+        = Connection(&getNetwork(Network::Profile::Management));
+
+    auto managementNetworkInterface
+        = tree.get<std::string>("network_management.interface");
+    managementConnection.setInterface(managementNetworkInterface);
+
+    auto managementNetworkAddress
+        = tree.get<std::string>("network_management.network_address");
+    managementConnection.setAddress(managementNetworkAddress);
+
+    if (tree.count("network_management.ip_address") != 0) {
+        auto managementNetworkMacAddress
+            = tree.get<std::string>("network_management.mac_address");
+        managementConnection.setMAC(managementNetworkMacAddress);
+    }
+
+    getHeadnode().addConnection(std::move(managementConnection));
 
     // External Network
+    std::unique_ptr<Network> externalNetwork = std::make_unique<Network>(
+        Network::Profile::External, Network::Type::Ethernet);
+
+    if (tree.count("network_external.ip_address") != 0) {
+        auto externalNetworkIpAddress
+            = tree.get<std::string>("network_external.ip_address");
+        externalNetwork->setAddress(externalNetworkIpAddress);
+    }
+
+    if (tree.count("network_external.subnet_mask") != 0) {
+        auto externalNetworkSubnetMask
+            = tree.get<std::string>("network_external.subnet_mask");
+        externalNetwork->setSubnetMask(externalNetworkSubnetMask);
+    }
+
+    if (tree.count("network_external.gateway") != 0) {
+        auto externalNetworkGateway
+            = tree.get<std::string>("network_external.gateway");
+        externalNetwork->setGateway(externalNetworkGateway);
+    }
+
+    if (tree.count("network_external.domain_name") != 0) {
+        auto externalNetworkDomainName
+            = tree.get<std::string>("network_external.domain_name");
+        externalNetwork->setDomainName(externalNetworkDomainName);
+    }
+
+    if (tree.count("network_external.nameservers") != 0) {
+        std::vector<std::string> externalNetworkNameservers;
+        boost::split(externalNetworkNameservers,
+            tree.get<std::string>("network_external.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        externalNetwork->setNameservers(externalNetworkNameservers);
+    }
+
+    addNetwork(std::move(externalNetwork));
+
+    auto externalConnection
+        = Connection(&getNetwork(Network::Profile::External));
+
     auto externalNetworkInterface
         = tree.get<std::string>("network_external.interface");
-    auto externalNetworkIpAddress
-        = tree.get<std::string>("network_external.ip_address");
-    auto externalNetworkSubnetMask
-        = tree.get<std::string>("network_external.subnet_mask");
-    auto externalNetworkAddress
-        = tree.get<std::string>("network_external.network_address");
-    auto externalNetworkGateway
-        = tree.get<std::string>("network_external.gateway");
-    auto externalNetworkDomainName
-        = tree.get<std::string>("network_external.domain_name");
-    auto externalNetworkMacAddress
-        = tree.get<std::string>("network_external.mac_address");
+    externalConnection.setInterface(externalNetworkInterface);
 
-    std::vector<std::string> externalNetworkNameservers;
-    boost::split(externalNetworkNameservers,
-        tree.get<std::string>("network_external.nameservers"),
-        boost::is_any_of(", "), boost::token_compress_on);
+    if (tree.count("network_external.network_address") != 0) {
+        auto externalNetworkAddress
+            = tree.get<std::string>("network_external.network_address");
+        externalConnection.setAddress(externalNetworkAddress);
+    }
 
-    addNetwork(Network::Profile::External, Network::Type::Ethernet,
-        externalNetworkIpAddress, externalNetworkSubnetMask,
-        externalNetworkGateway, 0, externalNetworkDomainName,
-        externalNetworkNameservers);
+    if (tree.count("network_external.mac_address") != 0) {
+        auto externalNetworkMacAddress
+            = tree.get<std::string>("network_external.mac_address");
+        externalConnection.setMAC(externalNetworkMacAddress);
+    }
 
-    m_headnode.addConnection(getNetwork(Network::Profile::External),
-        externalNetworkInterface, externalNetworkMacAddress,
-        externalNetworkAddress);
+    getHeadnode().addConnection(std::move(externalConnection));
 
     // Infiniband (Application) Network
     if (tree.count("network_application") != 0) {
