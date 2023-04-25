@@ -402,7 +402,8 @@ void Cluster::fillData(std::string answerfilePath)
         formattedManagementNetworkNameservers);
 
     m_headnode.addConnection(getNetwork(Network::Profile::Management),
-        managementNetworkInterface, "de:ad:be:ff:00:01", "172.26.255.254");
+        managementNetworkInterface, managementNetworkMacAddress,
+        managementNetworkAddress);
 
     // External Network
     auto externalNetworkInterface
@@ -424,17 +425,11 @@ void Cluster::fillData(std::string answerfilePath)
     boost::split(externalNetworkNameservers,
         tree.get<std::string>("network_external.nameservers"),
         boost::is_any_of(", "), boost::token_compress_on);
-    std::vector<boost::asio::ip::address> formattedExternalNetworkNameservers;
-
-    for (const std::string& nameserver : externalNetworkNameservers) {
-        formattedExternalNetworkNameservers.emplace_back(
-            boost::asio::ip::make_address(nameserver));
-    }
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         externalNetworkIpAddress, externalNetworkSubnetMask,
         externalNetworkGateway, 0, externalNetworkDomainName,
-        formattedExternalNetworkNameservers);
+        externalNetworkNameservers);
 
     m_headnode.addConnection(getNetwork(Network::Profile::External),
         externalNetworkInterface, externalNetworkMacAddress,
@@ -461,18 +456,11 @@ void Cluster::fillData(std::string answerfilePath)
         boost::split(applicationNetworkNameservers,
             tree.get<std::string>("network_application.nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
-        std::vector<boost::asio::ip::address>
-            formattedApplicationNetworkNameservers;
-
-        for (const std::string& nameserver : applicationNetworkNameservers) {
-            formattedApplicationNetworkNameservers.emplace_back(
-                boost::asio::ip::make_address(nameserver));
-        }
 
         addNetwork(Network::Profile::Application, Network::Type::Infiniband,
             applicationNetworkIpAddress, applicationNetworkSubnetMask,
             applicationNetworkGateway, 0, applicationNetworkDomainName,
-            formattedApplicationNetworkNameservers);
+            applicationNetworkNameservers);
 
         m_headnode.addConnection(getNetwork(Network::Profile::Application),
             applicationNetworkInterface, applicationNetworkMacAddress,
@@ -491,9 +479,10 @@ void Cluster::fillData(std::string answerfilePath)
     auto nodesPrefix = tree.get<std::string>("nodes.prefix");
     auto nodesPadding = tree.get<std::size_t>("nodes.padding");
     auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
+    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
 
     OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 7);
     CPU nodeCPU(2, 4, 2);
 
     std::vector<std::string> nodes;
@@ -507,12 +496,19 @@ void Cluster::fillData(std::string answerfilePath)
         auto& connection = nodeConnections.emplace_back(
             &getNetwork(Network::Profile::Management));
 
-        auto nodeName = fmt::format("{}", nodesPrefix, nodeValue);
+        auto nodeName
+            = fmt::format("{}{:0>{}}", nodesPrefix, nodeValue, nodesPadding);
 
         connection.setMAC(node);
         connection.setAddress(nodesStartIp);
         addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
     }
+
+    /* Bad and old data - @TODO Must improve */
+    nodePrefix = nodesPrefix;
+    nodePadding = nodesPadding;
+    nodeStartIP = boost::asio::ip::make_address(nodesStartIp);
+    nodeRootPassword = nodesRootPassword;
 }
 
 void Cluster::fillTestData()

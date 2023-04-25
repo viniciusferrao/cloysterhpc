@@ -291,14 +291,12 @@ std::vector<address> Network::getNameservers() const
     return returnVector;
 }
 
-/* TODO: Test this */
 void Network::setNameservers(const std::vector<address>& nameservers)
 {
     if (nameservers.empty())
         return;
 
     m_nameservers.reserve(nameservers.size());
-    struct address aux { };
 
 #if __cplusplus < 202002L
     size_t i = 0;
@@ -306,7 +304,7 @@ void Network::setNameservers(const std::vector<address>& nameservers)
 #else
     for (std::size_t i = 0; const auto& ns : std::as_const(nameservers)) {
 #endif
-        m_nameservers.push_back(aux); // aux may have garbage on it
+        m_nameservers.push_back(ns);
     }
 }
 
