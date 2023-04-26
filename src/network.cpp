@@ -108,22 +108,25 @@ void Network::setAddress(const std::string& ip)
 
 address Network::fetchAddress(const std::string& interface)
 {
-    address addr {};
-    address netmask {};
-    address network {};
+    struct in_addr addr { };
+    struct in_addr netmask { };
+    struct in_addr network { };
 
     // TODO: Fix exceptions
-    if (Connection::fetchAddress(interface).is_unspecified())
+    if (inet_aton(
+            Connection::fetchAddress(interface).to_string().c_str(), &addr)
+        == 0)
         return {};
     // throw std::runtime_error("Invalid IP address");
-    if (fetchSubnetMask(interface).is_unspecified())
+    if (inet_aton(fetchSubnetMask(interface).to_string().c_str(), &netmask)
+        == 0)
         return {};
     // throw std::runtime_error("Invalid subnet mask address");
 
-    network = boost::asio::ip::make_address_v4(
-        addr.to_v4().to_uint() & netmask.to_v4().to_uint());
+    network.s_addr = addr.s_addr & netmask.s_addr;
+    LOG_TRACE("teste");
 
-    return (network);
+    return boost::asio::ip::make_address(inet_ntoa(network));
 }
 
 address Network::getSubnetMask() const { return m_subnetMask; }
@@ -163,11 +166,13 @@ address Network::fetchSubnetMask(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
-            address result
-                = boost::asio::ip::make_address(ifa->ifa_netmask->sa_data);
+            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_netmask);
 
-            if (result.is_unspecified())
+            if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
+
+            address result
+                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr));
 
 #ifndef NDEBUG
             LOG_TRACE("Got subnet mask address {} from interface {}",
@@ -328,7 +333,7 @@ std::vector<address> Network::fetchNameservers()
     nameservers.reserve(static_cast<std::size_t>(_res.nscount));
     for (const auto& ns : _res.nsaddr_list) {
         address formattedNs
-            = boost::asio::ip::make_address_v4(ns.sin_addr.s_addr);
+            = boost::asio::ip::make_address_v4(inet_ntoa(ns.sin_addr));
         if (formattedNs.to_string() == "0.0.0.0")
             continue;
         nameservers.emplace_back(formattedNs);

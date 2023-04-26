@@ -370,12 +370,15 @@ void Cluster::fillData(std::string answerfilePath)
     m_queueSystem.value()->setDefaultQueue("Execution");
 
     // Management Network
-    std::unique_ptr<Network> managementNetwork = std::make_unique<Network>(
+    auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
 
-    auto managementNetworkIpAddress
-        = tree.get<std::string>("network_management.ip_address");
-    managementNetwork->setAddress(managementNetworkIpAddress);
+    auto managementNetworkInterface
+        = tree.get<std::string>("network_management.interface");
+
+    auto managementNetworkAddress
+        = tree.get<std::string>("network_management.network_address");
+    managementNetwork->setAddress(managementNetworkAddress);
 
     auto managementNetworkSubnetMask
         = tree.get<std::string>("network_management.subnet_mask");
@@ -398,21 +401,22 @@ void Cluster::fillData(std::string answerfilePath)
             boost::is_any_of(", "), boost::token_compress_on);
 
         managementNetwork->setNameservers(managementNetworkNameservers);
+    } else {
+        managementNetwork->setNameservers(
+            managementNetwork->fetchNameservers());
     }
 
     addNetwork(std::move(managementNetwork));
+
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
-
-    auto managementNetworkInterface
-        = tree.get<std::string>("network_management.interface");
     managementConnection.setInterface(managementNetworkInterface);
 
-    auto managementNetworkAddress
-        = tree.get<std::string>("network_management.network_address");
-    managementConnection.setAddress(managementNetworkAddress);
+    auto managementNetworkIpAddress
+        = tree.get<std::string>("network_management.ip_address");
+    managementConnection.setAddress(managementNetworkIpAddress);
 
-    if (tree.count("network_management.ip_address") != 0) {
+    if (tree.count("network_management.mac_address") != 0) {
         auto managementNetworkMacAddress
             = tree.get<std::string>("network_management.mac_address");
         managementConnection.setMAC(managementNetworkMacAddress);
@@ -421,19 +425,28 @@ void Cluster::fillData(std::string answerfilePath)
     getHeadnode().addConnection(std::move(managementConnection));
 
     // External Network
-    std::unique_ptr<Network> externalNetwork = std::make_unique<Network>(
+    auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
 
-    if (tree.count("network_external.ip_address") != 0) {
-        auto externalNetworkIpAddress
-            = tree.get<std::string>("network_external.ip_address");
-        externalNetwork->setAddress(externalNetworkIpAddress);
+    auto externalNetworkInterface
+        = tree.get<std::string>("network_external.interface");
+
+    if (tree.count("network_external.network_address") != 0) {
+        auto externalNetworkAddress
+            = tree.get<std::string>("network_external.network_address");
+        externalNetwork->setAddress(externalNetworkAddress);
+    } else {
+        externalNetwork->setAddress(
+            externalNetwork->fetchAddress(externalNetworkInterface));
     }
 
     if (tree.count("network_external.subnet_mask") != 0) {
         auto externalNetworkSubnetMask
             = tree.get<std::string>("network_external.subnet_mask");
         externalNetwork->setSubnetMask(externalNetworkSubnetMask);
+    } else {
+        externalNetwork->setSubnetMask(
+            externalNetwork->fetchSubnetMask(externalNetworkInterface));
     }
 
     if (tree.count("network_external.gateway") != 0) {
@@ -446,6 +459,8 @@ void Cluster::fillData(std::string answerfilePath)
         auto externalNetworkDomainName
             = tree.get<std::string>("network_external.domain_name");
         externalNetwork->setDomainName(externalNetworkDomainName);
+    } else {
+        externalNetwork->setDomainName(externalNetwork->fetchDomainName());
     }
 
     if (tree.count("network_external.nameservers") != 0) {
@@ -455,21 +470,23 @@ void Cluster::fillData(std::string answerfilePath)
             boost::is_any_of(", "), boost::token_compress_on);
 
         externalNetwork->setNameservers(externalNetworkNameservers);
+    } else {
+        externalNetwork->setNameservers(externalNetwork->fetchNameservers());
     }
 
     addNetwork(std::move(externalNetwork));
 
     auto externalConnection
         = Connection(&getNetwork(Network::Profile::External));
-
-    auto externalNetworkInterface
-        = tree.get<std::string>("network_external.interface");
     externalConnection.setInterface(externalNetworkInterface);
 
     if (tree.count("network_external.network_address") != 0) {
-        auto externalNetworkAddress
-            = tree.get<std::string>("network_external.network_address");
-        externalConnection.setAddress(externalNetworkAddress);
+        auto externalNetworkIpAddress
+            = tree.get<std::string>("network_external.ip_address");
+        externalConnection.setAddress(externalNetworkIpAddress);
+    } else {
+        externalConnection.setAddress(
+            externalConnection.fetchAddress(externalNetworkInterface));
     }
 
     if (tree.count("network_external.mac_address") != 0) {
@@ -503,13 +520,13 @@ void Cluster::fillData(std::string answerfilePath)
             boost::is_any_of(", "), boost::token_compress_on);
 
         addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-            applicationNetworkIpAddress, applicationNetworkSubnetMask,
+            applicationNetworkAddress, applicationNetworkSubnetMask,
             applicationNetworkGateway, 0, applicationNetworkDomainName,
             applicationNetworkNameservers);
 
         m_headnode.addConnection(getNetwork(Network::Profile::Application),
             applicationNetworkInterface, applicationNetworkMacAddress,
-            applicationNetworkAddress);
+            applicationNetworkIpAddress);
     }
 
     // System
