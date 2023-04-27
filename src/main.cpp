@@ -71,7 +71,8 @@ int main(int argc, const char** argv)
         // OR (INT in [0 - 6])
         ->option_text(" ");
 
-    app.add_option("-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
+    app.add_option(
+        "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
     CLI11_PARSE(app, argc, argv)
 
@@ -131,9 +132,8 @@ int main(int argc, const char** argv)
         auto presenter = std::make_unique<PresenterInstall>(model, view);
     }
 
-
 #ifndef NDEBUG
-    //model->fillTestData();
+    // model->fillTestData();
     model->printData();
 #endif
 
