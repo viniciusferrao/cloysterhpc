@@ -124,9 +124,13 @@ address Network::fetchAddress(const std::string& interface)
     // throw std::runtime_error("Invalid subnet mask address");
 
     network.s_addr = addr.s_addr & netmask.s_addr;
-    LOG_TRACE("teste");
 
-    return boost::asio::ip::make_address(inet_ntoa(network));
+    auto result = boost::asio::ip::make_address(inet_ntoa(network));
+
+    LOG_TRACE(
+        "Got address {} from interface {}", result.to_string(), interface);
+
+    return result;
 }
 
 address Network::getSubnetMask() const { return m_subnetMask; }
@@ -281,6 +285,8 @@ std::string Network::fetchDomainName()
     if (res_init() == -1)
         throw std::runtime_error("Failed to initialize domain name resolution");
 
+    LOG_TRACE("Got domain name {}", _res.defdname);
+
     return _res.defdname; // TODO: Seems to be a deprecated call
 }
 
@@ -339,6 +345,7 @@ std::vector<address> Network::fetchNameservers()
         nameservers.emplace_back(formattedNs);
     }
 
+    LOG_TRACE("Got nameservers {}", nameservers.data()->to_string());
     return nameservers;
 }
 

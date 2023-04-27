@@ -480,7 +480,7 @@ void Cluster::fillData(std::string answerfilePath)
         = Connection(&getNetwork(Network::Profile::External));
     externalConnection.setInterface(externalNetworkInterface);
 
-    if (tree.count("network_external.network_address") != 0) {
+    if (tree.count("network_external.ip_address") != 0) {
         auto externalNetworkIpAddress
             = tree.get<std::string>("network_external.ip_address");
         externalConnection.setAddress(externalNetworkIpAddress);
