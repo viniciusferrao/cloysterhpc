@@ -367,7 +367,7 @@ void Cluster::fillData(std::string answerfilePath)
 
     setOFED(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
-    m_queueSystem.value()->setDefaultQueue("Execution");
+    m_queueSystem.value()->setDefaultQueue("execution");
 
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
@@ -587,7 +587,7 @@ void Cluster::fillTestData()
 
     setOFED(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
-    m_queueSystem.value()->setDefaultQueue("Execution");
+    m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
