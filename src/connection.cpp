@@ -167,12 +167,7 @@ void Connection::setMAC(std::string_view mac)
         throw std::runtime_error("Invalid MAC address");
 }
 
-const address Connection::getAddress() const
-{
-    if (m_address.is_unspecified())
-        throw std::runtime_error("Member address variable is not defined");
-    return m_address;
-}
+const address Connection::getAddress() const { return m_address; }
 
 void Connection::setAddress(const address& ip)
 {
@@ -216,11 +211,13 @@ address Connection::fetchAddress(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
-            address result
-                = boost::asio::ip::make_address(ifa->ifa_addr->sa_data);
+            auto* sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
 
-            if (result.is_unspecified())
+            if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
+
+            address result
+                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr));
 
 #ifndef NDEBUG
             LOG_TRACE("Got address {} from interface {}", result.to_string(),

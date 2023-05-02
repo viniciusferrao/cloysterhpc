@@ -9,6 +9,10 @@
 #include "services/log.h"
 #include "services/xcat.h"
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <iostream>
 #include <memory>
 #include <regex>
@@ -318,6 +322,257 @@ void Cluster::printData()
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
+void Cluster::fillData(const std::string& answerfilePath)
+{
+    boost::property_tree::ptree tree;
+
+    try {
+        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
+    }
+
+    catch (boost::property_tree::ini_parser_error& ex) {
+        LOG_ERROR("Error: {}", ex.what());
+    }
+
+    LOG_TRACE("Read answerfile variables:");
+
+    // Information
+    auto clusterName = tree.get<std::string>("information.cluster_name");
+    auto companyName = tree.get<std::string>("information.company_name");
+    auto administratorEmail
+        = tree.get<std::string>("information.administrator_email");
+
+    LOG_TRACE("Cluster name: {}", clusterName);
+
+    setName(clusterName);
+    setCompanyName(companyName);
+    setAdminMail(administratorEmail);
+
+    // Time
+    auto timezone = tree.get<std::string>("time.timezone");
+    auto timeserver = tree.get<std::string>("time.timeserver");
+    auto locale = tree.get<std::string>("time.locale");
+
+    setTimezone(timezone);
+    setLocale(locale);
+
+    // Hostname
+    auto hostname = tree.get<std::string>("hostname.hostname");
+    auto domainName = tree.get<std::string>("hostname.domain_name");
+
+    this->m_headnode.setHostname(hostname);
+    setDomainName(domainName);
+    this->m_headnode.setFQDN(fmt::format(
+        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
+
+    setOFED(OFED::Kind::Inbox);
+    setQueueSystem(QueueSystem::Kind::SLURM);
+    m_queueSystem.value()->setDefaultQueue("execution");
+
+    // Management Network
+    auto managementNetwork = std::make_unique<Network>(
+        Network::Profile::Management, Network::Type::Ethernet);
+
+    auto managementNetworkInterface
+        = tree.get<std::string>("network_management.interface");
+
+    auto managementNetworkAddress
+        = tree.get<std::string>("network_management.network_address");
+    managementNetwork->setAddress(managementNetworkAddress);
+
+    auto managementNetworkSubnetMask
+        = tree.get<std::string>("network_management.subnet_mask");
+    managementNetwork->setSubnetMask(managementNetworkSubnetMask);
+
+    if (tree.count("network_management.gateway") != 0) {
+        auto managementNetworkGateway
+            = tree.get<std::string>("network_management.gateway");
+        managementNetwork->setGateway(managementNetworkGateway);
+    }
+
+    auto managementNetworkDomainName
+        = tree.get<std::string>("network_management.domain_name");
+    managementNetwork->setDomainName(managementNetworkDomainName);
+
+    if (tree.count("network_management.nameservers") != 0) {
+        std::vector<std::string> managementNetworkNameservers;
+        boost::split(managementNetworkNameservers,
+            tree.get<std::string>("network_management.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        managementNetwork->setNameservers(managementNetworkNameservers);
+    } else {
+        managementNetwork->setNameservers(
+            managementNetwork->fetchNameservers());
+    }
+
+    addNetwork(std::move(managementNetwork));
+
+    auto managementConnection
+        = Connection(&getNetwork(Network::Profile::Management));
+    managementConnection.setInterface(managementNetworkInterface);
+
+    auto managementNetworkIpAddress
+        = tree.get<std::string>("network_management.ip_address");
+    managementConnection.setAddress(managementNetworkIpAddress);
+
+    if (tree.count("network_management.mac_address") != 0) {
+        auto managementNetworkMacAddress
+            = tree.get<std::string>("network_management.mac_address");
+        managementConnection.setMAC(managementNetworkMacAddress);
+    }
+
+    getHeadnode().addConnection(std::move(managementConnection));
+
+    // External Network
+    auto externalNetwork = std::make_unique<Network>(
+        Network::Profile::External, Network::Type::Ethernet);
+
+    auto externalNetworkInterface
+        = tree.get<std::string>("network_external.interface");
+
+    if (tree.count("network_external.network_address") != 0) {
+        auto externalNetworkAddress
+            = tree.get<std::string>("network_external.network_address");
+        externalNetwork->setAddress(externalNetworkAddress);
+    } else {
+        externalNetwork->setAddress(
+            externalNetwork->fetchAddress(externalNetworkInterface));
+    }
+
+    if (tree.count("network_external.subnet_mask") != 0) {
+        auto externalNetworkSubnetMask
+            = tree.get<std::string>("network_external.subnet_mask");
+        externalNetwork->setSubnetMask(externalNetworkSubnetMask);
+    } else {
+        externalNetwork->setSubnetMask(
+            externalNetwork->fetchSubnetMask(externalNetworkInterface));
+    }
+
+    if (tree.count("network_external.gateway") != 0) {
+        auto externalNetworkGateway
+            = tree.get<std::string>("network_external.gateway");
+        externalNetwork->setGateway(externalNetworkGateway);
+    }
+
+    if (tree.count("network_external.domain_name") != 0) {
+        auto externalNetworkDomainName
+            = tree.get<std::string>("network_external.domain_name");
+        externalNetwork->setDomainName(externalNetworkDomainName);
+    } else {
+        externalNetwork->setDomainName(externalNetwork->fetchDomainName());
+    }
+
+    if (tree.count("network_external.nameservers") != 0) {
+        std::vector<std::string> externalNetworkNameservers;
+        boost::split(externalNetworkNameservers,
+            tree.get<std::string>("network_external.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        externalNetwork->setNameservers(externalNetworkNameservers);
+    } else {
+        externalNetwork->setNameservers(externalNetwork->fetchNameservers());
+    }
+
+    addNetwork(std::move(externalNetwork));
+
+    auto externalConnection
+        = Connection(&getNetwork(Network::Profile::External));
+    externalConnection.setInterface(externalNetworkInterface);
+
+    if (tree.count("network_external.ip_address") != 0) {
+        auto externalNetworkIpAddress
+            = tree.get<std::string>("network_external.ip_address");
+        externalConnection.setAddress(externalNetworkIpAddress);
+    } else {
+        externalConnection.setAddress(
+            externalConnection.fetchAddress(externalNetworkInterface));
+    }
+
+    if (tree.count("network_external.mac_address") != 0) {
+        auto externalNetworkMacAddress
+            = tree.get<std::string>("network_external.mac_address");
+        externalConnection.setMAC(externalNetworkMacAddress);
+    }
+
+    getHeadnode().addConnection(std::move(externalConnection));
+
+    // Infiniband (Application) Network
+    if (tree.count("network_application") != 0) {
+        auto applicationNetworkInterface
+            = tree.get<std::string>("network_application.interface");
+        auto applicationNetworkIpAddress
+            = tree.get<std::string>("network_application.ip_address");
+        auto applicationNetworkSubnetMask
+            = tree.get<std::string>("network_application.subnet_mask");
+        auto applicationNetworkAddress
+            = tree.get<std::string>("network_application.network_address");
+        auto applicationNetworkGateway
+            = tree.get<std::string>("network_application.gateway");
+        auto applicationNetworkDomainName
+            = tree.get<std::string>("network_application.domain_name");
+        auto applicationNetworkMacAddress
+            = tree.get<std::string>("network_application.mac_address");
+
+        std::vector<std::string> applicationNetworkNameservers;
+        boost::split(applicationNetworkNameservers,
+            tree.get<std::string>("network_application.nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+            applicationNetworkAddress, applicationNetworkSubnetMask,
+            applicationNetworkGateway, 0, applicationNetworkDomainName,
+            applicationNetworkNameservers);
+
+        m_headnode.addConnection(getNetwork(Network::Profile::Application),
+            applicationNetworkInterface, applicationNetworkMacAddress,
+            applicationNetworkIpAddress);
+    }
+
+    // System
+    setUpdateSystem(true);
+    setProvisioner(Provisioner::xCAT);
+
+    std::filesystem::path diskImage
+        = tree.get<std::string>("system.disk_image");
+    setDiskImage(diskImage);
+
+    // Nodes
+    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
+    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
+    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
+    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
+
+    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
+        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 7);
+    CPU nodeCPU(2, 4, 2);
+
+    std::vector<std::string> nodes;
+    boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),
+        boost::is_any_of(", "), boost::token_compress_on);
+
+    int nodeValue = 0;
+    for (const std::string& node : nodes) {
+        nodeValue++;
+        std::list<Connection> nodeConnections;
+        auto& connection = nodeConnections.emplace_back(
+            &getNetwork(Network::Profile::Management));
+
+        auto nodeName
+            = fmt::format("{}{:0>{}}", nodesPrefix, nodeValue, nodesPadding);
+
+        connection.setMAC(node);
+        connection.setAddress(nodesStartIp);
+        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+    }
+
+    /* Bad and old data - @TODO Must improve */
+    nodePrefix = nodesPrefix;
+    nodePadding = nodesPadding;
+    nodeStartIP = boost::asio::ip::make_address(nodesStartIp);
+    nodeRootPassword = nodesRootPassword;
+}
+
 void Cluster::fillTestData()
 {
     setName("Cloyster");
@@ -332,7 +587,7 @@ void Cluster::fillTestData()
 
     setOFED(OFED::Kind::Inbox);
     setQueueSystem(QueueSystem::Kind::SLURM);
-    m_queueSystem.value()->setDefaultQueue("Execution");
+    m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
         "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,

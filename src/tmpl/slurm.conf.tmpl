@@ -12,8 +12,8 @@ SlurmdPort=6818
 AuthType=auth/munge
 #JobCredentialPrivateKey=
 #JobCredentialPublicCertificate=
-StateSaveLocation=/var/spool/slurm/ctld
-SlurmdSpoolDir=/var/spool/slurm/d
+StateSaveLocation=/var/spool/slurmctld
+SlurmdSpoolDir=/var/spool/slurmd
 SwitchType=switch/none
 MpiDefault=none
 SlurmctldPidFile=/var/run/slurmctld.pid
@@ -81,7 +81,7 @@ Epilog=/etc/slurm/slurm.epilog.clean
 #NodeName=c[1-4] Sockets=2 CoresPerSocket=8 ThreadsPerCore=2 State=UNKNOWN
 #PartitionName=normal Nodes=c[1-4] Default=YES MaxTime=24:00:00 State=UP Oversubscribe=EXCLUSIVE
 SlurmctldParameters=enable_configless
-ReturnToService=1
+#ReturnToService=1
 # CloysterHPC changes
 ReturnToService=2
 PartitionName={partitionName} Nodes=ALL Default=YES MaxTime=INFINITE State=UP Oversubscribe=EXCLUSIVE

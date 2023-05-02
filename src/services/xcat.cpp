@@ -315,6 +315,9 @@ void XCAT::customizeImage()
             "/bin/bash -c \"chroot {} chown munge:munge /var/lib/munge\"",
             m_stateless.chroot.string()));
     cloyster::runCommand(fmt::format(
+            "/bin/bash -c \"chroot {} chown munge:munge /var/log/munge\"",
+            m_stateless.chroot.string()));
+    cloyster::runCommand(fmt::format(
             "/bin/bash -c \"chroot {} chown munge:munge /etc/munge\"",
             m_stateless.chroot.string()));
 #endif
