@@ -124,9 +124,9 @@ const std::list<Network> Cluster::getNet(Network::Profile profile) {
 
     switch (profile) {
         case Network::Profile::External:
-            return m_network_external;
+            return m_network.external;
         case Network::Profile::Management:
-            return m_network_management;
+            return m_network.management;
         case Network::Profile::Service:
             return m_network.service;
         case Network::Profile::Application:
@@ -322,7 +322,7 @@ void Cluster::printData()
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
-void Cluster::fillData(std::string answerfilePath)
+void Cluster::fillData(const std::string& answerfilePath)
 {
     boost::property_tree::ptree tree;
 
