@@ -56,7 +56,6 @@ private:
     void generateOSImagePath(ImageType, NodeType);
 
 public:
-    void configureRepositories();
     void installPackages();
     void setup();
 

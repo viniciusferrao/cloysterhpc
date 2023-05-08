@@ -146,7 +146,7 @@ void OS::setDistro(std::string_view distro)
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif
-    if (const auto& rv
+    if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))

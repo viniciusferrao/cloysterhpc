@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "../cluster.h"
+#include "../repos.h"
 
 using cloyster::runCommand;
 
@@ -220,30 +221,6 @@ void Shell::installRequiredPackages()
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Shell::configureRepositories()
-{
-    LOG_INFO("Setting up additional repositories");
-
-    runCommand("dnf -y install "
-               "https://dl.fedoraproject.org/pub/epel/"
-               "epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install "
-               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
-               "ohpc-release-2-1.el8.x86_64.rpm");
-
-    switch (m_cluster->getHeadnode().getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            runCommand("dnf config-manager --set-enabled "
-                       "codeready-builder-for-rhel-8-x86_64-rpms");
-            break;
-
-        case OS::Distro::OL:
-            runCommand("dnf config-manager --set-enabled "
-                       "ol8_codeready_builder");
-            break;
-    }
-}
-
 void Shell::installOpenHPCBase()
 {
     LOG_INFO("Installing base OpenHPC packages");
@@ -394,7 +371,8 @@ void Shell::install()
     // TODO: Pass headnode instead of cluster to reduce complexity
     configureTimeService(m_cluster->getHeadnode().getConnections());
 
-    configureRepositories();
+    auto repos = Repos(m_cluster->getHeadnode().getOS().getDistro());
+    repos.configureRepositories();
     runSystemUpdate();
 
     installRequiredPackages();
@@ -421,9 +399,6 @@ void Shell::install()
     }
 
     LOG_INFO("Setting up compute node images... This may take a while");
-
-    LOG_INFO("[{}] Setting up repositories", provisionerName);
-    provisioner->configureRepositories();
 
     LOG_INFO("[{}] Installing packages", provisionerName);
     provisioner->installPackages();
