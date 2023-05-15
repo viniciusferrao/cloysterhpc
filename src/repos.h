@@ -137,9 +137,7 @@ private:
 
 public:
     explicit Repos(OS::Distro);
-    void createConfigurationFile(const std::string&, bool, const std::string&,
-        const std::string&, const std::string&, bool, const std::string&,
-        const std::string&);
+    void createConfigurationFile(const repofile& repo);
     void enable(const std::string&);
     void disable(const std::string&);
     void configureRepositories();

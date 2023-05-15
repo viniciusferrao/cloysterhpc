@@ -6,7 +6,11 @@
 #include "repos.h"
 #include "functions.h"
 #include "services/log.h"
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <fstream>
 
+using boost::property_tree::ptree;
 using cloyster::runCommand;
 
 Repos::Repos(OS::Distro distro)
@@ -14,11 +18,21 @@ Repos::Repos(OS::Distro distro)
 {
 }
 
-void Repos::createConfigurationFile(const std::string& id, bool enabled,
-    const std::string& name, const std::string& baseurl,
-    const std::string& metalink, bool gpgcheck, const std::string& gpgkey,
-    const std::string& gpgkeyPath)
+void Repos::createConfigurationFile(const repofile& repo)
 {
+    ptree repof;
+
+    repof.put("baseos.name", repo.name);
+    repof.put("baseos.gpgcheck", repo.gpgcheck);
+    repof.put("baseos.gpgkey", repo.gpgkey);
+    repof.put("baseos.enabled", repo.enabled);
+
+    boost::property_tree::ini_parser::write_ini(
+        fmt::format("{}.repo", repo.id), repof);
+
+    std::ofstream gpgkey(repo.gpgkey.substr(7));
+    gpgkey << repo.gpgkeyContent;
+    gpgkey.close();
 }
 
 void Repos::enable(const std::string& id) { }
@@ -35,11 +49,19 @@ void Repos::configureOL()
 {
     runCommand("dnf config-manager --set-enabled "
                "ol8_codeready_builder");
+
+    createConfigurationFile(ol::ol8_base_latest);
 }
 
-void Repos::configureRocky() { }
+void Repos::configureRocky()
+{
+    runCommand("dnf config-manager --set-enabled "
+               "powertools");
 
-void configureXCAT()
+    createConfigurationFile(rocky::rocky8_baseos);
+}
+
+void Repos::configureXCAT()
 {
     LOG_INFO("Setting up XCAT repositories");
 
