@@ -91,7 +91,7 @@ void Repos::configureRepositories()
         case OS::Distro::OL:
             configureOL();
             break;
-        case OS::Distro::ROCKY:
+        case OS::Distro::Rocky:
             configureRocky();
             break;
     }
