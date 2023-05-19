@@ -555,8 +555,14 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto nodesPadding = tree.get<std::size_t>("nodes.padding");
     auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
     auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
+    auto nodesSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.sockets")));
+    auto nodesCoresPerSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.cores_per_socket")));
+    auto nodesThreadsPerCore = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.threads_per_core")));
 
-    CPU nodeCPU(2, 4, 2);
+    CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
 
     std::vector<std::string> nodes;
     boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),

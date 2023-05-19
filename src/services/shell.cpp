@@ -371,11 +371,12 @@ void Shell::install()
     // TODO: Pass headnode instead of cluster to reduce complexity
     configureTimeService(m_cluster->getHeadnode().getConnections());
 
+    installRequiredPackages();
+
     auto repos = Repos(m_cluster->getHeadnode().getOS().getDistro());
     repos.configureRepositories();
     runSystemUpdate();
 
-    installRequiredPackages();
     installOpenHPCBase();
 
     configureInfiniband();

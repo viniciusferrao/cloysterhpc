@@ -26,9 +26,10 @@ void Repos::createConfigurationFile(const repofile& repo)
     repof.put("baseos.gpgcheck", repo.gpgcheck);
     repof.put("baseos.gpgkey", repo.gpgkey);
     repof.put("baseos.enabled", repo.enabled);
+    repof.put("baseos.baseurl", repo.baseurl);
 
     boost::property_tree::ini_parser::write_ini(
-        fmt::format("{}.repo", repo.id), repof);
+        fmt::format("/etc/yum.repos.d/{}.repo", repo.id), repof);
 
     std::ofstream gpgkey(repo.gpgkey.substr(7));
     gpgkey << repo.gpgkeyContent;
