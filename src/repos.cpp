@@ -18,9 +18,9 @@ Repos::Repos(OS::Distro distro)
 {
 }
 
-void Repos::createConfigurationFile(const repofile& repo)
+void Repos::createConfigurationFile(const repofile& repo) const
 {
-    ptree repof;
+    ptree repof {};
 
     repof.put("baseos.name", repo.name);
     repof.put("baseos.gpgcheck", repo.gpgcheck);
@@ -40,13 +40,13 @@ void Repos::enable(const std::string& id) { }
 
 void Repos::disable(const std::string& id) { }
 
-void Repos::configureRHEL()
+void Repos::configureRHEL() const
 {
     runCommand("dnf config-manager --set-enabled "
                "codeready-builder-for-rhel-8-x86_64-rpms");
 }
 
-void Repos::configureOL()
+void Repos::configureOL() const
 {
     runCommand("dnf config-manager --set-enabled "
                "ol8_codeready_builder");
@@ -54,7 +54,7 @@ void Repos::configureOL()
     createConfigurationFile(ol::ol8_base_latest);
 }
 
-void Repos::configureRocky()
+void Repos::configureRocky() const
 {
     runCommand("dnf config-manager --set-enabled "
                "powertools");
@@ -62,7 +62,7 @@ void Repos::configureRocky()
     createConfigurationFile(rocky::rocky8_baseos);
 }
 
-void Repos::configureXCAT()
+void Repos::configureXCAT() const
 {
     LOG_INFO("Setting up XCAT repositories");
 
@@ -74,16 +74,9 @@ void Repos::configureXCAT()
                "rh8/x86_64/xcat-dep.repo");
 }
 
-void Repos::configureRepositories()
+void Repos::configureRepositories() const
 {
     LOG_INFO("Setting up additional repositories");
-
-    runCommand("dnf -y install "
-               "https://dl.fedoraproject.org/pub/epel/"
-               "epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install "
-               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
-               "ohpc-release-2-1.el8.x86_64.rpm");
 
     switch (m_distro) {
         case OS::Distro::RHEL:
@@ -96,6 +89,13 @@ void Repos::configureRepositories()
             configureRocky();
             break;
     }
+
+    runCommand("dnf -y install "
+               "https://dl.fedoraproject.org/pub/epel/"
+               "epel-release-latest-8.noarch.rpm");
+    runCommand("dnf -y install "
+               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
+               "ohpc-release-2-1.el8.x86_64.rpm");
 
     configureXCAT();
 }

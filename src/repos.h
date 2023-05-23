@@ -129,18 +129,18 @@ private:
     bool m_gpgcheck;
     std::string m_gpgkey;
     std::string m_gpgkeyPath; /* Location of the keyfile on filesystem */
-    void configureRHEL();
-    void configureRocky();
-    void configureOL();
-    void configureXCAT();
+    void configureRHEL() const;
+    void configureRocky() const;
+    void configureOL() const;
+    void configureXCAT() const;
     OS::Distro m_distro;
 
 public:
     explicit Repos(OS::Distro);
-    void createConfigurationFile(const repofile& repo);
+    void createConfigurationFile(const repofile& repo) const;
     void enable(const std::string&);
     void disable(const std::string&);
-    void configureRepositories();
+    void configureRepositories() const;
 };
 
 #endif // CLOYSTERHPC_REPOS_H_
