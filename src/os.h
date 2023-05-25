@@ -15,7 +15,7 @@ public:
     enum class Arch { x86_64, ppc64le };
     enum class Family { Linux, Darwin };
     enum class Platform { el8 };
-    enum class Distro { RHEL, OL };
+    enum class Distro { RHEL, OL, Rocky };
 
 private:
     Arch m_arch;
@@ -27,10 +27,8 @@ private:
     unsigned m_minorVersion {};
 
 private:
-    [[nodiscard]] unsigned int getMajorVersion() const;
     void setMajorVersion(unsigned int majorVersion);
 
-    [[nodiscard]] unsigned int getMinorVersion() const;
     void setMinorVersion(unsigned int minorVersion);
 
     std::string getValueFromKey(const std::string& line);
@@ -62,6 +60,9 @@ public:
 
     [[nodiscard]] std::string getVersion() const;
     void setVersion(const std::string&);
+
+    [[nodiscard]] unsigned int getMajorVersion() const;
+    [[nodiscard]] unsigned int getMinorVersion() const;
 
 #ifndef NDEBUG
     void printData() const;

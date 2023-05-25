@@ -537,15 +537,32 @@ void Cluster::fillData(const std::string& answerfilePath)
         = tree.get<std::string>("system.disk_image");
     setDiskImage(diskImage);
 
+    std::string distro = tree.get<std::string>("system.distro");
+    std::string distro_version = tree.get<std::string>("system.version");
+    std::string kernel = tree.get<std::string>("system.kernel");
+
+    OS nodeOS;
+    nodeOS.setArch(OS::Arch::x86_64);
+    nodeOS.setFamily(OS::Family::Linux);
+    nodeOS.setPlatform(OS::Platform::el8);
+    nodeOS.setDistro(distro);
+    nodeOS.setKernel(kernel);
+    nodeOS.setVersion(distro_version);
+    m_headnode.setOS(nodeOS);
+
     // Nodes
     auto nodesPrefix = tree.get<std::string>("nodes.prefix");
     auto nodesPadding = tree.get<std::size_t>("nodes.padding");
     auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
     auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
+    auto nodesSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.sockets")));
+    auto nodesCoresPerSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.cores_per_socket")));
+    auto nodesThreadsPerCore = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.threads_per_core")));
 
-    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 7);
-    CPU nodeCPU(2, 4, 2);
+    CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
 
     std::vector<std::string> nodes;
     boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),

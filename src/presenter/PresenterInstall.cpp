@@ -12,6 +12,7 @@
 #include "PresenterMailSystem.h"
 #include "PresenterNetwork.h"
 #include "PresenterNodes.h"
+#include "PresenterNodesOperationalSystem.h"
 #include "PresenterQueueSystem.h"
 #include "PresenterTime.h"
 #include "PresenterWelcome.h"
@@ -66,6 +67,7 @@ PresenterInstall::PresenterInstall(
 #endif
 
 #if 1 // Compute nodes formation details
+    Call<PresenterNodesOperationalSystem>();
     Call<PresenterNodes>();
 #endif
 

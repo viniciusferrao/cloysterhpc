@@ -30,7 +30,6 @@ private:
     void runSystemUpdate();
     void installRequiredPackages();
 
-    void configureRepositories();
     void installOpenHPCBase();
     void configureTimeService(const std::list<Connection>&);
     void configureQueueSystem();

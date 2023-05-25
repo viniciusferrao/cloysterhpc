@@ -29,17 +29,6 @@ XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
     setenv("PERL_BADLANG", "0", false);
 }
 
-/* TODO: Implement a repos class to properly do this */
-void XCAT::configureRepositories()
-{
-    cloyster::runCommand("wget -NP /etc/yum.repos.d "
-                         "https://xcat.org/files/xcat/repos/yum/latest/"
-                         "xcat-core/xcat-core.repo");
-    cloyster::runCommand("wget -NP /etc/yum.repos.d "
-                         "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                         "rh8/x86_64/xcat-dep.repo");
-}
-
 void XCAT::installPackages() { cloyster::runCommand("dnf -y install xCAT"); }
 
 void XCAT::setup()
@@ -289,6 +278,14 @@ void XCAT::configureOSImageDefinition()
             repos.emplace_back(
                 "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64");
             break;
+        case OS::Distro::Rocky:
+            repos.emplace_back(
+                "http://ftp.unicamp.br/pub/rocky/8.7/BaseOS/x86_64/os");
+            repos.emplace_back(
+                "http://ftp.unicamp.br/pub/rocky/8.7/PowerTools/x86_64/os");
+            repos.emplace_back(
+                "http://ftp.unicamp.br/pub/rocky/8.7/AppStream/x86_64/os");
+            break;
     }
 
     repos.emplace_back(
@@ -427,6 +424,10 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
             osimage += ".0";
             break;
+        case OS::Distro::Rocky:
+            osimage += "rocky";
+            osimage += m_cluster->getNodes()[0].getOS().getVersion();
+            break;
     }
     osimage += "-";
 
@@ -480,6 +481,10 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
             chroot += "ol";
             chroot += m_cluster->getNodes()[0].getOS().getVersion();
             chroot += ".0";
+            break;
+        case OS::Distro::Rocky:
+            chroot += "rocky";
+            chroot += m_cluster->getNodes()[0].getOS().getVersion();
             break;
     }
 

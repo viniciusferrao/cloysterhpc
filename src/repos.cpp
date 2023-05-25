@@ -5,16 +5,97 @@
 
 #include "repos.h"
 #include "functions.h"
+#include "services/log.h"
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <fstream>
 
-#include <iostream>
+using boost::property_tree::ptree;
+using cloyster::runCommand;
 
-void Repos::createConfigurationFile(const std::string& id, bool enabled,
-    const std::string& name, const std::string& baseurl,
-    const std::string& metalink, bool gpgcheck, const std::string& gpgkey,
-    const std::string& gpgkeyPath)
+Repos::Repos(OS::Distro distro)
+    : m_distro(distro)
 {
+}
+
+void Repos::createConfigurationFile(const repofile& repo) const
+{
+    ptree repof {};
+
+    repof.put("baseos.name", repo.name);
+    repof.put("baseos.gpgcheck", repo.gpgcheck);
+    repof.put("baseos.gpgkey", repo.gpgkey);
+    repof.put("baseos.enabled", repo.enabled);
+    repof.put("baseos.baseurl", repo.baseurl);
+
+    boost::property_tree::ini_parser::write_ini(
+        fmt::format("/etc/yum.repos.d/{}.repo", repo.id), repof);
+
+    std::ofstream gpgkey(repo.gpgkey.substr(7));
+    gpgkey << repo.gpgkeyContent;
+    gpgkey.close();
 }
 
 void Repos::enable(const std::string& id) { }
 
 void Repos::disable(const std::string& id) { }
+
+void Repos::configureRHEL() const
+{
+    runCommand("dnf config-manager --set-enabled "
+               "codeready-builder-for-rhel-8-x86_64-rpms");
+}
+
+void Repos::configureOL() const
+{
+    runCommand("dnf config-manager --set-enabled "
+               "ol8_codeready_builder");
+
+    createConfigurationFile(ol::ol8_base_latest);
+}
+
+void Repos::configureRocky() const
+{
+    runCommand("dnf config-manager --set-enabled "
+               "powertools");
+
+    createConfigurationFile(rocky::rocky8_baseos);
+}
+
+void Repos::configureXCAT() const
+{
+    LOG_INFO("Setting up XCAT repositories");
+
+    runCommand("wget -NP /etc/yum.repos.d "
+               "https://xcat.org/files/xcat/repos/yum/latest/"
+               "xcat-core/xcat-core.repo");
+    runCommand("wget -NP /etc/yum.repos.d "
+               "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+               "rh8/x86_64/xcat-dep.repo");
+}
+
+void Repos::configureRepositories() const
+{
+    LOG_INFO("Setting up additional repositories");
+
+    switch (m_distro) {
+        case OS::Distro::RHEL:
+            configureRHEL();
+            break;
+        case OS::Distro::OL:
+            configureOL();
+            break;
+        case OS::Distro::Rocky:
+            configureRocky();
+            break;
+    }
+
+    runCommand("dnf -y install "
+               "https://dl.fedoraproject.org/pub/epel/"
+               "epel-release-latest-8.noarch.rpm");
+    runCommand("dnf -y install "
+               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
+               "ohpc-release-2-1.el8.x86_64.rpm");
+
+    configureXCAT();
+}
