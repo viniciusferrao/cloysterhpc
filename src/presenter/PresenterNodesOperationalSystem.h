@@ -24,7 +24,7 @@ private:
 
         struct OperationalSystem {
             static constexpr const char* question
-                = "Choose your operational system iso";
+                = "Choose your operational system ISO";
             static constexpr const char* help
                 = Presenter::Messages::Placeholder::help;
         };
