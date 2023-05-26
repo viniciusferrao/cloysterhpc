@@ -96,7 +96,7 @@ void Repos::configureRepositories() const
         case OS::Distro::Rocky:
             configureRocky();
             break;
-        case OS::Distro::Almalinux:
+        case OS::Distro::AlmaLinux:
             configureAlma();
             break;
     }
