@@ -119,7 +119,7 @@ const repofile rocky8_baseos = { "Rocky-BaseOS", true,
 }
 
 namespace alma {
-const repofile alma8_baseos = { "Almalinux-BaseOS", true,
+const repofile alma8_baseos = { "AlmaLinux-BaseOS", true,
     "AlmaLinux $releasever - BaseOS",
     "https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux",
