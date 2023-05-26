@@ -62,6 +62,14 @@ void Repos::configureRocky() const
     createConfigurationFile(rocky::rocky8_baseos);
 }
 
+void Repos::configureAlma() const
+{
+    runCommand("dnf config-manager --set-enabled "
+               "powertools");
+
+    createConfigurationFile(alma::alma8_baseos);
+}
+
 void Repos::configureXCAT() const
 {
     LOG_INFO("Setting up XCAT repositories");
@@ -87,6 +95,9 @@ void Repos::configureRepositories() const
             break;
         case OS::Distro::Rocky:
             configureRocky();
+            break;
+        case OS::Distro::Almalinux:
+            configureAlma();
             break;
     }
 

@@ -286,6 +286,14 @@ void XCAT::configureOSImageDefinition()
             repos.emplace_back(
                 "http://ftp.unicamp.br/pub/rocky/8.7/AppStream/x86_64/os");
             break;
+        case OS::Distro::Almalinux:
+            repos.emplace_back(
+                "https://repo.almalinux.org/almalinux/8.7/BaseOS/x86_64/os");
+            repos.emplace_back("https://repo.almalinux.org/almalinux/8.7/"
+                               "PowerTools/x86_64/os");
+            repos.emplace_back(
+                "https://repo.almalinux.org/almalinux/8.7/AppStream/x86_64/os");
+            break;
     }
 
     repos.emplace_back(
@@ -428,6 +436,10 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
             osimage += "rocky";
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
             break;
+        case OS::Distro::Almalinux:
+            osimage += "alma";
+            osimage += m_cluster->getNodes()[0].getOS().getVersion();
+            break;
     }
     osimage += "-";
 
@@ -484,6 +496,10 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
             break;
         case OS::Distro::Rocky:
             chroot += "rocky";
+            chroot += m_cluster->getNodes()[0].getOS().getVersion();
+            break;
+        case OS::Distro::Almalinux:
+            chroot += "alma";
             chroot += m_cluster->getNodes()[0].getOS().getVersion();
             break;
     }
