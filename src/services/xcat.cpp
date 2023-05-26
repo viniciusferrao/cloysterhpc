@@ -436,7 +436,7 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
             osimage += "rocky";
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
             break;
-        case OS::Distro::Almalinux:
+        case OS::Distro::AlmaLinux:
             osimage += "alma";
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
             break;
