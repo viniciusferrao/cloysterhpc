@@ -15,7 +15,7 @@ public:
     enum class Arch { x86_64, ppc64le };
     enum class Family { Linux, Darwin };
     enum class Platform { el8 };
-    enum class Distro { RHEL, OL, Rocky, Almalinux };
+    enum class Distro { RHEL, OL, Rocky, AlmaLinux };
 
 private:
     Arch m_arch;
