@@ -13,6 +13,22 @@ private:
         static constexpr const char* title
             = "Nodes operational system settings";
 
+        struct OperationalSystemDownloadIso {
+            struct FirstStage {
+                static constexpr const char* question
+                    = "You want to download a ISO for your node?";
+                static constexpr const char* help
+                    = "Choose 'YES' if you want to download a new one or 'NO' "
+                      "if you already have an ISO.";
+            };
+            struct SecondStage {
+                static constexpr const char* question
+                    = "Choose an ISO to download";
+                static constexpr const char* help
+                    = Presenter::Messages::Placeholder::help;
+            };
+        };
+
         struct OperationalSystemDirectoryPath {
             static constexpr const char* question
                 = "Inform the directory where your operational system images "
@@ -20,6 +36,13 @@ private:
             static constexpr const char* help
                 = Presenter::Messages::Placeholder::help;
             static constexpr const char* field = "Path to ISOs directory:";
+        };
+
+        struct OperationalSystemDistro {
+            static constexpr const char* question
+                = "Choose your operational system distro";
+            static constexpr const char* help
+                = Presenter::Messages::Placeholder::help;
         };
 
         struct OperationalSystem {
