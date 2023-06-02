@@ -51,8 +51,9 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 break;
             case OS::Distro::OL:
                 // Waiting for mirror.versatushpc.com.br fix
-                distroDownloadURL += "";
-                isoName = "";
+                distroDownloadURL
+                    += "oracle/iso/OracleLinux-R8-U8-x86_64-dvd.iso";
+                isoName = "OracleLinux-R8-U8-x86_64-dvd.iso";
                 break;
             case OS::Distro::Rocky:
                 distroDownloadURL
@@ -66,6 +67,7 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 break;
         }
 
+        //@TODO Implement newt GUI progress bar
         cloyster::runCommand(
             fmt::format("wget -NP /root {}", distroDownloadURL));
 
