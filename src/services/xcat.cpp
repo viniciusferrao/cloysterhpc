@@ -498,7 +498,7 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
             chroot += "rocky";
             chroot += m_cluster->getNodes()[0].getOS().getVersion();
             break;
-        case OS::Distro::Almalinux:
+        case OS::Distro::AlmaLinux:
             chroot += "alma";
             chroot += m_cluster->getNodes()[0].getOS().getVersion();
             break;
