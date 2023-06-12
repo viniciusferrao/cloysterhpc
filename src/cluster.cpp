@@ -322,6 +322,92 @@ void Cluster::printData()
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
 }
 
+void Cluster::fillTestData()
+{
+    setName("Cloyster");
+    setFirewall(true);
+    setSELinux(SELinuxMode::Disabled);
+    setTimezone("America/Sao_Paulo");
+    setLocale("en_US.UTF-8");
+    this->m_headnode.setHostname(std::string_view { "headnode" });
+    setDomainName("cluster.example.tld");
+    this->m_headnode.setFQDN(fmt::format(
+        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
+
+    setOFED(OFED::Kind::Inbox);
+    setQueueSystem(QueueSystem::Kind::SLURM);
+    m_queueSystem.value()->setDefaultQueue("execution");
+
+    addNetwork(Network::Profile::External, Network::Type::Ethernet,
+        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
+        "home.ferrao.net.br",
+        { boost::asio::ip::make_address("172.16.144.1") });
+    addNetwork(Network::Profile::Management, Network::Type::Ethernet,
+        "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
+        { boost::asio::ip::make_address("172.26.0.1") });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+        "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
+        { boost::asio::ip::make_address("172.27.255.254") });
+#if 0
+    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
+               "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
+               "srv.cluster.example.com", { "172.16.255.254" });
+    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
+               "172.24.0.0", "255.255.0.0", "0.0.0.0", 0,
+               "srv2.cluster.example.com", { "1.1.1.1", "172.24.0.1" });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+               "192.168.0.0", "255.255.255.0", "0.0.0.0", 0,
+               "ib.cluster.example.com", { "0.0.0.0" });
+    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
+               "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
+               "ib2.cluster.example.com", { "0.0.0.0" });
+#endif
+
+    m_headnode.addConnection(getNetwork(Network::Profile::External), "enp0s25",
+        "de:ad:be:ff:00:00", "172.16.144.50");
+    m_headnode.addConnection(getNetwork(Network::Profile::Management), "eno1",
+        "de:ad:be:ff:00:01", "172.26.255.254");
+    // It's ethernet, we know, but consider as Infiniband
+    m_headnode.addConnection(getNetwork(Network::Profile::Application), "eno1",
+        "de:ad:be:ff:00:02", "172.27.255.254");
+
+#if 0
+    m_headnode.addConnection(getNetwork(Network::Profile::Service),
+                             "ens224", "192.168.22.8");
+#endif
+
+    setUpdateSystem(true);
+    setProvisioner(Provisioner::xCAT);
+
+    setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
+        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+    CPU nodeCPU(2, 4, 2);
+
+    // TODO: Pass network connection as object
+    std::list<Connection> connections1 {
+        { &getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75",
+            "172.26.0.1" },
+        { &getNetwork(Network::Profile::Application), "eno1", {}, "172.27.0.1" }
+    };
+
+    std::list<Connection> connections2 { { &getNetwork(
+                                               Network::Profile::Management),
+        {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
+
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
+
+    addNode("n01", nodeOS, nodeCPU, std::move(connections1));
+    addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
+
+    /* Bad and old data */
+    nodePrefix = "n";
+    nodePadding = 2;
+    nodeStartIP = boost::asio::ip::make_address("172.26.0.1");
+    nodeRootPassword = "pwdNodeRoot";
+}
+#endif
+
 void Cluster::fillData(const std::string& answerfilePath)
 {
     boost::property_tree::ptree tree;
@@ -589,89 +675,3 @@ void Cluster::fillData(const std::string& answerfilePath)
     nodeStartIP = boost::asio::ip::make_address(nodesStartIp);
     nodeRootPassword = nodesRootPassword;
 }
-
-void Cluster::fillTestData()
-{
-    setName("Cloyster");
-    setFirewall(true);
-    setSELinux(SELinuxMode::Disabled);
-    setTimezone("America/Sao_Paulo");
-    setLocale("en_US.UTF-8");
-    this->m_headnode.setHostname(std::string_view { "headnode" });
-    setDomainName("cluster.example.tld");
-    this->m_headnode.setFQDN(fmt::format(
-        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
-
-    setOFED(OFED::Kind::Inbox);
-    setQueueSystem(QueueSystem::Kind::SLURM);
-    m_queueSystem.value()->setDefaultQueue("execution");
-
-    addNetwork(Network::Profile::External, Network::Type::Ethernet,
-        "172.16.144.0", "255.255.255.0", "172.16.144.1", 0,
-        "home.ferrao.net.br",
-        { boost::asio::ip::make_address("172.16.144.1") });
-    addNetwork(Network::Profile::Management, Network::Type::Ethernet,
-        "172.26.0.0", "255.255.0.0", "0.0.0.0", 0, "cluster.example.tld",
-        { boost::asio::ip::make_address("172.26.0.1") });
-    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-        "172.27.0.0", "255.255.0.0", "0.0.0.0", 0, "ib.cluster.example.tld",
-        { boost::asio::ip::make_address("172.27.255.254") });
-#if 0
-    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
-               "172.16.0.0", "255.255.0.0", "0.0.0.0", 0,
-               "srv.cluster.example.com", { "172.16.255.254" });
-    addNetwork(Network::Profile::Service, Network::Type::Ethernet,
-               "172.24.0.0", "255.255.0.0", "0.0.0.0", 0,
-               "srv2.cluster.example.com", { "1.1.1.1", "172.24.0.1" });
-    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-               "192.168.0.0", "255.255.255.0", "0.0.0.0", 0,
-               "ib.cluster.example.com", { "0.0.0.0" });
-    addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-               "192.168.1.0", "255.255.255.0", "0.0.0.0", 4094,
-               "ib2.cluster.example.com", { "0.0.0.0" });
-#endif
-
-    m_headnode.addConnection(getNetwork(Network::Profile::External), "enp0s25",
-        "de:ad:be:ff:00:00", "172.16.144.50");
-    m_headnode.addConnection(getNetwork(Network::Profile::Management), "eno1",
-        "de:ad:be:ff:00:01", "172.26.255.254");
-    // It's ethernet, we know, but consider as Infiniband
-    m_headnode.addConnection(getNetwork(Network::Profile::Application), "eno1",
-        "de:ad:be:ff:00:02", "172.27.255.254");
-
-#if 0
-    m_headnode.addConnection(getNetwork(Network::Profile::Service),
-                             "ens224", "192.168.22.8");
-#endif
-
-    setUpdateSystem(true);
-    setProvisioner(Provisioner::xCAT);
-
-    setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
-    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
-    CPU nodeCPU(2, 4, 2);
-
-    // TODO: Pass network connection as object
-    std::list<Connection> connections1 {
-        { &getNetwork(Network::Profile::Management), {}, "00:0c:29:9b:0c:75",
-            "172.26.0.1" },
-        { &getNetwork(Network::Profile::Application), "eno1", {}, "172.27.0.1" }
-    };
-
-    std::list<Connection> connections2 { { &getNetwork(
-                                               Network::Profile::Management),
-        {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
-
-    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
-
-    addNode("n01", nodeOS, nodeCPU, std::move(connections1));
-    addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
-
-    /* Bad and old data */
-    nodePrefix = "n";
-    nodePadding = 2;
-    nodeStartIP = boost::asio::ip::make_address("172.26.0.1");
-    nodeRootPassword = "pwdNodeRoot";
-}
-#endif
