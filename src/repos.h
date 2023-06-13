@@ -245,7 +245,7 @@ const repofile beegfs = { "beegfs-7.3.3-rhel8", true,
 
 const repofile grafana = { "grafana", true,
     "grafana",
-    "https://mirror.versatushpc.com.br/grafana/repodata/", "",
+    "https://mirror.versatushpc.com.br/grafana/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-grafana",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -292,7 +292,7 @@ const repofile grafana = { "grafana", true,
 
 const repofile influxdata = { "influxdata", true,
     "InfluxData Repository - Stable",
-    "https://mirror.versatushpc.com.br/influxdata/repodata/", "",
+    "https://mirror.versatushpc.com.br/influxdata/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-influxdata",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -327,7 +327,7 @@ const repofile influxdata = { "influxdata", true,
 
 const repofile oneAPI = { "oneAPI", true,
     "Intel® oneAPI repository",
-    "https://mirror.versatushpc.com.br/oneAPI/repodata/", "",
+    "https://mirror.versatushpc.com.br/oneAPI/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oneAPI",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -394,7 +394,73 @@ const repofile oneAPI = { "oneAPI", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-    //@TODO ELRepo, rpmforge, Zabbix
+const repofile zabbix = { "zabbix", true,
+    "zabbix",
+    "https://mirror.versatushpc.com.br/zabbix/zabbix/6.4/rhel/8/x86_64/", "",
+    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ZABBIX",
+    R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
+            Version: GnuPG v1.4.10 (GNU/Linux)
+
+            mQGiBFCNJaYRBAC4nIW8o2NyOIswb82Xn3AYSMUcNZuKB2fMtpu0WxSXIRiX2BwC
+            YXx8cIEQVYtLRBL5o0JdmoNCjW6jd5fOVem3EmOcPksvzzRWonIgFHf4EI2n1KJc
+            JXX/nDC+eoh5xW35mRNFN/BEJHxxiRGGbp2MCnApwgrZLhOujaCGAwavGwCgiG4D
+            wKMZ4xX6Y2Gv3MSuzMIT0bcEAKYn3WohS+udp0yC3FHDj+oxfuHpklu1xuI3y6ha
+            402aEFahNi3wr316ukgdPAYLbpz76ivoouTJ/U2MqbNLjAspDvlnHXXyqPM5GC6K
+            jtXPqNrRMUCrwisoAhorGUg/+S5pyXwsWcJ6EKmA80pR9HO+TbsELE5bGe/oc238
+            t/2oBAC3zcQ46wPvXpMCNFb+ED71qDOlnDYaaAPbjgkvnp+WN6nZFFyevjx180Kw
+            qWOLnlNP6JOuFW27MP75MDPDpbAAOVENp6qnuW9dxXTN80YpPLKUxrQS8vWPnzkY
+            WtUfF75pEOACFVTgXIqEgW0E6oww2HJi9zF5fS8IlFHJztNYtbQgWmFiYml4IFNJ
+            QSA8cGFja2FnZXJAemFiYml4LmNvbT6IYAQTEQIAIAUCUI0lpgIbAwYLCQgHAwIE
+            FQIIAwQWAgMBAh4BAheAAAoJENE9WOR56l7UhUwAmgIGZ39U6D2w2oIWDD8m7KV3
+            oI06AJ9EnOxMMlxEjTkt9lEvGhEX1bEh7bkBDQRQjSWmEAQAqx+ecOzBbhqMq5hU
+            l39cJ6l4aocz6EZ9mSSoF/g+HFz6WYnPAfRaYyfLmZdtF5rGBDD4ysalYG5yD59R
+            Mv5tNVf/CEx+JAPMhp6JCBkGRaH+xHws4eBPGkea4rGNVP3L3rA7g+c1YXZICGRI
+            OOH7CIzIZ/w6aFGsPp7xM35ogncAAwUD/3s8Nc1OLDy81DC6rGpxfEURd5pvd/j0
+            D5Di0WSBEcHXp5nThDz6ro/Vr0/FVIBtT97tmBHX27yBS3PqxxNRIjZ0GSWQqdws
+            Q8o3YT+RHjBugXn8CzTOvIn+2QNMA8EtGIZPpCblJv8q6MFPi9m7avQxguMqufgg
+            fAk7377Rt9RqiEkEGBECAAkFAlCNJaYCGwwACgkQ0T1Y5HnqXtQx4wCfcJZINKVq
+            kQIoV3KTQAIzr6IvbZoAn12XXt4GP89xHuzPDZ86YJVAgnfK
+            =+200
+            -----END PGP PUBLIC KEY BLOCK-----
+            )PGPKEY" };
+
+const repofile ELRepo = { "elrepo", true,
+    "elrepo",
+    "https://mirror.versatushpc.com.br/elrepo/elrepo/el8/x86_64/", "",
+    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org",
+    R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
+            Version: GnuPG v1.4.5 (GNU/Linux)
+
+            mQGiBEm+/6QRBAC5mbtqOFSQ0FkTLIMdIoqxtraIeUqwbPp3IBYQ/u/EREjyEf1D
+            qFyBEXII0dD8JDT85vRZ81jhB7nFWa0VbUfY0xfghkbnokiNBVNpiQcvszw3UYDF
+            aLAaOC8Z98vmlsQaBBTQG6704ZXLr7FJyG3GP5WE6egXIQQbrMcdmCoRBwCg/dwC
+            HLWjuemoDc5SX7hKHbB4zZ8D/jP+oMbqz+bDn8OZ2UuaGdxr+mHW8tzTdPjnEU8e
+            hUt1ws8eBqn/gMfKvUBa8xFSILe8Ty99u+VjFbcRsdf0H6dRre9AdDVUz5oxzoPw
+            gamA8mhPQvFh3wt9smtRUh5IoM2LiM1s5pGMLuYuvSnVUPArEnSfW6K5I6v7OarU
+            3WfrBACDEGGcaWKjfdkRtmKIQrzu6AnldVC1ISLVAoqxHnKNFTk1BgO0PSZDpfJI
+            x8fMCnGlusoL6F5+LYEk4K4B0zvlj1ur3JocjxpuBLccl94JTo/+I9ZbS8ptUqLw
+            LBUkgIQJzzIH4G5NZsQ3FpzSWGRFVa7etqTv9BfUMUmJxhEoobQ/ZWxyZXBvLm9y
+            ZyAoUlBNIFNpZ25pbmcgS2V5IGZvciBlbHJlcG8ub3JnKSA8c2VjdXJlQGVscmVw
+            by5vcmc+iGAEExECACAFAkm+/6QCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK
+            CRAwm8MFuq2uUlgWAKCGWOpyodbzxS7Xy/0X9m9qVnHq+ACfUHrQzYAtFRpT07Sg
+            giosE+mvAKu5Ag0ESb7/pxAIALgT0q0HhwugE717a7N+gAtCbFu8pCXOZcrAnJpG
+            cMA9VWmsODZStPTxXYM2ggCMSzUnNis8pPZOPIP5C+t2IYtVjLshM4C9UiY7u5ET
+            jErWCxWmF+2QLO50K56E4qxj0wufZt9P+Ih0USUM5L2oyrQG51uj/2v3Qq3igc8Z
+            NTtmEOfis3losusQbAfZtTBmNQ0570kkhMxiyavgAUxLenXHYrkDJFuL7XdBCmna
+            kykTn2dzU81rIDZ+QPxII4V/eZ5xGiRY/EDUIAysEV2m0NNZgWi/twUnZICm7zYp
+            VRviJrBnFTvNEPMhiGRnJgQp/Krv4WIHQ67N8lQg3q5RJX8AAwUH/0UBjBgbsuWR
+            dB+ZYWjKPBy+bJY/6HefPUuLrt3QDNINMW8kY7VzWRMWyGc4IlPJDW0nwOn/vT5H
+            Dgc3YmA3tm7cKj5wpFijzff61Db8eq+CUKGscKxDBGzHq6oirM5U7DQLmipCs5Eb
+            efwHIjE3aOUSnoQmniEnBWI2hm/rftmY9oJSi8xgns4wAokDPiMcucADtbV3fznx
+            ppuowtBi8bcGB1vJZjTySQcSKWv+IVp5ej06uZ9501BEm6HxUZkuAGPecP65kcQu
+            5bg7B7LQeI5AWyujqvfuWgAF34xhl9QU/sDWxM3wUog+bw7y8pyWCqnJhp70yx8o
+            SqzhFygT62eISQQYEQIACQUCSb7/pwIbDAAKCRAwm8MFuq2uUq8PAKC1+E2pSwiS
+            oHXkKYPYDwApsP1mVACfRe1YnggLYQtG9LMeweVQQC77rK8=
+            =qyRr
+            -----END PGP PUBLIC KEY BLOCK-----
+            )PGPKEY" };
+
+    // @TODO add rpmforge
 }
 
 class Repos {
