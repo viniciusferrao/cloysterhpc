@@ -185,8 +185,7 @@ const repofile alma8_baseos = { "AlmaLinux-BaseOS", true,
 }
 
 namespace addons {
-const repofile beegfs = { "beegfs-7.3.3-rhel8", true,
-    "BeeGFS 7.3.3 (rhel8)",
+const repofile beegfs = { "beegfs-7.3.3-rhel8", true, "BeeGFS 7.3.3 (rhel8)",
     "https://mirror.versatushpc.com.br/beegfs/beegfs_7.3.3/dists/rhel8/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-beegfs_7.3.3",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -243,10 +242,9 @@ const repofile beegfs = { "beegfs-7.3.3-rhel8", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-const repofile grafana = { "grafana", true,
-    "grafana",
-    "https://mirror.versatushpc.com.br/grafana/", "",
-    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-grafana",
+const repofile grafana = { "grafana", true, "grafana",
+    "https://mirror.versatushpc.com.br/grafana/", "", true,
+    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-grafana",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
             mQGNBGO4aiUBDAC82zo3vUyQH3yTCabQ7ZpospBg/xXBbJWbQNksIbEP/+I12CjB
@@ -290,11 +288,11 @@ const repofile grafana = { "grafana", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-const repofile influxdata = { "influxdata", true,
-    "InfluxData Repository - Stable",
-    "https://mirror.versatushpc.com.br/influxdata/", "",
-    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-influxdata",
-    R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
+const repofile influxdata
+    = { "influxdata", true, "InfluxData Repository - Stable",
+          "https://mirror.versatushpc.com.br/influxdata/", "", true,
+          "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-influxdata",
+          R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
             mQINBGPIEycBEACpG4qSjhxA6fh4QJVJxFVBvCFt9tVx/hDbKH0Ryy9iilyMeReC
             AS1/CZnSv/fhDNKmVPckf6on72z/ODwZcVfMV6DHkxmZ6x/tQrS6CWfKkupsON2H
@@ -325,10 +323,9 @@ const repofile influxdata = { "influxdata", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-const repofile oneAPI = { "oneAPI", true,
-    "Intel® oneAPI repository",
-    "https://mirror.versatushpc.com.br/oneAPI/", "",
-    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oneAPI",
+const repofile oneAPI = { "oneAPI", true, "Intel® oneAPI repository",
+    "https://mirror.versatushpc.com.br/oneAPI/", "", true,
+    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oneAPI",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
 
             mQENBFfriU0BCADD98BaTc+sNO2nk7UwfhNIwiyN+8PtoozyIQtITGViuLGTC2f7kcA08blM+pkz
@@ -394,8 +391,7 @@ const repofile oneAPI = { "oneAPI", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-const repofile zabbix = { "zabbix", true,
-    "zabbix",
+const repofile zabbix = { "zabbix", true, "zabbix",
     "https://mirror.versatushpc.com.br/zabbix/zabbix/6.4/rhel/8/x86_64/", "",
     true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ZABBIX",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -424,10 +420,9 @@ const repofile zabbix = { "zabbix", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-const repofile ELRepo = { "elrepo", true,
-    "elrepo",
-    "https://mirror.versatushpc.com.br/elrepo/elrepo/el8/x86_64/", "",
-    true, "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org",
+const repofile ELRepo = { "elrepo", true, "elrepo",
+    "https://mirror.versatushpc.com.br/elrepo/elrepo/el8/x86_64/", "", true,
+    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo.org",
     R"PGPKEY(-----BEGIN PGP PUBLIC KEY BLOCK-----
             Version: GnuPG v1.4.5 (GNU/Linux)
 
@@ -460,7 +455,7 @@ const repofile ELRepo = { "elrepo", true,
             -----END PGP PUBLIC KEY BLOCK-----
             )PGPKEY" };
 
-    // @TODO add rpmforge
+// @TODO add rpmforge
 }
 
 class Repos {
@@ -479,6 +474,7 @@ private:
     void configureOL() const;
     void configureAlma() const;
     void configureXCAT() const;
+    void configureAddons() const;
     OS::Distro m_distro;
 
 public:

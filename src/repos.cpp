@@ -82,6 +82,16 @@ void Repos::configureXCAT() const
                "rh8/x86_64/xcat-dep.repo");
 }
 
+void Repos::configureAddons() const
+{
+    createConfigurationFile(addons::ELRepo);
+    createConfigurationFile(addons::beegfs);
+    createConfigurationFile(addons::grafana);
+    createConfigurationFile(addons::influxdata);
+    createConfigurationFile(addons::oneAPI);
+    createConfigurationFile(addons::zabbix);
+}
+
 void Repos::configureRepositories() const
 {
     LOG_INFO("Setting up additional repositories");
@@ -108,5 +118,6 @@ void Repos::configureRepositories() const
                "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
                "ohpc-release-2-1.el8.x86_64.rpm");
 
+    configureAddons();
     configureXCAT();
 }
