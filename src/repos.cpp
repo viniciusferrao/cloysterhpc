@@ -90,6 +90,7 @@ void Repos::configureAddons() const
     createConfigurationFile(addons::influxdata);
     createConfigurationFile(addons::oneAPI);
     createConfigurationFile(addons::zabbix);
+    createConfigurationFile(addons::RPMFusion);
 }
 
 void Repos::configureRepositories() const
