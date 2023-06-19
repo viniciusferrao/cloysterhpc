@@ -188,16 +188,6 @@ void XCAT::generatePostinstallFile()
     cloyster::removeFile(filename);
 
     m_stateless.postinstall.emplace_back(
-        fmt::format("cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
-                    "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
-                    "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
-                    "END\n\n",
-            m_cluster->getHeadnode()
-                .getConnection(Network::Profile::Management)
-                .getAddress()
-                .to_string()));
-
-    m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
         "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
         "perl -pi -e 's/# End of file/\\* hard memlock unlimited\\n$&/s' "
