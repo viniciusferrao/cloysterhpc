@@ -58,7 +58,4 @@ void NFS::configure()
     cloyster::addStringToFile(
         fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
         fmt::format("* {0}:{1}/&", m_address.to_string(), m_fullPath));
-
-    runCommand("updatenode compute -F");
-    runCommand("xdsh compute systemctl restart autofs");
 }
