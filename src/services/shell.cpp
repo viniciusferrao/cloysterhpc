@@ -372,8 +372,10 @@ void Shell::install()
         m_cluster->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),
-        "ro,no_subtree_check,fsid=11");
+        "ro,no_subtree_check");
     networkFileSystem.configure();
+    networkFileSystem.enable();
+    networkFileSystem.start();
 
     configureQueueSystem();
     removeMemlockLimits();

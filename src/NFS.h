@@ -5,10 +5,11 @@
 #ifndef CLOYSTERHPC_NFS_H_
 #define CLOYSTERHPC_NFS_H_
 
+#include "services/IService.h"
 #include <boost/asio.hpp>
 #include <string>
 
-class NFS {
+class NFS : IService {
 private:
     std::string m_directoryName;
     std::string m_directoryPath;
@@ -23,6 +24,10 @@ public:
         const boost::asio::ip::address& address,
         const std::string& permissions);
     void configure();
+    void enable();
+    void disable();
+    void start();
+    void stop();
 
 private:
     void setFullPath();

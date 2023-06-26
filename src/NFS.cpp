@@ -40,11 +40,11 @@ void NFS::configure()
     cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
         fmt::format("/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-                    "{} *({})\n",
-            m_fullPath, m_permissions));
+                    "{} *({},fsid={})\n",
+            m_fullPath, m_permissions, 11));
+    //@TODO make fsid dynamic
 
     runCommand("exportfs -a");
-    runCommand("systemctl enable --now nfs-server");
 
     runCommand(fmt::format("touch {}/conf/node/etc/auto.master.d/{}.autofs",
         installPath, m_directoryName));
@@ -59,3 +59,11 @@ void NFS::configure()
         fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
         fmt::format("* {0}:{1}/&", m_address.to_string(), m_fullPath));
 }
+
+void NFS::enable() { runCommand("systemctl enable nfs-server"); }
+
+void NFS::disable() { runCommand("systemctl disable nfs-server"); }
+
+void NFS::start() { runCommand("systemctl start nfs-server"); }
+
+void NFS::stop() { runCommand("systemctl stop nfs-server"); }
