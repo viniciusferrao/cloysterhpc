@@ -113,6 +113,11 @@ void writeConfig(const std::string& filename)
 
 void createDirectory(const std::filesystem::path& path)
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create directory {}", path.string());
+        return;
+    }
+
     std::filesystem::create_directories(path);
     LOG_DEBUG("Created directory: {}", path.string());
 }
