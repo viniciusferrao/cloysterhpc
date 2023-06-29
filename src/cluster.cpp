@@ -235,7 +235,11 @@ const std::filesystem::path& Cluster::getDiskImage() const
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
-    m_diskImage.setPath(diskImagePath);
+    if (std::filesystem::exists(diskImagePath)) {
+        m_diskImage.setPath(diskImagePath);
+    } else {
+        throw std::runtime_error("Disk image path doesn't exist");
+    }
 }
 
 const std::vector<Node>& Cluster::getNodes() const { return m_nodes; }
@@ -528,12 +532,9 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     // System
-    std::string diskImage = tree.get<std::string>("system.disk_image");
-    if (std::filesystem::exists(diskImage)) {
-        setDiskImage(diskImage);
-    } else {
-        throw std::runtime_error("Disk image path doesn't exist");
-    }
+    std::filesystem::path diskImage
+        = tree.get<std::string>("system.disk_image");
+    setDiskImage(diskImage);
 
     std::string distro = tree.get<std::string>("system.distro");
     std::string distro_version = tree.get<std::string>("system.version");
