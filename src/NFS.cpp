@@ -1,6 +1,7 @@
-//
-// Created by Lucas Gracioso <contact@lbgracioso.net> on 6/19/23.
-//
+/*
+ * Copyright 2023 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "NFS.h"
 #include "const.h"
@@ -9,6 +10,7 @@
 
 using cloyster::runCommand;
 
+// @TODO: Constructors should be chained and m_permissions should be an enum
 NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
     const boost::asio::ip::address& address)
     : m_directoryName(directoryName)
@@ -39,13 +41,13 @@ void NFS::configure()
     std::string_view filename = CHROOT "/etc/exports";
     cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
+        // @TODO make fsid dynamic
         fmt::format("/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-                    "{} *({},fsid={})\n",
-            m_fullPath, m_permissions, 11));
-    //@TODO make fsid dynamic
-
+                    "{} *({},fsid={})\n", m_fullPath, m_permissions, 11));
+    
     runCommand("exportfs -a");
 
+    // @FIXME: Create a file using std::filesystem and not with touch
     runCommand(fmt::format("touch {}/conf/node/etc/auto.master.d/{}.autofs",
         installPath, m_directoryName));
     cloyster::addStringToFile(
@@ -53,11 +55,12 @@ void NFS::configure()
             m_directoryName),
         fmt::format("{} /etc/auto.{}", m_fullPath, m_directoryName));
 
+    // @FIXME: Create a file using std::filesystem and not with touch
     runCommand(fmt::format(
         "touch {}/conf/node/etc/auto.{}", installPath, m_directoryName));
     cloyster::addStringToFile(
         fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
-        fmt::format("* {0}:{1}/&", m_address.to_string(), m_fullPath));
+        fmt::format("* {}:{}/&", m_address.to_string(), m_fullPath));
 }
 
 void NFS::enable() { runCommand("systemctl enable nfs-server"); }
