@@ -1,6 +1,7 @@
-//
-// Created by Lucas Gracioso <contact@lbgracioso.net> on 6/19/23.
-//
+/*
+ * Copyright 2023 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef CLOYSTERHPC_NFS_H_
 #define CLOYSTERHPC_NFS_H_
@@ -9,7 +10,7 @@
 #include <boost/asio.hpp>
 #include <string>
 
-class NFS : IService {
+class NFS : public IService {
 private:
     std::string m_directoryName;
     std::string m_directoryPath;
@@ -19,15 +20,14 @@ private:
 
 public:
     NFS(const std::string& directoryName, const std::string& directoryPath,
-        const boost::asio::ip::address& address);
-    NFS(const std::string& directoryName, const std::string& directoryPath,
         const boost::asio::ip::address& address,
         const std::string& permissions);
+
     void configure();
-    void enable();
-    void disable();
-    void start();
-    void stop();
+    void enable() final;
+    void disable() final;
+    void start() final;
+    void stop() final;
 
 private:
     void setFullPath();

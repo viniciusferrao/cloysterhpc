@@ -182,7 +182,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::vector<address> nameservers
             = connection.getNetwork()->getNameservers();
         std::vector<std::string> formattedNameservers;
-        for (int i = 0; i < nameservers.size(); i++) {
+        for (std::size_t i = 0; i < nameservers.size(); i++) {
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 

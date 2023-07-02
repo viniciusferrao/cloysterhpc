@@ -10,17 +10,6 @@
 
 using cloyster::runCommand;
 
-// @TODO: Constructors should be chained and m_permissions should be an enum
-NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
-    const boost::asio::ip::address& address)
-    : m_directoryName(directoryName)
-    , m_directoryPath(directoryPath)
-    , m_address(address)
-{
-    setFullPath();
-    m_permissions = "ro";
-}
-
 NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
     const boost::asio::ip::address& address, const std::string& permissions)
     : m_directoryName(directoryName)
@@ -38,13 +27,14 @@ void NFS::setFullPath()
 
 void NFS::configure()
 {
-    std::string_view filename = CHROOT "/etc/exports";
+    const std::string_view filename = CHROOT "/etc/exports";
     cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
         // @TODO make fsid dynamic
         fmt::format("/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-                    "{} *({},fsid={})\n", m_fullPath, m_permissions, 11));
-    
+                    "{} *({},fsid={})\n",
+            m_fullPath, m_permissions, 11));
+
     runCommand("exportfs -a");
 
     // @FIXME: Create a file using std::filesystem and not with touch
