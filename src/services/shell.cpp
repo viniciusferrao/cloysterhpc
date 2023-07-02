@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 #include <memory>
 
+#include "../NFS.h"
 #include "../cluster.h"
 #include "../repos.h"
 
@@ -25,6 +26,8 @@ Shell::Shell(const std::unique_ptr<Cluster>& cluster)
     // Initialize directory tree
     cloyster::createDirectory(installPath);
     cloyster::createDirectory(std::string { installPath } + "/backup");
+    cloyster::createDirectory(
+        std::string { installPath } + "/conf/node/etc/auto.master.d");
 }
 
 void Shell::disableSELinux()
@@ -179,7 +182,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::vector<address> nameservers
             = connection.getNetwork()->getNameservers();
         std::vector<std::string> formattedNameservers;
-        for (int i = 0; i < nameservers.size(); i++) {
+        for (std::size_t i = 0; i < nameservers.size(); i++) {
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
@@ -303,22 +306,6 @@ void Shell::configureInfiniband()
     }
 }
 
-/* TODO: Restrict by networks */
-void Shell::configureNetworkFileSystem()
-{
-    LOG_INFO("Setting up the Network File System");
-
-    std::string_view filename = CHROOT "/etc/exports";
-
-    cloyster::backupFile(filename);
-    cloyster::addStringToFile(filename,
-        "/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-        "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)\n");
-
-    runCommand("exportfs -a");
-    runCommand("systemctl enable --now nfs-server");
-}
-
 void Shell::removeMemlockLimits()
 {
     LOG_INFO("Removing memlock limits on headnode");
@@ -380,7 +367,15 @@ void Shell::install()
     installOpenHPCBase();
 
     configureInfiniband();
-    configureNetworkFileSystem();
+
+    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
+        m_cluster->getHeadnode()
+            .getConnection(Network::Profile::Management)
+            .getAddress(),
+        "ro,no_subtree_check");
+    networkFileSystem.configure();
+    networkFileSystem.enable();
+    networkFileSystem.start();
 
     configureQueueSystem();
     removeMemlockLimits();

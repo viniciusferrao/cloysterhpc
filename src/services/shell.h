@@ -34,7 +34,6 @@ private:
     void configureTimeService(const std::list<Connection>&);
     void configureQueueSystem();
     void configureInfiniband();
-    void configureNetworkFileSystem();
 
     void removeMemlockLimits();
     void installDevelopmentComponents();
