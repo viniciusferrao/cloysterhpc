@@ -235,7 +235,11 @@ const std::filesystem::path& Cluster::getDiskImage() const
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
-    m_diskImage.setPath(diskImagePath);
+    if (std::filesystem::exists(diskImagePath)) {
+        m_diskImage.setPath(diskImagePath);
+    } else {
+        throw std::runtime_error("Disk image path doesn't exist");
+    }
 }
 
 const std::vector<Node>& Cluster::getNodes() const { return m_nodes; }
@@ -428,32 +432,14 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto administratorEmail
         = tree.get<std::string>("information.administrator_email");
 
-    LOG_TRACE("Cluster name: {}", clusterName);
-
-    setName(clusterName);
-    setCompanyName(companyName);
-    setAdminMail(administratorEmail);
-
     // Time
     auto timezone = tree.get<std::string>("time.timezone");
     auto timeserver = tree.get<std::string>("time.timeserver");
     auto locale = tree.get<std::string>("time.locale");
 
-    setTimezone(timezone);
-    setLocale(locale);
-
     // Hostname
     auto hostname = tree.get<std::string>("hostname.hostname");
     auto domainName = tree.get<std::string>("hostname.domain_name");
-
-    this->m_headnode.setHostname(hostname);
-    setDomainName(domainName);
-    this->m_headnode.setFQDN(fmt::format(
-        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
-
-    setOFED(OFED::Kind::Inbox);
-    setQueueSystem(QueueSystem::Kind::SLURM);
-    m_queueSystem.value()->setDefaultQueue("execution");
 
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
@@ -492,23 +478,8 @@ void Cluster::fillData(const std::string& answerfilePath)
             managementNetwork->fetchNameservers());
     }
 
-    addNetwork(std::move(managementNetwork));
-
-    auto managementConnection
-        = Connection(&getNetwork(Network::Profile::Management));
-    managementConnection.setInterface(managementNetworkInterface);
-
     auto managementNetworkIpAddress
         = tree.get<std::string>("network_management.ip_address");
-    managementConnection.setAddress(managementNetworkIpAddress);
-
-    if (tree.count("network_management.mac_address") != 0) {
-        auto managementNetworkMacAddress
-            = tree.get<std::string>("network_management.mac_address");
-        managementConnection.setMAC(managementNetworkMacAddress);
-    }
-
-    getHeadnode().addConnection(std::move(managementConnection));
 
     // External Network
     auto externalNetwork = std::make_unique<Network>(
@@ -559,6 +530,61 @@ void Cluster::fillData(const std::string& answerfilePath)
     } else {
         externalNetwork->setNameservers(externalNetwork->fetchNameservers());
     }
+
+    // System
+    std::filesystem::path diskImage
+        = tree.get<std::string>("system.disk_image");
+    setDiskImage(diskImage);
+
+    std::string distro = tree.get<std::string>("system.distro");
+    std::string distro_version = tree.get<std::string>("system.version");
+    std::string kernel = tree.get<std::string>("system.kernel");
+
+    // Nodes
+    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
+    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
+    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
+    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
+    auto nodesSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.sockets")));
+    auto nodesCoresPerSockets = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.cores_per_socket")));
+    auto nodesThreadsPerCore = static_cast<std::size_t>(
+        std::stoul(tree.get<std::string>("nodes.threads_per_core")));
+
+    LOG_TRACE("Cluster name: {}", clusterName);
+
+    setName(clusterName);
+    setCompanyName(companyName);
+    setAdminMail(administratorEmail);
+
+    setTimezone(timezone);
+    setLocale(locale);
+
+    this->m_headnode.setHostname(hostname);
+    setDomainName(domainName);
+    this->m_headnode.setFQDN(fmt::format(
+        "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
+
+    setOFED(OFED::Kind::Inbox);
+    setQueueSystem(QueueSystem::Kind::SLURM);
+    m_queueSystem.value()->setDefaultQueue("execution");
+
+    addNetwork(std::move(managementNetwork));
+
+    auto managementConnection
+        = Connection(&getNetwork(Network::Profile::Management));
+    managementConnection.setInterface(managementNetworkInterface);
+
+    managementConnection.setAddress(managementNetworkIpAddress);
+
+    if (tree.count("network_management.mac_address") != 0) {
+        auto managementNetworkMacAddress
+            = tree.get<std::string>("network_management.mac_address");
+        managementConnection.setMAC(managementNetworkMacAddress);
+    }
+
+    getHeadnode().addConnection(std::move(managementConnection));
 
     addNetwork(std::move(externalNetwork));
 
@@ -619,14 +645,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
 
-    std::filesystem::path diskImage
-        = tree.get<std::string>("system.disk_image");
-    setDiskImage(diskImage);
-
-    std::string distro = tree.get<std::string>("system.distro");
-    std::string distro_version = tree.get<std::string>("system.version");
-    std::string kernel = tree.get<std::string>("system.kernel");
-
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
@@ -635,18 +653,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     nodeOS.setKernel(kernel);
     nodeOS.setVersion(distro_version);
     m_headnode.setOS(nodeOS);
-
-    // Nodes
-    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
-    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
-    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
-    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
-    auto nodesSockets = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.sockets")));
-    auto nodesCoresPerSockets = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.cores_per_socket")));
-    auto nodesThreadsPerCore = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.threads_per_core")));
 
     CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
 

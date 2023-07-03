@@ -20,6 +20,11 @@ Repos::Repos(OS::Distro distro)
 
 void Repos::createConfigurationFile(const repofile& repo) const
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create repofile {}", repo.name);
+        return;
+    }
+
     ptree repof {};
 
     repof.put("baseos.name", repo.name);
