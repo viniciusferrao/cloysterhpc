@@ -399,7 +399,7 @@ void Cluster::fillTestData()
                                                Network::Profile::Management),
         {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
-    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN", 0, 115200, BMC::kind::IPMI };
 
     addNode("n01", nodeOS, nodeCPU, std::move(connections1));
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
@@ -572,6 +572,20 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     addNetwork(std::move(managementNetwork));
 
+    // BMC
+    if (tree.count("BMC") != 0) {
+        auto bmcAddress = tree.get<std::string>("BMC.address");
+        auto bmcPassword = tree.get<std::string>("BMC.password");
+        auto bmcUsername = tree.get<std::string>("BMC.username");
+        int bmcSerialPort = std::stoi(tree.get<std::string>("BMC.serialport"));
+        int bmcSerialSpeed
+            = std::stoi(tree.get<std::string>("BMC.serialspeed"));
+
+        BMC bmc = BMC(bmcAddress, bmcUsername, bmcPassword, bmcSerialPort,
+            bmcSerialSpeed, BMC::kind::IPMI);
+        getHeadnode().setBMC(bmc);
+    }
+
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
     managementConnection.setInterface(managementNetworkInterface);
@@ -672,7 +686,13 @@ void Cluster::fillData(const std::string& answerfilePath)
 
         connection.setMAC(node);
         connection.setAddress(nodesStartIp);
-        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+
+        if (getHeadnode().getBMC().has_value()) {
+            BMC bmc = getHeadnode().getBMC().value();
+            addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections), bmc);
+        } else {
+            addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+        }
     }
 
     /* Bad and old data - @TODO Must improve */

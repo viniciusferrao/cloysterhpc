@@ -57,6 +57,7 @@ public:
     void setCPU(const CPU& cpu);
 
     [[nodiscard]] const std::optional<BMC>& getBMC() const;
+    void setBMC(const BMC& bmc);
 
     virtual ~Server() = default;
 };

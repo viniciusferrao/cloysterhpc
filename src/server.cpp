@@ -112,6 +112,8 @@ const Connection& Server::getConnection(Network::Profile profile) const
 
 const std::optional<BMC>& Server::getBMC() const { return m_bmc; }
 
+void Server::setBMC(const BMC& bmc) { m_bmc = bmc; }
+
 const CPU& Server::getCPU() const noexcept { return m_cpu; }
 
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
