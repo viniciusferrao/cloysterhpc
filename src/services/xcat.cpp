@@ -270,19 +270,19 @@ void XCAT::configureOSImageDefinition()
             break;
         case OS::Distro::Rocky:
             repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8.7/BaseOS/x86_64/os");
+                "http://ftp.unicamp.br/pub/rocky/8/BaseOS/x86_64/os");
             repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8.7/PowerTools/x86_64/os");
+                "http://ftp.unicamp.br/pub/rocky/8/PowerTools/x86_64/os");
             repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8.7/AppStream/x86_64/os");
+                "http://ftp.unicamp.br/pub/rocky/8/AppStream/x86_64/os");
             break;
         case OS::Distro::AlmaLinux:
             repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8.7/BaseOS/x86_64/os");
-            repos.emplace_back("https://repo.almalinux.org/almalinux/8.7/"
+                "https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os");
+            repos.emplace_back("https://repo.almalinux.org/almalinux/8/"
                                "PowerTools/x86_64/os");
             repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8.7/AppStream/x86_64/os");
+                "https://repo.almalinux.org/almalinux/8/AppStream/x86_64/os");
             break;
     }
 
