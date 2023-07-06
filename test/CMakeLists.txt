@@ -32,6 +32,7 @@ project(CmakeConfigPackageTests LANGUAGES CXX)
 set(TESTFILES        # All .cpp files in tests/
         src/main.cpp
         src/network.cpp
+        src/inifile.cpp
         )
 
 set(TEST_MAIN unit_test)   # Default name for test executable (change if you wish).
