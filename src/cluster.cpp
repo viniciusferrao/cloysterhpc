@@ -546,8 +546,10 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
     auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
     auto nodesSockets = std::stoul(tree.get<std::string>("nodes.sockets"));
-    auto nodesCoresPerSockets = std::stoul(tree.get<std::string>("nodes.cores_per_socket"));
-    auto nodesThreadsPerCore = std::stoul(tree.get<std::string>("nodes.threads_per_core"));
+    auto nodesCoresPerSockets
+        = std::stoul(tree.get<std::string>("nodes.cores_per_socket"));
+    auto nodesThreadsPerCore
+        = std::stoul(tree.get<std::string>("nodes.threads_per_core"));
 
     LOG_TRACE("Cluster name: {}", clusterName);
 
