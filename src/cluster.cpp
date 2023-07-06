@@ -165,7 +165,7 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
     const std::string& domainName, const std::vector<std::string>& nameserver)
 {
     std::vector<address> formattedNameservers;
-    for (int i = 0; i < nameserver.size(); i++) {
+    for (std::size_t i = 0; i < nameserver.size(); i++) {
         formattedNameservers.emplace_back(
             boost::asio::ip::make_address(nameserver[i]));
     }
@@ -292,9 +292,9 @@ void Cluster::printNetworks(
 
 void Cluster::printConnections()
 {
-    for (std::size_t i { 0 };
-         const auto& connection : getHeadnode().getConnections())
+    for (const auto& connection : getHeadnode().getConnections()) {
         connection.dumpConnection();
+    }
 }
 
 void Cluster::printData()
@@ -545,12 +545,9 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto nodesPadding = tree.get<std::size_t>("nodes.padding");
     auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
     auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
-    auto nodesSockets = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.sockets")));
-    auto nodesCoresPerSockets = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.cores_per_socket")));
-    auto nodesThreadsPerCore = static_cast<std::size_t>(
-        std::stoul(tree.get<std::string>("nodes.threads_per_core")));
+    auto nodesSockets = std::stoul(tree.get<std::string>("nodes.sockets"));
+    auto nodesCoresPerSockets = std::stoul(tree.get<std::string>("nodes.cores_per_socket"));
+    auto nodesThreadsPerCore = std::stoul(tree.get<std::string>("nodes.threads_per_core"));
 
     LOG_TRACE("Cluster name: {}", clusterName);
 

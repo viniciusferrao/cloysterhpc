@@ -322,7 +322,7 @@ void Network::setNameservers(const std::vector<address>& nameservers)
 void Network::setNameservers(const std::vector<std::string>& nameservers)
 {
     std::vector<address> formattedNameservers;
-    for (int i = 0; i < nameservers.size(); i++) {
+    for (std::size_t i = 0; i < nameservers.size(); i++) {
         formattedNameservers.emplace_back(
             boost::asio::ip::make_address(nameservers[i]));
     }

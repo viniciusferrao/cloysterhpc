@@ -53,7 +53,7 @@ void PresenterNetwork::createNetwork()
 
     std::vector<address> nameservers = Network::fetchNameservers();
     std::vector<std::string> formattedNameservers;
-    for (int i = 0; i < nameservers.size(); i++) {
+    for (std::size_t i = 0; i < nameservers.size(); i++) {
         formattedNameservers.emplace_back(nameservers[i].to_string());
     }
 
