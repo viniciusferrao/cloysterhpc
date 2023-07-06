@@ -574,6 +574,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // BMC
     if (tree.count("BMC") != 0) {
+        // @TODO Integrate this. This is just a scope.
         auto bmcAddress = tree.get<std::string>("BMC.address");
         auto bmcPassword = tree.get<std::string>("BMC.password");
         auto bmcUsername = tree.get<std::string>("BMC.username");
@@ -583,7 +584,6 @@ void Cluster::fillData(const std::string& answerfilePath)
 
         BMC bmc = BMC(bmcAddress, bmcUsername, bmcPassword, bmcSerialPort,
             bmcSerialSpeed, BMC::kind::IPMI);
-        getHeadnode().setBMC(bmc);
     }
 
     auto managementConnection
@@ -687,12 +687,8 @@ void Cluster::fillData(const std::string& answerfilePath)
         connection.setMAC(node);
         connection.setAddress(nodesStartIp);
 
-        if (getHeadnode().getBMC().has_value()) {
-            BMC bmc = getHeadnode().getBMC().value();
-            addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections), bmc);
-        } else {
-            addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
-        }
+        // @TODO Integrate answerfile BMC
+        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
     }
 
     /* Bad and old data - @TODO Must improve */
