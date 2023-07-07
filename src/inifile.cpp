@@ -51,3 +51,15 @@ void inifile::saveFile(const std::filesystem::path& filepath)
 {
     ini.SaveFile(filepath.c_str());
 }
+
+bool inifile::exists(const std::string& section, const std::string& key)
+{
+    const auto* sample = ini.GetValue(section.c_str(), key.c_str());
+    return sample != nullptr;
+}
+
+bool inifile::exists(const std::string& section)
+{
+    const auto* sample = ini.GetSection(section.c_str());
+    return sample != nullptr;
+}

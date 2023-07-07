@@ -6,6 +6,7 @@
 #include "cluster.h"
 #include "functions.h"
 #include "headnode.h"
+#include "inifile.h"
 #include "services/log.h"
 #include "services/xcat.h"
 
@@ -414,62 +415,56 @@ void Cluster::fillTestData()
 
 void Cluster::fillData(const std::string& answerfilePath)
 {
-    boost::property_tree::ptree tree;
+    inifile ini;
 
-    try {
-        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
-    }
-
-    catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what());
-    }
+    ini.loadFile(answerfilePath);
 
     LOG_TRACE("Read answerfile variables:");
 
     // Information
-    auto clusterName = tree.get<std::string>("information.cluster_name");
-    auto companyName = tree.get<std::string>("information.company_name");
+    auto clusterName = ini.getValue("information", "cluster_name");
+    auto companyName = ini.getValue("information", "company_name");
     auto administratorEmail
-        = tree.get<std::string>("information.administrator_email");
+        = ini.getValue("information", "administrator_email");
 
     // Time
-    auto timezone = tree.get<std::string>("time.timezone");
-    auto timeserver = tree.get<std::string>("time.timeserver");
-    auto locale = tree.get<std::string>("time.locale");
+    auto timezone = ini.getValue("time", "timezone");
+    auto timeserver = ini.getValue("time", "timeserver");
+    auto locale = ini.getValue("time", "locale");
 
     // Hostname
-    auto hostname = tree.get<std::string>("hostname.hostname");
-    auto domainName = tree.get<std::string>("hostname.domain_name");
+    auto hostname = ini.getValue("hostname", "hostname");
+    auto domainName = ini.getValue("hostname", "domain_name");
 
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
 
     auto managementNetworkInterface
-        = tree.get<std::string>("network_management.interface");
+        = ini.getValue("network_management", "interface");
 
     auto managementNetworkAddress
-        = tree.get<std::string>("network_management.network_address");
+        = ini.getValue("network_management", "network_address");
     managementNetwork->setAddress(managementNetworkAddress);
 
     auto managementNetworkSubnetMask
-        = tree.get<std::string>("network_management.subnet_mask");
+        = ini.getValue("network_management", "subnet_mask");
     managementNetwork->setSubnetMask(managementNetworkSubnetMask);
 
-    if (tree.count("network_management.gateway") != 0) {
+    if (ini.exists("network_management", "gateway")) {
         auto managementNetworkGateway
-            = tree.get<std::string>("network_management.gateway");
+            = ini.getValue("network_management", "gateway");
         managementNetwork->setGateway(managementNetworkGateway);
     }
 
     auto managementNetworkDomainName
-        = tree.get<std::string>("network_management.domain_name");
+        = ini.getValue("network_management", "domain_name");
     managementNetwork->setDomainName(managementNetworkDomainName);
 
-    if (tree.count("network_management.nameservers") != 0) {
+    if (ini.exists("network_management", "nameservers")) {
         std::vector<std::string> managementNetworkNameservers;
         boost::split(managementNetworkNameservers,
-            tree.get<std::string>("network_management.nameservers"),
+            ini.getValue("network_management", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         managementNetwork->setNameservers(managementNetworkNameservers);
@@ -479,51 +474,51 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     auto managementNetworkIpAddress
-        = tree.get<std::string>("network_management.ip_address");
+        = ini.getValue("network_management", "ip_address");
 
     // External Network
     auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
 
     auto externalNetworkInterface
-        = tree.get<std::string>("network_external.interface");
+        = ini.getValue("network_external", "interface");
 
-    if (tree.count("network_external.network_address") != 0) {
+    if (ini.exists("network_external", "network_address")) {
         auto externalNetworkAddress
-            = tree.get<std::string>("network_external.network_address");
+            = ini.getValue("network_external", "network_address");
         externalNetwork->setAddress(externalNetworkAddress);
     } else {
         externalNetwork->setAddress(
             externalNetwork->fetchAddress(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.subnet_mask") != 0) {
+    if (ini.exists("network_external", "subnet_mask")) {
         auto externalNetworkSubnetMask
-            = tree.get<std::string>("network_external.subnet_mask");
+            = ini.getValue("network_external", "subnet_mask");
         externalNetwork->setSubnetMask(externalNetworkSubnetMask);
     } else {
         externalNetwork->setSubnetMask(
             externalNetwork->fetchSubnetMask(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.gateway") != 0) {
+    if (ini.exists("network_external", "gateway")) {
         auto externalNetworkGateway
-            = tree.get<std::string>("network_external.gateway");
+            = ini.getValue("network_external", "gateway");
         externalNetwork->setGateway(externalNetworkGateway);
     }
 
-    if (tree.count("network_external.domain_name") != 0) {
+    if (ini.exists("network_external", "domain_name")) {
         auto externalNetworkDomainName
-            = tree.get<std::string>("network_external.domain_name");
+            = ini.getValue("network_external", "domain_name");
         externalNetwork->setDomainName(externalNetworkDomainName);
     } else {
         externalNetwork->setDomainName(externalNetwork->fetchDomainName());
     }
 
-    if (tree.count("network_external.nameservers") != 0) {
+    if (ini.exists("network_external", "nameservers")) {
         std::vector<std::string> externalNetworkNameservers;
         boost::split(externalNetworkNameservers,
-            tree.get<std::string>("network_external.nameservers"),
+            ini.getValue("network_external", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         externalNetwork->setNameservers(externalNetworkNameservers);
@@ -532,22 +527,23 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     // System
-    std::filesystem::path diskImage
-        = tree.get<std::string>("system.disk_image");
+    std::filesystem::path diskImage = ini.getValue("system", "disk_image");
     setDiskImage(diskImage);
 
-    std::string distro = tree.get<std::string>("system.distro");
-    std::string distro_version = tree.get<std::string>("system.version");
-    std::string kernel = tree.get<std::string>("system.kernel");
+    auto distro = ini.getValue("system", "distro");
+    auto distro_version = ini.getValue("system", "version");
+    auto kernel = ini.getValue("system", "kernel");
 
     // Nodes
-    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
-    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
-    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
-    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
-    auto nodesSockets = std::stoul(tree.get<std::string>("nodes.sockets"));
-    auto nodesCoresPerSockets = std::stoul(tree.get<std::string>("nodes.cores_per_socket"));
-    auto nodesThreadsPerCore = std::stoul(tree.get<std::string>("nodes.threads_per_core"));
+    auto nodesPrefix = ini.getValue("nodes", "prefix");
+    auto nodesPadding = std::stoul(ini.getValue("nodes", "padding"));
+    auto nodesStartIp = ini.getValue("nodes", "node_start_ip");
+    auto nodesRootPassword = ini.getValue("nodes", "node_root_password");
+    auto nodesSockets = std::stoul(ini.getValue("nodes", "sockets"));
+    auto nodesCoresPerSockets
+        = std::stoul(ini.getValue("nodes", "cores_per_socket"));
+    auto nodesThreadsPerCore
+        = std::stoul(ini.getValue("nodes", "threads_per_core"));
 
     LOG_TRACE("Cluster name: {}", clusterName);
 
@@ -570,14 +566,13 @@ void Cluster::fillData(const std::string& answerfilePath)
     addNetwork(std::move(managementNetwork));
 
     // BMC
-    if (tree.count("BMC") != 0) {
+    if (ini.exists("BMC")) {
         // @TODO Integrate this. This is just a scope.
-        auto bmcAddress = tree.get<std::string>("BMC.address");
-        auto bmcPassword = tree.get<std::string>("BMC.password");
-        auto bmcUsername = tree.get<std::string>("BMC.username");
-        int bmcSerialPort = std::stoi(tree.get<std::string>("BMC.serialport"));
-        int bmcSerialSpeed
-            = std::stoi(tree.get<std::string>("BMC.serialspeed"));
+        auto bmcAddress = ini.getValue("BMC", "address");
+        auto bmcPassword = ini.getValue("BMC", "password");
+        auto bmcUsername = ini.getValue("BMC", "username");
+        int bmcSerialPort = std::stoi(ini.getValue("BMC", "serialport"));
+        int bmcSerialSpeed = std::stoi(ini.getValue("BMC", "serialspeed"));
 
         BMC bmc = BMC(bmcAddress, bmcUsername, bmcPassword, bmcSerialPort,
             bmcSerialSpeed, BMC::kind::IPMI);
@@ -589,9 +584,9 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     managementConnection.setAddress(managementNetworkIpAddress);
 
-    if (tree.count("network_management.mac_address") != 0) {
+    if (ini.exists("network_management", "mac_address")) {
         auto managementNetworkMacAddress
-            = tree.get<std::string>("network_management.mac_address");
+            = ini.getValue("network_management", "mac_address");
         managementConnection.setMAC(managementNetworkMacAddress);
     }
 
@@ -603,43 +598,43 @@ void Cluster::fillData(const std::string& answerfilePath)
         = Connection(&getNetwork(Network::Profile::External));
     externalConnection.setInterface(externalNetworkInterface);
 
-    if (tree.count("network_external.ip_address") != 0) {
+    if (ini.exists("network_external", "ip_address")) {
         auto externalNetworkIpAddress
-            = tree.get<std::string>("network_external.ip_address");
+            = ini.getValue("network_external", "ip_address");
         externalConnection.setAddress(externalNetworkIpAddress);
     } else {
         externalConnection.setAddress(
             externalConnection.fetchAddress(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.mac_address") != 0) {
+    if (ini.exists("network_external", "mac_address")) {
         auto externalNetworkMacAddress
-            = tree.get<std::string>("network_external.mac_address");
+            = ini.getValue("network_external", "mac_address");
         externalConnection.setMAC(externalNetworkMacAddress);
     }
 
     getHeadnode().addConnection(std::move(externalConnection));
 
     // Infiniband (Application) Network
-    if (tree.count("network_application") != 0) {
+    if (ini.exists("network_application")) {
         auto applicationNetworkInterface
-            = tree.get<std::string>("network_application.interface");
+            = ini.getValue("network_application", "interface");
         auto applicationNetworkIpAddress
-            = tree.get<std::string>("network_application.ip_address");
+            = ini.getValue("network_application", "ip_address");
         auto applicationNetworkSubnetMask
-            = tree.get<std::string>("network_application.subnet_mask");
+            = ini.getValue("network_application", "subnet_mask");
         auto applicationNetworkAddress
-            = tree.get<std::string>("network_application.network_address");
+            = ini.getValue("network_application", "network_address");
         auto applicationNetworkGateway
-            = tree.get<std::string>("network_application.gateway");
+            = ini.getValue("network_application", "gateway");
         auto applicationNetworkDomainName
-            = tree.get<std::string>("network_application.domain_name");
+            = ini.getValue("network_application", "domain_name");
         auto applicationNetworkMacAddress
-            = tree.get<std::string>("network_application.mac_address");
+            = ini.getValue("network_application", "mac_address");
 
         std::vector<std::string> applicationNetworkNameservers;
         boost::split(applicationNetworkNameservers,
-            tree.get<std::string>("network_application.nameservers"),
+            ini.getValue("network_application", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         addNetwork(Network::Profile::Application, Network::Type::Infiniband,
@@ -668,7 +663,7 @@ void Cluster::fillData(const std::string& answerfilePath)
     CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
 
     std::vector<std::string> nodes;
-    boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),
+    boost::split(nodes, ini.getValue("nodes", "mac_addresses"),
         boost::is_any_of(", "), boost::token_compress_on);
 
     int nodeValue = 0;

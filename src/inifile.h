@@ -23,6 +23,8 @@ public:
     void saveFile(const std::string& filepath);
     void saveFile(const std::string_view& filepath);
     void saveFile(const std::filesystem::path& filepath);
+    bool exists(const std::string& section, const std::string& key);
+    bool exists(const std::string& section);
     inifile();
 };
 
