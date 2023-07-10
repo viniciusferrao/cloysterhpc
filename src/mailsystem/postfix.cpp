@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "postfix.h"
+#include <cloysterhpc/mailsystem/postfix.h>
 
 Postfix::Postfix(Profile profile)
     : m_profile(profile)

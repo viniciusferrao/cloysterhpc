@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "queuesystem.h"
+#include <cloysterhpc/queuesystem/queuesystem.h>
 
 QueueSystem::QueueSystem(const Cluster& cluster)
     : m_cluster(cluster)

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "slurm.h"
-#include "../cluster.h"
-#include "../services/log.h"
+#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/queuesystem/slurm.h>
+#include <cloysterhpc/services/log.h>
 
 using cloyster::runCommand;
 
@@ -38,7 +38,7 @@ void SLURM::configureServer()
                 node.getCPU().getThreadsPerCore()));
 
     const auto& conf { fmt::format(
-#include "../tmpl/slurm.conf.tmpl"
+#include "cloysterhpc/tmpl/slurm.conf.tmpl"
         , fmt::arg("clusterName", m_cluster.getName()),
         fmt::arg("controlMachine", m_cluster.getHeadnode().getFQDN()),
         fmt::arg("partitionName", getDefaultQueue()),

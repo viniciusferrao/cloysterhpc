@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pbs.h"
+#include <cloysterhpc/queuesystem/pbs.h>
 
 PBS::PBS(const Cluster& cluster)
     : QueueSystem(cluster)

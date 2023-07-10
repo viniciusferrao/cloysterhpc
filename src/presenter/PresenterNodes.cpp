@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterNodes.h"
+#include <cloysterhpc/presenter/PresenterNodes.h>
 
 PresenterNodes::PresenterNodes(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

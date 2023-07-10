@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "xcat.h"
-#include "../functions.h"
-#include "execution.h"
-#include "shell.h"
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/execution.h>
+#include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/xcat.h>
 
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>

@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cluster.h"
-#include "functions.h"
-#include "headnode.h"
-#include "services/log.h"
-#include "services/xcat.h"
+#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/xcat.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

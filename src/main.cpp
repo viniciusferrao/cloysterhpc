@@ -5,15 +5,15 @@
 
 #include <cstdlib>
 
-#include "cluster.h"
-#include "const.h"
-#include "presenter/PresenterInstall.h"
-#include "services/log.h"
-#include "services/shell.h"
-#include "verification.h"
-#include "view/newt.h"
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/const.h>
+#include <cloysterhpc/presenter/PresenterInstall.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/verification.h>
+#include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
 
 #ifdef _CLOYSTER_I18N

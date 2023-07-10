@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "os.h"
+#include <cloysterhpc/os.h>
 #include <magic_enum.hpp>
 
 #ifndef NDEBUG
-#include "services/log.h"
+#include <cloysterhpc/services/log.h>
 #endif
 
 #include <fstream>
@@ -146,7 +146,7 @@ void OS::setDistro(std::string_view distro)
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif
-    if (const auto& rv
+    if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))

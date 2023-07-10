@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterInstructions.h"
+#include <cloysterhpc/presenter/PresenterInstructions.h>
 
 PresenterInstructions::PresenterInstructions(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

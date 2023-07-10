@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "server.h"
-#include "services/log.h"
+#include <cloysterhpc/server.h>
+#include <cloysterhpc/services/log.h>
 
 Server::Server(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections, std::optional<BMC> bmc)

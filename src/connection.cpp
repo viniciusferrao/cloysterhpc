@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "connection.h"
-#include "network.h"
-#include "services/log.h"
+#include <cloysterhpc/connection.h>
+#include <cloysterhpc/network.h>
+#include <cloysterhpc/services/log.h>
 
 #include <regex>
 #include <set>

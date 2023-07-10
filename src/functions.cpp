@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "functions.h"
+#include <cloysterhpc/functions.h>
 
 #include <cstdlib> /* getenv() */
 #include <iostream>
@@ -13,7 +13,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <fmt/format.h>
 
-#include "services/log.h"
+#include <cloysterhpc/services/log.h>
 
 namespace cloyster {
 

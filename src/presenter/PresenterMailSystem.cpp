@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterMailSystem.h"
+#include <cloysterhpc/presenter/PresenterMailSystem.h>
 
 PresenterMailSystem::PresenterMailSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

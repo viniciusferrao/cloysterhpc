@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "shell.h"
-#include "../functions.h"
-#include "log.h"
-#include "xcat.h"
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/xcat.h>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -14,9 +14,9 @@
 #include <fmt/format.h>
 #include <memory>
 
-#include "../NFS.h"
-#include "../cluster.h"
-#include "../repos.h"
+#include <cloysterhpc/NFS.h>
+#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/repos.h>
 
 using cloyster::runCommand;
 

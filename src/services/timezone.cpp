@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "timezone.h"
-#include "../functions.h"
-#include "log.h"
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/timezone.h>
 #include <fmt/format.h>
 #include <map>
 #include <string>

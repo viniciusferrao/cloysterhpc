@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "diskImage.h"
+#include <cloysterhpc/diskImage.h>
 
 const std::filesystem::path& DiskImage::getPath() const { return m_path; }
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterInfiniband.h"
+#include <cloysterhpc/presenter/PresenterInfiniband.h>
 
 #include <algorithm>
 

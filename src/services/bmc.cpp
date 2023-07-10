@@ -3,4 +3,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "bmc.h"
+#include <cloysterhpc/services/bmc.h>

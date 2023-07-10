@@ -6,7 +6,7 @@
 #ifndef CLOYSTERHPC_CLOYSTER_H_
 #define CLOYSTERHPC_CLOYSTER_H_
 
-#include "../src/services/log.h"
+#include <cloysterhpc/services/log.h>
 #include <fmt/format.h>
 #include <magic_enum.hpp>
 #include <string>

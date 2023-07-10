@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterInstall.h"
-#include "PresenterGeneralSettings.h"
-#include "PresenterHostId.h"
-#include "PresenterInfiniband.h"
-#include "PresenterInstructions.h"
-#include "PresenterLocale.h"
-#include "PresenterMailSystem.h"
-#include "PresenterNetwork.h"
-#include "PresenterNodes.h"
-#include "PresenterNodesOperationalSystem.h"
-#include "PresenterQueueSystem.h"
-#include "PresenterTime.h"
-#include "PresenterWelcome.h"
+#include <cloysterhpc/presenter/PresenterGeneralSettings.h>
+#include <cloysterhpc/presenter/PresenterHostId.h>
+#include <cloysterhpc/presenter/PresenterInfiniband.h>
+#include <cloysterhpc/presenter/PresenterInstall.h>
+#include <cloysterhpc/presenter/PresenterInstructions.h>
+#include <cloysterhpc/presenter/PresenterLocale.h>
+#include <cloysterhpc/presenter/PresenterMailSystem.h>
+#include <cloysterhpc/presenter/PresenterNetwork.h>
+#include <cloysterhpc/presenter/PresenterNodes.h>
+#include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
+#include <cloysterhpc/presenter/PresenterQueueSystem.h>
+#include <cloysterhpc/presenter/PresenterTime.h>
+#include <cloysterhpc/presenter/PresenterWelcome.h>
 
 PresenterInstall::PresenterInstall(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
