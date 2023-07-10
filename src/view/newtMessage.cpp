@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "newt.h"
+#include <cloysterhpc/view/newt.h>
 
 void Newt::message(const char* message) { Newt::message(nullptr, message); }
 

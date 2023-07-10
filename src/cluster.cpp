@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cluster.h"
-#include "functions.h"
-#include "headnode.h"
-#include "inifile.h"
-#include "services/log.h"
-#include "services/xcat.h"
+#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/xcat.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -400,7 +399,7 @@ void Cluster::fillTestData()
                                                Network::Profile::Management),
         {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
-    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN", 0, 115200, BMC::kind::IPMI };
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
 
     addNode("n01", nodeOS, nodeCPU, std::move(connections1));
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
@@ -412,6 +411,7 @@ void Cluster::fillTestData()
     nodeRootPassword = "pwdNodeRoot";
 }
 #endif
+
 
 void Cluster::fillData(const std::string& answerfilePath)
 {

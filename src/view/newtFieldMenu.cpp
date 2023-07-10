@@ -5,4 +5,4 @@
 
 // This file is empty since the method is now a template
 
-#include "newt.h"
+#include <cloysterhpc/view/newt.h>

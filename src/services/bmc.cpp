@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "bmc.h"
+#include <cloysterhpc/services/bmc.h>
 BMC::BMC(const std::string& address, const std::string& username,
     const std::string& password, int serialPort, int serialSpeed,
     const BMC::kind& kind)

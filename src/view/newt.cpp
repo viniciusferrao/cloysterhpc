@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "newt.h"
-
-#include "../functions.h"
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/view/newt.h>
 #include <cstdio> /* sprintf() */
 #include <cstring> /* strlen() */
 #include <newt.h>

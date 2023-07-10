@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterLocale.h"
+#include <cloysterhpc/presenter/PresenterLocale.h>
 
 PresenterLocale::PresenterLocale(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

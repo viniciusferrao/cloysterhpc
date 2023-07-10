@@ -2,7 +2,7 @@
 // Created by Lucas Gracioso <contact@lbgracioso.net> on 5/25/23.
 //
 
-#include "PresenterNodesOperationalSystem.h"
+#include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
 
 namespace fs = std::filesystem;
 

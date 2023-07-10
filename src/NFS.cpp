@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "NFS.h"
-#include "const.h"
-#include "functions.h"
+#include <cloysterhpc/NFS.h>
+#include <cloysterhpc/const.h>
+#include <cloysterhpc/functions.h>
 #include <fmt/format.h>
 
 using cloyster::runCommand;

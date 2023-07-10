@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "repos.h"
-#include "functions.h"
-#include "services/log.h"
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/repos.h>
+#include <cloysterhpc/services/log.h>
 #include <fstream>
 
 using boost::property_tree::ptree;

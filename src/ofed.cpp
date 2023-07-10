@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ofed.h"
+#include <cloysterhpc/ofed.h>
 
 using cloyster::runCommand;
 

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "headnode.h"
-#include "services/log.h"
+#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/services/log.h>
 
 #include <algorithm> /* std::remove */
 #include <fstream>

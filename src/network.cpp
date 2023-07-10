@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "network.h"
-#include "connection.h"
-#include "services/log.h"
+#include <cloysterhpc/connection.h>
+#include <cloysterhpc/network.h>
+#include <cloysterhpc/services/log.h>
 
 #include <arpa/inet.h> /* inet_*() functions */
 #include <boost/asio.hpp>

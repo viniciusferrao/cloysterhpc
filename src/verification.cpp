@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "verification.h"
+#include <cloysterhpc/verification.h>
 
 #include <stdexcept>
 #include <unistd.h>

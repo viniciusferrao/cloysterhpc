@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterHostId.h"
+#include <cloysterhpc/presenter/PresenterHostId.h>
 
 PresenterHostId::PresenterHostId(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

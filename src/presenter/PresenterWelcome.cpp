@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "PresenterWelcome.h"
+#include <cloysterhpc/presenter/PresenterWelcome.h>
 
 PresenterWelcome::PresenterWelcome(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)

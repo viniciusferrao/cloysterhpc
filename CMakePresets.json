@@ -2,7 +2,7 @@
     "version": 3,
     "cmakeMinimumRequired": {
         "major": 3,
-        "minor": 21,
+        "minor": 24,
         "patch": 0
     },
     "configurePresets": [
@@ -15,16 +15,15 @@
             "installDir": "${sourceDir}/out/install/${presetName}"
         },
         {
-            "name": "conf-unixlike-common",
-            "description": "Unix-like OS settings for gcc and clang toolchains",
+            "name": "conf-linux-common",
+            "description": "Linux OS settings for gcc and clang toolchains",
             "hidden": true,
             "inherits": "conf-common",
             "condition": {
                 "type": "inList",
                 "string": "${hostSystemName}",
                 "list": [
-                    "Linux",
-                    "Darwin"
+                    "Linux"
                 ]
             },
             "vendor": {
@@ -34,10 +33,10 @@
             }
         },
         {
-            "name": "unixlike-gcc-debug",
+            "name": "linux-gcc-debug",
             "displayName": "gcc Debug",
-            "description": "Target Unix-like OS with the gcc compiler, debug build type",
-            "inherits": "conf-unixlike-common",
+            "description": "Target Linux OS with the gcc compiler, debug build type",
+            "inherits": "conf-linux-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
@@ -45,10 +44,10 @@
             }
         },
         {
-            "name": "unixlike-gcc-release",
+            "name": "linux-gcc-release",
             "displayName": "gcc Release",
-            "description": "Target Unix-like OS with the gcc compiler, release build type",
-            "inherits": "conf-unixlike-common",
+            "description": "Target Linux OS with the gcc compiler, release build type",
+            "inherits": "conf-linux-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
@@ -56,10 +55,10 @@
             }
         },
         {
-            "name": "unixlike-clang-debug",
+            "name": "linux-clang-debug",
             "displayName": "clang Debug",
-            "description": "Target Unix-like OS with the clang compiler, debug build type",
-            "inherits": "conf-unixlike-common",
+            "description": "Target Linux OS with the clang compiler, debug build type",
+            "inherits": "conf-linux-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
@@ -67,10 +66,10 @@
             }
         },
         {
-            "name": "unixlike-clang-release",
+            "name": "linux-clang-release",
             "displayName": "clang Release",
-            "description": "Target Unix-like OS with the clang compiler, release build type",
-            "inherits": "conf-unixlike-common",
+            "description": "Target Linux OS with the clang compiler, release build type",
+            "inherits": "conf-linux-common",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_COMPILER": "clang++",
@@ -92,32 +91,32 @@
             }
         },
         {
-            "name": "test-unixlike-gcc-debug",
+            "name": "test-linux-gcc-debug",
             "displayName": "Strict",
             "description": "Enable output and stop on failure",
             "inherits": "test-common",
-            "configurePreset": "unixlike-gcc-debug"
+            "configurePreset": "linux-gcc-debug"
         },
         {
-            "name": "test-unixlike-gcc-release",
+            "name": "test-linux-gcc-release",
             "displayName": "Strict",
             "description": "Enable output and stop on failure",
             "inherits": "test-common",
-            "configurePreset": "unixlike-gcc-release"
+            "configurePreset": "linux-gcc-release"
         },
         {
-            "name": "test-unixlike-clang-debug",
+            "name": "test-linux-clang-debug",
             "displayName": "Strict",
             "description": "Enable output and stop on failure",
             "inherits": "test-common",
-            "configurePreset": "unixlike-clang-debug"
+            "configurePreset": "linux-clang-debug"
         },
         {
-            "name": "test-unixlike-clang-release",
+            "name": "test-linux-clang-release",
             "displayName": "Strict",
             "description": "Enable output and stop on failure",
             "inherits": "test-common",
-            "configurePreset": "unixlike-clang-release"
+            "configurePreset": "linux-clang-release"
         }
     ]
 }
