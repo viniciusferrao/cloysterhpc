@@ -1,69 +1,149 @@
-cmake_minimum_required(VERSION 3.16...3.25)
-
-# Library: newt
-find_package(newt REQUIRED)
-
-# Library: fmt
-find_package(fmt CONFIG REQUIRED)
-
-# Library: CLI11
-find_package(CLI11 CONFIG REQUIRED)
-
-# Library: Boost
-find_package(Boost CONFIG REQUIRED
-        COMPONENTS system thread
-        )
-
-# Library: spdlog
-find_package(spdlog CONFIG REQUIRED)
-
-# Library: gsl-lite
-find_package(gsl-lite CONFIG REQUIRED)
-
-# Library: magic_enum
-find_package(magic_enum CONFIG REQUIRED)
-
-# Library: doctest
-find_package(doctest CONFIG REQUIRED)
+cmake_minimum_required(VERSION 3.24)
 
 project(CmakeConfigPackageTests LANGUAGES CXX)
 
-# List all files containing tests. (Change as needed)
-set(TESTFILES        # All .cpp files in tests/
-        src/main.cpp
-        src/network.cpp
-        )
+# ---- Test as standalone project the exported config package ----
 
-set(TEST_MAIN unit_test)   # Default name for test executable (change if you wish).
-set(TEST_RUNNER_PARAMS "")  # Any arguments to feed the test runner (change as needed).
+if(PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
+  enable_testing()
 
-# --------------------------------------------------------------------------------
-#                         Make Tests (no change needed).
-# --------------------------------------------------------------------------------
-add_executable(${TEST_MAIN} ${TESTFILES})
-target_link_libraries(${TEST_MAIN}
-        PUBLIC project_options project_warnings
-        PRIVATE
-			doctest::doctest
-			fmt::fmt
-			CLI11::CLI11
-			Boost::headers
-			Boost::system
-			Boost::thread
-			spdlog::spdlog
-			gsl::gsl-lite
-			magic_enum::magic_enum
-			)
+  find_package(cloysterhpc CONFIG REQUIRED) # for intro, project_options, ...
 
-set_target_properties(${TEST_MAIN} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+  if(NOT TARGET cloysterhpc_options)
+    message(FATAL_ERROR "Required config package not found!")
+    return() # be strictly paranoid for Template Janitor github action! CK
+  endif()
+endif()
 
-set_target_properties(${TEST_MAIN} PROPERTIES
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED YES
-        CXX_EXTENSIONS NO
-        )
+# ---- Dependencies ----
 
-add_test(
-        # Use some per-module/project prefix so that it is easier to run only tests for this module
-        NAME ${LIBRARY_NAME}.${TEST_MAIN}
-        COMMAND ${TEST_MAIN} ${TEST_RUNNER_PARAMS})
+# Provide a simple smoke test to make sure that the CLI works and can display a --help message
+add_test(NAME cli.has_help COMMAND main --help)
+
+# Provide a test to verify that the version being reported from the application
+# matches the version given to CMake. This will be important once you package
+# your program. Real world shows that this is the kind of simple mistake that is easy
+# to make, but also easy to test for.
+add_test(NAME cli.version_matches COMMAND main --version)
+set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
+
+file(GLOB TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+message(STATUS "Test files found are: ${TEST_SOURCES}")
+
+add_executable(${PROJECT_NAME} ${TEST_SOURCES})
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE cloysterhpc::cloysterhpc_warnings
+          cloysterhpc::cloysterhpc_options
+          doctest::doctest
+          fmt::fmt
+          spdlog::spdlog
+          magic_enum::magic_enum
+          gsl::gsl-lite
+          boost::boost)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
+
+if(WIN32 AND BUILD_SHARED_LIBS)
+  add_custom_command(
+    TARGET ${PROJECT_NAME}
+    PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:tests> $<TARGET_FILE_DIR:tests>
+    COMMAND_EXPAND_LISTS)
+endif()
+
+## enable compiler warnings
+#if(NOT TEST_INSTALLED_VERSION)
+#  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+#    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wpedantic -Wextra -Werror)
+#  elseif(MSVC)
+#    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
+#    target_compile_definitions(${PROJECT_NAME} PUBLIC DOCTEST_CONFIG_USE_STD_HEADERS)
+#  endif()
+#endif()
+
+# ---- Add CloysterHPCTests ----
+
+# Note: doctest and similar testing frameworks can automatically configure CMake tests. For other
+# testing frameworks add the tests target instead: add_test(NAME ${PROJECT_NAME} COMMAND
+# ${PROJECT_NAME})
+
+if (cloysterhpc_ENABLE_CONAN)
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+  string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" CMAKE_SYSTEM_PROCESSOR_LOWER)
+
+  include(${doctest_DIR}/doctest-${CMAKE_BUILD_TYPE_LOWER}-${CMAKE_SYSTEM_PROCESSOR_LOWER}-data.cmake)
+  include(${doctest_BUILD_DIRS_${CMAKE_BUILD_TYPE_UPPER}}/doctest.cmake)
+else()
+  include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
+endif()
+
+doctest_discover_tests(${PROJECT_NAME})
+
+# ---- code coverage ----
+
+if(ENABLE_TEST_COVERAGE)
+  target_compile_options(${PROJECT_NAME} PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
+  target_link_options(${PROJECT_NAME} PUBLIC -fprofile-arcs -ftest-coverage)
+endif()
+
+# automatically discover tests that are defined in catch based test files you can modify the unittests. Set TEST_PREFIX
+# to whatever you want, or use different for different binaries
+#catch_discover_tests(
+#  tests
+#  TEST_PREFIX
+#  "unittests."
+#  REPORTER
+#  XML
+#  OUTPUT_DIR
+#        ../test-catch
+#  OUTPUT_PREFIX
+#  "unittests."
+#  OUTPUT_SUFFIX
+#  .xml)
+
+# Add a file containing a set of constexpr tests
+#add_executable(constexpr_tests ../test-catch/constexpr_tests.cpp)
+#target_link_libraries(
+#  constexpr_tests
+#  PRIVATE cloysterhpc::cloysterhpc_warnings
+#          cloysterhpc::cloysterhpc_options
+#          doctest::doctest)
+#
+#catch_discover_tests(
+#  constexpr_tests
+#  TEST_PREFIX
+#  "constexpr."
+#  REPORTER
+#  XML
+#  OUTPUT_DIR
+#        ../test-catch
+#  OUTPUT_PREFIX
+#  "constexpr."
+#  OUTPUT_SUFFIX
+#  .xml)
+
+# Disable the constexpr portion of the test, and build again this allows us to have an executable that we can debug when
+# things go wrong with the constexpr testing
+#add_executable(relaxed_constexpr_tests ../test-catch/constexpr_tests.cpp)
+#target_link_libraries(
+#  relaxed_constexpr_tests
+#  PRIVATE cloysterhpc::cloysterhpc_warnings
+#          cloysterhpc::cloysterhpc_options
+#          doctest::doctest)
+#
+#target_compile_definitions(relaxed_constexpr_tests PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
+#
+#catch_discover_tests(
+#  relaxed_constexpr_tests
+#  TEST_PREFIX
+#  "relaxed_constexpr."
+#  REPORTER
+#  XML
+#  OUTPUT_DIR
+#        ../test-catch
+#  OUTPUT_PREFIX
+#  "relaxed_constexpr."
+#  OUTPUT_SUFFIX
+#  .xml)

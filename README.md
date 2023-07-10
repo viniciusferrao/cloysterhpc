@@ -117,7 +117,7 @@ nature and `root` execution requirements.
 
 ## Running tests
 
-To run tests you need to enable `-DENABLE_TESTING` flag with CMake.
+To run tests you need to run `ctest` inside the build directory.
 
 ### Recommended VM settings
 

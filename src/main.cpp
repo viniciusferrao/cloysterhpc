@@ -5,7 +5,6 @@
 
 #include <cstdlib>
 
-#include "cloyster.h"
 #include "cluster.h"
 #include "const.h"
 #include "presenter/PresenterInstall.h"
@@ -14,6 +13,8 @@
 #include "verification.h"
 #include "view/newt.h"
 #include <CLI/CLI.hpp>
+#include <cloysterhpc/cloyster.h>
+#include <internal_use_only/config.hpp>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"

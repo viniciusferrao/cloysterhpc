@@ -1,13 +1,13 @@
-# Docs at https://docs.conan.io/en/latest/reference/conanfile_txt.html
-
 [requires]
 cli11/2.3.2
-fmt/9.1.0
-spdlog/1.11.0
+# libfmt version will be automatically selected by spdlog
+#fmt/9.1.0
+spdlog/[>=1.11.0]
 boost/1.82.0
 magic_enum/0.9.2
 gsl-lite/0.40.0
 doctest/2.4.11
 
-[generators]
-cmake_find_package_multi
+[layout]
+cmake_layout
+

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "../../src/network.h"
-#include "../../src/connection.cpp"
-#include "../../src/connection.h"
-#include "../../src/network.cpp"
+#include "../src/network.h"
+#include "../src/connection.cpp"
+#include "../src/connection.h"
+#include "../src/network.cpp"
 #include <boost/asio.hpp>
 #include <doctest/doctest.h>
 
