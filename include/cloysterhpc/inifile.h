@@ -5,7 +5,7 @@
 #ifndef CLOYSTERHPC_INIFILE_H_
 #define CLOYSTERHPC_INIFILE_H_
 
-#include "include/SimpleIni.h"
+#include "../../src/include/SimpleIni.h"
 #include <filesystem>
 
 class inifile {

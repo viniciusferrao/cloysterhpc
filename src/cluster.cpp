@@ -6,6 +6,7 @@
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
+#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -258,6 +259,8 @@ void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
+void Cluster::addNode(Node node) { m_nodes.emplace_back(node); }
+
 #ifndef NDEBUG
 void Cluster::printNetworks(
     const std::list<std::unique_ptr<Network>>& networks) const
@@ -399,7 +402,7 @@ void Cluster::fillTestData()
                                                Network::Profile::Management),
         {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
-    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN", 0, 115200, BMC::kind::IPMI };
 
     addNode("n01", nodeOS, nodeCPU, std::move(connections1));
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
@@ -411,7 +414,6 @@ void Cluster::fillTestData()
     nodeRootPassword = "pwdNodeRoot";
 }
 #endif
-
 
 void Cluster::fillData(const std::string& answerfilePath)
 {
@@ -535,15 +537,80 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto kernel = ini.getValue("system", "kernel");
 
     // Nodes
-    auto nodesPrefix = ini.getValue("nodes", "prefix");
-    auto nodesPadding = std::stoul(ini.getValue("nodes", "padding"));
-    auto nodesStartIp = ini.getValue("nodes", "node_start_ip");
-    auto nodesRootPassword = ini.getValue("nodes", "node_root_password");
-    auto nodesSockets = std::stoul(ini.getValue("nodes", "sockets"));
-    auto nodesCoresPerSockets
-        = std::stoul(ini.getValue("nodes", "cores_per_socket"));
-    auto nodesThreadsPerCore
-        = std::stoul(ini.getValue("nodes", "threads_per_core"));
+
+    OS nodeOS;
+    nodeOS.setArch(OS::Arch::x86_64);
+    nodeOS.setFamily(OS::Family::Linux);
+    nodeOS.setPlatform(OS::Platform::el8);
+    nodeOS.setDistro(distro);
+    nodeOS.setKernel(kernel);
+    nodeOS.setVersion(distro_version);
+
+    Node genericNode;
+
+    if (ini.exists("node")) {
+
+        CPU genericNodeCPU;
+        BMC genericNodeBMC;
+
+        if (ini.exists("node", "prefix")) {
+            genericNode.setPrefix(ini.getValue("node", "prefix"));
+        }
+
+        if (ini.exists("node", "padding")) {
+            genericNode.setPadding(std::stoul(ini.getValue("node", "padding")));
+        }
+
+        if (ini.exists("node", "node_start_ip")) {
+            genericNode.setNodeStartIp(boost::asio::ip::make_address(
+                ini.getValue("node", "node_start_ip")));
+        }
+
+        if (ini.exists("node", "node_root_password")) {
+            genericNode.setNodeRootPassword(
+                ini.getValue("node", "node_root_password"));
+        }
+
+        if (ini.exists("node", "sockets")) {
+            genericNodeCPU.setSockets(
+                std::stoul(ini.getValue("node", "sockets")));
+        }
+
+        if (ini.exists("node", "cores_per_socket")) {
+            genericNodeCPU.setCoresPerSocket(
+                std::stoul(ini.getValue("node", "cores_per_socket")));
+        }
+
+        if (ini.exists("node", "threads_per_core")) {
+            genericNodeCPU.setThreadsPerCore(
+                std::stoul(ini.getValue("node", "threads_per_core")));
+        }
+
+        if (ini.exists("node", "bmc_address")) {
+            genericNodeBMC.setAddress(ini.getValue("node", "bmc_address"));
+        }
+
+        if (ini.exists("node", "bmc_username")) {
+            genericNodeBMC.setUsername(ini.getValue("node", "bmc_username"));
+        }
+
+        if (ini.exists("node", "bmc_password")) {
+            genericNodeBMC.setPassword(ini.getValue("node", "bmc_password"));
+        }
+
+        if (ini.exists("node", "bmc_serialport")) {
+            genericNodeBMC.setSerialPort(
+                std::stoul(ini.getValue("node", "bmc_serialport")));
+        }
+
+        if (ini.exists("node", "bmc_serialspeed")) {
+            genericNodeBMC.setSerialSpeed(
+                std::stoul(ini.getValue("node", "bmc_serialspeed")));
+        }
+
+        genericNode.setCPU(genericNodeCPU);
+        genericNode.setBMC(genericNodeBMC);
+    }
 
     LOG_TRACE("Cluster name: {}", clusterName);
 
@@ -564,19 +631,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(std::move(managementNetwork));
-
-    // BMC
-    if (ini.exists("BMC")) {
-        // @TODO Integrate this. This is just a scope.
-        auto bmcAddress = ini.getValue("BMC", "address");
-        auto bmcPassword = ini.getValue("BMC", "password");
-        auto bmcUsername = ini.getValue("BMC", "username");
-        int bmcSerialPort = std::stoi(ini.getValue("BMC", "serialport"));
-        int bmcSerialSpeed = std::stoi(ini.getValue("BMC", "serialspeed"));
-
-        BMC bmc = BMC(bmcAddress, bmcUsername, bmcPassword, bmcSerialPort,
-            bmcSerialSpeed, BMC::kind::IPMI);
-    }
 
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
@@ -650,42 +704,177 @@ void Cluster::fillData(const std::string& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-
-    OS nodeOS;
-    nodeOS.setArch(OS::Arch::x86_64);
-    nodeOS.setFamily(OS::Family::Linux);
-    nodeOS.setPlatform(OS::Platform::el8);
-    nodeOS.setDistro(distro);
-    nodeOS.setKernel(kernel);
-    nodeOS.setVersion(distro_version);
     m_headnode.setOS(nodeOS);
 
-    CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
+    // BMC
+    if (ini.exists("BMC")) {
+        // @TODO Integrate this. This is just a scope.
+        auto bmcAddress = ini.getValue("BMC", "address");
+        auto bmcPassword = ini.getValue("BMC", "password");
+        auto bmcUsername = ini.getValue("BMC", "username");
+        int bmcSerialPort = std::stoi(ini.getValue("BMC", "serialport"));
+        int bmcSerialSpeed = std::stoi(ini.getValue("BMC", "serialspeed"));
 
-    std::vector<std::string> nodes;
-    boost::split(nodes, ini.getValue("nodes", "mac_addresses"),
-        boost::is_any_of(", "), boost::token_compress_on);
+        BMC bmc = BMC(bmcAddress, bmcUsername, bmcPassword, bmcSerialPort,
+            bmcSerialSpeed, BMC::kind::IPMI);
+    }
 
-    int nodeValue = 0;
-    for (const std::string& node : nodes) {
-        nodeValue++;
+    int nodeCounter = 1;
+    while (true) {
+
+        std::string nodeSection = fmt::format("node.{}", nodeCounter);
+        if (!ini.exists(nodeSection)) {
+            break;
+        }
+
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(
             &getNetwork(Network::Profile::Management));
 
-        auto nodeName
-            = fmt::format("{}{:0>{}}", nodesPrefix, nodeValue, nodesPadding);
+        Node newNode;
+        CPU newNodeCPU;
+        BMC newNodeBMC;
 
-        connection.setMAC(node);
-        connection.setAddress(nodesStartIp);
+        if (ini.exists(nodeSection, "prefix")) {
+            newNode.setPrefix(ini.getValue("node", "prefix"));
+        } else if (genericNode.getPrefix().has_value()) {
+            newNode.setPrefix(genericNode.getPrefix());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a prefix value", nodeCounter));
+        }
 
-        // @TODO Integrate answerfile BMC
-        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+        if (ini.exists(nodeSection, "padding")) {
+            newNode.setPadding(std::stoul(ini.getValue("node", "padding")));
+        } else if (genericNode.getPadding().has_value()) {
+            newNode.setPadding(genericNode.getPadding().value());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a padding value", nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "node_start_ip")) {
+            newNode.setNodeStartIp(boost::asio::ip::make_address(
+                ini.getValue("node", "node_start_ip")));
+        } else if (genericNode.getNodeStartIp().has_value()) {
+            newNode.setNodeStartIp(genericNode.getNodeStartIp().value());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a node_start_ip value",
+                    nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "node_root_password")) {
+            newNode.setNodeRootPassword(
+                ini.getValue("node", "node_root_password"));
+        } else if (genericNode.getNodeRootPassword().has_value()) {
+            newNode.setNodeRootPassword(
+                genericNode.getNodeRootPassword().value());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a node_root_password value",
+                nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "sockets")) {
+            newNodeCPU.setSockets(std::stoul(ini.getValue("node", "sockets")));
+        } else if (genericNode.getCPU().getSockets() != 0) {
+            newNodeCPU.setSockets(genericNode.getCPU().getSockets());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a sockets value", nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "cores_per_socket")) {
+            newNodeCPU.setCoresPerSocket(
+                std::stoul(ini.getValue("node", "cores_per_socket")));
+        } else if (genericNode.getCPU().getCoresPerSocket() != 0) {
+            newNodeCPU.setCoresPerSocket(
+                genericNode.getCPU().getCoresPerSocket());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a cores_per_socket value",
+                nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "threads_per_core")) {
+            newNodeCPU.setThreadsPerCore(
+                std::stoul(ini.getValue("node", "threads_per_core")));
+        } else if (genericNode.getCPU().getThreadsPerCore() != 0) {
+            newNodeCPU.setThreadsPerCore(
+                genericNode.getCPU().getThreadsPerCore());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a threads_per_core value",
+                nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "bmc_address")) {
+            newNodeBMC.setAddress(ini.getValue("node", "bmc_address"));
+        } else if (!genericNode.getBMC()->getAddress().empty()) {
+            newNodeBMC.setAddress(genericNode.getBMC()->getAddress());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_address value", nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "bmc_username")) {
+            newNodeBMC.setUsername(ini.getValue("node", "bmc_username"));
+
+        } else if (!genericNode.getBMC()->getUsername().empty()) {
+            newNodeBMC.setUsername(genericNode.getBMC()->getUsername());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_username value", nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "bmc_password")) {
+            newNodeBMC.setPassword(ini.getValue("node", "bmc_password"));
+
+        } else if (!genericNode.getBMC()->getPassword().empty()) {
+            newNodeBMC.setPassword(genericNode.getBMC()->getPassword());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_password value", nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "bmc_serialport")) {
+            newNodeBMC.setSerialPort(
+                std::stoul(ini.getValue("node", "bmc_serialport")));
+
+        } else if (!genericNode.getBMC()->getSerialPort() != 0) {
+            newNodeBMC.setSerialPort(genericNode.getBMC()->getSerialPort());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a bmc_serialport value",
+                    nodeCounter));
+        }
+
+        if (ini.exists(nodeSection, "bmc_serialspeed")) {
+            newNodeBMC.setSerialSpeed(
+                std::stoul(ini.getValue("node", "bmc_serialspeed")));
+
+        } else if (!!genericNode.getBMC()->getSerialSpeed() != 0) {
+            newNodeBMC.setSerialSpeed(genericNode.getBMC()->getSerialSpeed());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a bmc_serialspeed value",
+                    nodeCounter));
+        }
+
+        genericNode.setCPU(newNodeCPU);
+        genericNode.setBMC(newNodeBMC);
+
+        connection.setMAC(newNode.getMacAddress());
+        connection.setAddress(newNode.getNodeStartIp().value());
+
+        addNode(newNode);
+        nodeCounter++;
     }
 
     /* Bad and old data - @TODO Must improve */
-    nodePrefix = nodesPrefix;
-    nodePadding = nodesPadding;
-    nodeStartIP = boost::asio::ip::make_address(nodesStartIp);
-    nodeRootPassword = nodesRootPassword;
+    nodePrefix = genericNode.getPrefix().value();
+    nodePadding = genericNode.getPadding().value();
+    nodeStartIP = genericNode.getNodeStartIp().value();
+    nodeRootPassword = genericNode.getNodeRootPassword().value();
 }

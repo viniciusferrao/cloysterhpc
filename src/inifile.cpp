@@ -2,7 +2,7 @@
 // Created by Lucas Gracioso <contact@lbgracioso.net> on 7/6/23.
 //
 
-#include "inifile.h"
+#include "cloysterhpc/inifile.h"
 
 void inifile::loadFile(const std::string& filepath)
 {

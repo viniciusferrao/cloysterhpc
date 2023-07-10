@@ -105,6 +105,7 @@ public:
         std::list<Connection>&& connections, BMC& bmc);
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections);
+    void addNode(Node node);
 
     void fillData(const std::string& answerfilePath);
 

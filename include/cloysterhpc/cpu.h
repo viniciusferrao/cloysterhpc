@@ -31,6 +31,12 @@ public:
     [[nodiscard]] size_t getThreads() const;
     [[nodiscard]] size_t getCoresPerSocket() const;
     [[nodiscard]] size_t getThreadsPerCore() const;
+
+    void setSockets(size_t sockets);
+    void setCores(size_t cores);
+    void setThreads(size_t threads);
+    void setCoresPerSocket(size_t coresPerSocket);
+    void setThreadsPerCore(size_t threadsPerCore);
 };
 
 #endif // CLOYSTERHPC_CPU_H_

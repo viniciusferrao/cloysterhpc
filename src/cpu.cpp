@@ -49,3 +49,15 @@ size_t CPU::getThreads() const { return m_threads; }
 size_t CPU::getCoresPerSocket() const { return m_coresPerSocket; }
 
 size_t CPU::getThreadsPerCore() const { return m_threadsPerCore; }
+
+void CPU::setSockets(size_t sockets) { m_sockets = sockets; }
+void CPU::setCores(size_t cores) { m_cores = cores; }
+void CPU::setThreads(size_t threads) { m_threads = threads; }
+void CPU::setCoresPerSocket(size_t coresPerSocket)
+{
+    m_coresPerSocket = coresPerSocket;
+}
+void CPU::setThreadsPerCore(size_t threadsPerCore)
+{
+    m_threadsPerCore = threadsPerCore;
+}

@@ -5,7 +5,7 @@
 
 #include <cloysterhpc/services/bmc.h>
 BMC::BMC(const std::string& address, const std::string& username,
-    const std::string& password, int serialPort, int serialSpeed,
+    const std::string& password, size_t serialPort, size_t serialSpeed,
     const BMC::kind& kind)
     : m_address(address)
     , m_username(username)
@@ -15,3 +15,18 @@ BMC::BMC(const std::string& address, const std::string& username,
     , m_kind(kind)
 {
 }
+
+BMC::BMC() {};
+
+const std::string& BMC::getAddress() const { return m_address; }
+void BMC::setAddress(const std::string& address) { m_address = address; }
+const std::string& BMC::getUsername() const { return m_username; }
+void BMC::setUsername(const std::string& username) { m_username = username; }
+const std::string& BMC::getPassword() const { return m_password; }
+void BMC::setPassword(const std::string& password) { m_password = password; }
+size_t BMC::getSerialPort() const { return m_serialPort; }
+void BMC::setSerialPort(size_t serialPort) { m_serialPort = serialPort; }
+size_t BMC::getSerialSpeed() const { return m_serialSpeed; }
+void BMC::setSerialSpeed(size_t serialSpeed) { m_serialSpeed = serialSpeed; }
+BMC::kind BMC::getKind() const { return m_kind; }
+void BMC::setKind(BMC::kind kind) { m_kind = kind; }
