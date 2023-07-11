@@ -15,8 +15,6 @@ if(PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
   endif()
 endif()
 
-# ---- Dependencies ----
-
 # Provide a simple smoke test to make sure that the CLI works and can display a --help message
 add_test(NAME cli.has_help COMMAND main --help)
 
@@ -40,7 +38,13 @@ target_link_libraries(
           spdlog::spdlog
           magic_enum::magic_enum
           gsl::gsl-lite
-          boost::boost)
+          Boost::headers
+          Boost::system
+          Boost::thread)
+
+target_include_directories(${PROJECT_NAME} ${WARNING_GUARD} PRIVATE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/../include>)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
 
@@ -52,17 +56,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
     COMMAND_EXPAND_LISTS)
 endif()
 
-## enable compiler warnings
-#if(NOT TEST_INSTALLED_VERSION)
-#  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-#    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Wpedantic -Wextra -Werror)
-#  elseif(MSVC)
-#    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
-#    target_compile_definitions(${PROJECT_NAME} PUBLIC DOCTEST_CONFIG_USE_STD_HEADERS)
-#  endif()
-#endif()
-
-# ---- Add CloysterHPCTests ----
+# ---- Add Tests ----
 
 # Note: doctest and similar testing frameworks can automatically configure CMake tests. For other
 # testing frameworks add the tests target instead: add_test(NAME ${PROJECT_NAME} COMMAND
@@ -87,63 +81,3 @@ if(ENABLE_TEST_COVERAGE)
   target_compile_options(${PROJECT_NAME} PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
   target_link_options(${PROJECT_NAME} PUBLIC -fprofile-arcs -ftest-coverage)
 endif()
-
-# automatically discover tests that are defined in catch based test files you can modify the unittests. Set TEST_PREFIX
-# to whatever you want, or use different for different binaries
-#catch_discover_tests(
-#  tests
-#  TEST_PREFIX
-#  "unittests."
-#  REPORTER
-#  XML
-#  OUTPUT_DIR
-#        ../test-catch
-#  OUTPUT_PREFIX
-#  "unittests."
-#  OUTPUT_SUFFIX
-#  .xml)
-
-# Add a file containing a set of constexpr tests
-#add_executable(constexpr_tests ../test-catch/constexpr_tests.cpp)
-#target_link_libraries(
-#  constexpr_tests
-#  PRIVATE cloysterhpc::cloysterhpc_warnings
-#          cloysterhpc::cloysterhpc_options
-#          doctest::doctest)
-#
-#catch_discover_tests(
-#  constexpr_tests
-#  TEST_PREFIX
-#  "constexpr."
-#  REPORTER
-#  XML
-#  OUTPUT_DIR
-#        ../test-catch
-#  OUTPUT_PREFIX
-#  "constexpr."
-#  OUTPUT_SUFFIX
-#  .xml)
-
-# Disable the constexpr portion of the test, and build again this allows us to have an executable that we can debug when
-# things go wrong with the constexpr testing
-#add_executable(relaxed_constexpr_tests ../test-catch/constexpr_tests.cpp)
-#target_link_libraries(
-#  relaxed_constexpr_tests
-#  PRIVATE cloysterhpc::cloysterhpc_warnings
-#          cloysterhpc::cloysterhpc_options
-#          doctest::doctest)
-#
-#target_compile_definitions(relaxed_constexpr_tests PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
-#
-#catch_discover_tests(
-#  relaxed_constexpr_tests
-#  TEST_PREFIX
-#  "relaxed_constexpr."
-#  REPORTER
-#  XML
-#  OUTPUT_DIR
-#        ../test-catch
-#  OUTPUT_PREFIX
-#  "relaxed_constexpr."
-#  OUTPUT_SUFFIX
-#  .xml)

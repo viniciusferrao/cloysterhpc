@@ -29,7 +29,8 @@ target_link_system_libraries(
     gsl::gsl-lite
     magic_enum::magic_enum
     resolv
-    ${STDC++FS})
+    ${STDC++FS}
+    doctest::doctest)
 
 target_include_directories(main PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
 target_include_directories(main ${WARNING_GUARD} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)

@@ -10,7 +10,7 @@ function(cloysterhpc_setup_dependencies)
   # For each dependency, see if it's
   # already been provided to us by a parent project
 
-  if(NOT TARGET boost::boost)
+  if(NOT (TARGET Boost::headers OR TARGET Boost::system OR TARGET Boost::thread))
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME Boost)
     else()
