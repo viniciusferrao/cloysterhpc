@@ -29,17 +29,16 @@ public:
     Node();
 
     const std::optional<std::string>& getPrefix() const;
-    void setPrefix(const std::optional<std::string>& mPrefix);
+    void setPrefix(const std::optional<std::string>& prefix);
     const std::optional<size_t>& getPadding() const;
-    void setPadding(const std::optional<size_t>& mPadding);
+    void setPadding(const std::optional<size_t>& padding);
     const std::optional<boost::asio::ip::address>& getNodeStartIp() const;
     void setNodeStartIp(
-        const std::optional<boost::asio::ip::address>& mNodeStartIp);
-    const std::string& getMacAddress() const;
-    void setMacAddress(const std::string& mMacAddress);
+        const std::optional<boost::asio::ip::address>& nodeStartIp);
+    const std::string& getMACAddress() const;
+    void setMACAddress(const std::string& macAddress);
     const std::optional<std::string>& getNodeRootPassword() const;
-    void setNodeRootPassword(
-        const std::optional<std::string>& mNodeRootPassword);
+    void setNodeRootPassword(const std::optional<std::string>& ndeRootPassword);
 };
 
 #endif // CLOYSTERHPC_NODE_H_

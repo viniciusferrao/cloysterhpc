@@ -50,6 +50,8 @@ public:
         const std::string& ip);
     void addConnection(Connection&& connection);
 
+    void setConnection(const std::list<Connection>& connection);
+
     [[nodiscard]] const Connection& getConnection(Network::Profile) const;
     //    [[nodiscard]] Connection& getConnection(Network::Profile);
 

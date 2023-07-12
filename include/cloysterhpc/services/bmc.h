@@ -19,7 +19,7 @@ struct BMC {
     kind m_kind = kind::IPMI;
 
     BMC(const std::string& address, const std::string& username,
-        const std::string& password, int serialPort, int serialSpeed,
+        const std::string& password, size_t serialPort, size_t serialSpeed,
         const kind& kind);
 
     BMC();
