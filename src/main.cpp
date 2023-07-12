@@ -95,54 +95,61 @@ int main(int argc, const char** argv)
 
     LOG_INFO("{} Started", productName);
 
-    if (cloyster::showVersion) {
-        fmt::print("{}: Version {}\n", productName, productVersion);
-        return EXIT_SUCCESS;
-    }
+    try {
+        if (cloyster::showVersion) {
+            fmt::print("{}: Version {}\n", productName, productVersion);
+            return EXIT_SUCCESS;
+        }
 
-    if (cloyster::runAsRoot) {
-        cloyster::checkEffectiveUserId();
-    }
+        if (cloyster::runAsRoot) {
+            cloyster::checkEffectiveUserId();
+        }
 
-    if (cloyster::dryRun) {
-        fmt::print("Dry run enabled.\n");
-    }
+        if (cloyster::dryRun) {
+            fmt::print("Dry run enabled.\n");
+        }
 
-    //@TODO implement CLI feature
-    if (cloyster::enableCLI) {
-        fmt::print("CLI feature not implemented.\n");
-        return EXIT_FAILURE;
-    }
+        //@TODO implement CLI feature
+        if (cloyster::enableCLI) {
+            fmt::print("CLI feature not implemented.\n");
+            return EXIT_FAILURE;
+        }
 
-    //@TODO implement run as daemon feature
-    if (cloyster::runAsDaemon) {
-        fmt::print("Daemon feature not implemented.\n");
-        return EXIT_FAILURE;
-    }
+        //@TODO implement run as daemon feature
+        if (cloyster::runAsDaemon) {
+            fmt::print("Daemon feature not implemented.\n");
+            return EXIT_FAILURE;
+        }
 
-    auto model = std::make_unique<Cluster>();
+        auto model = std::make_unique<Cluster>();
 
-    if (!cloyster::answerfile.empty()) {
-        LOG_TRACE("Answerfile: {}", cloyster::answerfile);
-        model->fillData(cloyster::answerfile);
-    }
+        if (!cloyster::answerfile.empty()) {
+            LOG_TRACE("Answerfile: {}", cloyster::answerfile);
+            model->fillData(cloyster::answerfile);
+        }
 
-    if (cloyster::enableTUI) {
-        // Entrypoint; if the view is constructed it will start the TUI.
-        auto view = std::make_unique<Newt>();
-        auto presenter = std::make_unique<PresenterInstall>(model, view);
-    }
+        if (cloyster::enableTUI) {
+            // Entrypoint; if the view is constructed it will start the TUI.
+            auto view = std::make_unique<Newt>();
+            auto presenter = std::make_unique<PresenterInstall>(model, view);
+        }
 
 #ifndef NDEBUG
-    // model->fillTestData();
-    model->printData();
+        // model->fillTestData();
+        model->printData();
 #endif
 
-    LOG_TRACE("Starting execution engine");
-    std::unique_ptr<Execution> executionEngine = std::make_unique<Shell>(model);
-    executionEngine->install();
+        LOG_TRACE("Starting execution engine");
+        std::unique_ptr<Execution> executionEngine
+            = std::make_unique<Shell>(model);
+        executionEngine->install();
 
-    LOG_INFO("{} is ending", productName);
+    } catch (const std::exception& e) {
+        LOG_ERROR("ERROR: {}", e.what());
+        return EXIT_FAILURE;
+    }
+
+    LOG_INFO("{} has successfully ended", productName);
     Log::shutdown();
 
     return EXIT_SUCCESS;
