@@ -67,6 +67,11 @@ if (cloysterhpc_ENABLE_CONAN)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
   string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" CMAKE_SYSTEM_PROCESSOR_LOWER)
 
+  # Hack to fix wrong architecture name for aarch64 during Conan install
+  if (CMAKE_SYSTEM_PROCESSOR_LOWER STREQUAL "aarch64")
+    set(CMAKE_SYSTEM_PROCESSOR_LOWER "armv8")
+  endif()
+
   include(${doctest_DIR}/doctest-${CMAKE_BUILD_TYPE_LOWER}-${CMAKE_SYSTEM_PROCESSOR_LOWER}-data.cmake)
   include(${doctest_BUILD_DIRS_${CMAKE_BUILD_TYPE_UPPER}}/doctest.cmake)
 else()
