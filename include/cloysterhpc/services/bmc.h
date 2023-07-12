@@ -14,13 +14,13 @@ struct BMC {
     std::string m_address;
     std::string m_username;
     std::string m_password;
-    size_t m_serialPort { 0 };
-    size_t m_serialSpeed { 115200 };
+    std::size_t m_serialPort { 0 };
+    std::size_t m_serialSpeed { 115200 };
     kind m_kind = kind::IPMI;
 
     BMC(const std::string& address, const std::string& username,
-        const std::string& password, size_t serialPort, size_t serialSpeed,
-        const kind& kind);
+        const std::string& password, std::size_t serialPort,
+        std::size_t serialSpeed, const kind& kind);
 
     BMC();
 
@@ -30,10 +30,10 @@ struct BMC {
     void setUsername(const std::string& username);
     const std::string& getPassword() const;
     void setPassword(const std::string& password);
-    size_t getSerialPort() const;
-    void setSerialPort(size_t serialPort);
-    size_t getSerialSpeed() const;
-    void setSerialSpeed(size_t serialSpeed);
+    std::size_t getSerialPort() const;
+    void setSerialPort(std::size_t serialPort);
+    std::size_t getSerialSpeed() const;
+    void setSerialSpeed(std::size_t serialSpeed);
     kind getKind() const;
     void setKind(kind kind);
 };
