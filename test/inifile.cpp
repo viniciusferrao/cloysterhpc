@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "../../src/inifile.h"
-#include "../../src/inifile.cpp"
+#include <cloysterhpc/inifile.h>
+#include "../src/inifile.cpp"
 #include <doctest/doctest.h>
 #include <filesystem>
 #include <iostream>

@@ -89,13 +89,16 @@ function(cloysterhpc_setup_dependencies)
   #  CPMAddPackage("gh:lefticus/tools#update_build_system")
   #endif()
 
-  if(NOT TARGET simpleini::simpleini)
-    CPMAddPackage(
-      NAME simpleini
-      VERSION 4.19
-      GITHUB_REPOSITORY brofield/simpleini
-    )
-  endif()
+#  if(NOT TARGET simpleini::simpleini)
+#    CPMAddPackage(
+#      NAME simpleini
+#      VERSION 4.19
+#      GITHUB_REPOSITORY brofield/simpleini
+#    )
+#  endif()
+    if(NOT TARGET SimpleIni::SimpleIni)
+      CPMAddPackage("gh:viniciusferrao/simpleini#4.20@4.20")
+    endif()
 
   # Standalone packages
   # Include module path for packages that we need to find or build

@@ -28,6 +28,7 @@ target_link_system_libraries(
     spdlog::spdlog
     gsl::gsl-lite
     magic_enum::magic_enum
+    SimpleIni::SimpleIni
     resolv
     ${STDC++FS}
     doctest::doctest)

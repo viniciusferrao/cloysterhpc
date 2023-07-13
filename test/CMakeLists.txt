@@ -37,6 +37,7 @@ target_link_libraries(
           fmt::fmt
           spdlog::spdlog
           magic_enum::magic_enum
+          SimpleIni::SimpleIni
           gsl::gsl-lite
           Boost::headers
           Boost::system
