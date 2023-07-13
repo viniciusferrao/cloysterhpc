@@ -4,12 +4,13 @@
 
 #include "cloysterhpc/inifile.h"
 
+// TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
 {
     ini.LoadFile(filepath.c_str());
 }
 
-void inifile::loadFile(const std::string_view& filepath)
+void inifile::loadFile(std::string_view filepath)
 {
     ini.LoadFile(filepath.data());
 }
@@ -42,7 +43,7 @@ void inifile::saveFile(const std::string& filepath)
     ini.SaveFile(filepath.c_str());
 }
 
-void inifile::saveFile(const std::string_view& filepath)
+void inifile::saveFile(std::string_view filepath)
 {
     ini.SaveFile(filepath.data());
 }
