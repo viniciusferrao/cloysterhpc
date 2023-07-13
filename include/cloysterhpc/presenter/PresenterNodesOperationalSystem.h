@@ -1,6 +1,7 @@
-//
-// Created by Lucas Gracioso <contact@lbgracioso.net> on 5/25/23.
-//
+/*
+ * Copyright 2023 Vinícius Ferrão <vinicius@ferrao.net.br>
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef CLOYSTERHPC_PRESENTERNODESOPERATIONALSYSTEM_H_
 #define CLOYSTERHPC_PRESENTERNODESOPERATIONALSYSTEM_H_
