@@ -40,12 +40,24 @@ void CPU::checkTopology() const
         throw std::runtime_error("Total number of cores is not valid");
 }
 
-size_t CPU::getSockets() const { return m_sockets; }
+std::size_t CPU::getSockets() const { return m_sockets; }
 
-size_t CPU::getCores() const { return m_cores; }
+std::size_t CPU::getCores() const { return m_cores; }
 
-size_t CPU::getThreads() const { return m_threads; }
+std::size_t CPU::getThreads() const { return m_threads; }
 
-size_t CPU::getCoresPerSocket() const { return m_coresPerSocket; }
+std::size_t CPU::getCoresPerSocket() const { return m_coresPerSocket; }
 
-size_t CPU::getThreadsPerCore() const { return m_threadsPerCore; }
+std::size_t CPU::getThreadsPerCore() const { return m_threadsPerCore; }
+
+void CPU::setSockets(std::size_t sockets) { m_sockets = sockets; }
+void CPU::setCores(std::size_t cores) { m_cores = cores; }
+void CPU::setThreads(std::size_t threads) { m_threads = threads; }
+void CPU::setCoresPerSocket(std::size_t coresPerSocket)
+{
+    m_coresPerSocket = coresPerSocket;
+}
+void CPU::setThreadsPerCore(size_t threadsPerCore)
+{
+    m_threadsPerCore = threadsPerCore;
+}

@@ -50,6 +50,8 @@ public:
         const std::string& ip);
     void addConnection(Connection&& connection);
 
+    void setConnection(const std::list<Connection>& connection);
+
     [[nodiscard]] const Connection& getConnection(Network::Profile) const;
     //    [[nodiscard]] Connection& getConnection(Network::Profile);
 
@@ -57,6 +59,7 @@ public:
     void setCPU(const CPU& cpu);
 
     [[nodiscard]] const std::optional<BMC>& getBMC() const;
+    void setBMC(const BMC& bmc);
 
     virtual ~Server() = default;
 };

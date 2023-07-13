@@ -110,7 +110,14 @@ const Connection& Server::getConnection(Network::Profile profile) const
             magic_enum::enum_name(profile)));
 }
 
+void Server::setConnection(const std::list<Connection>& connection)
+{
+    m_connection = connection;
+}
+
 const std::optional<BMC>& Server::getBMC() const { return m_bmc; }
+
+void Server::setBMC(const BMC& bmc) { m_bmc = bmc; }
 
 const CPU& Server::getCPU() const noexcept { return m_cpu; }
 

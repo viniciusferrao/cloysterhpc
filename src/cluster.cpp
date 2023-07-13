@@ -6,6 +6,7 @@
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
+#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -258,6 +259,8 @@ void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
+void Cluster::addNode(Node node) { m_nodes.emplace_back(node); }
+
 #ifndef NDEBUG
 void Cluster::printNetworks(
     const std::list<std::unique_ptr<Network>>& networks) const
@@ -399,7 +402,7 @@ void Cluster::fillTestData()
                                                Network::Profile::Management),
         {}, "de:ad:be:ff:00:00", "172.26.0.2" } };
 
-    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN" };
+    BMC bmc { "172.25.0.2", "ADMIN", "ADMIN", 0, 115200, BMC::kind::IPMI };
 
     addNode("n01", nodeOS, nodeCPU, std::move(connections1));
     addNode("n02", nodeOS, nodeCPU, std::move(connections2), bmc);
@@ -414,62 +417,56 @@ void Cluster::fillTestData()
 
 void Cluster::fillData(const std::string& answerfilePath)
 {
-    boost::property_tree::ptree tree;
+    inifile ini;
 
-    try {
-        boost::property_tree::ini_parser::read_ini(answerfilePath, tree);
-    }
-
-    catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what());
-    }
+    ini.loadFile(answerfilePath);
 
     LOG_TRACE("Read answerfile variables:");
 
     // Information
-    auto clusterName = tree.get<std::string>("information.cluster_name");
-    auto companyName = tree.get<std::string>("information.company_name");
+    auto clusterName = ini.getValue("information", "cluster_name");
+    auto companyName = ini.getValue("information", "company_name");
     auto administratorEmail
-        = tree.get<std::string>("information.administrator_email");
+        = ini.getValue("information", "administrator_email");
 
     // Time
-    auto timezone = tree.get<std::string>("time.timezone");
-    auto timeserver = tree.get<std::string>("time.timeserver");
-    auto locale = tree.get<std::string>("time.locale");
+    auto timezone = ini.getValue("time", "timezone");
+    auto timeserver = ini.getValue("time", "timeserver");
+    auto locale = ini.getValue("time", "locale");
 
     // Hostname
-    auto hostname = tree.get<std::string>("hostname.hostname");
-    auto domainName = tree.get<std::string>("hostname.domain_name");
+    auto hostname = ini.getValue("hostname", "hostname");
+    auto domainName = ini.getValue("hostname", "domain_name");
 
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
 
     auto managementNetworkInterface
-        = tree.get<std::string>("network_management.interface");
+        = ini.getValue("network_management", "interface");
 
     auto managementNetworkAddress
-        = tree.get<std::string>("network_management.network_address");
+        = ini.getValue("network_management", "network_address");
     managementNetwork->setAddress(managementNetworkAddress);
 
     auto managementNetworkSubnetMask
-        = tree.get<std::string>("network_management.subnet_mask");
+        = ini.getValue("network_management", "subnet_mask");
     managementNetwork->setSubnetMask(managementNetworkSubnetMask);
 
-    if (tree.count("network_management.gateway") != 0) {
+    if (ini.exists("network_management", "gateway")) {
         auto managementNetworkGateway
-            = tree.get<std::string>("network_management.gateway");
+            = ini.getValue("network_management", "gateway");
         managementNetwork->setGateway(managementNetworkGateway);
     }
 
     auto managementNetworkDomainName
-        = tree.get<std::string>("network_management.domain_name");
+        = ini.getValue("network_management", "domain_name");
     managementNetwork->setDomainName(managementNetworkDomainName);
 
-    if (tree.count("network_management.nameservers") != 0) {
+    if (ini.exists("network_management", "nameservers")) {
         std::vector<std::string> managementNetworkNameservers;
         boost::split(managementNetworkNameservers,
-            tree.get<std::string>("network_management.nameservers"),
+            ini.getValue("network_management", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         managementNetwork->setNameservers(managementNetworkNameservers);
@@ -479,51 +476,51 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     auto managementNetworkIpAddress
-        = tree.get<std::string>("network_management.ip_address");
+        = ini.getValue("network_management", "ip_address");
 
     // External Network
     auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
 
     auto externalNetworkInterface
-        = tree.get<std::string>("network_external.interface");
+        = ini.getValue("network_external", "interface");
 
-    if (tree.count("network_external.network_address") != 0) {
+    if (ini.exists("network_external", "network_address")) {
         auto externalNetworkAddress
-            = tree.get<std::string>("network_external.network_address");
+            = ini.getValue("network_external", "network_address");
         externalNetwork->setAddress(externalNetworkAddress);
     } else {
         externalNetwork->setAddress(
             externalNetwork->fetchAddress(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.subnet_mask") != 0) {
+    if (ini.exists("network_external", "subnet_mask")) {
         auto externalNetworkSubnetMask
-            = tree.get<std::string>("network_external.subnet_mask");
+            = ini.getValue("network_external", "subnet_mask");
         externalNetwork->setSubnetMask(externalNetworkSubnetMask);
     } else {
         externalNetwork->setSubnetMask(
             externalNetwork->fetchSubnetMask(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.gateway") != 0) {
+    if (ini.exists("network_external", "gateway")) {
         auto externalNetworkGateway
-            = tree.get<std::string>("network_external.gateway");
+            = ini.getValue("network_external", "gateway");
         externalNetwork->setGateway(externalNetworkGateway);
     }
 
-    if (tree.count("network_external.domain_name") != 0) {
+    if (ini.exists("network_external", "domain_name")) {
         auto externalNetworkDomainName
-            = tree.get<std::string>("network_external.domain_name");
+            = ini.getValue("network_external", "domain_name");
         externalNetwork->setDomainName(externalNetworkDomainName);
     } else {
         externalNetwork->setDomainName(externalNetwork->fetchDomainName());
     }
 
-    if (tree.count("network_external.nameservers") != 0) {
+    if (ini.exists("network_external", "nameservers")) {
         std::vector<std::string> externalNetworkNameservers;
         boost::split(externalNetworkNameservers,
-            tree.get<std::string>("network_external.nameservers"),
+            ini.getValue("network_external", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         externalNetwork->setNameservers(externalNetworkNameservers);
@@ -532,24 +529,88 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     // System
-    std::filesystem::path diskImage
-        = tree.get<std::string>("system.disk_image");
+    std::filesystem::path diskImage = ini.getValue("system", "disk_image");
     setDiskImage(diskImage);
 
-    std::string distro = tree.get<std::string>("system.distro");
-    std::string distro_version = tree.get<std::string>("system.version");
-    std::string kernel = tree.get<std::string>("system.kernel");
+    auto distro = ini.getValue("system", "distro");
+    auto distro_version = ini.getValue("system", "version");
+    auto kernel = ini.getValue("system", "kernel");
 
     // Nodes
-    auto nodesPrefix = tree.get<std::string>("nodes.prefix");
-    auto nodesPadding = tree.get<std::size_t>("nodes.padding");
-    auto nodesStartIp = tree.get<std::string>("nodes.node_start_ip");
-    auto nodesRootPassword = tree.get<std::string>("nodes.node_root_password");
-    auto nodesSockets = std::stoul(tree.get<std::string>("nodes.sockets"));
-    auto nodesCoresPerSockets
-        = std::stoul(tree.get<std::string>("nodes.cores_per_socket"));
-    auto nodesThreadsPerCore
-        = std::stoul(tree.get<std::string>("nodes.threads_per_core"));
+
+    OS nodeOS;
+    nodeOS.setArch(OS::Arch::x86_64);
+    nodeOS.setFamily(OS::Family::Linux);
+    nodeOS.setPlatform(OS::Platform::el8);
+    nodeOS.setDistro(distro);
+    nodeOS.setKernel(kernel);
+    nodeOS.setVersion(distro_version);
+
+    Node genericNode;
+
+    if (ini.exists("node")) {
+
+        CPU genericNodeCPU;
+        BMC genericNodeBMC;
+
+        if (ini.exists("node", "prefix")) {
+            genericNode.setPrefix(ini.getValue("node", "prefix"));
+        }
+
+        if (ini.exists("node", "padding")) {
+            genericNode.setPadding(std::stoul(ini.getValue("node", "padding")));
+        }
+
+        if (ini.exists("node", "node_start_ip")) {
+            genericNode.setNodeStartIp(boost::asio::ip::make_address(
+                ini.getValue("node", "node_start_ip")));
+        }
+
+        if (ini.exists("node", "node_root_password")) {
+            genericNode.setNodeRootPassword(
+                ini.getValue("node", "node_root_password"));
+        }
+
+        if (ini.exists("node", "sockets")) {
+            genericNodeCPU.setSockets(
+                std::stoul(ini.getValue("node", "sockets")));
+        }
+
+        if (ini.exists("node", "cores_per_socket")) {
+            genericNodeCPU.setCoresPerSocket(
+                std::stoul(ini.getValue("node", "cores_per_socket")));
+        }
+
+        if (ini.exists("node", "threads_per_core")) {
+            genericNodeCPU.setThreadsPerCore(
+                std::stoul(ini.getValue("node", "threads_per_core")));
+        }
+
+        if (ini.exists("node", "bmc_address")) {
+            genericNodeBMC.setAddress(ini.getValue("node", "bmc_address"));
+        }
+
+        if (ini.exists("node", "bmc_username")) {
+            genericNodeBMC.setUsername(ini.getValue("node", "bmc_username"));
+        }
+
+        if (ini.exists("node", "bmc_password")) {
+            genericNodeBMC.setPassword(ini.getValue("node", "bmc_password"));
+        }
+
+        if (ini.exists("node", "bmc_serialport")) {
+            genericNodeBMC.setSerialPort(
+                std::stoul(ini.getValue("node", "bmc_serialport")));
+        }
+
+        if (ini.exists("node", "bmc_serialspeed")) {
+            genericNodeBMC.setSerialSpeed(
+                std::stoul(ini.getValue("node", "bmc_serialspeed")));
+        }
+
+        genericNode.setCPU(genericNodeCPU);
+        genericNode.setBMC(genericNodeBMC);
+    }
 
     LOG_TRACE("Cluster name: {}", clusterName);
 
@@ -577,9 +638,9 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     managementConnection.setAddress(managementNetworkIpAddress);
 
-    if (tree.count("network_management.mac_address") != 0) {
+    if (ini.exists("network_management", "mac_address")) {
         auto managementNetworkMacAddress
-            = tree.get<std::string>("network_management.mac_address");
+            = ini.getValue("network_management", "mac_address");
         managementConnection.setMAC(managementNetworkMacAddress);
     }
 
@@ -591,43 +652,43 @@ void Cluster::fillData(const std::string& answerfilePath)
         = Connection(&getNetwork(Network::Profile::External));
     externalConnection.setInterface(externalNetworkInterface);
 
-    if (tree.count("network_external.ip_address") != 0) {
+    if (ini.exists("network_external", "ip_address")) {
         auto externalNetworkIpAddress
-            = tree.get<std::string>("network_external.ip_address");
+            = ini.getValue("network_external", "ip_address");
         externalConnection.setAddress(externalNetworkIpAddress);
     } else {
         externalConnection.setAddress(
             externalConnection.fetchAddress(externalNetworkInterface));
     }
 
-    if (tree.count("network_external.mac_address") != 0) {
+    if (ini.exists("network_external", "mac_address")) {
         auto externalNetworkMacAddress
-            = tree.get<std::string>("network_external.mac_address");
+            = ini.getValue("network_external", "mac_address");
         externalConnection.setMAC(externalNetworkMacAddress);
     }
 
     getHeadnode().addConnection(std::move(externalConnection));
 
     // Infiniband (Application) Network
-    if (tree.count("network_application") != 0) {
+    if (ini.exists("network_application")) {
         auto applicationNetworkInterface
-            = tree.get<std::string>("network_application.interface");
+            = ini.getValue("network_application", "interface");
         auto applicationNetworkIpAddress
-            = tree.get<std::string>("network_application.ip_address");
+            = ini.getValue("network_application", "ip_address");
         auto applicationNetworkSubnetMask
-            = tree.get<std::string>("network_application.subnet_mask");
+            = ini.getValue("network_application", "subnet_mask");
         auto applicationNetworkAddress
-            = tree.get<std::string>("network_application.network_address");
+            = ini.getValue("network_application", "network_address");
         auto applicationNetworkGateway
-            = tree.get<std::string>("network_application.gateway");
+            = ini.getValue("network_application", "gateway");
         auto applicationNetworkDomainName
-            = tree.get<std::string>("network_application.domain_name");
+            = ini.getValue("network_application", "domain_name");
         auto applicationNetworkMacAddress
-            = tree.get<std::string>("network_application.mac_address");
+            = ini.getValue("network_application", "mac_address");
 
         std::vector<std::string> applicationNetworkNameservers;
         boost::split(applicationNetworkNameservers,
-            tree.get<std::string>("network_application.nameservers"),
+            ini.getValue("network_application", "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         addNetwork(Network::Profile::Application, Network::Type::Infiniband,
@@ -643,40 +704,223 @@ void Cluster::fillData(const std::string& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-
-    OS nodeOS;
-    nodeOS.setArch(OS::Arch::x86_64);
-    nodeOS.setFamily(OS::Family::Linux);
-    nodeOS.setPlatform(OS::Platform::el8);
-    nodeOS.setDistro(distro);
-    nodeOS.setKernel(kernel);
-    nodeOS.setVersion(distro_version);
     m_headnode.setOS(nodeOS);
 
-    CPU nodeCPU(nodesSockets, nodesCoresPerSockets, nodesThreadsPerCore);
+    LOG_TRACE("Read nodes data from answerfile");
+    int nodeCounter = 1;
+    while (true) {
 
-    std::vector<std::string> nodes;
-    boost::split(nodes, tree.get<std::string>("nodes.mac_addresses"),
-        boost::is_any_of(", "), boost::token_compress_on);
+        std::string nodeSection = fmt::format("node.{}", nodeCounter);
+        if (!ini.exists(nodeSection)) {
+            break;
+        }
 
-    int nodeValue = 0;
-    for (const std::string& node : nodes) {
-        nodeValue++;
+        LOG_TRACE("Configure {}", nodeSection);
+
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(
             &getNetwork(Network::Profile::Management));
 
-        auto nodeName
-            = fmt::format("{}{:0>{}}", nodesPrefix, nodeValue, nodesPadding);
+        Node newNode;
+        CPU newNodeCPU;
+        BMC newNodeBMC;
 
-        connection.setMAC(node);
-        connection.setAddress(nodesStartIp);
-        addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections));
+        if (ini.exists(nodeSection, "hostname")) {
+            newNode.setHostname(ini.getValue(nodeSection, "hostname"));
+        } else {
+            if (ini.exists(nodeSection, "prefix")) {
+                newNode.setPrefix(ini.getValue(nodeSection, "prefix"));
+            } else if (genericNode.getPrefix().has_value()) {
+                newNode.setPrefix(genericNode.getPrefix());
+            } else {
+                throw std::runtime_error(fmt::format(
+                    "Section node.{} must have a prefix value", nodeCounter));
+            }
+
+            LOG_TRACE(
+                "{} prefix: {}", nodeSection, newNode.getPrefix().value());
+
+            if (ini.exists(nodeSection, "padding")) {
+                newNode.setPadding(
+                    std::stoul(ini.getValue(nodeSection, "padding")));
+            } else if (genericNode.getPadding().has_value()) {
+                newNode.setPadding(genericNode.getPadding().value());
+            } else {
+                throw std::runtime_error(fmt::format(
+                    "Section node.{} must have a padding value", nodeCounter));
+            }
+
+            LOG_TRACE(
+                "{} padding: {}", nodeSection, newNode.getPrefix().value());
+
+            auto nodeName
+                = fmt::format("{}{:0>{}}", newNode.getPrefix().value(),
+                    nodeCounter, newNode.getPadding().value());
+
+            newNode.setHostname(nodeName);
+        }
+
+        LOG_TRACE("{} hostname: {}", nodeSection, newNode.getHostname());
+
+        if (ini.exists(nodeSection, "node_start_ip")) {
+            newNode.setNodeStartIp(boost::asio::ip::make_address(
+                ini.getValue(nodeSection, "node_start_ip")));
+        } else if (genericNode.getNodeStartIp().has_value()) {
+            newNode.setNodeStartIp(genericNode.getNodeStartIp().value());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a node_start_ip value",
+                    nodeCounter));
+        }
+
+        LOG_TRACE("{} start ip: {}", nodeSection,
+            newNode.getNodeStartIp()->to_string());
+
+        if (ini.exists(nodeSection, "mac_address")) {
+            newNode.setMACAddress(ini.getValue(nodeSection, "mac_address"));
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a node_root_password value",
+                nodeCounter));
+        }
+
+        LOG_TRACE("{} MAC address: {}", nodeSection, newNode.getMACAddress());
+
+        if (ini.exists(nodeSection, "node_root_password")) {
+            newNode.setNodeRootPassword(
+                ini.getValue(nodeSection, "node_root_password"));
+        } else if (genericNode.getNodeRootPassword().has_value()) {
+            newNode.setNodeRootPassword(
+                genericNode.getNodeRootPassword().value());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a node_root_password value",
+                nodeCounter));
+        }
+
+        LOG_TRACE("{} root password: {}", nodeSection,
+            newNode.getNodeRootPassword().value());
+
+        if (ini.exists(nodeSection, "sockets")) {
+            newNodeCPU.setSockets(
+                std::stoul(ini.getValue(nodeSection, "sockets")));
+        } else if (genericNode.getCPU().getSockets() != 0) {
+            newNodeCPU.setSockets(genericNode.getCPU().getSockets());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a sockets value", nodeCounter));
+        }
+
+        LOG_TRACE("{} CPU sockets: {}", nodeSection, newNodeCPU.getSockets());
+
+        if (ini.exists(nodeSection, "cores_per_socket")) {
+            newNodeCPU.setCoresPerSocket(
+                std::stoul(ini.getValue(nodeSection, "cores_per_socket")));
+        } else if (genericNode.getCPU().getCoresPerSocket() != 0) {
+            newNodeCPU.setCoresPerSocket(
+                genericNode.getCPU().getCoresPerSocket());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a cores_per_socket value",
+                nodeCounter));
+        }
+
+        LOG_TRACE("{} CPU cores per socket: {}", nodeSection,
+            newNodeCPU.getCoresPerSocket());
+
+        if (ini.exists(nodeSection, "threads_per_core")) {
+            newNodeCPU.setThreadsPerCore(
+                std::stoul(ini.getValue(nodeSection, "threads_per_core")));
+        } else if (genericNode.getCPU().getThreadsPerCore() != 0) {
+            newNodeCPU.setThreadsPerCore(
+                genericNode.getCPU().getThreadsPerCore());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a threads_per_core value",
+                nodeCounter));
+        }
+
+        LOG_TRACE("{} CPU threads per core: {}", nodeSection,
+            newNodeCPU.getThreadsPerCore());
+
+        if (ini.exists(nodeSection, "bmc_address")) {
+            newNodeBMC.setAddress(ini.getValue(nodeSection, "bmc_address"));
+        } else if (!genericNode.getBMC()->getAddress().empty()) {
+            newNodeBMC.setAddress(genericNode.getBMC()->getAddress());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_address value", nodeCounter));
+        }
+
+        LOG_TRACE("{} BMC address: {}", nodeSection, newNodeBMC.getAddress());
+
+        if (ini.exists(nodeSection, "bmc_username")) {
+            newNodeBMC.setUsername(ini.getValue(nodeSection, "bmc_username"));
+
+        } else if (!genericNode.getBMC()->getUsername().empty()) {
+            newNodeBMC.setUsername(genericNode.getBMC()->getUsername());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_username value", nodeCounter));
+        }
+
+        LOG_TRACE("{} BMC username: {}", nodeSection, newNodeBMC.getUsername());
+
+        if (ini.exists(nodeSection, "bmc_password")) {
+            newNodeBMC.setPassword(ini.getValue(nodeSection, "bmc_password"));
+
+        } else if (!genericNode.getBMC()->getPassword().empty()) {
+            newNodeBMC.setPassword(genericNode.getBMC()->getPassword());
+        } else {
+            throw std::runtime_error(fmt::format(
+                "Section node.{} must have a bmc_password value", nodeCounter));
+        }
+
+        LOG_TRACE("{} BMC password: {}", nodeSection, newNodeBMC.getPassword());
+
+        if (ini.exists(nodeSection, "bmc_serialport")) {
+            newNodeBMC.setSerialPort(
+                std::stoul(ini.getValue(nodeSection, "bmc_serialport")));
+        } else if (genericNode.getBMC()->getSerialPort() != 0) {
+            newNodeBMC.setSerialPort(genericNode.getBMC()->getSerialPort());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a bmc_serialport value",
+                    nodeCounter));
+        }
+
+        LOG_TRACE(
+            "{} BMC serial port: {}", nodeSection, newNodeBMC.getSerialPort());
+
+        if (ini.exists(nodeSection, "bmc_serialspeed")) {
+            newNodeBMC.setSerialSpeed(
+                std::stoul(ini.getValue(nodeSection, "bmc_serialspeed")));
+        } else if (genericNode.getBMC()->getSerialSpeed() != 0) {
+            newNodeBMC.setSerialSpeed(genericNode.getBMC()->getSerialSpeed());
+        } else {
+            throw std::runtime_error(
+                fmt::format("Section node.{} must have a bmc_serialspeed value",
+                    nodeCounter));
+        }
+
+        LOG_TRACE("{} BMC serial speed: {}", nodeSection,
+            newNodeBMC.getSerialSpeed());
+
+        newNode.setCPU(newNodeCPU);
+        newNode.setBMC(newNodeBMC);
+        newNode.setOS(nodeOS);
+
+        connection.setMAC(newNode.getMACAddress());
+        connection.setAddress(newNode.getNodeStartIp().value());
+        newNode.setConnection(nodeConnections);
+
+        addNode(newNode);
+        nodeCounter++;
     }
 
     /* Bad and old data - @TODO Must improve */
-    nodePrefix = nodesPrefix;
-    nodePadding = nodesPadding;
-    nodeStartIP = boost::asio::ip::make_address(nodesStartIp);
-    nodeRootPassword = nodesRootPassword;
+    nodePrefix = genericNode.getPrefix().value();
+    nodePadding = genericNode.getPadding().value();
+    nodeStartIP = genericNode.getNodeStartIp().value();
+    nodeRootPassword = genericNode.getNodeRootPassword().value();
 }

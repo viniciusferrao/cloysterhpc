@@ -359,8 +359,9 @@ void XCAT::addNode(const Node& node)
 
     if (const auto& bmc = node.getBMC())
         command += fmt::format("bmc={} bmcusername={} bmcpassword={} mgt=ipmi "
-                               "cons=ipmi serialport=0 serialspeed=115200 ",
-            bmc->m_address, bmc->m_username, bmc->m_password);
+                               "cons=ipmi serialport={} serialspeed={} ",
+            bmc->m_address, bmc->m_username, bmc->m_password, bmc->m_serialPort,
+            bmc->m_serialSpeed);
 
     // FIXME:
     //  *********************************************************************
