@@ -17,7 +17,7 @@
 class Node : public Server {
 public:
     std::optional<std::string> m_prefix;
-    std::optional<size_t> m_padding;
+    std::optional<std::size_t> m_padding;
     std::optional<boost::asio::ip::address> m_node_start_ip;
     std::string m_mac_address;
     std::optional<std::string> m_node_root_password;
@@ -30,8 +30,8 @@ public:
 
     const std::optional<std::string>& getPrefix() const;
     void setPrefix(const std::optional<std::string>& prefix);
-    const std::optional<size_t>& getPadding() const;
-    void setPadding(const std::optional<size_t>& padding);
+    const std::optional<std::size_t>& getPadding() const;
+    void setPadding(const std::optional<std::size_t>& padding);
     const std::optional<boost::asio::ip::address>& getNodeStartIp() const;
     void setNodeStartIp(
         const std::optional<boost::asio::ip::address>& nodeStartIp);
