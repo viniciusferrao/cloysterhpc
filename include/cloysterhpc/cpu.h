@@ -26,17 +26,17 @@ public:
     CPU(std::size_t sockets, std::size_t cores, std::size_t threads,
         std::size_t coresPerSocket, std::size_t threadsPerCore);
 
-    [[nodiscard]] size_t getSockets() const;
-    [[nodiscard]] size_t getCores() const;
-    [[nodiscard]] size_t getThreads() const;
-    [[nodiscard]] size_t getCoresPerSocket() const;
-    [[nodiscard]] size_t getThreadsPerCore() const;
+    [[nodiscard]] std::size_t getSockets() const;
+    [[nodiscard]] std::size_t getCores() const;
+    [[nodiscard]] std::size_t getThreads() const;
+    [[nodiscard]] std::size_t getCoresPerSocket() const;
+    [[nodiscard]] std::size_t getThreadsPerCore() const;
 
-    void setSockets(size_t sockets);
-    void setCores(size_t cores);
-    void setThreads(size_t threads);
-    void setCoresPerSocket(size_t coresPerSocket);
-    void setThreadsPerCore(size_t threadsPerCore);
+    void setSockets(std::size_t sockets);
+    void setCores(std::size_t cores);
+    void setThreads(std::size_t threads);
+    void setCoresPerSocket(std::size_t coresPerSocket);
+    void setThreadsPerCore(std::size_t threadsPerCore);
 };
 
 #endif // CLOYSTERHPC_CPU_H_
