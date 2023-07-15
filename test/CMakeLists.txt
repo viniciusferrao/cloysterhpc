@@ -25,23 +25,34 @@ add_test(NAME cli.has_help COMMAND main --help)
 add_test(NAME cli.version_matches COMMAND main --version)
 set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
 
-file(GLOB TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 message(STATUS "Test files found are: ${TEST_SOURCES}")
 
 add_executable(${PROJECT_NAME} ${TEST_SOURCES})
+
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE cloysterhpc::cloysterhpc_warnings
-          cloysterhpc::cloysterhpc_options
-          doctest::doctest
-          fmt::fmt
-          spdlog::spdlog
-          magic_enum::magic_enum
-          SimpleIni::SimpleIni
-          gsl::gsl-lite
-          Boost::headers
-          Boost::system
-          Boost::thread)
+  PRIVATE
+    cloysterhpc_static
+    cloysterhpc::cloysterhpc_warnings
+    cloysterhpc::cloysterhpc_options)
+
+target_link_system_libraries(
+  ${PROJECT_NAME}
+  PRIVATE
+    ${NEWT_LIBRARY}
+    fmt::fmt
+    CLI11::CLI11
+    Boost::headers
+    Boost::system
+    Boost::thread
+    spdlog::spdlog
+    gsl::gsl-lite
+    magic_enum::magic_enum
+    SimpleIni::SimpleIni
+    resolv
+    ${STDC++FS}
+    doctest::doctest)
 
 target_include_directories(${PROJECT_NAME} ${WARNING_GUARD} PRIVATE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>

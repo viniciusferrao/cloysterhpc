@@ -3,13 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/network.h>
-#include <cloysterhpc/connection.h>
-#include "../src/network.cpp" // This is lame
-#include "../src/connection.cpp" // This is also lame
-#include <boost/asio.hpp>
-
 #include <doctest/doctest.h>
+
+#include <cloysterhpc/network.h>
+#include <boost/asio.hpp>
 
 TEST_SUITE("Network setters and getters")
 {

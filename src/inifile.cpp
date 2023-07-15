@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/inifile.h"
+#include <cloysterhpc/inifile.h>
 
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
