@@ -1,0 +1,25 @@
+:root {
+    --purple: #826B8D;
+    --purple-variation-2: #B9AEBF;
+    --purple-variation-3: #63586E;
+    --purple-variation-4: #3F3438;
+}
+
+
+.navbar-default {
+    background-color: var(--purple);
+    border-bottom: 8px #EBF2F2 solid;
+}
+
+.navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus {
+    color: #fff;
+    background-color: var(--purple-variation-2);
+}
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus {
+    color: #fff;
+    background-color: var(--purple-variation-3);
+}
+
+a {
+    color: var(--purple-variation-3);
+}
