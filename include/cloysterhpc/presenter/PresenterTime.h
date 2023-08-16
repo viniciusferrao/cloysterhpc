@@ -14,7 +14,8 @@ private:
         static constexpr const char* title = "Time and clock settings";
 
         struct Timezone {
-            static constexpr const char* question = "Choose you local timezone";
+            static constexpr const char* question
+                = "Choose your local timezone";
             static constexpr const char* help
                 = Presenter::Messages::Placeholder::help;
         };
