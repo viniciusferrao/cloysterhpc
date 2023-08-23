@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 
 #include <cloysterhpc/services/log.h>
+#include <fstream>
 
 namespace cloyster {
 
@@ -191,6 +192,16 @@ void changeValueInConfigurationFile(
 
 void addStringToFile(std::string_view filename, std::string_view string)
 {
+    // Check if file already contains the string to avoid duplicate lines.
+    std::ifstream ifs(std::string { filename });
+    std::string content((std::istreambuf_iterator<char>(ifs)),
+        (std::istreambuf_iterator<char>()));
+
+    if (content.find(string) != std::string::npos) {
+        LOG_DEBUG("File {} already contains line(s):\n{}\n", filename, string);
+        return;
+    }
+
 #ifdef _LIBCPP_VERSION
     std::ofstream file(filename, std::ios_base::app);
 #else
