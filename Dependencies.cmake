@@ -84,6 +84,14 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
+  if(NOT TARGET cryptopp::cryptopp)
+    if (cloysterhpc_ENABLE_CONAN)
+      CPMFindPackage(NAME cryptopp)
+    else()
+      CPMAddPackage("gh:cryptopp/cryptopp@8.7.0")
+    endif()
+  endif()
+
   # Packages only available with CPM
   #if(NOT TARGET tools::tools)
   #  CPMAddPackage("gh:lefticus/tools#update_build_system")

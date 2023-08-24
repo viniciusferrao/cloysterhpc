@@ -13,9 +13,10 @@ class DiskImage {
 private:
     std::filesystem::path m_path;
     static constexpr auto m_knownImageFilename { std::to_array<const char*>(
-        { "rhel-8.5-x86_64-dvd.iso", "OracleLinux-R8-U5-x86_64-dvd.iso",
-            "Rocky-8.5-x86_64-dvd1.iso" }) };
-    bool isKnownImage();
+        { "rhel-8.8-x86_64-dvd.iso", "OracleLinux-R8-U8-x86_64-dvd.iso",
+            "Rocky-8.8-x86_64-dvd1.iso", "AlmaLinux-8.8-x86_64-dvd.iso" }) };
+    bool isKnownImage(const std::filesystem::path& path);
+    bool hasVerifiedChecksum(const std::filesystem::path& path);
 
 public:
     const std::filesystem::path& getPath() const;

@@ -31,7 +31,8 @@ target_link_system_libraries(
     SimpleIni::SimpleIni
     resolv
     ${STDC++FS}
-    doctest::doctest)
+    doctest::doctest
+    cryptopp::cryptopp)
 
 target_link_libraries(
   cloysterhpc_object
@@ -54,7 +55,8 @@ target_link_system_libraries(
     SimpleIni::SimpleIni
     resolv
     ${STDC++FS}
-    doctest::doctest)
+    doctest::doctest
+    cryptopp::cryptopp)
 
 target_include_directories(cloysterhpc_static PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include")
 target_include_directories(cloysterhpc_static ${WARNING_GUARD} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include> $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
