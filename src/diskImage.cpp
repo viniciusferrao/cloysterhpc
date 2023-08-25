@@ -41,12 +41,10 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
 
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
-    using namespace CryptoPP;
-    using namespace std;
 
     LOG_TRACE("Verifying disk image checksum... This may take a while");
 
-    map<string, string> hash_map = {
+    std::unordered_map<std::string, std::string> hash_map = {
         { "rhel-8.8-x86_64-dvd.iso",
             "517abcc67ee3b7212f57e180f5d30be3e8269e7a99e127a3399b7935c7e00a0"
             "9" },
@@ -61,12 +59,14 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "1" },
     };
 
-    SHA256 hash;
-    string isoHash = hash_map.find(path.filename().string())->second;
-    string output;
-    FileSource(path.string().c_str(), true,
-        new HashFilter(hash, new HexEncoder(new StringSink(output))), true);
-    transform(isoHash.begin(), isoHash.end(), isoHash.begin(), ::toupper);
+    CryptoPP::SHA256 hash;
+    std::string isoHash = hash_map.find(path.filename().string())->second;
+    std::string output;
+    CryptoPP::FileSource(path.string().c_str(), true,
+        new CryptoPP::HashFilter(
+            hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(output))),
+        true);
+    transform(output.begin(), output.end(), output.begin(), ::tolower);
 
     if (output == isoHash) {
         LOG_TRACE("Checksum - The disk image is valid");
