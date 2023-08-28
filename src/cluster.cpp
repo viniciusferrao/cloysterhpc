@@ -665,10 +665,9 @@ void Cluster::fillData(const std::string& answerfilePath)
             = externalConnection.fetchAddress(externalNetworkInterface);
         externalConnection.setAddress(externalNetworkIpAddress);
 
-        auto networkAddress = getNetwork(Network::Profile::External)
-                                  .calculateAddress(externalNetworkIpAddress);
-
-        getNetwork(Network::Profile::External).setAddress(networkAddress);
+        getNetwork(Network::Profile::External)
+            .setAddress(getNetwork(Network::Profile::External)
+                            .calculateAddress(externalNetworkIpAddress));
     }
 
     if (ini.exists("network_external", "mac_address")) {
