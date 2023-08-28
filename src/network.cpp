@@ -195,7 +195,7 @@ address Network::fetchSubnetMask(const std::string& interface)
         "Interface {} does not have a netmask address defined", interface));
 }
 
-void Network::calculateAddress(const address& connectionAddress)
+address Network::calculateAddress(const address& connectionAddress)
 {
 
     if (m_subnetMask.is_unspecified()) {
@@ -209,14 +209,15 @@ void Network::calculateAddress(const address& connectionAddress)
 
     inet_aton(connectionAddress.to_string().c_str(), &ip_addr);
     inet_aton(m_subnetMask.to_string().c_str(), &subnet_addr);
-    setAddress(boost::asio::ip::make_address(
-        inet_ntoa({ ip_addr.s_addr & subnet_addr.s_addr })));
+    return boost::asio::ip::make_address(
+        inet_ntoa({ ip_addr.s_addr & subnet_addr.s_addr }));
 }
 
-void Network::calculateAddress(const std::string& connectionAddress)
+address Network::calculateAddress(const std::string& connectionAddress)
 {
     try {
-        calculateAddress(boost::asio::ip::make_address(connectionAddress));
+        return calculateAddress(
+            boost::asio::ip::make_address(connectionAddress));
     } catch (boost::system::system_error& e) {
         throw std::runtime_error("Invalid ip address");
     }

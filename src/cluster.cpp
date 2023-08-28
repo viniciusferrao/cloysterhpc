@@ -483,7 +483,8 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto managementConnectionIpAddress
         = ini.getValue("network_management", "ip_address");
 
-    managementNetwork->calculateAddress(managementConnectionIpAddress);
+    managementNetwork->setAddress(
+        managementNetwork->calculateAddress(managementConnectionIpAddress));
 
     // External Network
     auto externalNetwork = std::make_unique<Network>(
@@ -656,13 +657,18 @@ void Cluster::fillData(const std::string& answerfilePath)
         externalConnection.setAddress(externalNetworkIpAddress);
 
         getNetwork(Network::Profile::External)
-            .calculateAddress(externalNetworkIpAddress);
+            .setAddress(getNetwork(Network::Profile::External)
+                            .calculateAddress(externalNetworkIpAddress));
+
     } else {
         auto externalNetworkIpAddress
             = externalConnection.fetchAddress(externalNetworkInterface);
         externalConnection.setAddress(externalNetworkIpAddress);
-        getNetwork(Network::Profile::External)
-            .calculateAddress(externalNetworkIpAddress);
+
+        auto networkAddress = getNetwork(Network::Profile::External)
+                                  .calculateAddress(externalNetworkIpAddress);
+
+        getNetwork(Network::Profile::External).setAddress(networkAddress);
     }
 
     if (ini.exists("network_external", "mac_address")) {
@@ -743,9 +749,13 @@ void Cluster::fillData(const std::string& answerfilePath)
         if (ini.exists("network_application", "ip_address")) {
             auto applicationConnectionIpAddress
                 = ini.getValue("network_application", "ip_address");
-            applicationNetwork->calculateAddress(
-                applicationConnectionIpAddress);
             applicationConnection.setAddress(applicationConnectionIpAddress);
+
+            getNetwork(Network::Profile::Application)
+                .setAddress(
+                    getNetwork(Network::Profile::Application)
+                        .calculateAddress(applicationConnectionIpAddress));
+
         } else {
             throw std::runtime_error(lGenericWarnMustFillSectionKey(
                 "network_application", "ip_address"));
