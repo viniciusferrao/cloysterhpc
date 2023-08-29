@@ -417,6 +417,15 @@ void Cluster::fillTestData()
 
 void Cluster::fillData(const std::string& answerfilePath)
 {
+    // @TODO Clean and improve this code
+
+    auto lGenericWarnMustFillSectionKey
+        = [](std::string section, std::string key) {
+              return fmt::format(
+                  "Answerfile section \"{}\" must have \"{}\" key filled",
+                  section, key);
+          };
+
     inifile ini;
 
     ini.loadFile(answerfilePath);
@@ -445,10 +454,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     auto managementNetworkInterface
         = ini.getValue("network_management", "interface");
 
-    auto managementNetworkAddress
-        = ini.getValue("network_management", "network_address");
-    managementNetwork->setAddress(managementNetworkAddress);
-
     auto managementNetworkSubnetMask
         = ini.getValue("network_management", "subnet_mask");
     managementNetwork->setSubnetMask(managementNetworkSubnetMask);
@@ -475,8 +480,11 @@ void Cluster::fillData(const std::string& answerfilePath)
             managementNetwork->fetchNameservers());
     }
 
-    auto managementNetworkIpAddress
+    auto managementConnectionIpAddress
         = ini.getValue("network_management", "ip_address");
+
+    managementNetwork->setAddress(
+        managementNetwork->calculateAddress(managementConnectionIpAddress));
 
     // External Network
     auto externalNetwork = std::make_unique<Network>(
@@ -484,15 +492,6 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     auto externalNetworkInterface
         = ini.getValue("network_external", "interface");
-
-    if (ini.exists("network_external", "network_address")) {
-        auto externalNetworkAddress
-            = ini.getValue("network_external", "network_address");
-        externalNetwork->setAddress(externalNetworkAddress);
-    } else {
-        externalNetwork->setAddress(
-            externalNetwork->fetchAddress(externalNetworkInterface));
-    }
 
     if (ini.exists("network_external", "subnet_mask")) {
         auto externalNetworkSubnetMask
@@ -636,7 +635,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         = Connection(&getNetwork(Network::Profile::Management));
     managementConnection.setInterface(managementNetworkInterface);
 
-    managementConnection.setAddress(managementNetworkIpAddress);
+    managementConnection.setAddress(managementConnectionIpAddress);
 
     if (ini.exists("network_management", "mac_address")) {
         auto managementNetworkMacAddress
@@ -656,9 +655,19 @@ void Cluster::fillData(const std::string& answerfilePath)
         auto externalNetworkIpAddress
             = ini.getValue("network_external", "ip_address");
         externalConnection.setAddress(externalNetworkIpAddress);
+
+        getNetwork(Network::Profile::External)
+            .setAddress(getNetwork(Network::Profile::External)
+                            .calculateAddress(externalNetworkIpAddress));
+
     } else {
-        externalConnection.setAddress(
-            externalConnection.fetchAddress(externalNetworkInterface));
+        auto externalNetworkIpAddress
+            = externalConnection.fetchAddress(externalNetworkInterface);
+        externalConnection.setAddress(externalNetworkIpAddress);
+
+        getNetwork(Network::Profile::External)
+            .setAddress(getNetwork(Network::Profile::External)
+                            .calculateAddress(externalNetworkIpAddress));
     }
 
     if (ini.exists("network_external", "mac_address")) {
@@ -671,34 +680,87 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // Infiniband (Application) Network
     if (ini.exists("network_application")) {
-        auto applicationNetworkInterface
-            = ini.getValue("network_application", "interface");
-        auto applicationNetworkIpAddress
-            = ini.getValue("network_application", "ip_address");
-        auto applicationNetworkSubnetMask
-            = ini.getValue("network_application", "subnet_mask");
-        auto applicationNetworkAddress
-            = ini.getValue("network_application", "network_address");
-        auto applicationNetworkGateway
-            = ini.getValue("network_application", "gateway");
-        auto applicationNetworkDomainName
-            = ini.getValue("network_application", "domain_name");
-        auto applicationNetworkMacAddress
-            = ini.getValue("network_application", "mac_address");
+        auto applicationNetwork = std::make_unique<Network>(
+            Network::Profile::Application, Network::Type::Ethernet);
 
-        std::vector<std::string> applicationNetworkNameservers;
-        boost::split(applicationNetworkNameservers,
-            ini.getValue("network_application", "nameservers"),
-            boost::is_any_of(", "), boost::token_compress_on);
+        if (ini.exists("network_application", "subnet_mask")) {
+            auto applicationNetworkSubnetMask
+                = ini.getValue("network_application", "subnet_mask");
+            applicationNetwork->setSubnetMask(applicationNetworkSubnetMask);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "subnet_mask"));
+        }
 
-        addNetwork(Network::Profile::Application, Network::Type::Infiniband,
-            applicationNetworkAddress, applicationNetworkSubnetMask,
-            applicationNetworkGateway, 0, applicationNetworkDomainName,
-            applicationNetworkNameservers);
+        if (ini.exists("network_application", "gateway")) {
+            auto applicationNetworkGateway
+                = ini.getValue("network_application", "gateway");
+            applicationNetwork->setGateway(applicationNetworkGateway);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "gateway"));
+        }
 
-        m_headnode.addConnection(getNetwork(Network::Profile::Application),
-            applicationNetworkInterface, applicationNetworkMacAddress,
-            applicationNetworkIpAddress);
+        if (ini.exists("network_application", "domain_name")) {
+            auto applicationNetworkDomainName
+                = ini.getValue("network_application", "domain_name");
+            applicationNetwork->setDomainName(applicationNetworkDomainName);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "domain_name"));
+        }
+
+        if (ini.exists("network_application", "nameservers")) {
+            std::vector<std::string> applicationNetworkNameservers;
+            boost::split(applicationNetworkNameservers,
+                ini.getValue("network_application", "nameservers"),
+                boost::is_any_of(", "), boost::token_compress_on);
+
+            applicationNetwork->setNameservers(applicationNetworkNameservers);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "nameservers"));
+        }
+
+        addNetwork(std::move(applicationNetwork));
+
+        auto applicationConnection
+            = Connection(&getNetwork(Network::Profile::Application));
+
+        if (ini.exists("network_application", "mac_address")) {
+            auto applicationConnectionMacAddress
+                = ini.getValue("network_application", "mac_address");
+            applicationConnection.setMAC(applicationConnectionMacAddress);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "mac_address"));
+        }
+
+        if (ini.exists("network_application", "interface")) {
+            auto applicationConnectionInterface
+                = ini.getValue("network_application", "interface");
+            applicationConnection.setInterface(applicationConnectionInterface);
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "interface"));
+        }
+
+        if (ini.exists("network_application", "ip_address")) {
+            auto applicationConnectionIpAddress
+                = ini.getValue("network_application", "ip_address");
+            applicationConnection.setAddress(applicationConnectionIpAddress);
+
+            getNetwork(Network::Profile::Application)
+                .setAddress(
+                    getNetwork(Network::Profile::Application)
+                        .calculateAddress(applicationConnectionIpAddress));
+
+        } else {
+            throw std::runtime_error(lGenericWarnMustFillSectionKey(
+                "network_application", "ip_address"));
+        }
+
+        m_headnode.addConnection(std::move(applicationConnection));
     }
 
     // System

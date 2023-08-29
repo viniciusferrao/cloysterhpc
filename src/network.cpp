@@ -95,6 +95,8 @@ void Network::setAddress(const address& ip)
         throw std::runtime_error("IP address cannot be 0.0.0.0");
 
     m_address = ip;
+    LOG_TRACE("{} network address set to {}", magic_enum::enum_name(m_profile),
+        m_address.to_string());
 }
 
 void Network::setAddress(const std::string& ip)
@@ -191,6 +193,34 @@ address Network::fetchSubnetMask(const std::string& interface)
     return {};
     throw std::runtime_error(fmt::format(
         "Interface {} does not have a netmask address defined", interface));
+}
+
+address Network::calculateAddress(const address& connectionAddress)
+{
+
+    if (m_subnetMask.is_unspecified()) {
+        throw std::runtime_error(
+            fmt::format("Network must have a specified subnet mask to "
+                        "calculate the address"));
+    }
+
+    struct in_addr ip_addr { };
+    struct in_addr subnet_addr { };
+
+    inet_aton(connectionAddress.to_string().c_str(), &ip_addr);
+    inet_aton(m_subnetMask.to_string().c_str(), &subnet_addr);
+    return boost::asio::ip::make_address(
+        inet_ntoa({ ip_addr.s_addr & subnet_addr.s_addr }));
+}
+
+address Network::calculateAddress(const std::string& connectionAddress)
+{
+    try {
+        return calculateAddress(
+            boost::asio::ip::make_address(connectionAddress));
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid ip address");
+    }
 }
 
 address Network::getGateway() const { return m_gateway; }
