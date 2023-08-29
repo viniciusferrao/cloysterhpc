@@ -82,6 +82,9 @@ public:
     void setAddress(const address& ip);
     void setAddress(const std::string& ip);
     [[nodiscard]] static address fetchAddress(const std::string& interface);
+    [[nodiscard]] address calculateAddress(const address& connectionAddress);
+    [[nodiscard]] address calculateAddress(
+        const std::string& connectionAddress);
 
     [[nodiscard]] address getSubnetMask() const;
     void setSubnetMask(const address& subnetMask);
