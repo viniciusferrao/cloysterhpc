@@ -1,0 +1,226 @@
+/*
+ * Created by Lucas Gracioso <contact@lbgracioso.net>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "cloysterhpc/answerfile.h"
+#include "cloysterhpc/services/log.h"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+
+AnswerFile::AnswerFile(const std::filesystem::path& path)
+    : m_path(path)
+{
+    m_ini.loadFile(m_path);
+    loadOptions();
+}
+
+const AnswerFile::AFNetwork& AnswerFile::getExternal() const
+{
+    return external;
+}
+
+const AnswerFile::AFNetwork& AnswerFile::getManagement() const
+{
+    return management;
+}
+
+const AnswerFile::AFNetwork& AnswerFile::getApplication() const
+{
+    return application;
+}
+
+const AnswerFile::AFInformation& AnswerFile::getInformation() const
+{
+    return information;
+}
+
+const AnswerFile::AFTime& AnswerFile::getTime() const { return time; }
+
+const AnswerFile::AFHostname& AnswerFile::getHostname() const
+{
+    return hostname;
+}
+
+const AnswerFile::AFSystem& AnswerFile::getSystem() const { return system; }
+
+const AnswerFile::AFNodes& AnswerFile::getNodes() const { return nodes; }
+
+void AnswerFile::loadOptions()
+{
+    LOG_TRACE("Read answerfile variables");
+
+    loadExternalNetwork();
+    loadManagementNetwork();
+    loadApplicationNetwork();
+    loadInformation();
+    loadTimeSettings();
+    loadHostnameSettings();
+    loadSystemSettings();
+    loadNodes();
+}
+
+void AnswerFile::loadExternalNetwork()
+{
+    external.con_interface
+        = m_ini.getValue("network_external", "interface", false);
+    external.con_ip_addr = m_ini.getValue("network_external", "ip_address");
+    external.con_mac_addr = m_ini.getValue("network_external", "mac_address");
+    external.subnet_mask = m_ini.getValue("network_external", "subnet_mask");
+    external.domain_name = m_ini.getValue("network_external", "domain_name");
+    external.gateway = m_ini.getValue("network_external", "gateway");
+
+    if (m_ini.exists("network_external", "nameservers")) {
+        std::vector<std::string> nameservers;
+        boost::split(nameservers,
+            m_ini.getValue("network_external", "nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        external.nameservers = nameservers;
+    }
+}
+
+void AnswerFile::loadManagementNetwork()
+{
+    management.con_interface
+        = m_ini.getValue("network_management", "interface", false);
+    management.con_ip_addr
+        = m_ini.getValue("network_management", "ip_address", false);
+    management.con_mac_addr
+        = m_ini.getValue("network_management", "mac_address");
+    management.subnet_mask
+        = m_ini.getValue("network_management", "subnet_mask", false);
+    management.domain_name
+        = m_ini.getValue("network_management", "domain_name", false);
+    management.gateway = m_ini.getValue("network_management", "gateway");
+
+    if (m_ini.exists("network_management", "nameservers")) {
+        std::vector<std::string> nameservers;
+        boost::split(nameservers,
+            m_ini.getValue("network_management", "nameservers"),
+            boost::is_any_of(", "), boost::token_compress_on);
+
+        management.nameservers = nameservers;
+    }
+}
+
+void AnswerFile::loadApplicationNetwork()
+{
+    if (!m_ini.exists("network_application"))
+        return;
+
+    application.con_interface
+        = m_ini.getValue("network_application", "interface", false);
+    application.con_ip_addr
+        = m_ini.getValue("network_application", "ip_address", false);
+    application.con_mac_addr
+        = m_ini.getValue("network_application", "mac_address", false);
+    application.subnet_mask
+        = m_ini.getValue("network_application", "subnet_mask", false);
+    application.domain_name
+        = m_ini.getValue("network_application", "domain_name", false);
+    application.gateway
+        = m_ini.getValue("network_application", "gateway", false);
+
+    std::vector<std::string> nameservers;
+    boost::split(nameservers,
+        m_ini.getValue("network_application", "nameservers", false),
+        boost::is_any_of(", "), boost::token_compress_on);
+
+    application.nameservers = nameservers;
+}
+
+void AnswerFile::loadInformation()
+{
+    information.cluster_name
+        = m_ini.getValue("information", "cluster_name", false);
+    information.company_name
+        = m_ini.getValue("information", "company_name", false);
+    information.administrator_email
+        = m_ini.getValue("information", "administrator_email", false);
+}
+
+void AnswerFile::loadTimeSettings()
+{
+    time.timezone = m_ini.getValue("time", "timezone", false);
+    time.timeserver = m_ini.getValue("time", "timeserver", false);
+    time.locale = m_ini.getValue("time", "locale", false);
+}
+
+void AnswerFile::loadHostnameSettings()
+{
+    hostname.hostname = m_ini.getValue("hostname", "hostname", false);
+    hostname.domain_name = m_ini.getValue("hostname", "domain_name", false);
+}
+
+void AnswerFile::loadSystemSettings()
+{
+    system.disk_image = m_ini.getValue("system", "disk_image", false);
+    system.distro = m_ini.getValue("system", "distro", false);
+    system.version = m_ini.getValue("system", "version", false);
+    system.kernel = m_ini.getValue("system", "kernel", false);
+}
+
+AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
+{
+    AFNode node;
+
+    if (section == "node") {
+        node.prefix = m_ini.getValue(section, "prefix");
+        node.padding = m_ini.getValue(section, "prefix");
+        node.start_ip = m_ini.getValue(section, "node_start_ip");
+    }
+
+    node.hostname = m_ini.getValue(section, "hostname");
+    node.mac_address = m_ini.getValue(section, "mac_address");
+    node.root_password = m_ini.getValue(section, "node_root_password");
+    node.sockets = m_ini.getValue(section, "sockets");
+    node.cores_per_socket = m_ini.getValue(section, "cores_per_socket");
+    node.threads_per_core = m_ini.getValue(section, "threads_per_core");
+    node.bmc_address = m_ini.getValue(section, "bmc_address");
+    node.bmc_username = m_ini.getValue(section, "bmc_username");
+    node.bmc_password = m_ini.getValue(section, "bmc_password");
+    node.bmc_serialport = m_ini.getValue(section, "bmc_serialport");
+    node.bmc_serialspeed = m_ini.getValue(section, "bmc_serialspeed");
+
+    return node;
+}
+
+void AnswerFile::loadNodes()
+{
+    const AFNode generic = loadNode("node");
+    nodes.generic = generic;
+
+    int nodeCounter = 1;
+    while (true) {
+        std::string nodeSection = fmt::format("node.{}", nodeCounter);
+        if (!m_ini.exists(nodeSection)) {
+            break;
+        }
+
+        LOG_TRACE("Configure {}", nodeSection);
+        AFNode newNode = loadNode(nodeSection);
+
+        if (newNode.hostname->empty()) {
+            if (generic.prefix->empty()) {
+                throw std::runtime_error(
+                    fmt::format("Section node.{} must have a 'hostname' key or "
+                                "you must inform a generic 'node.prefix' value",
+                        nodeCounter));
+            } else if (generic.padding->empty()) {
+                throw std::runtime_error(fmt::format(
+                    "Section node.{} must have a 'hostname' key or you must "
+                    "inform a generic 'node.padding' value",
+                    nodeCounter));
+            } else
+                newNode.hostname = fmt::format(fmt::runtime("{}{:0>{}}"),
+                    generic.prefix.value(), nodeCounter,
+                    generic.padding.value());
+        }
+
+        //@TODO implement verification to all node keys
+
+        nodes.nodes.emplace_back(newNode);
+        nodeCounter++;
+    }
+}

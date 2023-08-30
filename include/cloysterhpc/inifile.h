@@ -17,7 +17,8 @@ public:
     void loadFile(const std::string& filepath);
     void loadFile(std::string_view filepath);
     void loadFile(const std::filesystem::path& filepath);
-    std::string getValue(const std::string& section, const std::string& key);
+    std::string getValue(const std::string& section, const std::string& key,
+        const bool& optional = true);
     void setValue(const std::string& section, const std::string& key,
         const std::string& newValue);
     bool deleteValue(const std::string& section, const std::string& key);
