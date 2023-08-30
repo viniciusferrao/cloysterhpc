@@ -167,7 +167,7 @@ AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
 
     if (section == "node") {
         node.prefix = m_ini.getValue(section, "prefix");
-        node.padding = m_ini.getValue(section, "prefix");
+        node.padding = m_ini.getValue(section, "padding");
         node.start_ip = m_ini.getValue(section, "node_start_ip");
     }
 
