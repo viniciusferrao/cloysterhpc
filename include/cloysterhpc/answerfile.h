@@ -82,6 +82,7 @@ private:
     void loadSystemSettings();
     void loadNodes();
     AFNode loadNode(const std::string& section);
+    void validateNode(AFNode node);
 
 public:
     AFNetwork external;

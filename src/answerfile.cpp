@@ -169,10 +169,11 @@ AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
         node.prefix = m_ini.getValue(section, "prefix");
         node.padding = m_ini.getValue(section, "padding");
         node.start_ip = m_ini.getValue(section, "node_start_ip");
+    } else {
+        node.mac_address = m_ini.getValue(section, "mac_address", false);
     }
 
     node.hostname = m_ini.getValue(section, "hostname");
-    node.mac_address = m_ini.getValue(section, "mac_address");
     node.root_password = m_ini.getValue(section, "node_root_password");
     node.sockets = m_ini.getValue(section, "sockets");
     node.cores_per_socket = m_ini.getValue(section, "cores_per_socket");
@@ -205,22 +206,129 @@ void AnswerFile::loadNodes()
             if (generic.prefix->empty()) {
                 throw std::runtime_error(
                     fmt::format("Section node.{} must have a 'hostname' key or "
-                                "you must inform a generic 'node.prefix' value",
+                                "you must inform a generic 'prefix' value",
                         nodeCounter));
             } else if (generic.padding->empty()) {
                 throw std::runtime_error(fmt::format(
                     "Section node.{} must have a 'hostname' key or you must "
-                    "inform a generic 'node.padding' value",
+                    "inform a generic 'padding' value",
                     nodeCounter));
             } else
                 newNode.hostname = fmt::format(fmt::runtime("{}{:0>{}}"),
                     generic.prefix.value(), nodeCounter,
-                    generic.padding.value());
+                    stoi(generic.padding.value()));
         }
 
-        //@TODO implement verification to all node keys
+        try {
+            validateNode(newNode);
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section node.{} validation failed - {}",
+                    nodeCounter, e.what()));
+        }
 
         nodes.nodes.emplace_back(newNode);
         nodeCounter++;
+    }
+}
+
+void AnswerFile::validateNode(AnswerFile::AFNode node)
+{
+    if (node.root_password->empty()) {
+        if (nodes.generic->root_password->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "node_root_password"));
+        } else {
+            node.root_password = nodes.generic->root_password;
+        }
+    }
+
+    if (node.sockets->empty()) {
+        if (nodes.generic->sockets->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "sockets"));
+        } else {
+            node.sockets = nodes.generic->sockets;
+        }
+    }
+
+    if (node.cores_per_socket->empty()) {
+        if (nodes.generic->cores_per_socket->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "cores_per_socket"));
+        } else {
+            node.cores_per_socket = nodes.generic->cores_per_socket;
+        }
+    }
+
+    if (node.threads_per_core->empty()) {
+        if (nodes.generic->threads_per_core->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "threads_per_core"));
+        } else {
+            node.threads_per_core = nodes.generic->threads_per_core;
+        }
+    }
+
+    if (node.bmc_address->empty()) {
+        if (nodes.generic->bmc_address->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key", "bmc_address"));
+        } else {
+            node.bmc_address = nodes.generic->bmc_address;
+        }
+    }
+
+    if (node.bmc_username->empty()) {
+        if (nodes.generic->bmc_username->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "bmc_username"));
+        } else {
+            node.bmc_username = nodes.generic->bmc_username;
+        }
+    }
+
+    if (node.bmc_password->empty()) {
+        if (nodes.generic->bmc_password->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "bmc_password"));
+
+        } else {
+            node.bmc_password = nodes.generic->bmc_password;
+        }
+    }
+
+    if (node.bmc_serialport->empty()) {
+        if (nodes.generic->bmc_serialport->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "bmc_serialport"));
+        } else {
+            node.bmc_serialport = nodes.generic->bmc_serialport;
+        }
+    }
+
+    if (node.bmc_serialspeed->empty()) {
+        if (nodes.generic->bmc_serialspeed->empty()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "bmc_serialspeed"));
+        } else {
+            node.bmc_serialspeed = nodes.generic->bmc_serialspeed;
+        }
     }
 }
