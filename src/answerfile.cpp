@@ -60,15 +60,59 @@ void AnswerFile::loadOptions()
     loadNodes();
 }
 
+address AnswerFile::convertStringToAddress(std::string addr)
+{
+    try {
+        return boost::asio::ip::make_address(addr);
+    } catch (boost::system::system_error& e) {
+        throw std::runtime_error("Invalid address");
+    }
+}
+
 void AnswerFile::loadExternalNetwork()
 {
     external.con_interface
         = m_ini.getValue("network_external", "interface", false);
-    external.con_ip_addr = m_ini.getValue("network_external", "ip_address");
+
+    if (m_ini.exists("network_external", "ip_address")) {
+        try {
+            external.con_ip_addr = convertStringToAddress(
+                m_ini.getValue("network_external", "ip_address"));
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section 'network_external' field 'ip_address' "
+                            "validation failed - {}",
+                    e.what()));
+        }
+    }
+
     external.con_mac_addr = m_ini.getValue("network_external", "mac_address");
-    external.subnet_mask = m_ini.getValue("network_external", "subnet_mask");
+
+    if (m_ini.exists("network_external", "subnet_mask")) {
+        try {
+            external.subnet_mask = convertStringToAddress(
+                m_ini.getValue("network_external", "subnet_mask"));
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section 'network_external' field 'subnet_mask' "
+                            "validation failed - {}",
+                    e.what()));
+        }
+    }
+
     external.domain_name = m_ini.getValue("network_external", "domain_name");
-    external.gateway = m_ini.getValue("network_external", "gateway");
+
+    if (m_ini.exists("network_external", "gateway")) {
+        try {
+            external.gateway = convertStringToAddress(
+                m_ini.getValue("network_external", "gateway"));
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section 'network_external' field 'gateway' "
+                            "validation failed - {}",
+                    e.what()));
+        }
+    }
 
     if (m_ini.exists("network_external", "nameservers")) {
         std::vector<std::string> nameservers;
@@ -84,15 +128,44 @@ void AnswerFile::loadManagementNetwork()
 {
     management.con_interface
         = m_ini.getValue("network_management", "interface", false);
-    management.con_ip_addr
-        = m_ini.getValue("network_management", "ip_address", false);
+
+    try {
+        management.con_ip_addr = convertStringToAddress(
+            m_ini.getValue("network_management", "ip_address", false));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(
+            fmt::format("Section 'network_management' field 'ip_address' "
+                        "validation failed - {}",
+                e.what()));
+    }
+
     management.con_mac_addr
         = m_ini.getValue("network_management", "mac_address");
-    management.subnet_mask
-        = m_ini.getValue("network_management", "subnet_mask", false);
+
+    try {
+        management.subnet_mask = convertStringToAddress(
+            m_ini.getValue("network_management", "subnet_mask", false));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(
+            fmt::format("Section 'network_management' field 'subnet_mask' "
+                        "validation failed - {}",
+                e.what()));
+    }
+
     management.domain_name
         = m_ini.getValue("network_management", "domain_name", false);
-    management.gateway = m_ini.getValue("network_management", "gateway");
+
+    if (m_ini.exists("network_management", "gateway")) {
+        try {
+            management.gateway = convertStringToAddress(
+                m_ini.getValue("network_management", "gateway"));
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section 'network_management' field 'gateway' "
+                            "validation failed - {}",
+                    e.what()));
+        }
+    }
 
     if (m_ini.exists("network_management", "nameservers")) {
         std::vector<std::string> nameservers;
@@ -111,16 +184,42 @@ void AnswerFile::loadApplicationNetwork()
 
     application.con_interface
         = m_ini.getValue("network_application", "interface", false);
-    application.con_ip_addr
-        = m_ini.getValue("network_application", "ip_address", false);
+
+    try {
+        application.con_ip_addr = convertStringToAddress(
+            m_ini.getValue("network_application", "ip_address", false));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(
+            fmt::format("Section 'network_application' field 'ip_address' "
+                        "validation failed - {}",
+                e.what()));
+    }
+
     application.con_mac_addr
         = m_ini.getValue("network_application", "mac_address", false);
-    application.subnet_mask
-        = m_ini.getValue("network_application", "subnet_mask", false);
+
+    try {
+        application.subnet_mask = convertStringToAddress(
+            m_ini.getValue("network_application", "subnet_mask", false));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(
+            fmt::format("Section 'network_application' field 'subnet_mask' "
+                        "validation failed - {}",
+                e.what()));
+    }
+
     application.domain_name
         = m_ini.getValue("network_application", "domain_name", false);
-    application.gateway
-        = m_ini.getValue("network_application", "gateway", false);
+
+    try {
+        application.gateway = convertStringToAddress(
+            m_ini.getValue("network_application", "gateway", false));
+    } catch (const std::runtime_error& e) {
+        throw std::runtime_error(
+            fmt::format("Section 'network_application' field 'gateway' "
+                        "validation failed - {}",
+                e.what()));
+    }
 
     std::vector<std::string> nameservers;
     boost::split(nameservers,

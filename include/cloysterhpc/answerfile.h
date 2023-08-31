@@ -6,20 +6,23 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <optional>
 #include <vector>
+
+using boost::asio::ip::address;
 
 class AnswerFile {
 
 private:
     struct AFNetwork {
-        std::optional<std::string> subnet_mask;
-        std::optional<std::string> gateway;
+        std::optional<address> subnet_mask;
+        std::optional<address> gateway;
         std::optional<std::string> domain_name;
         std::optional<std::vector<std::string>> nameservers;
         std::optional<std::string> con_interface;
-        std::optional<std::string> con_ip_addr;
+        std::optional<address> con_ip_addr;
         std::optional<std::string> con_mac_addr;
     };
 
@@ -73,6 +76,7 @@ private:
     inifile m_ini;
 
     void loadOptions();
+    address convertStringToAddress(std::string addr);
     void loadExternalNetwork();
     void loadManagementNetwork();
     void loadApplicationNetwork();
