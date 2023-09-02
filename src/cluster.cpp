@@ -19,6 +19,7 @@
 #include <regex>
 
 #ifndef NDEBUG
+#include "cloysterhpc/answerfile.h"
 #include <fmt/format.h>
 #endif
 
@@ -417,211 +418,86 @@ void Cluster::fillTestData()
 
 void Cluster::fillData(const std::string& answerfilePath)
 {
-    // @TODO Clean and improve this code
 
-    auto lGenericWarnMustFillSectionKey
-        = [](std::string section, std::string key) {
-              return fmt::format(
-                  "Answerfile section \"{}\" must have \"{}\" key filled",
-                  section, key);
-          };
+    AnswerFile answerfile(answerfilePath);
 
-    inifile ini;
-
-    ini.loadFile(answerfilePath);
-
-    LOG_TRACE("Read answerfile variables:");
-
-    // Information
-    auto clusterName = ini.getValue("information", "cluster_name");
-    auto companyName = ini.getValue("information", "company_name");
-    auto administratorEmail
-        = ini.getValue("information", "administrator_email");
-
-    // Time
-    auto timezone = ini.getValue("time", "timezone");
-    auto timeserver = ini.getValue("time", "timeserver");
-    auto locale = ini.getValue("time", "locale");
-
-    // Hostname
-    auto hostname = ini.getValue("hostname", "hostname");
-    auto domainName = ini.getValue("hostname", "domain_name");
-
+    LOG_TRACE("Configure Management Network");
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
 
-    auto managementNetworkInterface
-        = ini.getValue("network_management", "interface");
+    managementNetwork->setSubnetMask(answerfile.management.subnet_mask.value());
 
-    auto managementNetworkSubnetMask
-        = ini.getValue("network_management", "subnet_mask");
-    managementNetwork->setSubnetMask(managementNetworkSubnetMask);
-
-    if (ini.exists("network_management", "gateway")) {
-        auto managementNetworkGateway
-            = ini.getValue("network_management", "gateway");
-        managementNetwork->setGateway(managementNetworkGateway);
+    if (answerfile.management.gateway.has_value()) {
+        managementNetwork->setGateway(answerfile.management.gateway.value());
     }
 
-    auto managementNetworkDomainName
-        = ini.getValue("network_management", "domain_name");
-    managementNetwork->setDomainName(managementNetworkDomainName);
+    managementNetwork->setDomainName(answerfile.management.domain_name.value());
 
-    if (ini.exists("network_management", "nameservers")) {
-        std::vector<std::string> managementNetworkNameservers;
-        boost::split(managementNetworkNameservers,
-            ini.getValue("network_management", "nameservers"),
-            boost::is_any_of(", "), boost::token_compress_on);
-
-        managementNetwork->setNameservers(managementNetworkNameservers);
+    if (answerfile.management.nameservers.has_value()) {
+        managementNetwork->setNameservers(
+            answerfile.management.nameservers.value());
     } else {
         managementNetwork->setNameservers(
             managementNetwork->fetchNameservers());
     }
 
-    auto managementConnectionIpAddress
-        = ini.getValue("network_management", "ip_address");
+    managementNetwork->setAddress(managementNetwork->calculateAddress(
+        answerfile.management.con_ip_addr.value()));
 
-    managementNetwork->setAddress(
-        managementNetwork->calculateAddress(managementConnectionIpAddress));
-
+    LOG_TRACE("Configure External Network");
     // External Network
     auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
 
-    auto externalNetworkInterface
-        = ini.getValue("network_external", "interface");
-
-    if (ini.exists("network_external", "subnet_mask")) {
-        auto externalNetworkSubnetMask
-            = ini.getValue("network_external", "subnet_mask");
-        externalNetwork->setSubnetMask(externalNetworkSubnetMask);
+    if (answerfile.external.subnet_mask.has_value()) {
+        externalNetwork->setSubnetMask(answerfile.external.subnet_mask.value());
     } else {
-        externalNetwork->setSubnetMask(
-            externalNetwork->fetchSubnetMask(externalNetworkInterface));
+        externalNetwork->setSubnetMask(externalNetwork->fetchSubnetMask(
+            answerfile.external.con_interface.value()));
     }
 
-    if (ini.exists("network_external", "gateway")) {
-        auto externalNetworkGateway
-            = ini.getValue("network_external", "gateway");
-        externalNetwork->setGateway(externalNetworkGateway);
+    if (answerfile.external.gateway.has_value()) {
+        externalNetwork->setGateway(answerfile.external.gateway.value());
     }
 
-    if (ini.exists("network_external", "domain_name")) {
-        auto externalNetworkDomainName
-            = ini.getValue("network_external", "domain_name");
-        externalNetwork->setDomainName(externalNetworkDomainName);
+    if (!answerfile.external.domain_name->empty()) {
+        externalNetwork->setDomainName(answerfile.external.domain_name.value());
     } else {
         externalNetwork->setDomainName(externalNetwork->fetchDomainName());
     }
 
-    if (ini.exists("network_external", "nameservers")) {
-        std::vector<std::string> externalNetworkNameservers;
-        boost::split(externalNetworkNameservers,
-            ini.getValue("network_external", "nameservers"),
-            boost::is_any_of(", "), boost::token_compress_on);
-
-        externalNetwork->setNameservers(externalNetworkNameservers);
+    if (answerfile.external.nameservers.has_value()) {
+        externalNetwork->setNameservers(
+            answerfile.external.nameservers.value());
     } else {
         externalNetwork->setNameservers(externalNetwork->fetchNameservers());
     }
 
     // System
-    std::filesystem::path diskImage = ini.getValue("system", "disk_image");
-    setDiskImage(diskImage);
+    setDiskImage(answerfile.system.disk_image);
 
-    auto distro = ini.getValue("system", "distro");
-    auto distro_version = ini.getValue("system", "version");
-    auto kernel = ini.getValue("system", "kernel");
-
-    // Nodes
+    // OS and Information
 
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
     nodeOS.setPlatform(OS::Platform::el8);
-    nodeOS.setDistro(distro);
-    nodeOS.setKernel(kernel);
-    nodeOS.setVersion(distro_version);
+    nodeOS.setDistro(answerfile.system.distro);
+    nodeOS.setKernel(answerfile.system.kernel);
+    nodeOS.setVersion(answerfile.system.version);
 
-    Node genericNode;
+    LOG_TRACE("Cluster name: {}", answerfile.information.cluster_name);
 
-    if (ini.exists("node")) {
+    setName(answerfile.information.cluster_name);
+    setCompanyName(answerfile.information.company_name);
+    setAdminMail(answerfile.information.administrator_email);
 
-        CPU genericNodeCPU;
-        BMC genericNodeBMC;
+    setTimezone(answerfile.time.timezone);
+    setLocale(answerfile.time.locale);
 
-        if (ini.exists("node", "prefix")) {
-            genericNode.setPrefix(ini.getValue("node", "prefix"));
-        }
-
-        if (ini.exists("node", "padding")) {
-            genericNode.setPadding(std::stoul(ini.getValue("node", "padding")));
-        }
-
-        if (ini.exists("node", "node_start_ip")) {
-            genericNode.setNodeStartIp(boost::asio::ip::make_address(
-                ini.getValue("node", "node_start_ip")));
-        }
-
-        if (ini.exists("node", "node_root_password")) {
-            genericNode.setNodeRootPassword(
-                ini.getValue("node", "node_root_password"));
-        }
-
-        if (ini.exists("node", "sockets")) {
-            genericNodeCPU.setSockets(
-                std::stoul(ini.getValue("node", "sockets")));
-        }
-
-        if (ini.exists("node", "cores_per_socket")) {
-            genericNodeCPU.setCoresPerSocket(
-                std::stoul(ini.getValue("node", "cores_per_socket")));
-        }
-
-        if (ini.exists("node", "threads_per_core")) {
-            genericNodeCPU.setThreadsPerCore(
-                std::stoul(ini.getValue("node", "threads_per_core")));
-        }
-
-        if (ini.exists("node", "bmc_address")) {
-            genericNodeBMC.setAddress(ini.getValue("node", "bmc_address"));
-        }
-
-        if (ini.exists("node", "bmc_username")) {
-            genericNodeBMC.setUsername(ini.getValue("node", "bmc_username"));
-        }
-
-        if (ini.exists("node", "bmc_password")) {
-            genericNodeBMC.setPassword(ini.getValue("node", "bmc_password"));
-        }
-
-        if (ini.exists("node", "bmc_serialport")) {
-            genericNodeBMC.setSerialPort(
-                std::stoul(ini.getValue("node", "bmc_serialport")));
-        }
-
-        if (ini.exists("node", "bmc_serialspeed")) {
-            genericNodeBMC.setSerialSpeed(
-                std::stoul(ini.getValue("node", "bmc_serialspeed")));
-        }
-
-        genericNode.setCPU(genericNodeCPU);
-        genericNode.setBMC(genericNodeBMC);
-    }
-
-    LOG_TRACE("Cluster name: {}", clusterName);
-
-    setName(clusterName);
-    setCompanyName(companyName);
-    setAdminMail(administratorEmail);
-
-    setTimezone(timezone);
-    setLocale(locale);
-
-    this->m_headnode.setHostname(hostname);
-    setDomainName(domainName);
+    this->m_headnode.setHostname(answerfile.hostname.hostname);
+    setDomainName(answerfile.hostname.domain_name);
     this->m_headnode.setFQDN(fmt::format(
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
@@ -631,38 +507,37 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     addNetwork(std::move(managementNetwork));
 
+    LOG_TRACE("Configure Management Connection");
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
-    managementConnection.setInterface(managementNetworkInterface);
+    managementConnection.setInterface(
+        answerfile.management.con_interface.value());
 
-    managementConnection.setAddress(managementConnectionIpAddress);
+    managementConnection.setAddress(answerfile.management.con_ip_addr.value());
 
-    if (ini.exists("network_management", "mac_address")) {
-        auto managementNetworkMacAddress
-            = ini.getValue("network_management", "mac_address");
-        managementConnection.setMAC(managementNetworkMacAddress);
+    if (!answerfile.management.con_mac_addr->empty()) {
+        managementConnection.setMAC(answerfile.management.con_mac_addr.value());
     }
 
     getHeadnode().addConnection(std::move(managementConnection));
 
     addNetwork(std::move(externalNetwork));
 
+    LOG_TRACE("Configure External Connection");
     auto externalConnection
         = Connection(&getNetwork(Network::Profile::External));
-    externalConnection.setInterface(externalNetworkInterface);
+    externalConnection.setInterface(answerfile.external.con_interface.value());
 
-    if (ini.exists("network_external", "ip_address")) {
-        auto externalNetworkIpAddress
-            = ini.getValue("network_external", "ip_address");
-        externalConnection.setAddress(externalNetworkIpAddress);
+    if (answerfile.external.con_ip_addr.has_value()) {
+        externalConnection.setAddress(answerfile.external.con_ip_addr.value());
 
         getNetwork(Network::Profile::External)
-            .setAddress(getNetwork(Network::Profile::External)
-                            .calculateAddress(externalNetworkIpAddress));
-
+            .setAddress(
+                getNetwork(Network::Profile::External)
+                    .calculateAddress(answerfile.external.con_ip_addr.value()));
     } else {
-        auto externalNetworkIpAddress
-            = externalConnection.fetchAddress(externalNetworkInterface);
+        auto externalNetworkIpAddress = externalConnection.fetchAddress(
+            answerfile.external.con_interface.value());
         externalConnection.setAddress(externalNetworkIpAddress);
 
         getNetwork(Network::Profile::External)
@@ -670,95 +545,47 @@ void Cluster::fillData(const std::string& answerfilePath)
                             .calculateAddress(externalNetworkIpAddress));
     }
 
-    if (ini.exists("network_external", "mac_address")) {
-        auto externalNetworkMacAddress
-            = ini.getValue("network_external", "mac_address");
-        externalConnection.setMAC(externalNetworkMacAddress);
+    if (!answerfile.external.con_mac_addr->empty()) {
+        externalConnection.setMAC(answerfile.external.con_mac_addr.value());
     }
 
     getHeadnode().addConnection(std::move(externalConnection));
 
     // Infiniband (Application) Network
-    if (ini.exists("network_application")) {
+    if (answerfile.application.con_interface.has_value()) {
+        LOG_TRACE("Configure Application Network");
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
-        if (ini.exists("network_application", "subnet_mask")) {
-            auto applicationNetworkSubnetMask
-                = ini.getValue("network_application", "subnet_mask");
-            applicationNetwork->setSubnetMask(applicationNetworkSubnetMask);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "subnet_mask"));
-        }
+        applicationNetwork->setSubnetMask(
+            answerfile.application.subnet_mask.value());
 
-        if (ini.exists("network_application", "gateway")) {
-            auto applicationNetworkGateway
-                = ini.getValue("network_application", "gateway");
-            applicationNetwork->setGateway(applicationNetworkGateway);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "gateway"));
-        }
+        applicationNetwork->setGateway(answerfile.application.gateway.value());
 
-        if (ini.exists("network_application", "domain_name")) {
-            auto applicationNetworkDomainName
-                = ini.getValue("network_application", "domain_name");
-            applicationNetwork->setDomainName(applicationNetworkDomainName);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "domain_name"));
-        }
+        applicationNetwork->setDomainName(
+            answerfile.application.domain_name.value());
 
-        if (ini.exists("network_application", "nameservers")) {
-            std::vector<std::string> applicationNetworkNameservers;
-            boost::split(applicationNetworkNameservers,
-                ini.getValue("network_application", "nameservers"),
-                boost::is_any_of(", "), boost::token_compress_on);
-
-            applicationNetwork->setNameservers(applicationNetworkNameservers);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "nameservers"));
-        }
+        applicationNetwork->setNameservers(
+            answerfile.application.nameservers.value());
 
         addNetwork(std::move(applicationNetwork));
 
         auto applicationConnection
             = Connection(&getNetwork(Network::Profile::Application));
 
-        if (ini.exists("network_application", "mac_address")) {
-            auto applicationConnectionMacAddress
-                = ini.getValue("network_application", "mac_address");
-            applicationConnection.setMAC(applicationConnectionMacAddress);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "mac_address"));
-        }
+        applicationConnection.setMAC(
+            answerfile.application.con_mac_addr.value());
 
-        if (ini.exists("network_application", "interface")) {
-            auto applicationConnectionInterface
-                = ini.getValue("network_application", "interface");
-            applicationConnection.setInterface(applicationConnectionInterface);
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "interface"));
-        }
+        applicationConnection.setInterface(
+            answerfile.application.con_interface.value());
 
-        if (ini.exists("network_application", "ip_address")) {
-            auto applicationConnectionIpAddress
-                = ini.getValue("network_application", "ip_address");
-            applicationConnection.setAddress(applicationConnectionIpAddress);
+        applicationConnection.setAddress(
+            answerfile.application.con_ip_addr.value());
 
-            getNetwork(Network::Profile::Application)
-                .setAddress(
-                    getNetwork(Network::Profile::Application)
-                        .calculateAddress(applicationConnectionIpAddress));
-
-        } else {
-            throw std::runtime_error(lGenericWarnMustFillSectionKey(
-                "network_application", "ip_address"));
-        }
+        getNetwork(Network::Profile::Application)
+            .setAddress(getNetwork(Network::Profile::Application)
+                            .calculateAddress(
+                                answerfile.application.con_ip_addr.value()));
 
         m_headnode.addConnection(std::move(applicationConnection));
     }
@@ -768,16 +595,10 @@ void Cluster::fillData(const std::string& answerfilePath)
     setProvisioner(Provisioner::xCAT);
     m_headnode.setOS(nodeOS);
 
-    LOG_TRACE("Read nodes data from answerfile");
-    int nodeCounter = 1;
-    while (true) {
+    LOG_TRACE("Configure Nodes");
+    for (auto node : answerfile.nodes.nodes) {
 
-        std::string nodeSection = fmt::format("node.{}", nodeCounter);
-        if (!ini.exists(nodeSection)) {
-            break;
-        }
-
-        LOG_TRACE("Configure {}", nodeSection);
+        LOG_TRACE("Configure node {}", node.hostname.value());
 
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(
@@ -787,185 +608,61 @@ void Cluster::fillData(const std::string& answerfilePath)
         CPU newNodeCPU;
         BMC newNodeBMC;
 
-        if (ini.exists(nodeSection, "hostname")) {
-            newNode.setHostname(ini.getValue(nodeSection, "hostname"));
-        } else {
-            if (ini.exists(nodeSection, "prefix")) {
-                newNode.setPrefix(ini.getValue(nodeSection, "prefix"));
-            } else if (genericNode.getPrefix().has_value()) {
-                newNode.setPrefix(genericNode.getPrefix());
-            } else {
-                throw std::runtime_error(fmt::format(
-                    "Section node.{} must have a prefix value", nodeCounter));
-            }
+        newNode.setHostname(node.hostname.value());
 
-            LOG_TRACE(
-                "{} prefix: {}", nodeSection, newNode.getPrefix().value());
+        newNode.setNodeStartIp(node.start_ip.value());
 
-            if (ini.exists(nodeSection, "padding")) {
-                newNode.setPadding(
-                    std::stoul(ini.getValue(nodeSection, "padding")));
-            } else if (genericNode.getPadding().has_value()) {
-                newNode.setPadding(genericNode.getPadding().value());
-            } else {
-                throw std::runtime_error(fmt::format(
-                    "Section node.{} must have a padding value", nodeCounter));
-            }
-
-            LOG_TRACE(
-                "{} padding: {}", nodeSection, newNode.getPrefix().value());
-
-            auto nodeName
-                = fmt::format("{}{:0>{}}", newNode.getPrefix().value(),
-                    nodeCounter, newNode.getPadding().value());
-
-            newNode.setHostname(nodeName);
-        }
-
-        LOG_TRACE("{} hostname: {}", nodeSection, newNode.getHostname());
-
-        if (ini.exists(nodeSection, "node_start_ip")) {
-            newNode.setNodeStartIp(boost::asio::ip::make_address(
-                ini.getValue(nodeSection, "node_start_ip")));
-        } else if (genericNode.getNodeStartIp().has_value()) {
-            newNode.setNodeStartIp(genericNode.getNodeStartIp().value());
-        } else {
-            throw std::runtime_error(
-                fmt::format("Section node.{} must have a node_start_ip value",
-                    nodeCounter));
-        }
-
-        LOG_TRACE("{} start ip: {}", nodeSection,
+        LOG_TRACE("{} start ip: {}", newNode.getHostname(),
             newNode.getNodeStartIp()->to_string());
 
-        if (ini.exists(nodeSection, "mac_address")) {
-            newNode.setMACAddress(ini.getValue(nodeSection, "mac_address"));
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a node_root_password value",
-                nodeCounter));
-        }
+        newNode.setMACAddress(node.mac_address.value());
 
-        LOG_TRACE("{} MAC address: {}", nodeSection, newNode.getMACAddress());
+        LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
+            newNode.getMACAddress());
 
-        if (ini.exists(nodeSection, "node_root_password")) {
-            newNode.setNodeRootPassword(
-                ini.getValue(nodeSection, "node_root_password"));
-        } else if (genericNode.getNodeRootPassword().has_value()) {
-            newNode.setNodeRootPassword(
-                genericNode.getNodeRootPassword().value());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a node_root_password value",
-                nodeCounter));
-        }
+        newNode.setNodeRootPassword(node.root_password.value());
 
-        LOG_TRACE("{} root password: {}", nodeSection,
+        LOG_TRACE("{} root password: {}", newNode.getHostname(),
             newNode.getNodeRootPassword().value());
 
-        if (ini.exists(nodeSection, "sockets")) {
-            newNodeCPU.setSockets(
-                std::stoul(ini.getValue(nodeSection, "sockets")));
-        } else if (genericNode.getCPU().getSockets() != 0) {
-            newNodeCPU.setSockets(genericNode.getCPU().getSockets());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a sockets value", nodeCounter));
-        }
+        newNodeCPU.setSockets(std::stoul(node.sockets.value()));
 
-        LOG_TRACE("{} CPU sockets: {}", nodeSection, newNodeCPU.getSockets());
+        LOG_TRACE("{} CPU sockets: {}", newNode.getHostname(),
+            newNodeCPU.getSockets());
 
-        if (ini.exists(nodeSection, "cores_per_socket")) {
-            newNodeCPU.setCoresPerSocket(
-                std::stoul(ini.getValue(nodeSection, "cores_per_socket")));
-        } else if (genericNode.getCPU().getCoresPerSocket() != 0) {
-            newNodeCPU.setCoresPerSocket(
-                genericNode.getCPU().getCoresPerSocket());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a cores_per_socket value",
-                nodeCounter));
-        }
+        newNodeCPU.setCoresPerSocket(std::stoul(node.cores_per_socket.value()));
 
-        LOG_TRACE("{} CPU cores per socket: {}", nodeSection,
+        LOG_TRACE("{} CPU cores per socket: {}", newNode.getHostname(),
             newNodeCPU.getCoresPerSocket());
 
-        if (ini.exists(nodeSection, "threads_per_core")) {
-            newNodeCPU.setThreadsPerCore(
-                std::stoul(ini.getValue(nodeSection, "threads_per_core")));
-        } else if (genericNode.getCPU().getThreadsPerCore() != 0) {
-            newNodeCPU.setThreadsPerCore(
-                genericNode.getCPU().getThreadsPerCore());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a threads_per_core value",
-                nodeCounter));
-        }
+        newNodeCPU.setThreadsPerCore(std::stoul(node.threads_per_core.value()));
 
-        LOG_TRACE("{} CPU threads per core: {}", nodeSection,
+        LOG_TRACE("{} CPU threads per core: {}", newNode.getHostname(),
             newNodeCPU.getThreadsPerCore());
 
-        if (ini.exists(nodeSection, "bmc_address")) {
-            newNodeBMC.setAddress(ini.getValue(nodeSection, "bmc_address"));
-        } else if (!genericNode.getBMC()->getAddress().empty()) {
-            newNodeBMC.setAddress(genericNode.getBMC()->getAddress());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a bmc_address value", nodeCounter));
-        }
+        newNodeBMC.setAddress(node.bmc_address.value());
 
-        LOG_TRACE("{} BMC address: {}", nodeSection, newNodeBMC.getAddress());
+        LOG_TRACE("{} BMC address: {}", newNode.getHostname(),
+            newNodeBMC.getAddress());
 
-        if (ini.exists(nodeSection, "bmc_username")) {
-            newNodeBMC.setUsername(ini.getValue(nodeSection, "bmc_username"));
+        newNodeBMC.setUsername(node.bmc_username.value());
 
-        } else if (!genericNode.getBMC()->getUsername().empty()) {
-            newNodeBMC.setUsername(genericNode.getBMC()->getUsername());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a bmc_username value", nodeCounter));
-        }
+        LOG_TRACE("{} BMC username: {}", newNode.getHostname(),
+            newNodeBMC.getUsername());
 
-        LOG_TRACE("{} BMC username: {}", nodeSection, newNodeBMC.getUsername());
+        newNodeBMC.setPassword(node.bmc_password.value());
 
-        if (ini.exists(nodeSection, "bmc_password")) {
-            newNodeBMC.setPassword(ini.getValue(nodeSection, "bmc_password"));
+        LOG_TRACE("{} BMC password: {}", newNode.getHostname(),
+            newNodeBMC.getPassword());
 
-        } else if (!genericNode.getBMC()->getPassword().empty()) {
-            newNodeBMC.setPassword(genericNode.getBMC()->getPassword());
-        } else {
-            throw std::runtime_error(fmt::format(
-                "Section node.{} must have a bmc_password value", nodeCounter));
-        }
+        newNodeBMC.setSerialPort(std::stoul(node.bmc_serialport.value()));
 
-        LOG_TRACE("{} BMC password: {}", nodeSection, newNodeBMC.getPassword());
+        LOG_TRACE("{} BMC serial port: {}", newNode.getHostname(),
+            newNodeBMC.getSerialPort());
 
-        if (ini.exists(nodeSection, "bmc_serialport")) {
-            newNodeBMC.setSerialPort(
-                std::stoul(ini.getValue(nodeSection, "bmc_serialport")));
-        } else if (genericNode.getBMC()->getSerialPort() != 0) {
-            newNodeBMC.setSerialPort(genericNode.getBMC()->getSerialPort());
-        } else {
-            throw std::runtime_error(
-                fmt::format("Section node.{} must have a bmc_serialport value",
-                    nodeCounter));
-        }
+        newNodeBMC.setSerialSpeed(std::stoul(node.bmc_serialspeed.value()));
 
-        LOG_TRACE(
-            "{} BMC serial port: {}", nodeSection, newNodeBMC.getSerialPort());
-
-        if (ini.exists(nodeSection, "bmc_serialspeed")) {
-            newNodeBMC.setSerialSpeed(
-                std::stoul(ini.getValue(nodeSection, "bmc_serialspeed")));
-        } else if (genericNode.getBMC()->getSerialSpeed() != 0) {
-            newNodeBMC.setSerialSpeed(genericNode.getBMC()->getSerialSpeed());
-        } else {
-            throw std::runtime_error(
-                fmt::format("Section node.{} must have a bmc_serialspeed value",
-                    nodeCounter));
-        }
-
-        LOG_TRACE("{} BMC serial speed: {}", nodeSection,
+        LOG_TRACE("{} BMC serial speed: {}", newNode.getHostname(),
             newNodeBMC.getSerialSpeed());
 
         newNode.setCPU(newNodeCPU);
@@ -977,12 +674,11 @@ void Cluster::fillData(const std::string& answerfilePath)
         newNode.setConnection(nodeConnections);
 
         addNode(newNode);
-        nodeCounter++;
     }
 
     /* Bad and old data - @TODO Must improve */
-    nodePrefix = genericNode.getPrefix().value();
-    nodePadding = genericNode.getPadding().value();
-    nodeStartIP = genericNode.getNodeStartIp().value();
-    nodeRootPassword = genericNode.getNodeRootPassword().value();
+    nodePrefix = answerfile.nodes.generic->prefix.value();
+    nodePadding = std::stoul(answerfile.nodes.generic->padding.value());
+    nodeStartIP = answerfile.nodes.generic->start_ip.value();
+    nodeRootPassword = answerfile.nodes.generic->root_password.value();
 }

@@ -53,7 +53,7 @@ private:
     struct AFNode {
         std::optional<std::string> prefix;
         std::optional<std::string> padding;
-        std::optional<std::string> start_ip;
+        std::optional<address> start_ip = address();
         std::optional<std::string> hostname;
         std::optional<std::string> root_password;
         std::optional<std::string> mac_address;
@@ -76,7 +76,7 @@ private:
     inifile m_ini;
 
     void loadOptions();
-    address convertStringToAddress(std::string addr);
+    address convertStringToAddress(const std::string& addr);
     void loadExternalNetwork();
     void loadManagementNetwork();
     void loadApplicationNetwork();
@@ -86,7 +86,7 @@ private:
     void loadSystemSettings();
     void loadNodes();
     AFNode loadNode(const std::string& section);
-    void validateNode(AFNode node);
+    AFNode validateNode(AFNode node);
 
 public:
     AFNetwork external;
@@ -99,15 +99,6 @@ public:
     AFNodes nodes;
 
     explicit AnswerFile(const std::filesystem::path& path);
-
-    [[nodiscard]] const AFNetwork& getExternal() const;
-    [[nodiscard]] const AFNetwork& getManagement() const;
-    [[nodiscard]] const AFNetwork& getApplication() const;
-    [[nodiscard]] const AFInformation& getInformation() const;
-    [[nodiscard]] const AFTime& getTime() const;
-    [[nodiscard]] const AFHostname& getHostname() const;
-    [[nodiscard]] const AFSystem& getSystem() const;
-    [[nodiscard]] const AFNodes& getNodes() const;
 };
 
 #endif // CLOYSTERHPC_ANSWERFILE_H_

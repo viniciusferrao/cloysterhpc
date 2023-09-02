@@ -15,37 +15,6 @@ AnswerFile::AnswerFile(const std::filesystem::path& path)
     loadOptions();
 }
 
-const AnswerFile::AFNetwork& AnswerFile::getExternal() const
-{
-    return external;
-}
-
-const AnswerFile::AFNetwork& AnswerFile::getManagement() const
-{
-    return management;
-}
-
-const AnswerFile::AFNetwork& AnswerFile::getApplication() const
-{
-    return application;
-}
-
-const AnswerFile::AFInformation& AnswerFile::getInformation() const
-{
-    return information;
-}
-
-const AnswerFile::AFTime& AnswerFile::getTime() const { return time; }
-
-const AnswerFile::AFHostname& AnswerFile::getHostname() const
-{
-    return hostname;
-}
-
-const AnswerFile::AFSystem& AnswerFile::getSystem() const { return system; }
-
-const AnswerFile::AFNodes& AnswerFile::getNodes() const { return nodes; }
-
 void AnswerFile::loadOptions()
 {
     LOG_TRACE("Read answerfile variables");
@@ -60,7 +29,7 @@ void AnswerFile::loadOptions()
     loadNodes();
 }
 
-address AnswerFile::convertStringToAddress(std::string addr)
+address AnswerFile::convertStringToAddress(const std::string& addr)
 {
     try {
         return boost::asio::ip::make_address(addr);
@@ -267,9 +236,20 @@ AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
     if (section == "node") {
         node.prefix = m_ini.getValue(section, "prefix");
         node.padding = m_ini.getValue(section, "padding");
-        node.start_ip = m_ini.getValue(section, "node_start_ip");
     } else {
         node.mac_address = m_ini.getValue(section, "mac_address", false);
+    }
+
+    if (m_ini.exists(section, "node_start_ip")) {
+        try {
+            node.start_ip = convertStringToAddress(
+                m_ini.getValue(section, "node_start_ip"));
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error(
+                fmt::format("Section '{}' field 'node_start_ip' "
+                            "validation failed - {}",
+                    section, e.what()));
+        }
     }
 
     node.hostname = m_ini.getValue(section, "hostname");
@@ -319,7 +299,7 @@ void AnswerFile::loadNodes()
         }
 
         try {
-            validateNode(newNode);
+            newNode = validateNode(newNode);
         } catch (const std::runtime_error& e) {
             throw std::runtime_error(
                 fmt::format("Section node.{} validation failed - {}",
@@ -331,8 +311,19 @@ void AnswerFile::loadNodes()
     }
 }
 
-void AnswerFile::validateNode(AnswerFile::AFNode node)
+AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
 {
+    if (node.start_ip->is_unspecified()) {
+        if (nodes.generic->start_ip->is_unspecified()) {
+            throw std::runtime_error(
+                fmt::format("Node must have a \"{0}\" key or you must inform a "
+                            "generic \"{0}\" value",
+                    "node_start_ip"));
+        } else {
+            node.start_ip = nodes.generic->start_ip;
+        }
+    }
+
     if (node.root_password->empty()) {
         if (nodes.generic->root_password->empty()) {
             throw std::runtime_error(
@@ -430,4 +421,6 @@ void AnswerFile::validateNode(AnswerFile::AFNode node)
             node.bmc_serialspeed = nodes.generic->bmc_serialspeed;
         }
     }
+
+    return node;
 }
