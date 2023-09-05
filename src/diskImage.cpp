@@ -62,11 +62,16 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
     CryptoPP::SHA256 hash;
     std::string isoHash = hash_map.find(path.filename().string())->second;
     std::string output;
-    CryptoPP::FileSource(path.string().c_str(), true,
-        new CryptoPP::HashFilter(
-            hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(output))),
-        true);
+    auto sink = std::make_unique<CryptoPP::StringSink>(output);
+    auto encoder = std::make_unique<CryptoPP::HexEncoder>(sink.get());
+    auto filter = std::make_unique<CryptoPP::HashFilter>(hash, encoder.get());
+
+    CryptoPP::FileSource(path.string().c_str(), true, filter.get(), true);
     transform(output.begin(), output.end(), output.begin(), ::tolower);
+
+    sink.release();
+    encoder.release();
+    filter.release();
 
     if (output == isoHash) {
         LOG_TRACE("Checksum - The disk image is valid");
