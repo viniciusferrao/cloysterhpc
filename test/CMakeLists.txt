@@ -52,7 +52,8 @@ target_link_system_libraries(
     SimpleIni::SimpleIni
     resolv
     ${STDC++FS}
-    doctest::doctest)
+    doctest::doctest
+    cryptopp::cryptopp)
 
 target_include_directories(${PROJECT_NAME} ${WARNING_GUARD} PRIVATE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>

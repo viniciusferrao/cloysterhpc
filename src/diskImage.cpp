@@ -41,6 +41,10 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
 
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
+    if (!isKnownImage(path)) {
+        LOG_TRACE("Disk image is unknown. Can't verify checksum");
+        return false;
+    }
 
     LOG_TRACE("Verifying disk image checksum... This may take a while");
 
