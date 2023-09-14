@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/inifile.h>
 
+void inifile::loadData(const std::string& data) { ini.LoadData(data); }
+
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
 {

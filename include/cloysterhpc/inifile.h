@@ -14,6 +14,7 @@ private:
     CSimpleIniA ini;
 
 public:
+    void loadData(const std::string& data);
     void loadFile(const std::string& filepath);
     void loadFile(std::string_view filepath);
     void loadFile(const std::filesystem::path& filepath);
