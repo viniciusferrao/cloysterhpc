@@ -22,6 +22,7 @@ private:
     CSimpleIniA ini;
 
 public:
+
     /**
      * @brief Loads an INI file from the specified file path.
      *

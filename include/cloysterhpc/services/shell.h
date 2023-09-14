@@ -144,6 +144,7 @@ private:
      * This function sets up the InfiniBand interconnect settings.
      */
     void configureInfiniband();
+    void configureMailSystem();
 
     /**
      * @brief Removes memory lock limits.
