@@ -23,7 +23,7 @@ void inifile::loadFile(const std::filesystem::path& filepath)
 }
 
 std::string inifile::getValue(
-    const std::string& section, const std::string& key, const bool& optional)
+    const std::string& section, const std::string& key, const bool optional)
 {
     if (!optional && !exists(section, key))
         throw std::runtime_error(

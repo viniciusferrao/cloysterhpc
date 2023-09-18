@@ -319,9 +319,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "node_start_ip"));
-        } else {
-            node.start_ip = nodes.generic->start_ip;
         }
+        node.start_ip = nodes.generic->start_ip;
     }
 
     if (node.root_password->empty()) {
@@ -330,9 +329,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "node_root_password"));
-        } else {
-            node.root_password = nodes.generic->root_password;
         }
+        node.root_password = nodes.generic->root_password;
     }
 
     if (node.sockets->empty()) {
@@ -341,9 +339,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "sockets"));
-        } else {
-            node.sockets = nodes.generic->sockets;
         }
+        node.sockets = nodes.generic->sockets;
     }
 
     if (node.cores_per_socket->empty()) {
@@ -352,9 +349,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "cores_per_socket"));
-        } else {
-            node.cores_per_socket = nodes.generic->cores_per_socket;
         }
+        node.cores_per_socket = nodes.generic->cores_per_socket;
     }
 
     if (node.threads_per_core->empty()) {
@@ -363,18 +359,16 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "threads_per_core"));
-        } else {
-            node.threads_per_core = nodes.generic->threads_per_core;
         }
+        node.threads_per_core = nodes.generic->threads_per_core;
     }
 
     if (node.bmc_address->empty()) {
         if (nodes.generic->bmc_address->empty()) {
             throw std::runtime_error(
                 fmt::format("Node must have a \"{0}\" key", "bmc_address"));
-        } else {
-            node.bmc_address = nodes.generic->bmc_address;
         }
+        node.bmc_address = nodes.generic->bmc_address;
     }
 
     if (node.bmc_username->empty()) {
@@ -383,9 +377,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "bmc_username"));
-        } else {
-            node.bmc_username = nodes.generic->bmc_username;
         }
+        node.bmc_username = nodes.generic->bmc_username;
     }
 
     if (node.bmc_password->empty()) {
@@ -394,10 +387,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "bmc_password"));
-
-        } else {
-            node.bmc_password = nodes.generic->bmc_password;
         }
+        node.bmc_password = nodes.generic->bmc_password;
     }
 
     if (node.bmc_serialport->empty()) {
@@ -406,9 +397,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "bmc_serialport"));
-        } else {
-            node.bmc_serialport = nodes.generic->bmc_serialport;
         }
+        node.bmc_serialport = nodes.generic->bmc_serialport;
     }
 
     if (node.bmc_serialspeed->empty()) {
@@ -417,9 +407,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
                     "bmc_serialspeed"));
-        } else {
-            node.bmc_serialspeed = nodes.generic->bmc_serialspeed;
         }
+        node.bmc_serialspeed = nodes.generic->bmc_serialspeed;
     }
 
     return node;
