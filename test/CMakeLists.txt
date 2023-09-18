@@ -26,37 +26,53 @@ add_test(NAME cli.version_matches COMMAND main --version)
 set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
 
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-message(STATUS "Test files found are: ${TEST_SOURCES}")
+list(REMOVE_ITEM TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+message(STATUS "Dedicated test files found are: ${TEST_SOURCES}")
 
-add_executable(${PROJECT_NAME} ${TEST_SOURCES})
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp)
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)
+message(STATUS "Source files found are: ${SOURCES}")
+
+add_library(cloysterhpc_test_object OBJECT ${TEST_SOURCES} ${SOURCES})
+add_executable(${PROJECT_NAME} main.cpp)
+
+# Enable BUILD_TESTING macro to compile the test shipped on the source files
+target_compile_definitions(cloysterhpc_test_object PRIVATE BUILD_TESTING=1)
+
+include(../cmake/CommonLibraries.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE
-    cloysterhpc_static
+    cloysterhpc_test_object
     cloysterhpc::cloysterhpc_warnings
     cloysterhpc::cloysterhpc_options)
 
 target_link_system_libraries(
   ${PROJECT_NAME}
   PRIVATE
-    ${NEWT_LIBRARY}
-    fmt::fmt
-    CLI11::CLI11
-    Boost::headers
-    Boost::system
-    Boost::thread
-    spdlog::spdlog
-    gsl::gsl-lite
-    magic_enum::magic_enum
-    SimpleIni::SimpleIni
-    resolv
-    ${STDC++FS}
-    doctest::doctest)
+    ${COMMON_LIBS})
 
 target_include_directories(${PROJECT_NAME} ${WARNING_GUARD} PRIVATE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/../include>)
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/../include>)
+
+target_link_libraries(
+  cloysterhpc_test_object
+  PRIVATE
+    cloysterhpc::cloysterhpc_options
+    cloysterhpc::cloysterhpc_warnings)
+
+target_link_system_libraries(
+  cloysterhpc_test_object
+  PRIVATE
+    ${COMMON_LIBS})
+
+target_include_directories(cloysterhpc_test_object PRIVATE
+  "${CMAKE_BINARY_DIR}/../configured_files/include")
+target_include_directories(cloysterhpc_test_object ${WARNING_GUARD} PRIVATE
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/../include>)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
 
