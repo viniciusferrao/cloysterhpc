@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/inifile.h>
+#include <fmt/format.h>
 
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
@@ -22,9 +23,14 @@ void inifile::loadFile(const std::filesystem::path& filepath)
 }
 
 std::string inifile::getValue(
-    const std::string& section, const std::string& key)
+    const std::string& section, const std::string& key, const bool optional)
 {
-    return ini.GetValue(section.c_str(), key.c_str());
+    if (!optional && !exists(section, key))
+        throw std::runtime_error(
+            fmt::format("Answerfile section \"{}\" must have \"{}\" key filled",
+                section, key));
+
+    return ini.GetValue(section.c_str(), key.c_str(), "");
 }
 
 inifile::inifile() { ini.SetUnicode(); }
