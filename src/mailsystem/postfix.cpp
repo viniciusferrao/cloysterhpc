@@ -80,6 +80,10 @@ const std::optional<std::string>& Postfix::getFQDN() const { return m_fqdn; }
 
 void Postfix::setFQDN(const std::optional<std::string>& fqdn) { m_fqdn = fqdn; }
 
+const std::optional<std::string>& Postfix::getSMTPServer() const { return m_smtp_server; }
+
+void Postfix::setSMTPServer(const std::optional<std::string>& smtp_server) { m_smtp_server = smtp_server; }
+
 void Postfix::install()
 {
     LOG_INFO("Installing Postfix")
@@ -156,8 +160,17 @@ void Postfix::setup()
     install();
     createFiles();
 
-    if (m_profile == Profile::SASL)
-        configureSASL();
+    switch (m_profile) {
+
+        case Profile::Local:
+            break;
+        case Profile::Relay:
+            configureRelay();
+            break;
+        case Profile::SASL:
+            configureSASL();
+            break;
+    }
 
     enable();
     start();
@@ -172,7 +185,7 @@ void Postfix::configureSASL()
     }
 
     cloyster::addStringToFile(filename,
-        fmt::format("[{}]:{} {}:{}", m_hostname.value(), m_port.value(),
+        fmt::format("[{}]:{} {}:{}", m_smtp_server.value(), m_port.value(),
             m_username.value(), m_password.value()));
 
     std::filesystem::permissions(filename,

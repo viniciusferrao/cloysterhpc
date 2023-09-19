@@ -74,19 +74,22 @@ private:
     };
 
     struct AFPostfix {
-        bool enabled = false;
-        std::vector<std::string> destination;
-        Postfix::Profile profile;
         struct SASL {
-            std::optional<address> server;
+            std::optional<std::string> server;
             std::optional<int> port;
             std::optional<std::string> username;
             std::optional<std::string> password;
         };
         struct Relay {
-            std::optional<address> server;
+            std::optional<std::string> server;
             std::optional<int> port;
         };
+
+        bool enabled = false;
+        std::vector<std::string> destination;
+        Postfix::Profile profile;
+        std::optional<SASL> sasl;
+        std::optional<Relay> relay;
     };
 
     std::filesystem::path m_path;

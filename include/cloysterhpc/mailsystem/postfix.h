@@ -18,6 +18,7 @@ private:
     std::optional<std::string> m_hostname {};
     std::optional<std::string> m_domain {};
     std::optional<std::string> m_fqdn {};
+    std::optional<std::string> m_smtp_server {};
     std::optional<std::vector<std::string>> m_destination {};
     std::optional<std::uint16_t> m_port {};
     std::optional<std::string> m_username {};
@@ -52,6 +53,9 @@ public:
 
     [[nodiscard]] const std::optional<std::string>& getFQDN() const;
     void setFQDN(const std::optional<std::string>& fqdn);
+
+    [[nodiscard]] const std::optional<std::string>& getSMTPServer() const;
+    void setSMTPServer(const std::optional<std::string>& smtp_server);
 
     void setup();
     void enable();
