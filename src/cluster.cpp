@@ -676,6 +676,14 @@ void Cluster::fillData(const std::string& answerfilePath)
         addNode(newNode);
     }
 
+    if (answerfile.postfix.enabled) {
+        setMailSystem(answerfile.postfix.profile);
+        m_mailSystem->setHostname(this->m_headnode.getHostname());
+        m_mailSystem->setDomain(getDomainName());
+        m_mailSystem->setFQDN(this->m_headnode.getFQDN());
+        m_mailSystem->setDestination(answerfile.postfix.destination);
+    }
+
     /* Bad and old data - @TODO Must improve */
     nodePrefix = answerfile.nodes.generic->prefix.value();
     nodePadding = std::stoul(answerfile.nodes.generic->padding.value());

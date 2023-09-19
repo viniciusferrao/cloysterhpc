@@ -10,6 +10,7 @@
 #include <cloysterhpc/inifile.h>
 #include <optional>
 #include <vector>
+#include "cloysterhpc/mailsystem/postfix.h"
 
 using boost::asio::ip::address;
 
@@ -72,6 +73,22 @@ private:
         std::vector<AFNode> nodes;
     };
 
+    struct AFPostfix {
+        bool enabled = false;
+        std::vector<std::string> destination;
+        Postfix::Profile profile;
+        struct SASL {
+            std::optional<address> server;
+            std::optional<int> port;
+            std::optional<std::string> username;
+            std::optional<std::string> password;
+        };
+        struct Relay {
+            std::optional<address> server;
+            std::optional<int> port;
+        };
+    };
+
     std::filesystem::path m_path;
     inifile m_ini;
 
@@ -85,6 +102,7 @@ private:
     void loadHostnameSettings();
     void loadSystemSettings();
     void loadNodes();
+    void loadPostfix();
     AFNode loadNode(const std::string& section);
     AFNode validateNode(AFNode node);
 
@@ -97,6 +115,7 @@ public:
     AFHostname hostname;
     AFSystem system;
     AFNodes nodes;
+    AFPostfix postfix;
 
     explicit AnswerFile(const std::filesystem::path& path);
 };
