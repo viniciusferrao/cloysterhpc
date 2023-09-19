@@ -775,6 +775,21 @@ void Cluster::fillData(const std::string& answerfilePath)
         m_mailSystem->setDomain(getDomainName());
         m_mailSystem->setFQDN(this->m_headnode.getFQDN());
         m_mailSystem->setDestination(answerfile.postfix.destination);
+
+        switch (answerfile.postfix.profile) {
+            case Postfix::Profile::Local:
+                break;
+            case Postfix::Profile::Relay:
+                m_mailSystem->setSMTPServer(answerfile.postfix.relay.value().server);
+                m_mailSystem->setPort(answerfile.postfix.relay.value().port);
+                break;
+            case Postfix::Profile::SASL:
+                m_mailSystem->setSMTPServer(answerfile.postfix.sasl.value().server);
+                m_mailSystem->setPort(answerfile.postfix.sasl.value().port);
+                m_mailSystem->setUsername(answerfile.postfix.sasl.value().username);
+                m_mailSystem->setPassword(answerfile.postfix.sasl.value().password);
+                break;
+        }
     }
 
     /* Bad and old data - @TODO Must improve */

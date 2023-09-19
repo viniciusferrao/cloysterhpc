@@ -347,12 +347,23 @@ void AnswerFile::loadPostfix() {
             fmt::format("Invalid Postfix profile"));
     }
 
+    AFPostfix::Relay relay;
+    AFPostfix::SASL sasl;
+
     switch(postfix.profile) {
         case Postfix::Profile::Local:
             break;
         case Postfix::Profile::Relay:
+            relay.server = m_ini.getValue("postfix.relay", "server", false);
+            relay.port = std::stoi(m_ini.getValue("postfix.relay", "port", false));
+            postfix.relay = relay;
             break;
         case Postfix::Profile::SASL:
+            sasl.server = m_ini.getValue("postfix.sasl", "server", false);
+            sasl.port = std::stoi(m_ini.getValue("postfix.sasl", "port", false));
+            sasl.username = m_ini.getValue("postfix.sasl", "username", false);
+            sasl.password = m_ini.getValue("postfix.sasl", "password", false);
+            postfix.sasl = sasl;
             break;
     }
 }
