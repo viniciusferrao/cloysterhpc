@@ -31,8 +31,6 @@ void inifile::loadFile(const std::filesystem::path& filepath)
     }
 }
 
-void inifile::loadData(const std::string& data) { ini.LoadData(data); }
-
 std::string inifile::getValue(const std::string& section,
     const std::string& key, const bool optional, const bool canBeNull)
 {

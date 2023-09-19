@@ -40,6 +40,7 @@ void AnswerFile::loadOptions()
     loadSystemSettings();
     loadNodes();
     loadTools();
+    loadPostfix();
 }
 
 address AnswerFile::convertStringToAddress(const std::string& addr)
@@ -322,6 +323,40 @@ void AnswerFile::loadNVHPC()
 }
 
 std::vector<std::shared_ptr<ITool>> AnswerFile::getTools() { return m_tools; }
+
+void AnswerFile::loadPostfix() {
+    if (!m_ini.exists("postfix"))
+        return;
+
+    LOG_TRACE("Postfix enabled");
+
+    postfix.enabled = true;
+
+    boost::split(postfix.destination,
+        m_ini.getValue("postfix", "destination", false),
+        boost::is_any_of(", "), boost::token_compress_on);
+
+    auto castProfile = magic_enum::enum_cast<Postfix::Profile>(
+        m_ini.getValue("postfix", "profile", false),
+        magic_enum::case_insensitive);
+
+    if (castProfile.has_value())
+        postfix.profile = castProfile.value();
+    else {
+        throw std::runtime_error(
+            fmt::format("Invalid Postfix profile"));
+    }
+
+    switch(postfix.profile) {
+        case Postfix::Profile::Local:
+            break;
+        case Postfix::Profile::Relay:
+            break;
+        case Postfix::Profile::SASL:
+            break;
+    }
+}
+
 
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
