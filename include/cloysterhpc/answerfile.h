@@ -10,10 +10,10 @@
 #include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
+#include <cloysterhpc/mailsystem/postfix.h>
 #include <optional>
 #include <utility>
 #include <vector>
-#include <cloysterhpc/mailsystem/postfix.h>
 
 using boost::asio::ip::address;
 
@@ -143,7 +143,8 @@ private:
             std::string server;
             int port;
             std::optional<SASL> sasl;
-            // Relay doesn't need to have a specific struct because it only needs 'server' and 'port'.
+            // Relay doesn't need to have a specific struct because it only
+            // needs 'server' and 'port'.
         };
 
         bool enabled = false;
