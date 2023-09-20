@@ -13,7 +13,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
-#include "cloysterhpc/mailsystem/postfix.h"
+#include <cloysterhpc/mailsystem/postfix.h>
 
 using boost::asio::ip::address;
 
@@ -136,21 +136,20 @@ private:
     
     struct AFPostfix {
         struct SASL {
-            std::optional<std::string> server;
-            std::optional<int> port;
-            std::optional<std::string> username;
-            std::optional<std::string> password;
+            std::string username;
+            std::string password;
         };
-        struct Relay {
-            std::optional<std::string> server;
-            std::optional<int> port;
+        struct SMTP {
+            std::string server;
+            int port;
+            std::optional<SASL> sasl;
+            // Relay doesn't need to have a specific struct because it only needs 'server' and 'port'.
         };
 
         bool enabled = false;
         std::vector<std::string> destination;
         Postfix::Profile profile;
-        std::optional<SASL> sasl;
-        std::optional<Relay> relay;
+        std::optional<SMTP> smtp;
     };
 
     std::filesystem::path m_path;
