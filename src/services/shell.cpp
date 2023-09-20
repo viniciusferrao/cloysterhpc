@@ -298,6 +298,13 @@ void Shell::configureQueueSystem()
     }
 }
 
+void Shell::configureMailSystem()
+{
+    LOG_INFO("Setting up the mail system");
+
+    m_cluster->getMailSystem()->setup();
+}
+
 void Shell::configureInfiniband()
 {
     if (const auto& ofed = m_cluster->getOFED()) {
@@ -378,6 +385,8 @@ void Shell::install()
     networkFileSystem.start();
 
     configureQueueSystem();
+    if (m_cluster->getMailSystem().has_value())
+        configureMailSystem();
     removeMemlockLimits();
 
     installDevelopmentComponents();
