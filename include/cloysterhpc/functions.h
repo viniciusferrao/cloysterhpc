@@ -163,6 +163,8 @@ void changeValueInConfigurationFile(
  */
 void addStringToFile(std::string_view filename, std::string_view string);
 std::string getCurrentTimestamp();
+std::string findAndReplace(const std::string& source, const std::string& find,
+    const std::string& replace);
 
 } /* namespace cloyster */
 

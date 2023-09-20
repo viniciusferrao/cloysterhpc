@@ -245,4 +245,18 @@ void addStringToFile(std::string_view filename, std::string_view string)
     LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename)
 }
 
+std::string findAndReplace(const std::string& source, const std::string& find,
+    const std::string& replace)
+{
+    std::string result = source;
+    std::string::size_type pos = 0;
+
+    while ((pos = result.find(find, pos)) != std::string::npos) {
+        result.replace(pos, find.length(), replace);
+        pos += replace.length();
+    }
+
+    return result;
+}
+
 } // namespace cloyster

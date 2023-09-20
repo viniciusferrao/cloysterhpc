@@ -80,9 +80,15 @@ const std::optional<std::string>& Postfix::getFQDN() const { return m_fqdn; }
 
 void Postfix::setFQDN(const std::optional<std::string>& fqdn) { m_fqdn = fqdn; }
 
-const std::optional<std::string>& Postfix::getSMTPServer() const { return m_smtp_server; }
+const std::optional<std::string>& Postfix::getSMTPServer() const
+{
+    return m_smtp_server;
+}
 
-void Postfix::setSMTPServer(const std::optional<std::string>& smtp_server) { m_smtp_server = smtp_server; }
+void Postfix::setSMTPServer(const std::optional<std::string>& smtp_server)
+{
+    m_smtp_server = smtp_server;
+}
 
 void Postfix::install()
 {
@@ -113,7 +119,7 @@ void Postfix::createFiles()
         fmt::format("/etc/pki/tls/private/{}.key", m_fqdn.value()));
 
     //@TODO Check if m_domain is the right key. Maybe a new variable is needed
-    //here, m_relayhost_domain?.
+    // here, m_relayhost_domain?.
     switch (m_profile) {
         case Profile::Local:
             break;
@@ -129,20 +135,23 @@ void Postfix::createFiles()
 
     ini.saveFile(mainFile);
 
-    const auto& masterConf {
+    const auto& masterConfInclude {
 #include "cloysterhpc/tmpl/postfix/master.cf.tmpl"
     };
 
-    cloyster::addStringToFile(masterFile, masterConf);
+    std::string masterConf(masterConfInclude);
 
-    //@TODO Not the best way to do this, but the only one who worked now. Gotta
-    //fix it.
     if (m_profile != Profile::Local) {
-        cloyster::runCommand(
-            "sed -i 's/local     unix  -       n       n       -       -       "
-            "local/#local     unix  -       n       n       -       -       "
-            "local/g' /etc/postfix/master.cf");
+        masterConf
+            = cloyster::findAndReplace(masterConf, "{postfix_local_config}",
+                "#local     unix  -       n       n       -       -       ");
+    } else {
+        masterConf
+            = cloyster::findAndReplace(masterConf, "{postfix_local_config}",
+                "local     unix  -       n       n       -       -       ");
     }
+
+    cloyster::addStringToFile(masterFile, masterConf);
 
     if (!std::filesystem::exists("/etc/postfix/transport.db")) {
         runCommand("postmap hash:/etc/postfix/transport");
@@ -201,8 +210,15 @@ void Postfix::configureSASL()
         std::filesystem::perm_options::add);
 }
 
-//@TODO
-void Postfix::configureRelay() { }
+void Postfix::configureRelay()
+{
+    const std::string mainFile { "/etc/postfix/main.cf" };
+    inifile ini;
+    ini.loadData(mainFile);
+    ini.setValue("", "relayhost",
+        fmt::format("{}:{}", m_smtp_server.value(), m_port.value()));
+    ini.saveFile(mainFile);
+}
 
 void Postfix::enable() { runCommand("systemctl enable postfix"); }
 
