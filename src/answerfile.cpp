@@ -416,7 +416,8 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
     return node;
 }
 
-void AnswerFile::loadPostfix() {
+void AnswerFile::loadPostfix()
+{
     if (!m_ini.exists("postfix"))
         return;
 
@@ -425,8 +426,8 @@ void AnswerFile::loadPostfix() {
     postfix.enabled = true;
 
     boost::split(postfix.destination,
-        m_ini.getValue("postfix", "destination", false),
-        boost::is_any_of(", "), boost::token_compress_on);
+        m_ini.getValue("postfix", "destination", false), boost::is_any_of(", "),
+        boost::token_compress_on);
 
     auto castProfile = magic_enum::enum_cast<Postfix::Profile>(
         m_ini.getValue("postfix", "profile", false),
@@ -435,24 +436,25 @@ void AnswerFile::loadPostfix() {
     if (castProfile.has_value())
         postfix.profile = castProfile.value();
     else {
-        throw std::runtime_error(
-            fmt::format("Invalid Postfix profile"));
+        throw std::runtime_error(fmt::format("Invalid Postfix profile"));
     }
 
     AFPostfix::SMTP smtp;
     AFPostfix::SASL sasl;
 
-    switch(postfix.profile) {
+    switch (postfix.profile) {
         case Postfix::Profile::Local:
             break;
         case Postfix::Profile::Relay:
             smtp.server = m_ini.getValue("postfix.relay", "server", false);
-            smtp.port = std::stoi(m_ini.getValue("postfix.relay", "port", false));
+            smtp.port
+                = std::stoi(m_ini.getValue("postfix.relay", "port", false));
             postfix.smtp = smtp;
             break;
         case Postfix::Profile::SASL:
             smtp.server = m_ini.getValue("postfix.sasl", "server", false);
-            smtp.port = std::stoi(m_ini.getValue("postfix.sasl", "port", false));
+            smtp.port
+                = std::stoi(m_ini.getValue("postfix.sasl", "port", false));
             sasl.username = m_ini.getValue("postfix.sasl", "username", false);
             sasl.password = m_ini.getValue("postfix.sasl", "password", false);
             smtp.sasl = sasl;

@@ -14,7 +14,7 @@
 namespace cloyster {
 bool showVersion = false;
 bool runAsRoot = false;
-bool dryRun = false;
+bool dryRun = true;
 bool enableTUI = false;
 bool enableCLI = false;
 bool runAsDaemon = false;
