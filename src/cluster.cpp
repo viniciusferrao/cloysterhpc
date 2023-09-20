@@ -687,14 +687,14 @@ void Cluster::fillData(const std::string& answerfilePath)
             case Postfix::Profile::Local:
                 break;
             case Postfix::Profile::Relay:
-                m_mailSystem->setSMTPServer(answerfile.postfix.relay.value().server);
-                m_mailSystem->setPort(answerfile.postfix.relay.value().port);
+                m_mailSystem->setSMTPServer(answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
                 break;
             case Postfix::Profile::SASL:
-                m_mailSystem->setSMTPServer(answerfile.postfix.sasl.value().server);
-                m_mailSystem->setPort(answerfile.postfix.sasl.value().port);
-                m_mailSystem->setUsername(answerfile.postfix.sasl.value().username);
-                m_mailSystem->setPassword(answerfile.postfix.sasl.value().password);
+                m_mailSystem->setSMTPServer(answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                m_mailSystem->setUsername(answerfile.postfix.smtp.value().sasl.value().username);
+                m_mailSystem->setPassword(answerfile.postfix.smtp.value().sasl.value().password);
                 break;
         }
     }
