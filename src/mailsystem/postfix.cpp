@@ -76,10 +76,6 @@ void Postfix::setDestination(
     m_destination = destination;
 }
 
-const std::optional<std::string>& Postfix::getFQDN() const { return m_fqdn; }
-
-void Postfix::setFQDN(const std::optional<std::string>& fqdn) { m_fqdn = fqdn; }
-
 const std::optional<std::string>& Postfix::getSMTPServer() const
 {
     return m_smtp_server;
@@ -88,6 +84,26 @@ const std::optional<std::string>& Postfix::getSMTPServer() const
 void Postfix::setSMTPServer(const std::optional<std::string>& smtp_server)
 {
     m_smtp_server = smtp_server;
+}
+
+const std::optional<std::filesystem::path>& Postfix::getCertFile() const
+{
+    return m_cert_file;
+}
+
+void Postfix::setCertFile(const std::optional<std::filesystem::path>& cert_file)
+{
+    m_cert_file = cert_file;
+}
+
+const std::optional<std::filesystem::path>& Postfix::getKeyFile() const
+{
+    return m_key_file;
+}
+
+void Postfix::setKeyFile(const std::optional<std::filesystem::path>& key_file)
+{
+    m_key_file = key_file;
 }
 
 void Postfix::install()
@@ -113,10 +129,8 @@ void Postfix::createFiles()
     ini.setValue("", "mydomain", m_domain.value());
     ini.setValue("", "mydestination",
         fmt::format("{}", fmt::join(m_destination.value(), ",")));
-    ini.setValue("", "smtpd_tls_cert_file",
-        fmt::format("/etc/pki/tls/certs/{}.cer", m_fqdn.value()));
-    ini.setValue("", "smtpd_tls_key_file",
-        fmt::format("/etc/pki/tls/private/{}.key", m_fqdn.value()));
+    ini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
+    ini.setValue("", "smtpd_tls_key_file", m_key_file->string());
 
     //@TODO Check if m_domain is the right key. Maybe a new variable is needed
     // here, m_relayhost_domain?.

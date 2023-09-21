@@ -146,11 +146,12 @@ private:
             // Relay doesn't need to have a specific struct because it only
             // needs 'server' and 'port'.
         };
-
         bool enabled = false;
         std::vector<std::string> destination;
         Postfix::Profile profile;
         std::optional<SMTP> smtp;
+        std::filesystem::path cert_file;
+        std::filesystem::path key_file;
     };
 
     std::filesystem::path m_path;
