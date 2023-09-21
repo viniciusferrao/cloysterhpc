@@ -461,4 +461,7 @@ void AnswerFile::loadPostfix()
             postfix.smtp = smtp;
             break;
     }
+
+    postfix.cert_file = m_ini.getValue("postfix", "smtpd_tls_cert_file", false);
+    postfix.key_file = m_ini.getValue("postfix", "smtpd_tls_key_file", false);
 }

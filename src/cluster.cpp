@@ -680,7 +680,6 @@ void Cluster::fillData(const std::string& answerfilePath)
         setMailSystem(answerfile.postfix.profile);
         m_mailSystem->setHostname(this->m_headnode.getHostname());
         m_mailSystem->setDomain(getDomainName());
-        m_mailSystem->setFQDN(this->m_headnode.getFQDN());
         m_mailSystem->setDestination(answerfile.postfix.destination);
 
         switch (answerfile.postfix.profile) {
@@ -701,6 +700,8 @@ void Cluster::fillData(const std::string& answerfilePath)
                     answerfile.postfix.smtp.value().sasl.value().password);
                 break;
         }
+        m_mailSystem->setCertFile(answerfile.postfix.cert_file);
+        m_mailSystem->setKeyFile(answerfile.postfix.key_file);
     }
 
     /* Bad and old data - @TODO Must improve */

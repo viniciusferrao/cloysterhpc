@@ -17,12 +17,13 @@ private:
     Profile m_profile;
     std::optional<std::string> m_hostname {};
     std::optional<std::string> m_domain {};
-    std::optional<std::string> m_fqdn {};
     std::optional<std::string> m_smtp_server {};
     std::optional<std::vector<std::string>> m_destination {};
     std::optional<std::uint16_t> m_port {};
     std::optional<std::string> m_username {};
     std::optional<std::string> m_password {};
+    std::optional<std::filesystem::path> m_cert_file {};
+    std::optional<std::filesystem::path> m_key_file {};
     void install();
     void createFiles();
     void configureSASL();
@@ -51,11 +52,16 @@ public:
     [[nodiscard]] const std::optional<std::string>& getPassword() const;
     void setPassword(const std::optional<std::string>& password);
 
-    [[nodiscard]] const std::optional<std::string>& getFQDN() const;
-    void setFQDN(const std::optional<std::string>& fqdn);
-
     [[nodiscard]] const std::optional<std::string>& getSMTPServer() const;
     void setSMTPServer(const std::optional<std::string>& smtp_server);
+
+    [[nodiscard]] const std::optional<std::filesystem::path>&
+    getCertFile() const;
+    void setCertFile(const std::optional<std::filesystem::path>& cert_file);
+
+    [[nodiscard]] const std::optional<std::filesystem::path>&
+    getKeyFile() const;
+    void setKeyFile(const std::optional<std::filesystem::path>& cert_file);
 
     void setup();
     void enable();
