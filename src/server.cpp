@@ -58,11 +58,30 @@ void Server::setHostname(std::string_view hostname)
 
 const std::string& Server::getFQDN() const noexcept { return m_fqdn; }
 
-/* TODO: Validate if FQDN is in right format */
 void Server::setFQDN(const std::string& fqdn)
 {
     if (fqdn.size() > 255)
         throw std::runtime_error("FQDN cannot be bigger than 255 characters");
+
+    const std::regex fqdnPattern(
+        R"regex(^
+    (                        # Start of FQDN
+        (                    # Start of label (subdomain)
+            [a-zA-Z0-9]       # First character of label
+            [a-zA-Z0-9\\-]*   # Zero or more valid characters in label
+            [a-zA-Z0-9]       # Last character of label
+        )                    # End of label
+        \.                   # Dot separator
+    )*                       # Zero or more labels
+    (                        # Start of last label (TLD)
+        [A-Za-z0-9]           # First character of label (TLD)
+        [A-Za-z0-9\\-]*       # Zero or more valid characters in label
+        [A-Za-z0-9]           # Last character of label (TLD)
+    )                        # End of last label (TLD)
+    $)regex");
+
+    if (!std::regex_match(fqdn, fqdnPattern))
+        throw std::runtime_error("Invalid FQDN format");
 
     m_fqdn = fqdn;
 }
