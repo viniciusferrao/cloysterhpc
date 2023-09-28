@@ -32,19 +32,6 @@ Connection::Connection(Network* network)
         setMTU(2044);
 }
 
-// TODO: Remove this constructor
-Connection::Connection(
-    Network* network, const std::string& interface, const std::string& ip)
-    : m_network(network)
-{
-
-    setInterface(interface);
-    setAddress(ip);
-
-    if (network->getType() == Network::Type::Infiniband)
-        setMTU(2044);
-}
-
 Connection::Connection(Network* network,
     std::optional<std::string_view> interface,
     std::optional<std::string_view> mac, const std::string& ip)
@@ -132,15 +119,18 @@ std::vector<std::string> Connection::fetchInterfaces()
         if (std::strcmp(ifa->ifa_name, "lo") == 0)
             continue;
 
-        interfaces.emplace_back(ifa->ifa_name);
-    }
+        bool duplicate = false;
+        for (const auto& name : interfaces) {
+            if (std::strcmp(ifa->ifa_name, name.c_str()) == 0) {
+                duplicate = true;
+                break;
+            }
+        }
 
-    // TODO: It must have a better way to remove duplicates instead of creating
-    //       a set to filter out them. Perhaps changing the return type?
-    std::set<std::string> aux(interfaces.begin(), interfaces.end());
-    interfaces.clear();
-    interfaces.reserve(aux.size());
-    interfaces.assign(aux.begin(), aux.end());
+        if (!duplicate) {
+            interfaces.emplace_back(ifa->ifa_name);
+        }
+    }
 
     return interfaces;
 }
@@ -284,9 +274,24 @@ void Connection::setMTU(std::uint16_t mtu)
     //
     // https://www.rfc-editor.org/rfc/rfc791
     // https://www.rfc-editor.org/rfc/rfc2460
-    // TODO: Check if Infiniband networks have a minimum requirement
-    if (mtu < 1280)
-        throw std::runtime_error("MTU size must be higher or equal to 1280");
+    //
+    // RFC4391 states that 2044 is the minimum required for Infiniband networks.
+    // https://www.rfc-editor.org/rfc/rfc4391.html
+
+    switch (m_network->getType()) {
+        case Network::Type::Ethernet:
+            if (mtu < 1280) {
+                throw std::runtime_error(
+                    "Ethernet MTU size must be higher or equal to 1280");
+            }
+            break;
+        case Network::Type::Infiniband:
+            if (mtu < 2044) {
+                throw std::runtime_error(
+                    "Infiniband MTU size must be higher or equal to 2044");
+            }
+            break;
+    }
 
     m_mtu = mtu;
 }
