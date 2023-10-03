@@ -26,11 +26,15 @@ private:
     struct Messages {
         static constexpr const char* title = "Network Settings";
 
-        // TODO: Find a way to express which interface you are dealing with:
-        //       "Select your <external> network interface", for example.
         struct Interface {
-            static constexpr const char* question
-                = "Select your network interface";
+            static std::string formatQuestion(
+                Network::Type type, Network::Profile profile)
+            {
+                return fmt::format("Select your {} ({}) network interface",
+                    magic_enum::enum_name(profile),
+                    magic_enum::enum_name(type));
+            }
+
             static constexpr const char* help
                 = Presenter::Messages::Placeholder::help;
         };
@@ -65,7 +69,10 @@ private:
     template <typename T>
     std::string networkInterfaceSelection(const T& interfaces)
     {
-        return m_view->listMenu(Messages::title, Messages::Interface::question,
+        return m_view->listMenu(Messages::title,
+            Messages::Interface::formatQuestion(
+                m_network->getType(), m_network->getProfile())
+                .c_str(),
             interfaces, Messages::Interface::help);
     }
 
