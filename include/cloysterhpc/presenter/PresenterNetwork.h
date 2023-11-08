@@ -45,7 +45,6 @@ private:
         struct IP {
             static constexpr const char* address = "IP Address";
             static constexpr const char* subnetMask = "Subnet Mask";
-            static constexpr const char* network = "Network Address";
             static constexpr const char* gateway = "Gateway";
         };
 
