@@ -12,16 +12,16 @@
 class PresenterInfiniband : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "Infiniband settings";
-        static constexpr const char* question
+        static constexpr const auto title = "Infiniband settings";
+        static constexpr const auto question
             = "Do you have an Infiniband Fabric available?";
-        static constexpr const char* help
+        static constexpr const auto help
             = Presenter::Messages::Placeholder::help;
 
         struct OFED {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Choose the desired Infiniband stack";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
     };

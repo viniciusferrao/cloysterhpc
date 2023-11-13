@@ -26,27 +26,27 @@ class Newt : public View {
 private:
     struct TUIText {
         // TODO: Get rid of the macro: https://stackoverflow.com/q/75216821
-        static constexpr const char* title = PRODUCT_NAME " Installer";
-        static constexpr const char* version = "Version " PRODUCT_VERSION;
+        static constexpr const auto title = PRODUCT_NAME " Installer";
+        static constexpr const auto version = "Version " PRODUCT_VERSION;
 #ifndef NDEBUG
-        static constexpr const char* developmentBuild = "DEVELOPMENT BUILD";
+        static constexpr const auto developmentBuild = "DEVELOPMENT BUILD";
 #endif
-        static constexpr const char* helpLine
+        static constexpr const auto helpLine
             = "  <Tab>/<Alt-Tab> between elements   |  <Space> selects   |  "
               "<F12> disabled";
-        static constexpr const char* abort
+        static constexpr const auto abort
             = "Installation aborted due to operator request";
 
         struct Buttons {
-            static constexpr const char* ok = "OK";
-            static constexpr const char* cancel = "Cancel";
-            static constexpr const char* yes = "Yes";
-            static constexpr const char* no = "No";
-            static constexpr const char* help = "Help";
+            static constexpr const auto ok = "OK";
+            static constexpr const auto cancel = "Cancel";
+            static constexpr const auto yes = "Yes";
+            static constexpr const auto no = "No";
+            static constexpr const auto help = "Help";
         };
 
         struct Help {
-            static constexpr const char* title = "Help";
+            static constexpr const auto title = "Help";
         };
     };
 

@@ -11,28 +11,28 @@
 class PresenterQueueSystem : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "Queue System settings";
-        static constexpr const char* question
+        static constexpr const auto title = "Queue System settings";
+        static constexpr const auto question
             = "Pick a queue system to run you compute jobs";
-        static constexpr const char* help
+        static constexpr const auto help
             = Presenter::Messages::Placeholder::help;
 
         struct SLURM {
-            static constexpr const char* title = "SLURM settings";
-            static constexpr const char* question
+            static constexpr const auto title = "SLURM settings";
+            static constexpr const auto question
                 = "Enter the default partition name for SLURM";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
 
-            static constexpr const char* partition = "Partition name";
+            static constexpr const auto partition = "Partition name";
         };
 
         struct PBS {
-            static constexpr const char* title = "PBS Professional settings";
-            static constexpr const char* question
+            static constexpr const auto title = "PBS Professional settings";
+            static constexpr const auto question
                 = "Select the default execution place for PBS Professional "
                   "jobs";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
     };

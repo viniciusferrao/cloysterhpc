@@ -25,7 +25,7 @@ protected:
 
     struct Messages {
         struct Placeholder {
-            static constexpr const char* help
+            static constexpr const auto help
                 = "We're sorry, but there's no help available for this session";
         };
     };
