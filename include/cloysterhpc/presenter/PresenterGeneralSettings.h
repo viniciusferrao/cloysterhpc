@@ -11,23 +11,23 @@
 class PresenterGeneralSettings : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "General cluster settings";
+        static constexpr const auto title = "General cluster settings";
 
         struct General {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Fill the required data about your new cluster";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
 
-            static constexpr const char* clusterName = "Cluster Name";
-            static constexpr const char* companyName = "Company Name";
-            static constexpr const char* adminEmail = "Administrator e-mail";
+            static constexpr const auto clusterName = "Cluster Name";
+            static constexpr const auto companyName = "Company Name";
+            static constexpr const auto adminEmail = "Administrator e-mail";
         };
 
         struct BootTarget {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Select the boot target for the headnode";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
     };

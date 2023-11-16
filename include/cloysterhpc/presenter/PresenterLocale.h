@@ -11,9 +11,9 @@
 class PresenterLocale : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "Locale settings";
-        static constexpr const char* question = "Pick your default locale";
-        static constexpr const char* help
+        static constexpr const auto title = "Locale settings";
+        static constexpr const auto question = "Pick your default locale";
+        static constexpr const auto help
             = Presenter::Messages::Placeholder::help;
     };
 

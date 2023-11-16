@@ -11,45 +11,44 @@
 class PresenterNodesOperationalSystem : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title
-            = "Nodes operational system settings";
+        static constexpr const auto title = "Nodes operational system settings";
 
         struct OperationalSystemDownloadIso {
             struct FirstStage {
-                static constexpr const char* question
+                static constexpr const auto question
                     = "You want to download a ISO for your node?";
-                static constexpr const char* help
+                static constexpr const auto help
                     = "Choose 'YES' if you want to download a new one or 'NO' "
                       "if you already have an ISO.";
             };
             struct SecondStage {
-                static constexpr const char* question
+                static constexpr const auto question
                     = "Choose an ISO to download";
-                static constexpr const char* help
+                static constexpr const auto help
                     = Presenter::Messages::Placeholder::help;
             };
         };
 
         struct OperationalSystemDirectoryPath {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Inform the directory where your operational system images "
                   "are";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
-            static constexpr const char* field = "Path to ISOs directory:";
+            static constexpr const auto field = "Path to ISOs directory:";
         };
 
         struct OperationalSystemDistro {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Choose your operational system distro";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
 
         struct OperationalSystem {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Choose your operational system ISO";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
     };
