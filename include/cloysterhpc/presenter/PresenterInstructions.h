@@ -12,7 +12,7 @@ class PresenterInstructions : public Presenter {
 private:
     struct Messages {
         struct Instructions {
-            static constexpr const char* message
+            static constexpr const auto message
                 = "We will start the installation phase now.\n\nYou will be "
                   "guided through "
                   "a series of questions about your HPC cluster so we can "

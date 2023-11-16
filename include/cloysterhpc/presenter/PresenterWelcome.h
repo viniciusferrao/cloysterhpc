@@ -13,7 +13,7 @@ class PresenterWelcome : public Presenter {
 private:
     struct Messages {
         struct Welcome {
-            static constexpr const char* message
+            static constexpr const auto message
                 = "Welcome to the guided installer of " PRODUCT_NAME
                   ".\n\n" PRODUCT_NAME " is a software program to "
                   "guide the user to set up an HPC clustered environment. It "
