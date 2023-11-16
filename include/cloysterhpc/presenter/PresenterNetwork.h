@@ -45,7 +45,6 @@ private:
         struct IP {
             static constexpr const auto address = "IP Address";
             static constexpr const auto subnetMask = "Subnet Mask";
-            static constexpr const auto network = "Network Address";
             static constexpr const auto gateway = "Gateway";
         };
 
