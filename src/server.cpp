@@ -63,6 +63,7 @@ void Server::setFQDN(const std::string& fqdn)
     if (fqdn.size() > 255)
         throw std::runtime_error("FQDN cannot be bigger than 255 characters");
 
+    // This pattern validates whether an FQDN is valid or not.
     const std::regex fqdnPattern(
         R"regex(^
     (                        # Start of FQDN

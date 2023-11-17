@@ -123,7 +123,7 @@ std::vector<std::string> Connection::fetchInterfaces()
         for (const auto& name : interfaces) {
             if (std::strcmp(ifa->ifa_name, name.c_str()) == 0) {
                 duplicate = true;
-                break;
+                continue;
             }
         }
 
@@ -144,6 +144,7 @@ void Connection::setMAC(std::string_view mac)
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");
 
+    // This pattern validates whether an MAC address is valid or not.
     const std::regex pattern(
         R"regex(^
     ([0-9A-Fa-f]{2}[:-]){5}        # Matches MAC address with colons or hyphens
