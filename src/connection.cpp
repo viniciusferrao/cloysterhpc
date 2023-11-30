@@ -119,18 +119,15 @@ std::vector<std::string> Connection::fetchInterfaces()
         if (std::strcmp(ifa->ifa_name, "lo") == 0)
             continue;
 
-        bool duplicate = false;
-        for (const auto& name : interfaces) {
-            if (std::strcmp(ifa->ifa_name, name.c_str()) == 0) {
-                duplicate = true;
-                continue;
-            }
-        }
-
-        if (!duplicate) {
-            interfaces.emplace_back(ifa->ifa_name);
-        }
+        interfaces.emplace_back(ifa->ifa_name);
     }
+
+    // TODO: It must have a better way to remove duplicates instead of creating
+    //       a set to filter out them. Perhaps changing the return type?
+    std::set<std::string> aux(interfaces.begin(), interfaces.end());
+    interfaces.clear();
+    interfaces.reserve(aux.size());
+    interfaces.assign(aux.begin(), aux.end());
 
     return interfaces;
 }
@@ -147,9 +144,8 @@ void Connection::setMAC(std::string_view mac)
     // This pattern validates whether an MAC address is valid or not.
     const std::regex pattern(
         R"regex(^
-    ([0-9A-Fa-f]{2}[:-]){5}        # Matches MAC address with colons or hyphens
-    ([0-9A-Fa-f]{2})|              # Or
-    ([0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}  # Matches Cisco MAC format
+    ([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|  # Matches MAC address with colons or hyphens or
+    ([0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}       # Matches Cisco MAC format
     $)regex");
 
     // regex_match cannot work with std::string_view
