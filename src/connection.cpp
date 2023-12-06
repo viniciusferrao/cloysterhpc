@@ -309,3 +309,78 @@ void Connection::dumpConnection() const
     LOG_DEBUG("===================================")
 }
 #endif
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+TEST_SUITE("Test MAC address validity")
+{
+    Network network;
+    Connection connection = Connection(&network);
+
+    TEST_CASE("Length Issues")
+    {
+        CHECK_THROWS(connection.setMAC("ab:cd:ef:01:23")); // Too short
+        CHECK_THROWS(connection.setMAC("ab:cd:ef:01:23:45:67")); // Too long
+    }
+
+    TEST_CASE("Invalid Separators")
+    {
+        CHECK_THROWS(connection.setMAC("ab-cd-ef-01-23-45")); // Wrong separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd.ef:01:23:45")); // Inconsistent separators
+    }
+
+    TEST_CASE("Incorrect Positioning of Separators")
+    {
+        CHECK_THROWS(
+            connection.setMAC(":ab:cd:ef:01:23:45")); // Leading separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:23:45:")); // Trailing separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:2:345")); // Misplaced separator
+    }
+
+    TEST_CASE("Invalid Characters")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "ab:cd:ef:01:23:gh")); // Non-hexadecimal characters
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:23:45$")); // Special characters
+    }
+
+    TEST_CASE("Mixed Formats")
+    {
+        CHECK_THROWS(
+            connection.setMAC("abcd.ef:01:2345")); // Mixing different formats
+    }
+
+    TEST_CASE("Multicast Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "01:00:5e:00:00:00")); // Multicast addresses are not typically used
+    }
+
+    TEST_CASE("Locally Administered Addresses")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "02:00:5e:00:00:00")); // Locally administered address
+    }
+
+    TEST_CASE("Zeroed Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "00:00:00:00:00:00")); // All zeros are not a valid hardware MAC
+                                   // address
+    }
+
+    TEST_CASE("Broadcast Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "ff:ff:ff:ff:ff:ff")); // Reserved broadcast address
+    }
+}
