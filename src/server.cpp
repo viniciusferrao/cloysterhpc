@@ -129,7 +129,6 @@ const CPU& Server::getCPU() const noexcept { return m_cpu; }
 
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
 
-
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
 #else
@@ -139,22 +138,26 @@ void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
 
 TEST_SUITE("Test FQDN")
 {
-    TEST_CASE("FQDN Validation with Server::setFQDN") {
+    TEST_CASE("FQDN Validation with Server::setFQDN")
+    {
         Server server;
 
-        SUBCASE("Valid FQDNs") {
+        SUBCASE("Valid FQDNs")
+        {
             CHECK_NOTHROW(server.setFQDN("example.com"));
             CHECK_NOTHROW(server.setFQDN("subdomain.example.com"));
             CHECK_NOTHROW(server.setFQDN("sub-domain.example.co.uk"));
         }
 
-        SUBCASE("Invalid FQDNs") {
+        SUBCASE("Invalid FQDNs")
+        {
             CHECK_THROWS(server.setFQDN("example")); // Missing TLD
             CHECK_THROWS(server.setFQDN(".example.com")); // Leading dot
             CHECK_THROWS(server.setFQDN("example.com.")); // Trailing dot
             CHECK_THROWS(server.setFQDN("example..com")); // Double dot
             CHECK_THROWS(server.setFQDN("example@com")); // Invalid character
-            CHECK_THROWS(server.setFQDN(std::string(256, 'a'))); // FQDN too long
+            CHECK_THROWS(
+                server.setFQDN(std::string(256, 'a'))); // FQDN too long
         }
     }
 }
