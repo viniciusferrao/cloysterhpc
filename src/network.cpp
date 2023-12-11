@@ -114,16 +114,13 @@ address Network::fetchAddress(const std::string& interface)
     struct in_addr netmask { };
     struct in_addr network { };
 
-    // TODO: Fix exceptions
     if (inet_aton(
             Connection::fetchAddress(interface).to_string().c_str(), &addr)
         == 0)
-        return {};
-    // throw std::runtime_error("Invalid IP address");
+        throw std::runtime_error("Invalid IP address");
     if (inet_aton(fetchSubnetMask(interface).to_string().c_str(), &netmask)
         == 0)
-        return {};
-    // throw std::runtime_error("Invalid subnet mask address");
+        throw std::runtime_error("Invalid subnet mask address");
 
     network.s_addr = addr.s_addr & netmask.s_addr;
 
@@ -312,12 +309,13 @@ void Network::setDomainName(const std::string& domainName)
 
 std::string Network::fetchDomainName()
 {
-    if (res_init() == -1)
-        throw std::runtime_error("Failed to initialize domain name resolution");
+    char domainName[256]; // Adjust the buffer size as needed
+    if (getdomainname(domainName, sizeof(domainName)) == -1)
+        throw std::runtime_error("Failed to fetch domain name");
 
-    LOG_TRACE("Got domain name {}", _res.defdname);
+    LOG_TRACE("Got domain name {}", domainName);
 
-    return _res.defdname; // TODO: Seems to be a deprecated call
+    return std::string(domainName);
 }
 
 /* TODO: Check return type
