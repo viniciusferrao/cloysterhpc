@@ -65,21 +65,7 @@ void Server::setFQDN(const std::string& fqdn)
 
     // This pattern validates whether an FQDN is valid or not.
     const std::regex fqdnPattern(
-        R"regex(^
-    (                        # Start of FQDN
-        (                    # Start of label (subdomain)
-            [a-zA-Z0-9]       # First character of label
-            [a-zA-Z0-9\\-]*   # Zero or more valid characters in label
-            [a-zA-Z0-9]       # Last character of label
-        )                    # End of label
-        \.                   # Dot separator
-    )*                       # Zero or more labels
-    (                        # Start of last label (TLD)
-        [A-Za-z0-9]           # First character of label (TLD)
-        [A-Za-z0-9\\-]*       # Zero or more valid characters in label
-        [A-Za-z0-9]           # Last character of label (TLD)
-    )                        # End of last label (TLD)
-    $)regex");
+        R"regex(^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?$)regex");
 
     if (!std::regex_match(fqdn, fqdnPattern))
         throw std::runtime_error("Invalid FQDN format");
@@ -142,3 +128,33 @@ void Server::setBMC(const BMC& bmc) { m_bmc = bmc; }
 const CPU& Server::getCPU() const noexcept { return m_cpu; }
 
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
+
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+TEST_SUITE("Test FQDN")
+{
+    TEST_CASE("FQDN Validation with Server::setFQDN") {
+        Server server;
+
+        SUBCASE("Valid FQDNs") {
+            CHECK_NOTHROW(server.setFQDN("example.com"));
+            CHECK_NOTHROW(server.setFQDN("subdomain.example.com"));
+            CHECK_NOTHROW(server.setFQDN("sub-domain.example.co.uk"));
+        }
+
+        SUBCASE("Invalid FQDNs") {
+            CHECK_THROWS(server.setFQDN("example")); // Missing TLD
+            CHECK_THROWS(server.setFQDN(".example.com")); // Leading dot
+            CHECK_THROWS(server.setFQDN("example.com.")); // Trailing dot
+            CHECK_THROWS(server.setFQDN("example..com")); // Double dot
+            CHECK_THROWS(server.setFQDN("example@com")); // Invalid character
+            CHECK_THROWS(server.setFQDN(std::string(256, 'a'))); // FQDN too long
+        }
+    }
+}
