@@ -13,4 +13,5 @@ set(COMMON_LIBS
   SimpleIni::SimpleIni
   resolv
   ${STDC++FS}
-  doctest::doctest)
+  doctest::doctest
+  hwinfo::HWinfo)
