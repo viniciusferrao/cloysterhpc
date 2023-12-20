@@ -15,4 +15,5 @@ set(COMMON_LIBS
   ${STDC++FS}
   doctest::doctest
   cryptopp::cryptopp
-  SDBusCpp::sdbus-c++)
+  SDBusCpp::sdbus-c++
+  hwinfo::HWinfo)
