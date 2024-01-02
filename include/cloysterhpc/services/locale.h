@@ -16,13 +16,12 @@ private:
 
 public:
     Locale();
-    ~Locale() = default;
 
     void setLocale(std::string_view locale);
-    std::string_view getLocale() const;
+    [[nodiscard]] std::string_view getLocale() const;
 
-    std::list<std::string> getAvailableLocales() const;
-    std::list<std::string> fetchAvailableLocales() const;
+    [[nodiscard]] std::list<std::string> getAvailableLocales() const;
+    [[nodiscard]] std::list<std::string> fetchAvailableLocales() const;
 };
 
 #endif // CLOYSTERHPC_LOCALE_H_
