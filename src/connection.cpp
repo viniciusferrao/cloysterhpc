@@ -142,11 +142,11 @@ void Connection::setMAC(std::string_view mac)
         throw std::runtime_error("Invalid MAC address size");
 
     // This pattern validates whether an MAC address is valid or not.
-    const std::regex pattern(
-        R"regex(^
-    ([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|  # Matches MAC address with colons or hyphens or
-    ([0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}       # Matches Cisco MAC format
-    $)regex");
+    const std::regex pattern("^("
+                             "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}"   // Matches MAC address with colons or hyphens
+                             "|"
+                             "(?:[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}"   // Matches Cisco MAC format
+                             "))$");
 
     // regex_match cannot work with std::string_view
     if (std::string tempString { mac }; regex_match(tempString, pattern))
