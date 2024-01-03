@@ -86,3 +86,26 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
               "custom image?");
     return false;
 }
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+TEST_SUITE("Disk image test suite")
+{
+    DiskImage diskImage;
+    const auto path = std::filesystem::current_path() / "/sample/checksum.iso";
+
+    TEST_CASE("Verify if is unknown image")
+    {
+        REQUIRE_FALSE(diskImage.isKnownImage(path));
+    }
+
+    TEST_CASE("Verify invalid checksum")
+    {
+        REQUIRE_FALSE(diskImage.hasVerifiedChecksum(path));
+    }
+}
