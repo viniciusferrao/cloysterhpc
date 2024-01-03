@@ -58,11 +58,17 @@ void Server::setHostname(std::string_view hostname)
 
 const std::string& Server::getFQDN() const noexcept { return m_fqdn; }
 
-/* TODO: Validate if FQDN is in right format */
 void Server::setFQDN(const std::string& fqdn)
 {
     if (fqdn.size() > 255)
         throw std::runtime_error("FQDN cannot be bigger than 255 characters");
+
+    // This pattern validates whether an FQDN is valid or not.
+    const std::regex fqdnPattern(
+        R"regex(^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?$)regex");
+
+    if (!std::regex_match(fqdn, fqdnPattern))
+        throw std::runtime_error("Invalid FQDN format");
 
     m_fqdn = fqdn;
 }
@@ -122,3 +128,36 @@ void Server::setBMC(const BMC& bmc) { m_bmc = bmc; }
 const CPU& Server::getCPU() const noexcept { return m_cpu; }
 
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+TEST_SUITE("Test FQDN")
+{
+    TEST_CASE("FQDN Validation with Server::setFQDN")
+    {
+        Server server;
+
+        SUBCASE("Valid FQDNs")
+        {
+            CHECK_NOTHROW(server.setFQDN("example.com"));
+            CHECK_NOTHROW(server.setFQDN("subdomain.example.com"));
+            CHECK_NOTHROW(server.setFQDN("sub-domain.example.co.uk"));
+        }
+
+        SUBCASE("Invalid FQDNs")
+        {
+            CHECK_THROWS(server.setFQDN("example")); // Missing TLD
+            CHECK_THROWS(server.setFQDN(".example.com")); // Leading dot
+            CHECK_THROWS(server.setFQDN("example.com.")); // Trailing dot
+            CHECK_THROWS(server.setFQDN("example..com")); // Double dot
+            CHECK_THROWS(server.setFQDN("example@com")); // Invalid character
+            CHECK_THROWS(
+                server.setFQDN(std::string(256, 'a'))); // FQDN too long
+        }
+    }
+}

@@ -32,19 +32,6 @@ Connection::Connection(Network* network)
         setMTU(2044);
 }
 
-// TODO: Remove this constructor
-Connection::Connection(
-    Network* network, const std::string& interface, const std::string& ip)
-    : m_network(network)
-{
-
-    setInterface(interface);
-    setAddress(ip);
-
-    if (network->getType() == Network::Type::Infiniband)
-        setMTU(2044);
-}
-
 Connection::Connection(Network* network,
     std::optional<std::string_view> interface,
     std::optional<std::string_view> mac, const std::string& ip)
@@ -154,11 +141,12 @@ void Connection::setMAC(std::string_view mac)
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");
 
-    // TODO: Make it easier to read and consider the Cisco MAC identifier
-    const std::regex pattern("^([0-9A-Fa-f]{2}[:-]){5}"
-                             "([0-9A-Fa-f]{2})|([0-9a-"
-                             "fA-F]{4}\\.[0-9a-fA-F]"
-                             "{4}\\.[0-9a-fA-F]{4})$");
+    // This pattern validates whether an MAC address is valid or not.
+    const std::regex pattern(
+        R"regex(^
+    ([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|  # Matches MAC address with colons or hyphens or
+    ([0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}       # Matches Cisco MAC format
+    $)regex");
 
     // regex_match cannot work with std::string_view
     if (std::string tempString { mac }; regex_match(tempString, pattern))
@@ -284,9 +272,24 @@ void Connection::setMTU(std::uint16_t mtu)
     //
     // https://www.rfc-editor.org/rfc/rfc791
     // https://www.rfc-editor.org/rfc/rfc2460
-    // TODO: Check if Infiniband networks have a minimum requirement
-    if (mtu < 1280)
-        throw std::runtime_error("MTU size must be higher or equal to 1280");
+    //
+    // RFC4391 states that 2044 is the minimum required for Infiniband networks.
+    // https://www.rfc-editor.org/rfc/rfc4391.html
+
+    switch (m_network->getType()) {
+        case Network::Type::Ethernet:
+            if (mtu < 1280) {
+                throw std::runtime_error(
+                    "Ethernet MTU size must be higher or equal to 1280");
+            }
+            break;
+        case Network::Type::Infiniband:
+            if (mtu < 2044) {
+                throw std::runtime_error(
+                    "Infiniband MTU size must be higher or equal to 2044");
+            }
+            break;
+    }
 
     m_mtu = mtu;
 }
@@ -306,3 +309,78 @@ void Connection::dumpConnection() const
     LOG_DEBUG("===================================")
 }
 #endif
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+TEST_SUITE("Test MAC address validity")
+{
+    Network network;
+    Connection connection = Connection(&network);
+
+    TEST_CASE("Length Issues")
+    {
+        CHECK_THROWS(connection.setMAC("ab:cd:ef:01:23")); // Too short
+        CHECK_THROWS(connection.setMAC("ab:cd:ef:01:23:45:67")); // Too long
+    }
+
+    TEST_CASE("Invalid Separators")
+    {
+        CHECK_THROWS(connection.setMAC("ab-cd-ef-01-23-45")); // Wrong separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd.ef:01:23:45")); // Inconsistent separators
+    }
+
+    TEST_CASE("Incorrect Positioning of Separators")
+    {
+        CHECK_THROWS(
+            connection.setMAC(":ab:cd:ef:01:23:45")); // Leading separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:23:45:")); // Trailing separator
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:2:345")); // Misplaced separator
+    }
+
+    TEST_CASE("Invalid Characters")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "ab:cd:ef:01:23:gh")); // Non-hexadecimal characters
+        CHECK_THROWS(
+            connection.setMAC("ab:cd:ef:01:23:45$")); // Special characters
+    }
+
+    TEST_CASE("Mixed Formats")
+    {
+        CHECK_THROWS(
+            connection.setMAC("abcd.ef:01:2345")); // Mixing different formats
+    }
+
+    TEST_CASE("Multicast Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "01:00:5e:00:00:00")); // Multicast addresses are not typically used
+    }
+
+    TEST_CASE("Locally Administered Addresses")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "02:00:5e:00:00:00")); // Locally administered address
+    }
+
+    TEST_CASE("Zeroed Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "00:00:00:00:00:00")); // All zeros are not a valid hardware MAC
+                                   // address
+    }
+
+    TEST_CASE("Broadcast Address")
+    {
+        CHECK_THROWS(connection.setMAC(
+            "ff:ff:ff:ff:ff:ff")); // Reserved broadcast address
+    }
+}

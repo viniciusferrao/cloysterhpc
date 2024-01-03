@@ -11,14 +11,14 @@
 class PresenterHostId : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "Hostname settings";
-        static constexpr const char* question
+        static constexpr const auto title = "Hostname settings";
+        static constexpr const auto question
             = "Enter the desired hostname and domain name for this machine";
-        static constexpr const char* help
+        static constexpr const auto help
             = Presenter::Messages::Placeholder::help;
 
-        static constexpr const char* hostname = "Hostname";
-        static constexpr const char* domainName = "Domain name";
+        static constexpr const auto hostname = "Hostname";
+        static constexpr const auto domainName = "Domain name";
     };
 
 public:

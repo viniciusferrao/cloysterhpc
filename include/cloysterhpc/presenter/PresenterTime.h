@@ -11,21 +11,20 @@
 class PresenterTime : public Presenter {
 private:
     struct Messages {
-        static constexpr const char* title = "Time and clock settings";
+        static constexpr const auto title = "Time and clock settings";
 
         struct Timezone {
-            static constexpr const char* question
-                = "Choose your local timezone";
-            static constexpr const char* help
+            static constexpr const auto question = "Choose your local timezone";
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
 
         struct Timeservers {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Add or change the list of available time servers";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
-            static constexpr const char* field = "Time server(s)";
+            static constexpr const auto field = "Time server(s)";
         };
     };
 

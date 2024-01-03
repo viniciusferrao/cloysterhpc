@@ -51,8 +51,6 @@ private:
 public:
     Connection() = delete;
     explicit Connection(Network* network);
-    Connection(
-        Network* network, const std::string& interface, const std::string& ip);
     Connection(Network* network, std::optional<std::string_view> interface,
         std::optional<std::string_view> mac, const std::string& ip);
 

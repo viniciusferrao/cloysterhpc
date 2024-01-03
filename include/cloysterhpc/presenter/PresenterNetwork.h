@@ -24,39 +24,42 @@ private:
     Connection m_connection;
 
     struct Messages {
-        static constexpr const char* title = "Network Settings";
+        static constexpr const auto title = "Network Settings";
 
-        // TODO: Find a way to express which interface you are dealing with:
-        //       "Select your <external> network interface", for example.
         struct Interface {
-            static constexpr const char* question
-                = "Select your network interface";
-            static constexpr const char* help
+            static std::string formatQuestion(
+                Network::Type type, Network::Profile profile)
+            {
+                return fmt::format("Select your {} ({}) network interface",
+                    magic_enum::enum_name(profile),
+                    magic_enum::enum_name(type));
+            }
+
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
 
         struct Details {
-            static constexpr const char* question
+            static constexpr const auto question
                 = "Fill the required network details";
-            static constexpr const char* help
+            static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
         };
 
         struct IP {
-            static constexpr const char* address = "IP Address";
-            static constexpr const char* subnetMask = "Subnet Mask";
-            static constexpr const char* network = "Network Address";
-            static constexpr const char* gateway = "Gateway";
+            static constexpr const auto address = "IP Address";
+            static constexpr const auto subnetMask = "Subnet Mask";
+            static constexpr const auto gateway = "Gateway";
         };
 
         struct Domain {
-            static constexpr const char* name = "Domain name";
-            static constexpr const char* servers = "Nameservers";
+            static constexpr const auto name = "Domain name";
+            static constexpr const auto servers = "Nameservers";
         };
 
 #ifndef NDEBUG
         struct Debug {
-            static constexpr const char* attributes
+            static constexpr const auto attributes
                 = "The following network attributes were detected";
         };
 #endif
@@ -65,7 +68,10 @@ private:
     template <typename T>
     std::string networkInterfaceSelection(const T& interfaces)
     {
-        return m_view->listMenu(Messages::title, Messages::Interface::question,
+        return m_view->listMenu(Messages::title,
+            Messages::Interface::formatQuestion(
+                m_network->getType(), m_network->getProfile())
+                .c_str(),
             interfaces, Messages::Interface::help);
     }
 

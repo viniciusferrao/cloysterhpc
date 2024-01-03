@@ -139,7 +139,8 @@ void Shell::configureLocale()
 {
     LOG_INFO("Setting up locale");
 
-    runCommand(fmt::format("localectl set-locale {}", m_cluster->getLocale()));
+    runCommand(fmt::format(
+        "localectl set-locale {}", m_cluster->getLocale().getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride()

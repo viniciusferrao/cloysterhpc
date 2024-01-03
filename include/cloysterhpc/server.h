@@ -26,7 +26,6 @@ protected:
     std::string m_fqdn; // TODO: Remove?
 
 protected:
-    Server() = default;
     Server(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections,
         std::optional<BMC> bmc = std::nullopt);
@@ -62,6 +61,7 @@ public:
     void setBMC(const BMC& bmc);
 
     virtual ~Server() = default;
+    Server() = default;
 };
 
 #endif // CLOYSTERHPC_SERVER_H_

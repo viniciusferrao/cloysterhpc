@@ -62,8 +62,6 @@ void PresenterNetwork::createNetwork()
               Connection::fetchAddress(interface).to_string() },
             { Messages::IP::subnetMask,
                 Network::fetchSubnetMask(interface).to_string() },
-            { Messages::IP::network,
-                Network::fetchAddress(interface).to_string() },
             { Messages::IP::gateway,
                 Network::fetchGateway(interface).to_string() },
             // Nameserver definitions
@@ -82,7 +80,8 @@ void PresenterNetwork::createNetwork()
     std::size_t i = 0;
     m_connection.setAddress(networkDetails[i++].second);
     m_network->setSubnetMask(networkDetails[i++].second);
-    m_network->setAddress(networkDetails[i++].second);
+    m_network->setAddress(
+        m_network->calculateAddress(m_connection.getAddress()));
     m_network->setGateway(networkDetails[i++].second);
 
     // Domain Data
