@@ -16,11 +16,11 @@ private:
 
 public:
     Locale();
-
     void setLocale(std::string_view locale);
     [[nodiscard]] std::string_view getLocale() const;
-
     [[nodiscard]] std::list<std::string> getAvailableLocales() const;
+
+private:
     [[nodiscard]] std::list<std::string> fetchAvailableLocales() const;
 };
 
