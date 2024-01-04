@@ -14,4 +14,5 @@ set(COMMON_LIBS
   resolv
   ${STDC++FS}
   doctest::doctest
+  cryptopp::cryptopp
   hwinfo::HWinfo)

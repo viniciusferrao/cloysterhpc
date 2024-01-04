@@ -65,9 +65,14 @@ Timezone& Cluster::getTimezone() { return m_timezone; }
 
 void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
-const std::string& Cluster::getLocale() const { return m_locale; }
+const Locale& Cluster::getLocale() const { return m_locale; }
 
-void Cluster::setLocale(const std::string& locale) { m_locale = locale; }
+void Cluster::setLocale(const Locale& locale) { m_locale = locale; }
+
+void Cluster::setLocale(const std::string& locale)
+{
+    m_locale.setLocale(locale);
+}
 
 const std::string& Cluster::getDomainName() const { return m_domainName; }
 
@@ -308,7 +313,7 @@ void Cluster::printData()
     LOG_DEBUG("OS Data:")
     m_headnode.getOS().printData();
     LOG_DEBUG("Timezone: {}", getTimezone().getTimezone());
-    LOG_DEBUG("Locale: {}", getLocale());
+    LOG_DEBUG("Locale: {}", getLocale().getLocale());
     LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname());
     LOG_DEBUG("DomainName: {}", getDomainName());
     LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
