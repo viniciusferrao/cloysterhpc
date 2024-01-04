@@ -73,6 +73,10 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
     CryptoPP::FileSource(path.string().c_str(), true, filter.get(), true);
     transform(output.begin(), output.end(), output.begin(), ::tolower);
 
+    /* Those release() methods are needed to address the following issue:
+     * https://github.com/weidai11/cryptopp/issues/1002
+     * https://stackoverflow.com/questions/21057393/what-does-double-free-mean
+     */
     sink.release();
     encoder.release();
     filter.release();
