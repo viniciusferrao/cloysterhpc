@@ -29,9 +29,6 @@ needed.
 
 ## Major features to be implemented
 
-* Command line arguments for unattended installation.
-* Unattended answer file via `.conf` file on user homedir or predefined
-  location.
 * Localization support.
 * Always running daemon to ease cluster maintenance.
 * Static binaries.
@@ -115,10 +112,6 @@ preliminar testing.
 We recommend to build and run this software in a virtual machine due to its
 nature and `root` execution requirements.
 
-## Running tests
-
-To run tests you need to run `ctest` inside the build directory.
-
 ### Recommended VM settings
 
 * EL8 based system with **minimal** package selection
@@ -150,11 +143,21 @@ Finally, to build the software just run the commands:
  $ cmake --build ./build
 ```
 
-Resulting binary will be available on `bin` directory in the root directory of
+Resulting binary will be available on `/build/src` directory in the root directory of
 the project.
 
 As a final warning: running the software without **DUMMY** option will probably
 damage the running OS if they run as **root**. Be advised.
+
+You can run it by calling `./binary_name -t` (TUI - Terminal User Interface) or
+by using a `answerfile` and CLI (Command Line Interface) with
+`./binary_name -a /path/to/answerfile`.
+
+If you require any further help, please use `./binary_name -h` (-h, --help).
+
+### Running tests
+
+To run tests you need to run `ctest` inside the build directory.
 
 # Open Source Apache License
 
