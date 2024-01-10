@@ -2,7 +2,8 @@
 # vi: set ft=ruby :
 
 machines = {
-  'alma-8' => {'memory' => '1024', 'cpus' => 1, 'ip' => '22', 'box' => 'almalinux/8', 'provision' => 'alma.sh'},
+  'alma-8' => {'memory' => '4096', 'cpus' => 2, 'ip' => '22', 'box' => 'almalinux/8', 'provision' => 'alma-8.sh'},
+  'rocky-9' => {'memory' => '4096', 'cpus' => 2, 'ip' => '23', 'box' => 'rockylinux/9', 'provision' => 'rocky-9.sh'},
 }
 
 specified_machines = ENV['MACHINES'].to_s.split(',')
@@ -16,8 +17,9 @@ Vagrant.configure("2") do |config|
 
     config.vm.define "#{name}" do |m|
       m.vm.box = "#{conf['box']}"
-      m.vm.network 'private_network', ip: "192.168.57.#{conf['ip']}"
-      m.vm.hostname = "#{name}"
+      m.vm.network 'private_network', ip: "192.168.20.#{conf['ip']}", name: "external_network"
+      m.vm.network 'private_network', ip: "192.168.30.10", name: "management_network"
+      m.vm.hostname = "cloyster.hpc"
       m.vm.provider 'libvirt' do |lv|
         lv.memory = conf['memory']
         lv.cpus = conf['cpus']
@@ -27,8 +29,8 @@ Vagrant.configure("2") do |config|
         #lv.connect_via_ssh = false
         lv.username = 'root'  # Replace with your username
       end
-      m.vm.disk :disk, size: "25GB", name: "new_storage"
       m.vm.provision 'shell', path: "provision/#{conf['provision']}"
+      m.vm.synced_folder '/mnt/iso', '/opt/iso', type: 'rsync'
     end
   end
 end
