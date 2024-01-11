@@ -29,7 +29,8 @@ Vagrant.configure("2") do |config|
         #lv.connect_via_ssh = false
         lv.username = 'root'  # Replace with your username
       end
-      m.vm.provision 'shell', path: "provision/#{conf['provision']}"
+      m.vm.provision :shell, path: "provision/#{conf['provision']}"
+      m.vm.synced_folder '.', '/vagrant', type: "rsync"
       m.vm.synced_folder '/mnt/iso', '/opt/iso', type: 'rsync'
     end
   end
