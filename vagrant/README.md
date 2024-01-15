@@ -42,18 +42,17 @@ $ chmod 644 /etc/pki/CA/cacert.pem
 
 ## Running
 
-**YOU MUST HAVE A `/mnt/iso` DIRECTORY IN YOUR HOST WITH ORIGINAL (DEFAULT) ISOs,
-SAME DISTRO AND VERSION AS YOUR DESIRED VAGRANT VMs. 
-DOWNLOAD IT FROM THE TABLE BELOW**
-
 Run `./setupVagrant /path/to/cloyster_binary 
-<vagrant_machine_name1> [<vagrant_machine_name2> ...] ` in this directory.
+<vagrant_machine_name>  <iso_image_path>` in this directory.
 
 You can SSH to the machine using `vagrant ssh <vagrant_machine_name>`.
 
-| Name     | Version | ISO                                                                                                                |
-|----------|---------|--------------------------------------------------------------------------------------------------------------------|
-| alma-8   | 8.9     | [AlmaLinux-8.9-x86_64-dvd.iso](https://repo.almalinux.org/almalinux/8.9/isos/x86_64/AlmaLinux-8.9-x86_64-dvd.iso ) |
-| rocky-8  | 8.9     | [Rocky-8.9-x86_64-dvd1.iso](https://download.rockylinux.org/pub/rocky/8/isos/x86_64/Rocky-8.9-x86_64-dvd1.iso)     |
-| rocky-9  | 9.3     | [Rocky-9.3-x86_64-dvd.iso](https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9.3-x86_64-dvd.iso)       |
+Already tested ISOs:
+
+| Name     | Version |
+|----------|---------|
+| alma-8   | 8.8     |
+| oracle-8 | 8.8     |
+| rocky-8  | 8.8     |
+| rocky-9  | 9.3     |
 

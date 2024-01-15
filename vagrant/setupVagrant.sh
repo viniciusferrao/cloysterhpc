@@ -4,23 +4,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Check if the required arguments are provided
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <local_file_path> <vagrant_machine_name1> [<vagrant_machine_name2> ...]"
+if [ "$#" -lt 3 ]; then
+    echo "Usage: $0 <local_file_path> <vagrant_machine_name> <iso_image_path>"
     exit 1
 fi
 
 local_file_path=$1
-shift  # Shift the first argument (local_file_path) off the argument list
-
-vagrant_machine_names=("$@")
-vagrant_machine_names_string=$(IFS=' '; echo "${vagrant_machine_names[*]}")
+vagrant_machine_name=$2
+iso_image_path=$3
 
 # Check if vagrant-scp plugin is installed
 if ! vagrant plugin list | grep -q vagrant-scp; then
     echo "vagrant-scp plugin is not installed. Please install it using 'vagrant plugin install vagrant-scp'."
     exit 1
 fi
-
 
 configure_disk() {
     machine_name="$1"
@@ -44,6 +41,10 @@ configure_disk() {
     vagrant ssh "$machine_name" -c "sudo mount /dev/${new_filesystem}1 /opt"
     vagrant ssh "$machine_name" -c "echo \"/dev/vdb1   /opt    xfs    defaults    0 0\" | sudo tee -a /etc/fstab"
 
+    # Create /opt/iso path
+    vagrant ssh "$machine_name" -c "sudo mkdir /opt/iso"
+    vagrant ssh "$machine_name" -c "sudo chown vagrant:vagrant /opt/iso"
+
     # Reload machine
     vagrant reload "$vagrant_machine_name"
 }
@@ -51,9 +52,11 @@ configure_disk() {
 deploy_cloyster() {
     machine_name="$1"
     local_file_path="$2"
+    iso_image_path="$3"
 
     # Copy files to VM
     vagrant scp "$local_file_path" "$machine_name":~/cloyster
+    vagrant scp "$iso_image_path" "$machine_name":/opt/iso
     vagrant scp include/"$machine_name".answerfile.ini "$machine_name":~/answerfile.ini
 
     # Run Cloyster
@@ -68,11 +71,9 @@ destroy_vm_and_cleanup() {
 }
 
 # Run Vagrantfile
-MACHINES="$vagrant_machine_names_string" vagrant up
+MACHINES="$vagrant_machine_name" vagrant up
 
-# Loop through each Vagrant machine and set up
-for vagrant_machine_name in "${vagrant_machine_names[@]}"; do
-    configure_disk "$vagrant_machine_name"
-    deploy_cloyster "$vagrant_machine_name" "$local_file_path"
-    destroy_vm_and_cleanup "$vagrant_machine_name"
-done
+# Set up for the specified Vagrant machine
+configure_disk "$vagrant_machine_name"
+deploy_cloyster "$vagrant_machine_name" "$local_file_path" "$iso_image_path"
+destroy_vm_and_cleanup "$vagrant_machine_name"
