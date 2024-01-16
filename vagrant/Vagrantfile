@@ -8,7 +8,7 @@ machines = {
   'alma-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '22', 'box' => 'almalinux/8', 'provision' => 'rhel-8-based.sh'},
   'rhel-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '23', 'box' => 'generic/rhel8', 'provision' => 'rhel-8.sh'},
   'oracle-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '24', 'box' => 'generic/oracle8', 'provision' => 'rhel-8-based.sh'},
-  'rocky-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '25', 'box' => 'rockylinux/8', 'provision' => 'rhel-8-based.sh'},
+  'rocky-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '25', 'box' => 'generic/rocky8', 'provision' => 'rhel-8-based.sh'},
   #'rocky-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'rockylinux/9', 'provision' => 'rhel-based.sh'}, # Not implemented yet.
 }
 

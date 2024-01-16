@@ -43,7 +43,8 @@ configure_disk() {
 
     # Create /opt/iso path
     vagrant ssh "$machine_name" -c "sudo mkdir /opt/iso"
-    vagrant ssh "$machine_name" -c "sudo chown vagrant:vagrant /opt/iso"
+
+    vagrant ssh "$machine_name" -c "sudo chown vagrant:vagrant /opt/ -R"
 
     # Reload machine
     vagrant reload "$vagrant_machine_name"
@@ -60,7 +61,7 @@ deploy_cloyster() {
     vagrant scp include/"$machine_name".answerfile.ini "$machine_name":~/answerfile.ini
 
     # Run Cloyster
-    vagrant ssh "$machine_name" -c "./cloyster -l 6 -a answerfile.ini"
+    vagrant ssh "$machine_name" -c "sudo ./cloyster -l 6 -a answerfile.ini"
 }
 
 destroy_vm_and_cleanup() {
