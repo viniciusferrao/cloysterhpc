@@ -49,10 +49,10 @@ You can SSH to the machine using `vagrant ssh <vagrant_machine_name>`.
 
 Already tested ISOs:
 
-| Name     | Version |
-|----------|---------|
-| alma-8   | 8.8     |
-| oracle-8 | 8.8     |
-| rocky-8  | 8.8     |
-| rocky-9  | 9.3     |
+| Name       | 8.8     |
+|------------|---------|
+| RHEL       | Passing |
+| RockyLinux | Passing  |
+| Alma       | Passing  |
+| Oracle     | Passing  |
 
