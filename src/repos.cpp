@@ -14,11 +14,10 @@
 using boost::property_tree::ptree;
 using cloyster::runCommand;
 
-Repos::Repos(OS::Distro distro, OS::Platform platform)
-    : m_distro(distro)
-    , m_platform(platform)
+Repos::Repos(const OS& m_os)
+    : m_os(m_os)
 {
-    switch (m_platform) {
+    switch (m_os.getPlatform()) {
         case OS::Platform::el8:
             m_family = EL8;
             break;
@@ -97,6 +96,7 @@ void Repos::configureOL() const {
 
 void Repos::configureRocky() const
 {
+    disable("baseos");
     createGPGKeyFile(m_family.Rocky.repo_gpg_filename, m_family.Rocky.repo_gpg);
     enable(m_family.Rocky.joinDependencies());
 }
@@ -115,7 +115,7 @@ void Repos::configureXCAT() const
                "https://xcat.org/files/xcat/repos/yum/latest/"
                "xcat-core/xcat-core.repo");
 
-    switch (m_platform) {
+    switch (m_os.getPlatform()) {
         case OS::Platform::el8:
             runCommand("wget -NP /etc/yum.repos.d "
                        "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
@@ -132,13 +132,67 @@ void Repos::configureXCAT() const
     }
 }
 
+std::vector<std::string_view> Repos::getxCATOSImageRepos()
+{
+    const auto osArch = magic_enum::enum_name(m_os.getArch());
+    const auto osMajorVersion = m_os.getMajorVersion();
+    const auto osVersion = m_os.getVersion();
+
+    std::vector<std::string_view> repos;
+
+    std::string crb = "CRB";
+    std::string OpenHPCVersion = "3";
+
+    if (osMajorVersion < 9) {
+            crb = "PowerTools";
+            OpenHPCVersion = "2";
+    }
+
+    switch (m_os.getDistro()) {
+        case OS::Distro::RHEL:
+            repos.emplace_back(
+                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/appstream/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/codeready-builder/os");
+            break;
+        case OS::Distro::OL:
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
+                            "baseos/latest/{}", osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/appstream/{}", osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/codeready/builder/{}", osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}", osMajorVersion, osArch));
+            break;
+        case OS::Distro::Rocky:
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/BaseOS/{}/os", osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/{}/{}/os", osVersion, crb, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/AppStream/{}/os", osVersion, osArch));
+            break;
+        case OS::Distro::AlmaLinux:
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/BaseOS/{}/os", osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/{}/{}/os", osVersion, crb, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/AppStream/{}/os", osVersion, osArch));
+            break;
+    }
+
+    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}", osMajorVersion, osArch));
+    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}", osMajorVersion, osArch));
+
+    /* TODO: if OpenHPC statement */
+    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}", OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}", OpenHPCVersion, osMajorVersion));
+
+    return repos;
+}
+
 void Repos::configureRepositories() const
 {
     LOG_INFO("Setting up repositories")
 
     createCloysterRepo();
 
-    switch (m_distro) {
+    switch (m_os.getDistro()) {
         using enum OS::Distro;
         case RHEL:
             configureRHEL();

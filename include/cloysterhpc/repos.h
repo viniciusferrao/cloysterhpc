@@ -45,17 +45,17 @@ private:
     void createGPGKeyFile(const std::filesystem::path& path, const std::string& key)const;
     void createGPGKeyFile(const repofile& repo) const;
     void createCloysterRepo() const;
-    OS::Distro m_distro;
-    OS::Platform m_platform;
+    OS m_os;
     Family m_family;
 
 
 public:
-    explicit Repos(OS::Distro, OS::Platform);
+    explicit Repos(const OS& osinfo);
     void createConfigurationFile(const repofile& repo) const;
     static void enable(const std::string& id);
     static void disable(const std::string& id);
     void configureRepositories() const;
+    std::vector<std::string_view> getxCATOSImageRepos();
 };
 
 #endif // CLOYSTERHPC_REPOS_H_

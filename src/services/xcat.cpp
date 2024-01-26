@@ -8,6 +8,7 @@
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
+#include "cloysterhpc/repos.h"
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
@@ -243,58 +244,8 @@ void XCAT::configureOSImageDefinition()
             m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-    /* TODO: Fix repos to EL8
-     *  - Repos URL may be generated with OS class methods
-     *     OS.getArch(); OS.getVersion();
-     */
-    std::vector<std::string_view> repos;
-
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            repos.emplace_back(
-                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/appstream/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/codeready-builder/os");
-            break;
-        case OS::Distro::OL:
-            repos.emplace_back("https://yum.oracle.com/repo/OracleLinux/OL8/"
-                               "baseos/latest/x86_64");
-            repos.emplace_back(
-                "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64");
-            repos.emplace_back("https://yum.oracle.com/repo/OracleLinux/OL8/"
-                               "codeready/builder/x86_64");
-            repos.emplace_back(
-                "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64");
-            break;
-        case OS::Distro::Rocky:
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/BaseOS/x86_64/os");
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/PowerTools/x86_64/os");
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/AppStream/x86_64/os");
-            break;
-        case OS::Distro::AlmaLinux:
-            repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os");
-            repos.emplace_back("https://repo.almalinux.org/almalinux/8/"
-                               "PowerTools/x86_64/os");
-            repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8/AppStream/x86_64/os");
-            break;
-    }
-
-    repos.emplace_back(
-        "https://download.fedoraproject.org/pub/epel/8/Everything/x86_64");
-    repos.emplace_back(
-        "https://download.fedoraproject.org/pub/epel/8/Modular/x86_64");
-
-    /* TODO: if OpenHPC statement */
-    repos.emplace_back("http://repos.openhpc.community/OpenHPC/2/CentOS_8");
-    repos.emplace_back(
-        "http://repos.openhpc.community/OpenHPC/2/updates/CentOS_8");
+    Repos repoManager(m_cluster->getNodes()[0].getOS());
+    auto repos = repoManager.getxCATOSImageRepos();
 
     cloyster::runCommand(
         fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
