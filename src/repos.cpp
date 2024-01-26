@@ -9,121 +9,181 @@
 #include <cloysterhpc/repos.h>
 #include <cloysterhpc/services/log.h>
 #include <fstream>
+#include <magic_enum.hpp>
 
 using boost::property_tree::ptree;
 using cloyster::runCommand;
 
-Repos::Repos(OS::Distro distro)
+Repos::Repos(OS::Distro distro, OS::Platform platform)
     : m_distro(distro)
+    , m_platform(platform)
 {
+    switch (m_platform) {
+        case OS::Platform::el8:
+            m_family = EL8;
+            break;
+        case OS::Platform::el9:
+            m_family = EL9;
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
 }
 
 void Repos::createConfigurationFile(const repofile& repo) const
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create repofile {}", repo.name);
+        LOG_INFO("Would create repofile {}", repo.name)
         return;
     }
 
     ptree repof {};
 
-    repof.put("baseos.name", repo.name);
-    repof.put("baseos.gpgcheck", repo.gpgcheck);
-    repof.put("baseos.gpgkey", repo.gpgkey);
-    repof.put("baseos.enabled", repo.enabled);
-    repof.put("baseos.baseurl", repo.baseurl);
+    repof.put(fmt::format("{}.name", repo.id), repo.name);
+    repof.put(fmt::format("{}.gpgcheck", repo.id), repo.gpgcheck ? 1 : 0);
+    repof.put(fmt::format("{}.gpgkey", repo.id), repo.gpgkey);
+    repof.put(fmt::format("{}.enabled", repo.id), repo.enabled ? 1 : 0);
+    repof.put(fmt::format("{}.baseurl", repo.id), repo.baseurl);
 
     boost::property_tree::ini_parser::write_ini(
         fmt::format("/etc/yum.repos.d/{}.repo", repo.id), repof);
 
-    std::ofstream gpgkey(repo.gpgkey.substr(7));
-    gpgkey << repo.gpgkeyContent;
+    createGPGKeyFile(repo);
+    LOG_INFO("Created repofile {}", repo.name)
+}
+
+void Repos::createGPGKeyFile(const repofile& repo) const
+{
+    std::filesystem::path path = repo.gpgkey.substr(7);
+    createGPGKeyFile(path, repo.gpgkeyContent);
+}
+
+void Repos::createGPGKeyFile(
+    const std::string& filename, const std::string& key) const
+{
+    std::filesystem::path path = fmt::format("/etc/pki/rpm-gpg/{}", filename);
+    createGPGKeyFile(path, key);
+}
+
+void Repos::createGPGKeyFile(
+    const std::filesystem::path& path, const std::string& key) const
+{
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create GPG Key file {}", path.filename().string())
+        return;
+    }
+
+    std::ofstream gpgkey(path);
+    gpgkey << key;
     gpgkey.close();
 }
 
-void Repos::enable(const std::string& id) { }
-
-void Repos::disable(const std::string& id) { }
-
-void Repos::configureRHEL() const
+void Repos::enable(const std::string& id)
 {
-    runCommand("dnf config-manager --set-enabled "
-               "codeready-builder-for-rhel-8-x86_64-rpms");
+    runCommand(fmt::format("sudo dnf config-manager --set-enabled {}", id));
 }
 
-void Repos::configureOL() const
+void Repos::disable(const std::string& id)
 {
-    runCommand("dnf config-manager --set-enabled "
-               "ol8_codeready_builder");
+    runCommand(fmt::format("sudo dnf config-manager --set-disabled {}", id));
+}
 
-    createConfigurationFile(ol::ol8_base_latest);
+void Repos::configureRHEL() const { enable(m_family.RHEL.joinDependencies()); }
+
+void Repos::configureOL() const {
+    createGPGKeyFile(m_family.Oracle.repo_gpg_filename, m_family.Oracle.repo_gpg);
+    enable(m_family.Oracle.joinDependencies());
 }
 
 void Repos::configureRocky() const
 {
-    runCommand("dnf config-manager --set-enabled "
-               "powertools");
-
-    createConfigurationFile(rocky::rocky8_baseos);
+    createGPGKeyFile(m_family.Rocky.repo_gpg_filename, m_family.Rocky.repo_gpg);
+    enable(m_family.Rocky.joinDependencies());
 }
 
 void Repos::configureAlma() const
 {
-    runCommand("dnf config-manager --set-enabled "
-               "powertools");
-
-    createConfigurationFile(alma::alma8_baseos);
+    createGPGKeyFile(m_family.AlmaLinux.repo_gpg_filename, m_family.AlmaLinux.repo_gpg);
+    enable(m_family.AlmaLinux.joinDependencies());
 }
 
 void Repos::configureXCAT() const
 {
-    LOG_INFO("Setting up XCAT repositories");
+    LOG_INFO("Setting up XCAT repositories")
 
     runCommand("wget -NP /etc/yum.repos.d "
                "https://xcat.org/files/xcat/repos/yum/latest/"
                "xcat-core/xcat-core.repo");
-    runCommand("wget -NP /etc/yum.repos.d "
-               "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-               "rh8/x86_64/xcat-dep.repo");
-}
 
-void Repos::configureAddons() const
-{
-    createConfigurationFile(addons::ELRepo);
-    createConfigurationFile(addons::beegfs);
-    createConfigurationFile(addons::grafana);
-    createConfigurationFile(addons::influxdata);
-    createConfigurationFile(addons::oneAPI);
-    createConfigurationFile(addons::zabbix);
-    createConfigurationFile(addons::RPMFusion);
+    switch (m_platform) {
+        case OS::Platform::el8:
+            runCommand("wget -NP /etc/yum.repos.d "
+                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                       "rh8/x86_64/xcat-dep.repo");
+            break;
+        case OS::Platform::el9:
+            runCommand("dnf -y install initscripts");
+            runCommand("wget -NP /etc/yum.repos.d "
+                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                       "rh9/x86_64/xcat-dep.repo");
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform for xCAT");
+    }
 }
 
 void Repos::configureRepositories() const
 {
-    LOG_INFO("Setting up additional repositories");
+    LOG_INFO("Setting up repositories")
+
+    createCloysterRepo();
 
     switch (m_distro) {
-        case OS::Distro::RHEL:
+        using enum OS::Distro;
+        case RHEL:
             configureRHEL();
             break;
-        case OS::Distro::OL:
+        case OL:
             configureOL();
             break;
-        case OS::Distro::Rocky:
+        case Rocky:
             configureRocky();
             break;
-        case OS::Distro::AlmaLinux:
+        case AlmaLinux:
             configureAlma();
             break;
     }
 
-    runCommand("dnf -y install "
-               "https://dl.fedoraproject.org/pub/epel/"
-               "epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install "
-               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
-               "ohpc-release-2-1.el8.x86_64.rpm");
+    //@TODO Let user choose the optional repos.
+    configureAdditionalRepos(
+        { AdditionalType::beegfs, AdditionalType::ELRepo, AdditionalType::EPEL,
+            AdditionalType::Grafana, AdditionalType::influxData,
+            AdditionalType::oneAPI, AdditionalType::OpenHPC,
+            AdditionalType::Zabbix, AdditionalType::RPMFusionUpdates });
 
-    configureAddons();
     configureXCAT();
+}
+
+void Repos::createCloysterRepo() const
+{
+    LOG_INFO("Creating Cloyster repo")
+    std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
+
+    std::ofstream repofile(path);
+    repofile << m_family.repo;
+    repofile.close();
+}
+
+void Repos::configureAdditionalRepos(
+    const std::vector<AdditionalType>& additional) const
+{
+    LOG_INFO("Setting up additional repositories")
+
+    for (AdditionalType type : additional) {
+        for (const AdditionalRepo& repo : m_family.additionalRepos) {
+            if (repo.type == type) {
+                createGPGKeyFile(repo.gpg_filename, repo.gpg_key);
+            }
+        }
+    }
 }

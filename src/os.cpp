@@ -56,7 +56,12 @@ OS::OS()
 #else
             if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
 #endif
-                setPlatform(getValueFromKey(line));
+                auto value = getValueFromKey(line);
+                if (value.starts_with("platform:")) {
+                    setPlatform(value.substr(9)); // Skip the 'platform:' prefix
+                } else {
+                    setPlatform(value);
+                }
             }
 
 #if __cpp_lib_starts_ends_with >= 201711L
@@ -127,11 +132,18 @@ void OS::setPlatform(OS::Platform platform) { m_platform = platform; }
 
 void OS::setPlatform(std::string_view platform)
 {
-    if (platform.substr(platform.find(':') + 1) == "el8")
-        setPlatform(OS::Platform::el8);
-    else
-        throw std::runtime_error(
-            fmt::format("Unsupported Platform: {}", platform));
+    std::string lowercasePlatform(platform);
+    std::transform(lowercasePlatform.begin(), lowercasePlatform.end(),
+        lowercasePlatform.begin(), ::tolower);
+
+    for (const auto& enumValue : magic_enum::enum_values<Platform>()) {
+        if (lowercasePlatform == magic_enum::enum_name(enumValue)) {
+            setPlatform(enumValue);
+            return;
+        }
+    }
+
+    throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
 OS::Distro OS::getDistro() const { return m_distro; }
@@ -146,7 +158,7 @@ void OS::setDistro(std::string_view distro)
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif
-    if (const auto& rv
+    if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))

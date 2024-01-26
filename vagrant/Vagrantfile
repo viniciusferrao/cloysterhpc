@@ -9,7 +9,10 @@ machines = {
   'rhel-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '23', 'box' => 'generic/rhel8', 'provision' => 'rhel-8.sh'},
   'oracle-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '24', 'box' => 'generic/oracle8', 'provision' => 'rhel-8-based.sh'},
   'rocky-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '25', 'box' => 'generic/rocky8', 'provision' => 'rhel-8-based.sh'},
-  #'rocky-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'rockylinux/9', 'provision' => 'rhel-based.sh'}, # Not implemented yet.
+  'rocky-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'generic/rocky9', 'provision' => 'rhel-9-based.sh'},
+  'oracle-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'generic/oracle9', 'provision' => 'rhel-9-based.sh'},
+  'rhel-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'generic/rhel9', 'provision' => 'rhel-9.sh'},
+  'alma-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'generic/alma9', 'provision' => 'rhel-9-based.sh'},
 }
 
 specified_machines = ENV['MACHINES'].to_s.split(',')
