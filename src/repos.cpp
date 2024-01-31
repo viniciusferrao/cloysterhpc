@@ -132,13 +132,13 @@ void Repos::configureXCAT() const
     }
 }
 
-std::vector<std::string_view> Repos::getxCATOSImageRepos()
+std::vector<std::string> Repos::getxCATOSImageRepos() const
 {
     const auto osArch = magic_enum::enum_name(m_os.getArch());
     const auto osMajorVersion = m_os.getMajorVersion();
     const auto osVersion = m_os.getVersion();
 
-    std::vector<std::string_view> repos;
+    std::vector<std::string> repos;
 
     std::string crb = "CRB";
     std::string OpenHPCVersion = "3";

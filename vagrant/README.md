@@ -9,7 +9,7 @@
 ```shell
 $ dnf install -y dnf-plugins-core libvirt libvirt-devel qemu-kvm virt-install
 
-$ dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+$ dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
 
 $ dnf -y install vagrant
 

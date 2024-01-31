@@ -55,7 +55,7 @@ public:
     static void enable(const std::string& id);
     static void disable(const std::string& id);
     void configureRepositories() const;
-    std::vector<std::string_view> getxCATOSImageRepos();
+    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
 };
 
 #endif // CLOYSTERHPC_REPOS_H_
