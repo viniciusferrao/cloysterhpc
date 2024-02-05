@@ -140,12 +140,20 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
 
     std::vector<std::string> repos;
 
+    std::string latestEL = "9.3";
+
     std::string crb = "CRB";
+    std::string rockyBranch = "linux"; // To check if Rocky mirror directory points to 'linux' (latest version) or 'vault'
+
     std::string OpenHPCVersion = "3";
 
     if (osMajorVersion < 9) {
             crb = "PowerTools";
             OpenHPCVersion = "2";
+    }
+
+    if (osVersion != latestEL) {
+        rockyBranch = "vault";
     }
 
     switch (m_os.getDistro()) {
@@ -165,9 +173,9 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
             repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}", osMajorVersion, osArch));
             break;
         case OS::Distro::Rocky:
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/BaseOS/{}/os", osVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/{}/{}/os", osVersion, crb, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/linux/{}/AppStream/{}/os", osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os", rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os", rockyBranch, osVersion, crb, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os", rockyBranch, osVersion, osArch));
             break;
         case OS::Distro::AlmaLinux:
             repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/BaseOS/{}/os", osVersion, osArch));
