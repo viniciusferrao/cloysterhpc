@@ -269,11 +269,77 @@ void XCAT::customizeImage()
 #endif
 }
 
+/* This is necessary to avoid problems with EL9-based distros.
+ * The xCAT team has discontinued the project and distros based on EL9 are not
+ * officially supported by default.
+ */
+void XCAT::configureEL9()
+{
+    auto createSymlinkCommand = [](const std::string& folder,
+                                    const std::string& version) {
+        return fmt::format(
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.exlist "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.exlist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.postinstall "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.postinstall,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.exlist "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.exlist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/"
+            "service.rhels9.x86_64.otherpkgs.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/"
+            "service.{1}.x86_64.otherpkgs.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.postinstall "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.postinstall,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/compute.rhels9.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/compute.{1}.pkglist,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/compute.rhels9.tmpl "
+            "/opt/xcat/share/xcat/install/{0}/compute.{1}.tmpl,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/service.rhels9.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/service.{1}.pkglist,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/service.rhels9.tmpl "
+            "/opt/xcat/share/xcat/install/{0}/service.{1}.tmpl,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/install/rh/"
+            "service.rhels9.x86_64.otherpkgs.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/"
+            "service.{1}.x86_64.otherpkgs.pkglist",
+            folder, version);
+    };
+
+    std::vector<std::string> commands;
+    std::vector<std::pair<std::string, std::string>> commandPairs
+        = { { "rocky", "rocky9" }, { "ol", "ol9" }, { "alma", "alma9" } };
+
+    for (const auto& pair : commandPairs) {
+        std::vector<std::string> temp;
+        boost::split(temp, createSymlinkCommand(pair.first, pair.second),
+            boost::is_any_of(","));
+        commands.insert(commands.end(), temp.begin(), temp.end());
+    }
+
+    for (const auto& command : commands) {
+        cloyster::runCommand(command);
+    }
+}
+
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
 void XCAT::createImage(ImageType imageType, NodeType nodeType)
 {
+    configureEL9();
+
     copycds(m_cluster->getDiskImage());
     generateOSImageName(imageType, nodeType);
     generateOSImagePath(imageType, nodeType);
