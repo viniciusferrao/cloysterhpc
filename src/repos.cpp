@@ -89,8 +89,10 @@ void Repos::disable(const std::string& id)
 
 void Repos::configureRHEL() const { enable(m_family.RHEL.joinDependencies()); }
 
-void Repos::configureOL() const {
-    createGPGKeyFile(m_family.Oracle.repo_gpg_filename, m_family.Oracle.repo_gpg);
+void Repos::configureOL() const
+{
+    createGPGKeyFile(
+        m_family.Oracle.repo_gpg_filename, m_family.Oracle.repo_gpg);
     enable(m_family.Oracle.joinDependencies());
 }
 
@@ -103,7 +105,8 @@ void Repos::configureRocky() const
 
 void Repos::configureAlma() const
 {
-    createGPGKeyFile(m_family.AlmaLinux.repo_gpg_filename, m_family.AlmaLinux.repo_gpg);
+    createGPGKeyFile(
+        m_family.AlmaLinux.repo_gpg_filename, m_family.AlmaLinux.repo_gpg);
     enable(m_family.AlmaLinux.joinDependencies());
 }
 
@@ -143,13 +146,15 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
     std::string latestEL = "9.3";
 
     std::string crb = "CRB";
-    std::string rockyBranch = "linux"; // To check if Rocky mirror directory points to 'linux' (latest version) or 'vault'
+    std::string rockyBranch
+        = "linux"; // To check if Rocky mirror directory points to 'linux'
+                   // (latest version) or 'vault'
 
     std::string OpenHPCVersion = "3";
 
     if (osMajorVersion < 9) {
-            crb = "PowerTools";
-            OpenHPCVersion = "2";
+        crb = "PowerTools";
+        OpenHPCVersion = "2";
     }
 
     if (osVersion != latestEL) {
@@ -166,30 +171,60 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
                                "x86_64/codeready-builder/os");
             break;
         case OS::Distro::OL:
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
-                            "baseos/latest/{}", osMajorVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/appstream/{}", osMajorVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/codeready/builder/{}", osMajorVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}", osMajorVersion, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
+                            "baseos/latest/{}",
+                    osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "oracle/{}/codeready/builder/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
+                osMajorVersion, osArch));
             break;
         case OS::Distro::Rocky:
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os", rockyBranch, osVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os", rockyBranch, osVersion, crb, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os", rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
+                rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
+                rockyBranch, osVersion, crb, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
+                rockyBranch, osVersion, osArch));
             break;
         case OS::Distro::AlmaLinux:
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/BaseOS/{}/os", osVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/{}/{}/os", osVersion, crb, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/almalinux/almalinux/{}/AppStream/{}/os", osVersion, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/BaseOS/{}/os",
+                    osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "almalinux/almalinux/{}/{}/{}/os",
+                osVersion, crb, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/AppStream/{}/os",
+                    osVersion, osArch));
             break;
     }
 
-    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}", osMajorVersion, osArch));
-    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}", osMajorVersion, osArch));
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
+            osMajorVersion, osArch));
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
+            osMajorVersion, osArch));
 
     /* TODO: if OpenHPC statement */
-    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}", OpenHPCVersion, osMajorVersion));
-    repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}", OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
+            OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(fmt::format(
+        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
+        OpenHPCVersion, osMajorVersion));
 
     return repos;
 }
