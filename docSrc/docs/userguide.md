@@ -216,7 +216,7 @@ threads_per_core=1
 ```
 
 ---
-#Running Cloyster
+#Installation Guide
 
 ###Help
 
@@ -225,7 +225,7 @@ You can read a full commands list by running on your terminal the command below:
 
 ##Using the Terminal User Interface
 
-Cloyster' TUI runs in a terminal with an preassembled [answerfile](#assembling-an-answerfile
+Cloyster' TUI runs in a terminal with an preassembled [answerfile](#assembling-an-answerfile)
 
 ###Commands
 

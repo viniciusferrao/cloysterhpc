@@ -4,7 +4,7 @@ repo_url: "https://github.com/viniciusferrao/cloysterhpc"
 copyright: "CloysterHPC is licensed under the <a href='https://github.com/viniciusferrao/cloysterhpc/blob/master/LICENSE'>Apache License 2.0</a>"
 nav:
     - Home: index.md
-    - Contributing: contributing.md
+    - Developers: developers.md
     - User Guide: userguide.md
     - About: about.md
 extra_css:
