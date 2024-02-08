@@ -64,7 +64,7 @@ void Hardware::printHardwareInfo() {
 
 void Hardware::printGPUInfo() {
     fmt::println("     GPUs Overview:\n");
-    for (auto const &gpu: m_gpu) {
+    for (auto const& gpu: m_gpu) {
         fmt::println("        {}: ", gpu.name());
         fmt::println("           Total Memory: {} GB ({} bytes)",
                      convertByteToGB(gpu.memory_Bytes()), gpu.memory_Bytes());
