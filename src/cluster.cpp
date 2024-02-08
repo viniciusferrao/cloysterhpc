@@ -578,8 +578,10 @@ void Cluster::fillData(const std::string& answerfilePath)
         auto applicationConnection
             = Connection(&getNetwork(Network::Profile::Application));
 
-        applicationConnection.setMAC(
-            answerfile.application.con_mac_addr.value());
+        if (!answerfile.application.con_mac_addr->empty()) {
+            applicationConnection.setMAC(
+                answerfile.application.con_mac_addr.value());
+        }
 
         applicationConnection.setInterface(
             answerfile.application.con_interface.value());
