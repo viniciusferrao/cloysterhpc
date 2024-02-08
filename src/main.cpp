@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 
+#include "cloysterhpc/hardware.h"
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>
@@ -15,7 +16,6 @@
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
-#include "cloysterhpc/hardware.h"
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -24,17 +24,18 @@
 /**
  * @brief The entrypoint.
  */
-int main(int argc, const char **argv) {
-    CLI::App app{productName};
+int main(int argc, const char** argv)
+{
+    CLI::App app { productName };
 
     app.add_flag(
-            "-v, --version", cloyster::showVersion, "Show version information");
+        "-v, --version", cloyster::showVersion, "Show version information");
 
     app.add_flag(
-            "-r, --root", cloyster::runAsRoot, "Run with root permissions");
+        "-r, --root", cloyster::runAsRoot, "Run with root permissions");
 
     app.add_flag(
-            "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
+        "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
 
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
@@ -43,54 +44,53 @@ int main(int argc, const char **argv) {
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
 
     cloyster::logLevelInput
-            = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
-    constexpr std::size_t logLevels{magic_enum::enum_count<Log::Level>()};
+        = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
+    constexpr std::size_t logLevels { magic_enum::enum_count<Log::Level>() };
 
     const std::vector<std::string> logLevelVector = []() {
-        constexpr const auto &logLevelNames{
-                magic_enum::enum_names<Log::Level>()
+        constexpr const auto& logLevelNames {
+            magic_enum::enum_names<Log::Level>()
         };
-        return std::vector<std::string>{logLevelNames.begin(),
-                                        logLevelNames.end()};
+        return std::vector<std::string> { logLevelNames.begin(),
+            logLevelNames.end() };
     }();
 
     app.add_option("-l, --log-level", cloyster::logLevelInput,
-                   [&logLevelVector]() {
-                       std::string result{"Available log levels:"};
+           [&logLevelVector]() {
+               std::string result { "Available log levels:" };
 
-                       for (std::size_t i = 0; const auto &logLevel: logLevelVector) {
-                           result += fmt::format(" {} ({}),", logLevel, i++);
-                       }
+               for (std::size_t i = 0; const auto& logLevel : logLevelVector) {
+                   result += fmt::format(" {} ({}),", logLevel, i++);
+               }
 
-                       result.pop_back();
-                       return result;
-                   }())
-            ->check(CLI::IsMember(logLevelVector, CLI::ignore_case)
-                    | CLI::Range(logLevels - 1))
-                    // This is a hack to solve the autogen string:
-                    // -l,--log-level TEXT:({Trace,Debug,Info,Warn,Error,Critical,Off})
-                    // OR (INT in [0 - 6])
-            ->option_text(" ");
+               result.pop_back();
+               return result;
+           }())
+        ->check(CLI::IsMember(logLevelVector, CLI::ignore_case)
+            | CLI::Range(logLevels - 1))
+        // This is a hack to solve the autogen string:
+        // -l,--log-level TEXT:({Trace,Debug,Info,Warn,Error,Critical,Off})
+        // OR (INT in [0 - 6])
+        ->option_text(" ");
 
     app.add_option(
-            "-a, --answerfile", cloyster::answerfile,
-            "Full path to a answerfile");
+        "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
     bool showHardwareInfo = false;
     app.add_flag("-i, --hardwareinfo", showHardwareInfo,
-                 "Show a detailed hardware and system overview");
+        "Show a detailed hardware and system overview");
 
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
         if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
             return magic_enum::enum_cast<Log::Level>(
-                    stoi(cloyster::logLevelInput))
-                    .value();
+                stoi(cloyster::logLevelInput))
+                .value();
         } else {
             return magic_enum::enum_cast<Log::Level>(
-                    cloyster::logLevelInput, magic_enum::case_insensitive)
-                    .value();
+                cloyster::logLevelInput, magic_enum::case_insensitive)
+                .value();
         }
     }());
 
@@ -152,10 +152,10 @@ int main(int argc, const char **argv) {
 
         LOG_TRACE("Starting execution engine");
         std::unique_ptr<Execution> executionEngine
-                = std::make_unique<Shell>(model);
+            = std::make_unique<Shell>(model);
         executionEngine->install();
 
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         LOG_ERROR("ERROR: {}", e.what());
         return EXIT_FAILURE;
     }

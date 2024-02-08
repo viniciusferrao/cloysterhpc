@@ -1,7 +1,7 @@
 /*
  * Created by Lucas Gracioso <contact@lbgracioso.net>
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 
 #ifndef CLOYSTERHPC_HARDWARE_H_
 #define CLOYSTERHPC_HARDWARE_H_
@@ -45,4 +45,4 @@ public:
     void printOverview();
 };
 
-#endif //CLOYSTERHPC_HARDWARE_H_
+#endif // CLOYSTERHPC_HARDWARE_H_
