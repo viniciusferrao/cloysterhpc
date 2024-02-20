@@ -22,7 +22,8 @@ enum class AdditionalType {
     RPMFusionUpdates
 };
 
-struct Distro {
+class Distro {
+public:
     std::string repo_gpg;
     std::string repo_gpg_filename;
     std::vector<std::string> dependencies;
@@ -43,7 +44,8 @@ struct Distro {
     }
 };
 
-struct AdditionalRepo {
+class AdditionalRepo {
+public:
     AdditionalType type;
     std::string gpg_filename;
     std::string gpg_key;
@@ -59,13 +61,16 @@ struct AdditionalRepo {
     AdditionalRepo() = default;
 };
 
-struct Family {
+class Family {
+public:
     std::string repo;
     std::vector<AdditionalRepo> additionalRepos;
     Distro RHEL;
     Distro AlmaLinux;
     Distro Rocky;
     Distro Oracle;
+
+    Family() = default;
 
     Family(const std::string& repo,
         const std::vector<AdditionalRepo> additionalRepos, const Distro& rhel,
@@ -78,8 +83,6 @@ struct Family {
         , Oracle(oracle)
     {
     }
-
-    Family() = default;
 };
 
 const Family EL8(
