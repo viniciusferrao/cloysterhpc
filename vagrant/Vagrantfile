@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+default_memory = '4096';
+default_cpus = 2;
+
+machines = {
+  'alma-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '22', 'box' => 'almalinux/8', 'provision' => 'rhel-8-based.sh'},
+  'rhel-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '23', 'box' => 'generic/rhel8', 'provision' => 'rhel-8.sh'},
+  'oracle-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '24', 'box' => 'generic/oracle8', 'provision' => 'rhel-8-based.sh'},
+  'rocky-8' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '25', 'box' => 'generic/rocky8', 'provision' => 'rhel-8-based.sh'},
+  #'rocky-9' => {'memory' => default_memory, 'cpus' => default_cpus, 'ip' => '30', 'box' => 'rockylinux/9', 'provision' => 'rhel-based.sh'}, # Not implemented yet.
+}
+
+specified_machines = ENV['MACHINES'].to_s.split(',')
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box_check_update = false
+
+  machines.each do |name, conf|
+    next unless specified_machines.empty? || specified_machines.include?(name)
+
+    config.vm.define "#{name}" do |m|
+      m.vm.box = "#{conf['box']}"
+      m.vm.network 'private_network', ip: "192.168.20.#{conf['ip']}", name: "external_network"
+      m.vm.network 'private_network', ip: "192.168.30.10", name: "management_network"
+      m.vm.hostname = "cloyster.hpc"
+      m.vm.provider 'libvirt' do |lv|
+        lv.memory = conf['memory']
+        lv.cpus = conf['cpus']
+        lv.host = 'localhost'
+        lv.driver = 'kvm'
+        lv.uri = 'qemu:///system'
+        #lv.connect_via_ssh = false
+        lv.username = 'root'  # Replace with your username
+      end
+      m.vm.provision :shell, path: "provision/#{conf['provision']}"
+      m.vm.synced_folder '.', '/vagrant', type: "rsync"
+    end
+  end
+end
