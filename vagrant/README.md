@@ -2,7 +2,21 @@
 
 ## Configuration
 
-**Please run all commands in this file as root or with elevated privileges.**
+*
+*Please
+run
+all
+commands
+in
+this
+file
+as
+root
+or
+with
+elevated
+privileges.
+**
 
 ### Dependencies
 
@@ -20,14 +34,32 @@ $ vagrant plugin install vagrant-libvirt vagrant-scp
 
 ### Configure libvirt
 
-First, enable **libvirt** it by using:
+First,
+enable
+*
+*libvirt
+**
+it
+by
+using:
+
 ```shell
 $ systemctl enable --now libvirtd`
 
 $ systemctl start libvirtd
 ```
 
-And then you must create a CA cert for it
+And
+then
+you
+must
+create
+a
+CA
+cert
+for
+it
+
 ```shell
 $ mkdir -p /etc/pki/CA/private
 
@@ -42,17 +74,28 @@ $ chmod 644 /etc/pki/CA/cacert.pem
 
 ## Running
 
-Run `./setupVagrant /path/to/cloyster_binary 
-<vagrant_machine_name>  <iso_image_path>` in this directory.
+Run `./setupVagrant /path/to/cloyster_binary
+<vagrant_machine_name>  <iso_image_path>`
+in
+this
+directory.
 
-You can SSH to the machine using `vagrant ssh <vagrant_machine_name>`.
+You
+can
+SSH
+to
+the
+machine
+using `vagrant ssh <vagrant_machine_name>`.
 
-Already tested ISOs:
+Already
+tested
+ISOs:
 
-| Name       | 8.8     |
-|------------|---------|
-| RHEL       | Passing |
-| RockyLinux | Passing  |
-| Alma       | Passing  |
-| Oracle     | Passing  |
+| Name       | 8.8     | 9.3     |
+|------------|---------|---------|
+| RHEL       | Passing | Passing |
+| RockyLinux | Passing | Passing |
+| Alma       | Passing | Passing |
+| Oracle     | Passing | Passing |
 
