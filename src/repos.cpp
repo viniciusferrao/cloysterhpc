@@ -9,121 +9,278 @@
 #include <cloysterhpc/repos.h>
 #include <cloysterhpc/services/log.h>
 #include <fstream>
+#include <magic_enum.hpp>
 
 using boost::property_tree::ptree;
 using cloyster::runCommand;
 
-Repos::Repos(OS::Distro distro)
-    : m_distro(distro)
+Repos::Repos(const OS& m_os)
+    : m_os(m_os)
 {
+    switch (m_os.getPlatform()) {
+        case OS::Platform::el8:
+            m_family = EL8;
+            break;
+        case OS::Platform::el9:
+            m_family = EL9;
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
 }
 
 void Repos::createConfigurationFile(const repofile& repo) const
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create repofile {}", repo.name);
+        LOG_INFO("Would create repofile {}", repo.name)
         return;
     }
 
     ptree repof {};
 
-    repof.put("baseos.name", repo.name);
-    repof.put("baseos.gpgcheck", repo.gpgcheck);
-    repof.put("baseos.gpgkey", repo.gpgkey);
-    repof.put("baseos.enabled", repo.enabled);
-    repof.put("baseos.baseurl", repo.baseurl);
+    repof.put(fmt::format("{}.name", repo.id), repo.name);
+    repof.put(fmt::format("{}.gpgcheck", repo.id), repo.gpgcheck ? 1 : 0);
+    repof.put(fmt::format("{}.gpgkey", repo.id), repo.gpgkey);
+    repof.put(fmt::format("{}.enabled", repo.id), repo.enabled ? 1 : 0);
+    repof.put(fmt::format("{}.baseurl", repo.id), repo.baseurl);
 
     boost::property_tree::ini_parser::write_ini(
         fmt::format("/etc/yum.repos.d/{}.repo", repo.id), repof);
 
-    std::ofstream gpgkey(repo.gpgkey.substr(7));
-    gpgkey << repo.gpgkeyContent;
+    createGPGKeyFile(repo);
+    LOG_INFO("Created repofile {}", repo.name)
+}
+
+void Repos::createGPGKeyFile(const repofile& repo) const
+{
+    std::filesystem::path path = repo.gpgkey.substr(7);
+    createGPGKeyFile(path, repo.gpgkeyContent);
+}
+
+void Repos::createGPGKeyFile(
+    const std::string& filename, const std::string& key) const
+{
+    std::filesystem::path path = fmt::format("/etc/pki/rpm-gpg/{}", filename);
+    createGPGKeyFile(path, key);
+}
+
+void Repos::createGPGKeyFile(
+    const std::filesystem::path& path, const std::string& key) const
+{
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create GPG Key file {}", path.filename().string())
+        return;
+    }
+
+    std::ofstream gpgkey(path);
+    gpgkey << key;
     gpgkey.close();
 }
 
-void Repos::enable(const std::string& id) { }
-
-void Repos::disable(const std::string& id) { }
-
-void Repos::configureRHEL() const
+void Repos::enable(const std::string& id)
 {
-    runCommand("dnf config-manager --set-enabled "
-               "codeready-builder-for-rhel-8-x86_64-rpms");
+    runCommand(fmt::format("sudo dnf config-manager --set-enabled {}", id));
 }
+
+void Repos::disable(const std::string& id)
+{
+    runCommand(fmt::format("sudo dnf config-manager --set-disabled {}", id));
+}
+
+void Repos::configureRHEL() const { enable(m_family.RHEL.joinDependencies()); }
 
 void Repos::configureOL() const
 {
-    runCommand("dnf config-manager --set-enabled "
-               "ol8_codeready_builder");
-
-    createConfigurationFile(ol::ol8_base_latest);
+    createGPGKeyFile(
+        m_family.Oracle.repo_gpg_filename, m_family.Oracle.repo_gpg);
+    enable(m_family.Oracle.joinDependencies());
 }
 
 void Repos::configureRocky() const
 {
-    runCommand("dnf config-manager --set-enabled "
-               "powertools");
-
-    createConfigurationFile(rocky::rocky8_baseos);
+    disable("baseos");
+    createGPGKeyFile(m_family.Rocky.repo_gpg_filename, m_family.Rocky.repo_gpg);
+    enable(m_family.Rocky.joinDependencies());
 }
 
 void Repos::configureAlma() const
 {
-    runCommand("dnf config-manager --set-enabled "
-               "powertools");
-
-    createConfigurationFile(alma::alma8_baseos);
+    createGPGKeyFile(
+        m_family.AlmaLinux.repo_gpg_filename, m_family.AlmaLinux.repo_gpg);
+    enable(m_family.AlmaLinux.joinDependencies());
 }
 
 void Repos::configureXCAT() const
 {
-    LOG_INFO("Setting up XCAT repositories");
+    LOG_INFO("Setting up XCAT repositories")
 
     runCommand("wget -NP /etc/yum.repos.d "
                "https://xcat.org/files/xcat/repos/yum/latest/"
                "xcat-core/xcat-core.repo");
-    runCommand("wget -NP /etc/yum.repos.d "
-               "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-               "rh8/x86_64/xcat-dep.repo");
+
+    switch (m_os.getPlatform()) {
+        case OS::Platform::el8:
+            runCommand("wget -NP /etc/yum.repos.d "
+                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                       "rh8/x86_64/xcat-dep.repo");
+            break;
+        case OS::Platform::el9:
+            runCommand("dnf -y install initscripts");
+            runCommand("wget -NP /etc/yum.repos.d "
+                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                       "rh9/x86_64/xcat-dep.repo");
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform for xCAT");
+    }
 }
 
-void Repos::configureAddons() const
+std::vector<std::string> Repos::getxCATOSImageRepos() const
 {
-    createConfigurationFile(addons::ELRepo);
-    createConfigurationFile(addons::beegfs);
-    createConfigurationFile(addons::grafana);
-    createConfigurationFile(addons::influxdata);
-    createConfigurationFile(addons::oneAPI);
-    createConfigurationFile(addons::zabbix);
-    createConfigurationFile(addons::RPMFusion);
+    const auto osArch = magic_enum::enum_name(m_os.getArch());
+    const auto osMajorVersion = m_os.getMajorVersion();
+    const auto osVersion = m_os.getVersion();
+
+    std::vector<std::string> repos;
+
+    std::string latestEL = "9.3";
+
+    std::string crb = "CRB";
+    std::string rockyBranch
+        = "linux"; // To check if Rocky mirror directory points to 'linux'
+                   // (latest version) or 'vault'
+
+    std::string OpenHPCVersion = "3";
+
+    if (osMajorVersion < 9) {
+        crb = "PowerTools";
+        OpenHPCVersion = "2";
+    }
+
+    if (osVersion != latestEL) {
+        rockyBranch = "vault";
+    }
+
+    switch (m_os.getDistro()) {
+        case OS::Distro::RHEL:
+            repos.emplace_back(
+                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/appstream/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/codeready-builder/os");
+            break;
+        case OS::Distro::OL:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
+                            "baseos/latest/{}",
+                    osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "oracle/{}/codeready/builder/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
+                osMajorVersion, osArch));
+            break;
+        case OS::Distro::Rocky:
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
+                rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
+                rockyBranch, osVersion, crb, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
+                rockyBranch, osVersion, osArch));
+            break;
+        case OS::Distro::AlmaLinux:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/BaseOS/{}/os",
+                    osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "almalinux/almalinux/{}/{}/{}/os",
+                osVersion, crb, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/AppStream/{}/os",
+                    osVersion, osArch));
+            break;
+    }
+
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
+            osMajorVersion, osArch));
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
+            osMajorVersion, osArch));
+
+    /* TODO: if OpenHPC statement */
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
+            OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(fmt::format(
+        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
+        OpenHPCVersion, osMajorVersion));
+
+    return repos;
 }
 
 void Repos::configureRepositories() const
 {
-    LOG_INFO("Setting up additional repositories");
+    LOG_INFO("Setting up repositories")
 
-    switch (m_distro) {
-        case OS::Distro::RHEL:
+    createCloysterRepo();
+
+    switch (m_os.getDistro()) {
+        using enum OS::Distro;
+        case RHEL:
             configureRHEL();
             break;
-        case OS::Distro::OL:
+        case OL:
             configureOL();
             break;
-        case OS::Distro::Rocky:
+        case Rocky:
             configureRocky();
             break;
-        case OS::Distro::AlmaLinux:
+        case AlmaLinux:
             configureAlma();
             break;
     }
 
-    runCommand("dnf -y install "
-               "https://dl.fedoraproject.org/pub/epel/"
-               "epel-release-latest-8.noarch.rpm");
-    runCommand("dnf -y install "
-               "http://repos.openhpc.community/OpenHPC/2/CentOS_8/x86_64/"
-               "ohpc-release-2-1.el8.x86_64.rpm");
+    //@TODO Let user choose the optional repos.
+    configureAdditionalRepos(
+        { AdditionalType::beegfs, AdditionalType::ELRepo, AdditionalType::EPEL,
+            AdditionalType::Grafana, AdditionalType::influxData,
+            AdditionalType::oneAPI, AdditionalType::OpenHPC,
+            AdditionalType::Zabbix, AdditionalType::RPMFusionUpdates });
 
-    configureAddons();
     configureXCAT();
+}
+
+void Repos::createCloysterRepo() const
+{
+    LOG_INFO("Creating Cloyster repo")
+    std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
+
+    std::ofstream repofile(path);
+    repofile << m_family.repo;
+    repofile.close();
+}
+
+void Repos::configureAdditionalRepos(
+    const std::vector<AdditionalType>& additional) const
+{
+    LOG_INFO("Setting up additional repositories")
+
+    for (AdditionalType type : additional) {
+        for (const AdditionalRepo& repo : m_family.additionalRepos) {
+            if (repo.type == type) {
+                createGPGKeyFile(repo.gpg_filename, repo.gpg_key);
+            }
+        }
+    }
 }

@@ -54,6 +54,7 @@ private:
     void addNode(const Node& node);
     void generateOSImageName(ImageType, NodeType);
     void generateOSImagePath(ImageType, NodeType);
+    void configureEL9();
 
 public:
     void installPackages();
