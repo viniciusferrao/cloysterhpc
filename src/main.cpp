@@ -75,6 +75,10 @@ int main(int argc, const char** argv)
     app.add_option(
         "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
+    bool unattended = false;
+    app.add_flag(
+        "-u, --unattended", unattended, "Perform an unattended installation");
+
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
@@ -96,6 +100,25 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName);
 
     try {
+        if (!unattended) {
+            char response = 'N';
+            fmt::print("{} will now modify your system, do you want to "
+                       "continue? [Y/N]\n",
+                cloyster::productName);
+            std::cin >> response;
+
+            if (response == 'Y' || response == 'y') {
+                LOG_INFO("Running {}.\n", cloyster::productName)
+            } else if (response == 'N' || response == 'n') {
+                LOG_INFO("Stopping {}.\n", cloyster::productName);
+                return EXIT_SUCCESS;
+            } else {
+                LOG_ERROR(
+                    "Invalid response. Stopping {}.\n", cloyster::productName);
+                return EXIT_FAILURE;
+            }
+        }
+
         if (cloyster::showVersion) {
             fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
