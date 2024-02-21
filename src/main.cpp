@@ -100,7 +100,7 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName);
 
     try {
-        if (!unattended) {
+        while (!unattended) {
             char response = 'N';
             fmt::print("{} will now modify your system, do you want to "
                        "continue? [Y/N]\n",
@@ -109,13 +109,10 @@ int main(int argc, const char** argv)
 
             if (response == 'Y' || response == 'y') {
                 LOG_INFO("Running {}.\n", cloyster::productName)
+                break;
             } else if (response == 'N' || response == 'n') {
                 LOG_INFO("Stopping {}.\n", cloyster::productName);
                 return EXIT_SUCCESS;
-            } else {
-                LOG_ERROR(
-                    "Invalid response. Stopping {}.\n", cloyster::productName);
-                return EXIT_FAILURE;
             }
         }
 
