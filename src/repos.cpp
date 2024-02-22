@@ -214,9 +214,6 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
     repos.emplace_back(
         fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
             osMajorVersion, osArch));
-    repos.emplace_back(
-        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
-            osMajorVersion, osArch));
 
     /* TODO: if OpenHPC statement */
     repos.emplace_back(
