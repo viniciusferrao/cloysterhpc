@@ -171,6 +171,20 @@ void XCAT::configureSLURM()
         "\n");
 }
 
+void XCAT::configureOtherPkgList()
+{
+    const auto packages = { "autofs", "createrepo", "elfutils-libelf-devel",
+        "gcc", "gcc-gfortran", "gdb-headless", "htop", "kernel",
+        "kernel-rpm-macros", "ksh", "libtool", "lsof", "mrsh-rsh-compat-ohpc",
+        "pciutils", "perl", "pkgconf-pkg-config", "python3", "python3-devel",
+        "rpm-build", "slurm-libpmi-ohpc", "tcl", "tcsh", "tar", "tk", "ltrace",
+        "strace", "tcpdump" };
+
+    for (const auto& package : std::as_const(packages)) {
+        m_stateless.otherpkgs.emplace_back(package);
+    }
+}
+
 void XCAT::generateOtherPkgListFile()
 {
     std::string_view filename
@@ -349,6 +363,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
     configureTimeService();
     configureInfiniband();
     configureSLURM();
+    configureOtherPkgList();
 
     generateOtherPkgListFile();
     generatePostinstallFile();

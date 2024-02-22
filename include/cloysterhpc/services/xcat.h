@@ -46,6 +46,7 @@ private:
     void configureTimeService();
     void configureInfiniband();
     void configureSLURM();
+    void configureOtherPkgList();
     void generateOtherPkgListFile();
     void generatePostinstallFile();
     void generateSynclistsFile();
