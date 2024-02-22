@@ -165,7 +165,7 @@ void AnswerFile::loadApplicationNetwork()
     }
 
     application.con_mac_addr
-        = m_ini.getValue("network_application", "mac_address", false);
+        = m_ini.getValue("network_application", "mac_address");
 
     try {
         application.subnet_mask = convertStringToAddress(
