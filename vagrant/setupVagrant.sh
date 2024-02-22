@@ -61,7 +61,7 @@ deploy_cloyster() {
     vagrant scp include/"$machine_name".answerfile.ini "$machine_name":~/answerfile.ini
 
     # Run Cloyster
-    vagrant ssh "$machine_name" -c "sudo ./cloyster -l 6 -a answerfile.ini"
+    vagrant ssh "$machine_name" -c "sudo ./cloyster -l 6 -a answerfile.ini -u"
 }
 
 destroy_vm_and_cleanup() {
