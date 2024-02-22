@@ -487,7 +487,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
-    nodeOS.setPlatform(OS::Platform::el8);
     nodeOS.setDistro(answerfile.system.distro);
     nodeOS.setKernel(answerfile.system.kernel);
     nodeOS.setVersion(answerfile.system.version);

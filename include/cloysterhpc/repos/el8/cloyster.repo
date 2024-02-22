@@ -1,0 +1,106 @@
+R"([cloyster-OL-BaseOS]
+name=Oracle Linux 8 BaseOS Latest ($basearch)
+baseurl=https://yum$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/$basearch/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+
+[cloyster-Rocky-BaseOS]
+name=Rocky Linux $releasever - BaseOS
+baseurl=http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
+
+[cloyster-AlmaLinux-BaseOS]
+name=AlmaLinux $releasever - BaseOS
+baseurl=https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+
+[cloyster-beegfs]
+name=BeeGFS
+baseurl=https://mirror.versatushpc.com.br/beegfs/beegfs_7.3.3/dists/rhel8/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-beegfs
+
+[cloyster-grafana]
+name=grafana
+baseurl=https://mirror.versatushpc.com.br/grafana/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-grafana
+
+[cloyster-influxdata]
+name=InfluxData Repository - Stable
+baseurl=https://mirror.versatushpc.com.br/influxdata/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-influxdata
+
+[cloyster-oneAPI]
+name=Intel oneAPI repository
+baseurl=https://mirror.versatushpc.com.br/oneAPI/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oneapi
+
+[cloyster-zabbix]
+name=zabbix
+baseurl=https://mirror.versatushpc.com.br/zabbix/zabbix/6.4/rhel/8/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-zabbix
+
+[cloyster-elrepo]
+name=elrepo
+baseurl=https://mirror.versatushpc.com.br/elrepo/elrepo/el8/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-elrepo
+
+[cloyster-rpmfusion-free-updates]
+name=rpmfusion-free-updates
+baseurl=https://mirror.versatushpc.com.br/rpmfusion/free/el/updates/8/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rpmfusion-updates
+
+[cloyster-epel]
+name=Extra Packages for Enterprise Linux 8 - $basearch
+baseurl=https://mirror.versatushpc.com.br/epel/8/Everything/x86_64/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-epel
+
+[cloyster-epel-debuginfo]
+name=Extra Packages for Enterprise Linux 8 - $basearch - Debug
+baseurl=https://mirror.versatushpc.com.br/epel/8/Everything/x86_64/debug/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-epel
+
+[cloyster-epel-source]
+name=Extra Packages for Enterprise Linux 8 - $basearch - Source
+baseurl=https://mirror.versatushpc.com.br/epel/8/Everything/source/tree/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-epel
+
+[cloyster-openhpc]
+name=OpenHPC
+baseurl=https://mirror.versatushpc.com.br/openhpc/2/EL_8/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openhpc
+
+[cloyster-openhpc-updates]
+name=OpenHPC Updates
+baseurl=https://mirror.versatushpc.com.br/openhpc/2/updates/EL_8/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-openhpc
+
+)"

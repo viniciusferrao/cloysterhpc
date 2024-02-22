@@ -8,6 +8,7 @@
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
+#include "cloysterhpc/repos.h"
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
@@ -243,58 +244,8 @@ void XCAT::configureOSImageDefinition()
             m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-    /* TODO: Fix repos to EL8
-     *  - Repos URL may be generated with OS class methods
-     *     OS.getArch(); OS.getVersion();
-     */
-    std::vector<std::string_view> repos;
-
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            repos.emplace_back(
-                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/appstream/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/codeready-builder/os");
-            break;
-        case OS::Distro::OL:
-            repos.emplace_back("https://yum.oracle.com/repo/OracleLinux/OL8/"
-                               "baseos/latest/x86_64");
-            repos.emplace_back(
-                "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64");
-            repos.emplace_back("https://yum.oracle.com/repo/OracleLinux/OL8/"
-                               "codeready/builder/x86_64");
-            repos.emplace_back(
-                "https://yum.oracle.com/repo/OracleLinux/OL8/UEKR6/x86_64");
-            break;
-        case OS::Distro::Rocky:
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/BaseOS/x86_64/os");
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/PowerTools/x86_64/os");
-            repos.emplace_back(
-                "http://ftp.unicamp.br/pub/rocky/8/AppStream/x86_64/os");
-            break;
-        case OS::Distro::AlmaLinux:
-            repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os");
-            repos.emplace_back("https://repo.almalinux.org/almalinux/8/"
-                               "PowerTools/x86_64/os");
-            repos.emplace_back(
-                "https://repo.almalinux.org/almalinux/8/AppStream/x86_64/os");
-            break;
-    }
-
-    repos.emplace_back(
-        "https://download.fedoraproject.org/pub/epel/8/Everything/x86_64");
-    repos.emplace_back(
-        "https://download.fedoraproject.org/pub/epel/8/Modular/x86_64");
-
-    /* TODO: if OpenHPC statement */
-    repos.emplace_back("http://repos.openhpc.community/OpenHPC/2/CentOS_8");
-    repos.emplace_back(
-        "http://repos.openhpc.community/OpenHPC/2/updates/CentOS_8");
+    Repos repoManager(m_cluster->getNodes()[0].getOS());
+    auto repos = repoManager.getxCATOSImageRepos();
 
     cloyster::runCommand(
         fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
@@ -318,11 +269,77 @@ void XCAT::customizeImage()
 #endif
 }
 
+/* This is necessary to avoid problems with EL9-based distros.
+ * The xCAT team has discontinued the project and distros based on EL9 are not
+ * officially supported by default.
+ */
+void XCAT::configureEL9()
+{
+    auto createSymlinkCommand = [](const std::string& folder,
+                                    const std::string& version) {
+        return fmt::format(
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.exlist "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.exlist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/compute.rhels9.x86_64.postinstall "
+            "/opt/xcat/share/xcat/netboot/{0}/compute.{1}.x86_64.postinstall,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.exlist "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.exlist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/"
+            "service.rhels9.x86_64.otherpkgs.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/"
+            "service.{1}.x86_64.otherpkgs.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.pkglist "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.pkglist,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/netboot/rh/service.rhels9.x86_64.postinstall "
+            "/opt/xcat/share/xcat/netboot/{0}/service.{1}.x86_64.postinstall,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/compute.rhels9.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/compute.{1}.pkglist,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/compute.rhels9.tmpl "
+            "/opt/xcat/share/xcat/install/{0}/compute.{1}.tmpl,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/service.rhels9.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/service.{1}.pkglist,"
+            "ln -sf /opt/xcat/share/xcat/install/rh/service.rhels9.tmpl "
+            "/opt/xcat/share/xcat/install/{0}/service.{1}.tmpl,"
+            "ln -sf "
+            "/opt/xcat/share/xcat/install/rh/"
+            "service.rhels9.x86_64.otherpkgs.pkglist "
+            "/opt/xcat/share/xcat/install/{0}/"
+            "service.{1}.x86_64.otherpkgs.pkglist",
+            folder, version);
+    };
+
+    std::vector<std::string> commands;
+    std::vector<std::pair<std::string, std::string>> commandPairs
+        = { { "rocky", "rocky9" }, { "ol", "ol9" }, { "alma", "alma9" } };
+
+    for (const auto& pair : commandPairs) {
+        std::vector<std::string> temp;
+        boost::split(temp, createSymlinkCommand(pair.first, pair.second),
+            boost::is_any_of(","));
+        commands.insert(commands.end(), temp.begin(), temp.end());
+    }
+
+    for (const auto& command : commands) {
+        cloyster::runCommand(command);
+    }
+}
+
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
 void XCAT::createImage(ImageType imageType, NodeType nodeType)
 {
+    configureEL9();
+
     copycds(m_cluster->getDiskImage());
     generateOSImageName(imageType, nodeType);
     generateOSImagePath(imageType, nodeType);

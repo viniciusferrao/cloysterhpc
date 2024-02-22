@@ -361,7 +361,7 @@ void Shell::install()
 
     installRequiredPackages();
 
-    const auto& repos = Repos(m_cluster->getHeadnode().getOS().getDistro());
+    const auto& repos = Repos(m_cluster->getHeadnode().getOS());
     repos.configureRepositories();
     runSystemUpdate();
 
