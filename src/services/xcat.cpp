@@ -118,18 +118,17 @@ void XCAT::configureInfiniband()
         switch (ofed->getKind()) {
             case OFED::Kind::Inbox:
                 m_stateless.otherpkgs.emplace_back("@infiniband");
-
+                cloyster::runCommand(
+                    "chdef compute -p postscripts=confignetwork");
                 break;
 
             case OFED::Kind::Mellanox:
                 throw std::logic_error("MLNX OFED is not yet supported");
-
                 break;
 
             case OFED::Kind::Oracle:
                 throw std::logic_error(
                     "Oracle RDMA release is not yet supported");
-
                 break;
         }
 }
