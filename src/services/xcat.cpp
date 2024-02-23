@@ -118,8 +118,6 @@ void XCAT::configureInfiniband()
         switch (ofed->getKind()) {
             case OFED::Kind::Inbox:
                 m_stateless.otherpkgs.emplace_back("@infiniband");
-                cloyster::runCommand(
-                    "chdef compute -p postscripts=confignetwork");
                 break;
 
             case OFED::Kind::Mellanox:
@@ -131,6 +129,8 @@ void XCAT::configureInfiniband()
                     "Oracle RDMA release is not yet supported");
                 break;
         }
+
+    cloyster::runCommand("chdef compute -p postscripts=confignetwork");
 }
 
 void XCAT::configureSLURM()
