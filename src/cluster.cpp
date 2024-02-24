@@ -682,6 +682,34 @@ void Cluster::fillData(const std::string& answerfilePath)
         addNode(newNode);
     }
 
+    if (answerfile.postfix.enabled) {
+        setMailSystem(answerfile.postfix.profile);
+        m_mailSystem->setHostname(this->m_headnode.getHostname());
+        m_mailSystem->setDomain(getDomainName());
+        m_mailSystem->setDestination(answerfile.postfix.destination);
+
+        switch (answerfile.postfix.profile) {
+            case Postfix::Profile::Local:
+                break;
+            case Postfix::Profile::Relay:
+                m_mailSystem->setSMTPServer(
+                    answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                break;
+            case Postfix::Profile::SASL:
+                m_mailSystem->setSMTPServer(
+                    answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                m_mailSystem->setUsername(
+                    answerfile.postfix.smtp.value().sasl.value().username);
+                m_mailSystem->setPassword(
+                    answerfile.postfix.smtp.value().sasl.value().password);
+                break;
+        }
+        m_mailSystem->setCertFile(answerfile.postfix.cert_file);
+        m_mailSystem->setKeyFile(answerfile.postfix.key_file);
+    }
+
     /* Bad and old data - @TODO Must improve */
     nodePrefix = answerfile.nodes.generic->prefix.value();
     nodePadding = std::stoul(answerfile.nodes.generic->padding.value());
