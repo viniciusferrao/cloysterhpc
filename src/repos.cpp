@@ -214,7 +214,7 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
     repos.emplace_back(
         fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
             osMajorVersion, osArch));
-    
+
     // Modular repositories are only available on EL8
     if (osMajorVersion == 8) {
         repos.emplace_back(
