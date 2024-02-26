@@ -29,7 +29,8 @@ void Newt::okCancelMessage(const char* title, const char* message)
             abort();
             break;
         default:
-            throw;
+            throw std::runtime_error(
+                "Something happened. Please run the software again");
     }
 }
 

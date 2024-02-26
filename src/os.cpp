@@ -41,7 +41,8 @@ OS::OS()
 
         if (!file.is_open()) {
             perror(("Error while opening file " + filename).c_str());
-            throw; /* Error opening file */
+            throw std::runtime_error(
+                fmt::format("Error while opening file: {}", filename));
         }
 
         /* Fetches OS information from /etc/os-release. The file is writen in a
@@ -83,7 +84,8 @@ OS::OS()
 
         if (file.bad()) {
             perror(("Error while reading file " + filename).c_str());
-            throw; /* Error while reading file */
+            throw std::runtime_error(
+                fmt::format("Error while reading file: {}", filename));
         }
     }
 }
@@ -158,7 +160,7 @@ void OS::setDistro(std::string_view distro)
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif
-    if (const auto& rv
+    if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))
@@ -177,7 +179,8 @@ unsigned int OS::getMajorVersion() const { return m_majorVersion; }
 void OS::setMajorVersion(unsigned int majorVersion)
 {
     if (majorVersion < 8)
-        throw; /* Unsupported release */
+        throw std::runtime_error(
+            "Unsupported release: Major version must be 8 or greater.");
 
     m_majorVersion = majorVersion;
 }
@@ -187,7 +190,8 @@ unsigned int OS::getMinorVersion() const { return m_minorVersion; }
 void OS::setMinorVersion(unsigned int minorVersion)
 {
     if (minorVersion < 1)
-        throw; /* Unsupported minor release */
+        throw std::runtime_error(
+            "Unsupported release: Minor version must be 1 or greater.");
 
     m_minorVersion = minorVersion;
 }
