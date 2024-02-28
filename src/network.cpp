@@ -277,7 +277,7 @@ uint16_t Network::getVLAN() const { return m_vlan; }
 void Network::setVLAN(uint16_t vlan)
 {
     if (vlan >= 4096)
-        throw;
+        throw std::out_of_range("VLAN value must be less than 4096.");
     m_vlan = vlan;
 }
 
@@ -286,7 +286,8 @@ const std::string& Network::getDomainName() const { return m_domainName; }
 void Network::setDomainName(const std::string& domainName)
 {
     if (domainName.size() > 255)
-        throw;
+        throw std::length_error("Domain name exceeds the maximum allowed "
+                                "length of 255 characters.");
 
 #if __cpp_lib_starts_ends_with >= 201711L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
@@ -298,11 +299,14 @@ void Network::setDomainName(const std::string& domainName)
 
     /* Check if string has only digits */
     if (std::regex_match(domainName, std::regex("^[0-9]+$")))
-        throw;
+        throw std::invalid_argument(
+            "Domain name should not consist solely of numeric digits.");
 
     /* Check if it's not only alphanumerics and - */
     if (!(std::regex_match(domainName, std::regex("^[A-Za-z0-9-.]+$"))))
-        throw;
+        throw std::invalid_argument(
+            "Domain name contains invalid characters. Only alphanumeric "
+            "characters and hyphens are allowed.");
 
     m_domainName = domainName;
 }
