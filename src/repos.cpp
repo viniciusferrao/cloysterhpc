@@ -158,7 +158,7 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
     }
 
     if (std::find(latestEL.begin(), latestEL.end(), osVersion)
-        != latestEL.end()) {
+        == latestEL.end()) {
         rockyBranch = "vault";
     }
 
