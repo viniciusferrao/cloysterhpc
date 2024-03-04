@@ -143,7 +143,7 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
 
     std::vector<std::string> repos;
 
-    std::vector<std::string> latestEL = { "8,9", "9.3" };
+    std::vector<std::string> latestEL = { "8.9", "9.3" };
 
     std::string crb = "CRB";
     std::string rockyBranch
