@@ -240,15 +240,14 @@ AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
         node.mac_address = m_ini.getValue(section, "mac_address", false);
     }
 
-    if (m_ini.exists(section, "node_start_ip")) {
+    if (m_ini.exists(section, "node_ip")) {
         try {
-            node.start_ip = convertStringToAddress(
-                m_ini.getValue(section, "node_start_ip"));
+            node.start_ip
+                = convertStringToAddress(m_ini.getValue(section, "node_ip"));
         } catch (const std::runtime_error& e) {
-            throw std::runtime_error(
-                fmt::format("Section '{}' field 'node_start_ip' "
-                            "validation failed - {}",
-                    section, e.what()));
+            throw std::runtime_error(fmt::format("Section '{}' field 'node_ip' "
+                                                 "validation failed - {}",
+                section, e.what()));
         }
     }
 
@@ -318,7 +317,7 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
             throw std::runtime_error(
                 fmt::format("Node must have a \"{0}\" key or you must inform a "
                             "generic \"{0}\" value",
-                    "node_start_ip"));
+                    "node_ip"));
         }
         node.start_ip = nodes.generic->start_ip;
     }
