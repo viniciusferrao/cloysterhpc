@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <optional>
@@ -14,8 +15,12 @@
 using boost::asio::ip::address;
 
 class AnswerFile {
-
+// #define BUILD_TESTING
+#ifdef BUILD_TESTING
+public:
+#else
 private:
+#endif
     struct AFNetwork {
         std::optional<address> subnet_mask;
         std::optional<address> gateway;
@@ -45,7 +50,7 @@ private:
 
     struct AFSystem {
         std::filesystem::path disk_image;
-        std::string distro;
+        OS::Distro distro;
         std::string version;
         std::string kernel;
     };
@@ -88,6 +93,18 @@ private:
     AFNode loadNode(const std::string& section);
     AFNode validateNode(AFNode node);
 
+    template <typename T>
+    void validateAttribute(const std::string& sectionName,
+        const std::string& attributeName, T& objectAttr, const T& genericAttr);
+
+    template <typename T>
+    void convertNetworkAddressAndValidate(const std::string& section,
+        const std::string& fieldName, T& destination, bool isOptional = true);
+
+    template <typename NetworkType>
+    void loadNetwork(const std::string& networkSection, NetworkType& network,
+        bool optionalNameservers = true);
+
 public:
     AFNetwork external;
     AFNetwork management;
@@ -98,6 +115,9 @@ public:
     AFSystem system;
     AFNodes nodes;
 
+    void loadFile(const std::filesystem::path& path);
+
+    AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);
 };
 
