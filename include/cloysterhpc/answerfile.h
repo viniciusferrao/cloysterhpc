@@ -15,7 +15,6 @@
 using boost::asio::ip::address;
 
 class AnswerFile {
-// #define BUILD_TESTING
 #ifdef BUILD_TESTING
 public:
 #else
