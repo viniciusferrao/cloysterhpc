@@ -82,21 +82,15 @@ bool inifile::exists(const std::string& section)
 }
 
 #ifdef BUILD_TESTING
+#include <cloysterhpc/tests.h>
 #include <doctest/doctest.h>
-#else
-#define DOCTEST_CONFIG_DISABLE
-#include <doctest/doctest.h>
-#endif
 
-TEST_SUITE("Load .ini files")
+TEST_SUITE("Test Inifile methods")
 {
-
     TEST_CASE("Get information")
     {
         inifile ini;
-        std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
-        ini.loadFile(path);
+        ini.loadFile(tests::sampleDirectory / "inifile.ini");
         const std::string clusterName
             = ini.getValue("information", "cluster_name");
         CHECK(clusterName == "cloyster");
@@ -105,9 +99,7 @@ TEST_SUITE("Load .ini files")
     TEST_CASE("Set value")
     {
         inifile ini;
-        std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
-        ini.loadFile(path);
+        ini.loadFile(tests::sampleDirectory / "inifile.ini");
         const std::string newValue = "modified";
         ini.setValue("information", "cluster_name", newValue);
         CHECK(ini.getValue("information", "cluster_name") == newValue);
@@ -116,9 +108,7 @@ TEST_SUITE("Load .ini files")
     TEST_CASE("Delete value")
     {
         inifile ini;
-        std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
-        ini.loadFile(path);
+        ini.loadFile(tests::sampleDirectory / "inifile.ini");
         const bool result = ini.deleteValue("information", "company_name");
         CHECK(result);
     }
@@ -126,12 +116,10 @@ TEST_SUITE("Load .ini files")
     TEST_CASE("Save to a new file")
     {
         inifile ini;
-        std::filesystem::path path;
-        std::filesystem::path newFile;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
-        newFile = std::filesystem::current_path() / "sample/newinifile.ini";
-        ini.loadFile(path);
+        ini.loadFile(tests::sampleDirectory / "inifile.ini");
+        auto newFile = tests::sampleDirectory / "newfile.ini";
         ini.saveFile(newFile);
         CHECK(std::filesystem::exists(newFile));
     }
 }
+#endif
