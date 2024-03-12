@@ -6,22 +6,6 @@
 #include <cloysterhpc/inifile.h>
 #include <fmt/format.h>
 
-// TODO: Template<T> the next three functions
-void inifile::loadFile(const std::string& filepath)
-{
-    ini.LoadFile(filepath.c_str());
-}
-
-void inifile::loadFile(std::string_view filepath)
-{
-    ini.LoadFile(filepath.data());
-}
-
-void inifile::loadFile(const std::filesystem::path& filepath)
-{
-    ini.LoadFile(filepath.c_str());
-}
-
 std::string inifile::getValue(const std::string& section,
     const std::string& key, const bool optional, const bool canBeNull)
 {

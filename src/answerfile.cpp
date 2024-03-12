@@ -19,6 +19,7 @@ AnswerFile::AnswerFile() {};
 
 void AnswerFile::loadFile(const std::filesystem::path& path)
 {
+    m_path = path;
     m_ini.loadFile(m_path);
 #ifndef BUILD_TESTING
     loadOptions();

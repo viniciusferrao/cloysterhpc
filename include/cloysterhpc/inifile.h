@@ -14,9 +14,20 @@ private:
     CSimpleIniA ini;
 
 public:
-    void loadFile(const std::string& filepath);
-    void loadFile(std::string_view filepath);
-    void loadFile(const std::filesystem::path& filepath);
+    // https://isocpp.org/wiki/faq/templates#separate-template-fn-defn-from-decl
+    template <typename FilePath> void loadFile(FilePath&& path)
+    {
+        if constexpr (std::is_convertible_v<FilePath, std::string>
+            || std::is_same_v<FilePath, std::filesystem::path>) {
+            ini.LoadFile(std::forward<FilePath>(path).c_str());
+        } else if constexpr (std::is_convertible_v<FilePath,
+                                 std::string_view>) {
+            ini.LoadFile(std::forward<FilePath>(path).data());
+        } else {
+            throw std::invalid_argument("Unsupported inifile path object type");
+        }
+    }
+
     std::string getValue(const std::string& section, const std::string& key,
         const bool optional = true, const bool canBeNull = true);
     void setValue(const std::string& section, const std::string& key,
