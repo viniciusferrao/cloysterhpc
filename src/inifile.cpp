@@ -36,20 +36,6 @@ bool inifile::deleteValue(const std::string& section, const std::string& key)
 {
     return ini.Delete(section.c_str(), key.c_str());
 }
-void inifile::saveFile(const std::string& filepath)
-{
-    ini.SaveFile(filepath.c_str());
-}
-
-void inifile::saveFile(std::string_view filepath)
-{
-    ini.SaveFile(filepath.data());
-}
-
-void inifile::saveFile(const std::filesystem::path& filepath)
-{
-    ini.SaveFile(filepath.c_str());
-}
 
 // BUG: Returning a pointer is not a good idea, it causes ownership issues.
 bool inifile::exists(const std::string& section, const std::string& key)
@@ -77,7 +63,8 @@ TEST_SUITE("Test Inifile methods")
         ini.loadFile(tests::sampleDirectory / "inifile.ini");
         const std::string clusterName
             = ini.getValue("information", "cluster_name");
-        CHECK(clusterName == "cloyster");
+        CHECK((clusterName == "cloyster"));
+        MESSAGE("Cluster name: ", clusterName);
     }
 
     TEST_CASE("Set value")
@@ -86,7 +73,11 @@ TEST_SUITE("Test Inifile methods")
         ini.loadFile(tests::sampleDirectory / "inifile.ini");
         const std::string newValue = "modified";
         ini.setValue("information", "cluster_name", newValue);
-        CHECK(ini.getValue("information", "cluster_name") == newValue);
+
+        const std::string clusterName
+            = ini.getValue("information", "cluster_name");
+        CHECK((clusterName == newValue));
+        MESSAGE("Modified cluster name: ", clusterName);
     }
 
     TEST_CASE("Delete value")
@@ -104,6 +95,7 @@ TEST_SUITE("Test Inifile methods")
         auto newFile = tests::sampleDirectory / "newfile.ini";
         ini.saveFile(newFile);
         CHECK(std::filesystem::exists(newFile));
+        std::filesystem::remove(newFile);
     }
 }
 #endif
