@@ -16,10 +16,10 @@ private:
     static constexpr auto m_knownImageFilename { std::to_array<const char*>(
         { "rhel-8.8-x86_64-dvd.iso", "OracleLinux-R8-U8-x86_64-dvd.iso",
             "Rocky-8.8-x86_64-dvd1.iso", "AlmaLinux-8.8-x86_64-dvd.iso" }) };
-    bool isKnownImage();
-    bool hasVerifiedChecksum();
 
 public:
+    bool isKnownImage();
+    bool hasVerifiedChecksum();
     [[nodiscard]] const std::filesystem::path& getPath() const;
 
     template <typename FilePath> void setPath(FilePath&& path)
