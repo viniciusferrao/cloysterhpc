@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_INIFILE_H_
 #define CLOYSTERHPC_INIFILE_H_
 
+#include "functions.h"
 #include <SimpleIni.h>
 #include <filesystem>
 
@@ -16,12 +17,14 @@ private:
 public:
     template <typename FilePath> void saveFile(FilePath&& path)
     {
-        ini.SaveFile(handlePath(std::forward<FilePath>(path)).c_str());
+        ini.SaveFile(
+            cloyster::handlePath(std::forward<FilePath>(path)).c_str());
     }
 
     template <typename FilePath> void loadFile(FilePath&& path)
     {
-        ini.LoadFile(handlePath(std::forward<FilePath>(path)).c_str());
+        ini.LoadFile(
+            cloyster::handlePath(std::forward<FilePath>(path)).c_str());
     }
 
     std::string getValue(const std::string& section, const std::string& key,
@@ -32,20 +35,10 @@ public:
     bool exists(const std::string& section, const std::string& key);
     bool exists(const std::string& section);
     inifile();
-
-private:
-    template <typename FilePath>
-    std::filesystem::path handlePath(FilePath&& path)
+    template <typename FilePath> explicit inifile(FilePath&& path)
     {
-        std::filesystem::path pathToFile;
-
-        try {
-            pathToFile = std::forward<FilePath>(path);
-        } catch (...) {
-            throw std::invalid_argument("Unsupported inifile path object type");
-        }
-
-        return pathToFile.c_str();
+        ini.SetUnicode();
+        loadFile(std::forward<FilePath>(path));
     }
 };
 

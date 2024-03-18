@@ -12,24 +12,10 @@
 
 const std::filesystem::path& DiskImage::getPath() const { return m_path; }
 
-void DiskImage::setPath(const std::filesystem::path& path)
-{
-    if (path.extension() != ".iso")
-        throw std::runtime_error("Disk Image must have ISO extension");
-
-    // Verify checksum only if the image is known.
-    if (isKnownImage(path)) {
-        if (!hasVerifiedChecksum(path))
-            throw std::runtime_error("Disk Image checksum isn't valid");
-    }
-
-    m_path = path;
-}
-
-bool DiskImage::isKnownImage(const std::filesystem::path& path)
+bool DiskImage::isKnownImage()
 {
     for (const auto& image : m_knownImageFilename)
-        if (path.filename().string() == image) {
+        if (m_path.filename().string() == image) {
             LOG_TRACE("Disk image is recognized");
             return true;
         }
@@ -39,9 +25,9 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
     return false;
 }
 
-bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
+bool DiskImage::hasVerifiedChecksum()
 {
-    if (!isKnownImage(path)) {
+    if (!isKnownImage()) {
         LOG_TRACE("Disk image is unknown. Can't verify checksum");
         return false;
     }
@@ -64,13 +50,13 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
     };
 
     CryptoPP::SHA256 hash;
-    std::string isoHash = hash_map.find(path.filename().string())->second;
+    std::string isoHash = hash_map.find(m_path.filename().string())->second;
     std::string output;
     auto sink = std::make_unique<CryptoPP::StringSink>(output);
     auto encoder = std::make_unique<CryptoPP::HexEncoder>(sink.get());
     auto filter = std::make_unique<CryptoPP::HashFilter>(hash, encoder.get());
 
-    CryptoPP::FileSource(path.string().c_str(), true, filter.get(), true);
+    CryptoPP::FileSource(m_path.string().c_str(), true, filter.get(), true);
     transform(output.begin(), output.end(), output.begin(), ::tolower);
 
     /* Those release() methods are needed to address the following issue:
@@ -92,16 +78,12 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 }
 
 #ifdef BUILD_TESTING
-#include <doctest/doctest.h>
-#else
-#define DOCTEST_CONFIG_DISABLE
-#include <doctest/doctest.h>
-#endif
+#include <cloysterhpc/tests.h>
 
 TEST_SUITE("Disk image test suite")
 {
     DiskImage diskImage;
-    const auto path = std::filesystem::current_path() / "/sample/checksum.iso";
+    const auto path = tests::sampleDirectory / "checksum.iso";
 
     TEST_CASE("Verify if is unknown image")
     {
@@ -113,3 +95,4 @@ TEST_SUITE("Disk image test suite")
         REQUIRE_FALSE(diskImage.hasVerifiedChecksum(path));
     }
 }
+#endif
