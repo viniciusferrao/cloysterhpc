@@ -144,8 +144,10 @@ void Connection::setMAC(std::string_view mac)
     // This pattern validates whether an MAC address is valid or not.
     const std::regex pattern(
         "^("
-        "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" // Matches MAC address with
-                                                  // colons or hyphens
+        "((?!01:00:5e|02:00:5e|00:00:00:00:00:00|ff:ff:ff:ff:ff:ff)?:[0-9A-Fa-"
+        "f]{2}:){5}[0-9A-Fa-f]{2}" // Matches MAC address with
+                                   // colons, excluding multicast addresses and
+                                   // locally administrated addresses
         "|"
         "(?:[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}" // Matches Cisco
                                                               // MAC format
