@@ -82,17 +82,17 @@ bool DiskImage::hasVerifiedChecksum()
 
 TEST_SUITE("Disk image test suite")
 {
-    DiskImage diskImage;
-    const auto path = tests::sampleDirectory / "checksum.iso";
 
     TEST_CASE("Verify if is unknown image")
     {
-        REQUIRE_FALSE(diskImage.isKnownImage(path));
+        DiskImage diskImage {cloyster::handlePath(tests::sampleDirectory / "checksum.iso")};
+        REQUIRE_FALSE(diskImage.isKnownImage());
     }
 
     TEST_CASE("Verify invalid checksum")
     {
-        REQUIRE_FALSE(diskImage.hasVerifiedChecksum(path));
+        DiskImage diskImage {cloyster::handlePath(tests::sampleDirectory / "checksum.iso")};
+        REQUIRE_FALSE(diskImage.hasVerifiedChecksum());
     }
 }
 #endif
