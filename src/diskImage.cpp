@@ -85,13 +85,15 @@ TEST_SUITE("Disk image test suite")
 
     TEST_CASE("Verify if is unknown image")
     {
-        DiskImage diskImage {cloyster::handlePath(tests::sampleDirectory / "checksum.iso")};
+        DiskImage diskImage { cloyster::handlePath(
+            tests::sampleDirectory / "checksum.iso") };
         REQUIRE_FALSE(diskImage.isKnownImage());
     }
 
     TEST_CASE("Verify invalid checksum")
     {
-        DiskImage diskImage {cloyster::handlePath(tests::sampleDirectory / "checksum.iso")};
+        DiskImage diskImage { cloyster::handlePath(
+            tests::sampleDirectory / "checksum.iso") };
         REQUIRE_FALSE(diskImage.hasVerifiedChecksum());
     }
 }
