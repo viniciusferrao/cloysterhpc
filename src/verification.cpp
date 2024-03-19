@@ -15,3 +15,20 @@ void cloyster::checkEffectiveUserId()
             "This program must be run with root privileges");
     }
 }
+
+#ifdef BUILD_TESTING
+#include <cloysterhpc/tests.h>
+
+TEST_SUITE("Test user privileges")
+{
+    TEST_CASE("Verify if Cloyster is running with root privileges") {
+        const auto uid = geteuid();
+
+        if (geteuid() != 0) {
+            CHECK_THROWS(cloyster::checkEffectiveUserId());
+        } else {
+            CHECK_NOTHROW(cloyster::checkEffectiveUserId());
+        }
+    }
+}
+#endif

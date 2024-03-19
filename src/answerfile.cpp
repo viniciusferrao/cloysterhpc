@@ -299,7 +299,7 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
 
 TEST_SUITE("Test Answerfile Methods")
 {
-    TEST_CASE("Load Methods")
+    TEST_CASE("Test Answerfile Load Methods")
     {
         AnswerFile correct { tests::sampleDirectory
             / "answerfile/correct.answerfile.ini" };

@@ -130,11 +130,33 @@ const CPU& Server::getCPU() const noexcept { return m_cpu; }
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
 
 #ifdef BUILD_TESTING
-#include <doctest/doctest.h>
-#else
-#define DOCTEST_CONFIG_DISABLE
-#include <doctest/doctest.h>
-#endif
+#include <cloysterhpc/tests.h>
+
+TEST_SUITE("Test hostname")
+{
+    TEST_CASE("Hostname validation with Server::setHostname")
+    {
+        Server server;
+
+        SUBCASE("Valid Hostnames")
+        {
+            CHECK_NOTHROW(server.setHostname(std::string("example")));
+            CHECK_NOTHROW(server.setHostname(std::string("my-server")));
+            CHECK_NOTHROW(server.setHostname(std::string("host-01")));
+            CHECK_NOTHROW(server.setHostname(std::string("test123")));
+        }
+
+        SUBCASE("Invalid Hostnames")
+        {
+            CHECK_THROWS(server.setHostname(std::string(100, 'a'))); // Exceeds the maximum length
+            CHECK_THROWS(server.setHostname(std::string("-invalid-hostname"))); // Starts with a hyphen
+            CHECK_THROWS(server.setHostname(std::string("invalid-hostname-"))); // Ends with a hyphen
+            CHECK_THROWS(server.setHostname(std::string("123456"))); // Contains only digits
+            CHECK_THROWS(server.setHostname(std::string("example@host"))); // Contains special character "@" which is not allowed.
+            CHECK_THROWS(server.setHostname(std::string("host$123"))); // Contains special character "$" which is not allowed
+        }
+    }
+}
 
 TEST_SUITE("Test FQDN")
 {
@@ -161,3 +183,4 @@ TEST_SUITE("Test FQDN")
         }
     }
 }
+#endif
