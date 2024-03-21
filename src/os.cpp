@@ -240,3 +240,22 @@ void OS::printData() const
     LOG_DEBUG("Minor Version: {}", m_minorVersion);
 }
 #endif
+
+#ifdef BUILD_TESTING
+#include <cloysterhpc/tests.h>
+
+TEST_SUITE("Test OS class")
+{
+    TEST_CASE("Print OS gathered info")
+    {
+        OS tOS;
+        MESSAGE("Architecture: ", magic_enum::enum_name(tOS.getArch()));
+        MESSAGE("Family: ", magic_enum::enum_name(tOS.getFamily()));
+        MESSAGE("Kernel Release: ", tOS.getKernel());
+        MESSAGE("Platform: ", magic_enum::enum_name(tOS.getPlatform()));
+        MESSAGE("Distribution: ", magic_enum::enum_name(tOS.getDistro()));
+        MESSAGE("Major Version: ", tOS.getMajorVersion());
+        MESSAGE("Minor Version: ", tOS.getMinorVersion());
+    }
+}
+#endif
