@@ -229,7 +229,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 
 TEST_SUITE("Test Functions class")
 {
-    TEST_CASE("Run command with cloyster::runCommand") {
+    TEST_CASE("Run command with cloyster::runCommand")
+    {
         std::list<std::string> output;
         int exitCode = cloyster::runCommand("echo 'Test runCommand'", output);
 
@@ -237,21 +238,26 @@ TEST_SUITE("Test Functions class")
         MESSAGE("TEST OUTPUT:\n", boost::algorithm::join(output, "\n"));
     }
 
-    TEST_CASE("Manage (create and remove) a directory with cloyster::createDirectory") {
+    TEST_CASE(
+        "Manage (create and remove) a directory with cloyster::createDirectory")
+    {
         auto path = tests::sampleDirectory / "createDirectory";
 
-        SUBCASE("Create a directory") {
+        SUBCASE("Create a directory")
+        {
             cloyster::createDirectory(path);
             REQUIRE(std::filesystem::exists(path));
         }
 
-        SUBCASE("Remove a directory") {
+        SUBCASE("Remove a directory")
+        {
             cloyster::removeFile(path.string());
             REQUIRE(!std::filesystem::exists(path));
         }
     }
 
-    TEST_CASE("Add a string to file with cloyster::addStringToFile") {
+    TEST_CASE("Add a string to file with cloyster::addStringToFile")
+    {
         auto path = tests::sampleDirectory / "addStringToFile";
         std::ofstream tof(path);
         tof.close();
