@@ -54,43 +54,46 @@ bool inifile::exists(const std::string& section)
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
 
-TEST_SUITE("Test Inifile methods")
+TEST_SUITE("Test Inifile")
 {
-    TEST_CASE("Get information")
+    TEST_CASE("Test Inifile generic methods ")
     {
-        inifile ini { tests::sampleDirectory / "inifile.ini" };
-        const std::string clusterName
-            = ini.getValue("information", "cluster_name");
-        CHECK((clusterName == "cloyster"));
-        MESSAGE("Cluster name: ", clusterName);
-    }
+        SUBCASE("Get information")
+        {
+            inifile ini { tests::sampleDirectory / "inifile.ini" };
+            const std::string clusterName
+                = ini.getValue("information", "cluster_name");
+            CHECK((clusterName == "cloyster"));
+            MESSAGE("Cluster name: ", clusterName);
+        }
 
-    TEST_CASE("Set value")
-    {
-        inifile ini { tests::sampleDirectory / "inifile.ini" };
-        const std::string newValue = "modified";
-        ini.setValue("information", "cluster_name", newValue);
+        SUBCASE("Set value")
+        {
+            inifile ini { tests::sampleDirectory / "inifile.ini" };
+            const std::string newValue = "modified";
+            ini.setValue("information", "cluster_name", newValue);
 
-        const std::string clusterName
-            = ini.getValue("information", "cluster_name");
-        CHECK((clusterName == newValue));
-        MESSAGE("Modified cluster name: ", clusterName);
-    }
+            const std::string clusterName
+                = ini.getValue("information", "cluster_name");
+            CHECK((clusterName == newValue));
+            MESSAGE("Modified cluster name: ", clusterName);
+        }
 
-    TEST_CASE("Delete value")
-    {
-        inifile ini { tests::sampleDirectory / "inifile.ini" };
-        const bool result = ini.deleteValue("information", "company_name");
-        CHECK(result);
-    }
+        SUBCASE("Delete value")
+        {
+            inifile ini { tests::sampleDirectory / "inifile.ini" };
+            const bool result = ini.deleteValue("information", "company_name");
+            CHECK(result);
+        }
 
-    TEST_CASE("Save to a new file")
-    {
-        inifile ini { tests::sampleDirectory / "inifile.ini" };
-        auto newFile = tests::sampleDirectory / "newfile.ini";
-        ini.saveFile(newFile);
-        CHECK(std::filesystem::exists(newFile));
-        std::filesystem::remove(newFile);
+        SUBCASE("Save to a new file")
+        {
+            inifile ini { tests::sampleDirectory / "inifile.ini" };
+            auto newFile = tests::sampleDirectory / "newfile.ini";
+            ini.saveFile(newFile);
+            CHECK(std::filesystem::exists(newFile));
+            std::filesystem::remove(newFile);
+        }
     }
 }
 #endif

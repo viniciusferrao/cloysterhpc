@@ -223,3 +223,54 @@ void addStringToFile(std::string_view filename, std::string_view string)
 }
 
 } // namespace cloyster
+
+#ifdef BUILD_TESTING
+#include <cloysterhpc/tests.h>
+
+TEST_SUITE("Test Functions class")
+{
+    TEST_CASE("Run command with cloyster::runCommand") {
+        std::list<std::string> output;
+        int exitCode = cloyster::runCommand("echo 'Test runCommand'", output);
+
+        REQUIRE((exitCode == 0));
+        MESSAGE("TEST OUTPUT:\n", boost::algorithm::join(output, "\n"));
+    }
+
+    TEST_CASE("Manage (create and remove) a directory with cloyster::createDirectory") {
+        auto path = tests::sampleDirectory / "createDirectory";
+
+        SUBCASE("Create a directory") {
+            cloyster::createDirectory(path);
+            REQUIRE(std::filesystem::exists(path));
+        }
+
+        SUBCASE("Remove a directory") {
+            cloyster::removeFile(path.string());
+            REQUIRE(!std::filesystem::exists(path));
+        }
+    }
+
+    TEST_CASE("Add a string to file with cloyster::addStringToFile") {
+        auto path = tests::sampleDirectory / "addStringToFile";
+        std::ofstream tof(path);
+        tof.close();
+
+        auto stringToAdd = "test";
+        cloyster::addStringToFile(path.string(), stringToAdd);
+
+        std::ifstream ifs(std::string { path });
+        std::string content((std::istreambuf_iterator<char>(ifs)),
+            (std::istreambuf_iterator<char>()));
+
+        bool found = false;
+        if (content.find(stringToAdd) != std::string::npos) {
+            found = true;
+        }
+
+        REQUIRE(found);
+        std::filesystem::remove(path);
+    }
+}
+
+#endif

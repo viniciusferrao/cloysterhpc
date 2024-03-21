@@ -9,6 +9,9 @@
 #include <doctest/doctest.h>
 #include <filesystem>
 
+// @TODO We REALLY should have parameterized tests, but doctest doesn't support it yet.
+// https://github.com/doctest/doctest/blob/master/doc/markdown/parameterized-tests.md
+
 namespace tests {
 inline std::filesystem::path sampleDirectory {
     std::filesystem::current_path().parent_path().parent_path() / "test/sample"

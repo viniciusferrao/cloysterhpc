@@ -325,7 +325,8 @@ TEST_SUITE("Test MAC address validity")
         Network network;
         Connection connection = Connection(&network);
 
-        SUBCASE("Valid MAC addresses") {
+        SUBCASE("Valid MAC addresses")
+        {
             CHECK_NOTHROW(connection.setMAC("00:1A:2B:3C:4D:5E"));
             CHECK_NOTHROW(connection.setMAC("00:11:22:33:44:55"));
             CHECK_NOTHROW(connection.setMAC("0011.2233.4455")); // Cisco format

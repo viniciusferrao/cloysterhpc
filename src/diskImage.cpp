@@ -80,21 +80,23 @@ bool DiskImage::hasVerifiedChecksum()
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
 
-TEST_SUITE("Disk image test suite")
+TEST_SUITE("Test DiskImage")
 {
-
-    TEST_CASE("Verify if is unknown image")
+    TEST_CASE("Test DiskImage verification methods")
     {
-        DiskImage diskImage { cloyster::handlePath(
-            tests::sampleDirectory / "checksum.iso") };
-        REQUIRE_FALSE(diskImage.isKnownImage());
-    }
+        SUBCASE("Verify if is unknown image")
+        {
+            DiskImage diskImage { cloyster::handlePath(
+                tests::sampleDirectory / "checksum.iso") };
+            REQUIRE_FALSE(diskImage.isKnownImage());
+        }
 
-    TEST_CASE("Verify invalid checksum")
-    {
-        DiskImage diskImage { cloyster::handlePath(
-            tests::sampleDirectory / "checksum.iso") };
-        REQUIRE_FALSE(diskImage.hasVerifiedChecksum());
+        SUBCASE("Verify invalid checksum")
+        {
+            DiskImage diskImage { cloyster::handlePath(
+                tests::sampleDirectory / "checksum.iso") };
+            REQUIRE_FALSE(diskImage.hasVerifiedChecksum());
+        }
     }
 }
 #endif

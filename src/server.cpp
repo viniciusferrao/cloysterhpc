@@ -148,12 +148,20 @@ TEST_SUITE("Test hostname")
 
         SUBCASE("Invalid Hostnames")
         {
-            CHECK_THROWS(server.setHostname(std::string(100, 'a'))); // Exceeds the maximum length
-            CHECK_THROWS(server.setHostname(std::string("-invalid-hostname"))); // Starts with a hyphen
-            CHECK_THROWS(server.setHostname(std::string("invalid-hostname-"))); // Ends with a hyphen
-            CHECK_THROWS(server.setHostname(std::string("123456"))); // Contains only digits
-            CHECK_THROWS(server.setHostname(std::string("example@host"))); // Contains special character "@" which is not allowed.
-            CHECK_THROWS(server.setHostname(std::string("host$123"))); // Contains special character "$" which is not allowed
+            CHECK_THROWS(server.setHostname(
+                std::string(100, 'a'))); // Exceeds the maximum length
+            CHECK_THROWS(server.setHostname(
+                std::string("-invalid-hostname"))); // Starts with a hyphen
+            CHECK_THROWS(server.setHostname(
+                std::string("invalid-hostname-"))); // Ends with a hyphen
+            CHECK_THROWS(server.setHostname(
+                std::string("123456"))); // Contains only digits
+            CHECK_THROWS(server.setHostname(
+                std::string("example@host"))); // Contains special character "@"
+                                               // which is not allowed.
+            CHECK_THROWS(server.setHostname(
+                std::string("host$123"))); // Contains special character "$"
+                                           // which is not allowed
         }
     }
 }

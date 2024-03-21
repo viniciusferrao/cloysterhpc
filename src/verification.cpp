@@ -21,7 +21,8 @@ void cloyster::checkEffectiveUserId()
 
 TEST_SUITE("Test user privileges")
 {
-    TEST_CASE("Verify if Cloyster is running with root privileges") {
+    TEST_CASE("Verify if Cloyster is running with root privileges")
+    {
         const auto uid = geteuid();
 
         if (geteuid() != 0) {
