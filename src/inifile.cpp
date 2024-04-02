@@ -22,15 +22,22 @@ void inifile::loadFile(const std::filesystem::path& filepath)
     ini.LoadFile(filepath.c_str());
 }
 
-std::string inifile::getValue(
-    const std::string& section, const std::string& key, const bool optional)
+std::string inifile::getValue(const std::string& section,
+    const std::string& key, const bool optional, const bool canBeNull)
 {
     if (!optional && !exists(section, key))
         throw std::runtime_error(
             fmt::format("Answerfile section \"{}\" must have \"{}\" key filled",
                 section, key));
 
-    return ini.GetValue(section.c_str(), key.c_str(), "");
+    std::string value = ini.GetValue(section.c_str(), key.c_str(), "");
+
+    if (!canBeNull && value.empty())
+        throw std::runtime_error(
+            fmt::format("Answerfile section \"{}\" key \"{}\" can't be null",
+                section, key));
+
+    return value;
 }
 
 inifile::inifile() { ini.SetUnicode(); }
