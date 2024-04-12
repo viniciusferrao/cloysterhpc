@@ -1,3 +1,5 @@
+# Example repofile model to use with Cloyster.
+
 [cloyster-OL-BaseOS]
 name=Oracle Linux 8 BaseOS Latest ($basearch)
 baseurl=https://yum$ociregion.oracle.com/repo/OracleLinux/OL9/baseos/latest/$basearch/
