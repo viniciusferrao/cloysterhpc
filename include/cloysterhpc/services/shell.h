@@ -29,7 +29,7 @@ private:
 
     void runSystemUpdate();
     void installRequiredPackages();
-    void disallowRootPasswordLogin();
+    void disallowSSHRootPasswordLogin();
 
     void installOpenHPCBase();
     void configureTimeService(const std::list<Connection>&);

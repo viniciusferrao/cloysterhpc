@@ -225,7 +225,7 @@ void Shell::installRequiredPackages()
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
-void Shell::disallowRootPasswordLogin()
+void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
@@ -356,7 +356,7 @@ void Shell::install()
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
-    disallowRootPasswordLogin();
+    disallowSSHRootPasswordLogin();
 
     configureHostsFile();
     configureTimezone();
