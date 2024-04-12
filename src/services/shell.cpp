@@ -225,6 +225,14 @@ void Shell::installRequiredPackages()
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
+void Shell::disallowSSHRootPasswordLogin()
+{
+    LOG_INFO("Allowing root login only through public key authentication (SSH)")
+
+    runCommand("sed -i s/PermitRootLogin\\ yes/PermitRootLogin\\ "
+               "without-password/g /etc/ssh/sshd_config");
+}
+
 void Shell::installOpenHPCBase()
 {
     LOG_INFO("Installing base OpenHPC packages");
@@ -348,6 +356,7 @@ void Shell::install()
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
+    disallowSSHRootPasswordLogin();
 
     configureHostsFile();
     configureTimezone();
