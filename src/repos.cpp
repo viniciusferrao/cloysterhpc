@@ -95,8 +95,7 @@ void Repos::configureEL8() const
 {
     std::string dependencies;
 
-    switch(m_os.getDistro())
-    {
+    switch (m_os.getDistro()) {
         case OS::Distro::AlmaLinux:
             dependencies = "cloyster-AlmaLinux-BaseOS,powertools";
             break;
@@ -120,8 +119,7 @@ void Repos::configureEL9() const
 {
     std::string dependencies;
 
-    switch(m_os.getDistro())
-    {
+    switch (m_os.getDistro()) {
         case OS::Distro::AlmaLinux:
             dependencies = "cloyster-AlmaLinux-BaseOS,crb";
             break;
@@ -276,25 +274,29 @@ void Repos::configureRepositories() const
 
 void Repos::createCloysterRepo() const
 {
-    LOG_INFO("Creating Cloyster repo")
+    LOG_INFO("Creating Cloyster repofile")
     std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
 
-    // falta arrumar o gpg-key via URL
     inifile repofile;
     std::string repodata;
 
-    switch (m_os.getPlatform()) {
-        case OS::Platform::el8:
-            CLOYSTER_REPO_EL8.save(repodata);
-            break;
-        case OS::Platform::el9:
-            CLOYSTER_REPO_EL9.save(repodata);
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
+    if (cloyster::customRepofilePath.empty()) {
+        switch (m_os.getPlatform()) {
+            case OS::Platform::el8:
+                CLOYSTER_REPO_EL8.save(repodata);
+                break;
+            case OS::Platform::el9:
+                CLOYSTER_REPO_EL9.save(repodata);
+                break;
+            default:
+                throw std::runtime_error("Unsupported platform");
+        }
 
-    repofile.loadData(repodata);
+        repofile.loadData(repodata);
+    } else {
+        LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath)
+        repofile.loadFile(cloyster::customRepofilePath);
+    }
 
     // @TODO call to configureAdditionalRepos should be done here
     // @TODO Let user choose the optional repos.
@@ -315,5 +317,5 @@ void Repos::configureAdditionalRepos(
     /*
      * @TODO This function should enable/disable the additional repos on
      * cloyster.repo
-    */
+     */
 }

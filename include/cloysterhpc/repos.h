@@ -10,6 +10,10 @@
 #include <cloysterhpc/os.h>
 #include <string>
 
+namespace cloyster {
+extern std::string customRepofilePath;
+};
+
 struct repofile {
     std::string id;
     bool enabled = true;
