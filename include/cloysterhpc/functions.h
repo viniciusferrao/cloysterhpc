@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <boost/asio.hpp>
+#include <fmt/format.h>
 
 namespace cloyster {
 // Globals
@@ -70,6 +71,26 @@ void backupFile(std::string_view filename);
 void changeValueInConfigurationFile(
     const std::string&, const std::string&, std::string_view);
 void addStringToFile(std::string_view filename, std::string_view string);
+
+/* convert string, string_view and others to filesystem::path easily */
+template <typename FilePath>
+std::filesystem::path handlePath(FilePath&& path, bool shouldExist = false)
+{
+    std::filesystem::path pathToFile;
+
+    try {
+        pathToFile = std::forward<FilePath>(path);
+    } catch (...) {
+        throw std::invalid_argument("Unsupported path object type");
+    }
+
+    if (shouldExist && !std::filesystem::exists(pathToFile)) {
+        throw std::invalid_argument(fmt::format(
+            "File '{}' doesn't exist", pathToFile.filename().c_str()));
+    }
+
+    return pathToFile;
+}
 
 } /* namespace cloyster */
 
