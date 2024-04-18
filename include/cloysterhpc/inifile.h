@@ -35,7 +35,9 @@ public:
     bool exists(const std::string& section, const std::string& key);
     bool exists(const std::string& section);
     inifile();
-    template <typename FilePath> explicit inifile(FilePath&& path)
+    template <typename FilePath>
+        requires(!std::is_same_v<std::decay_t<FilePath>, inifile>)
+    explicit inifile(FilePath&& path)
     {
         ini.SetUnicode();
         loadFile(std::forward<FilePath>(path));

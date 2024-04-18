@@ -40,7 +40,9 @@ public:
     }
 
     DiskImage() = default;
-    template <typename FilePath> explicit DiskImage(FilePath&& path)
+    template <typename FilePath>
+        requires(!std::is_same_v<std::decay_t<FilePath>, DiskImage>)
+    explicit DiskImage(FilePath&& path)
     {
         setPath(cloyster::handlePath(std::forward<FilePath>(path)));
     }
