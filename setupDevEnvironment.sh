@@ -10,6 +10,7 @@
 
 # Stop execution in case of any error (add x for debugging)
 set -e
+os_version=$(rpm -E %{rhel})
 
 # OS relevant settings
 redhat() {
@@ -19,12 +20,24 @@ redhat() {
 }
 
 rocky() {
-	dnf config-manager --set-enabled powertools
+  if [ "$os_version" == "8" ]; then
+      repo_name="powertools"
+  elif [ "$os_version" == "9" ]; then
+      repo_name="crb"
+  fi
+
+  dnf config-manager --set-enabled "$repo_name"
 	dnf -y install epel-release
 }
 
 almalinux() {
-	dnf config-manager --set-enabled powertools
+  if [ "$os_version" == "8" ]; then
+      repo_name="powertools"
+  elif [ "$os_version" == "9" ]; then
+      repo_name="crb"
+  fi
+
+  dnf config-manager --set-enabled "$repo_name"
 	dnf -y install epel-release
 }
 
@@ -59,11 +72,12 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset and packages
-dnf -y install git cmake ccache llvm-toolset compiler-rt gcc-toolset-12\*
+dnf -y install git cmake ccache llvm-toolset compiler-rt gcc-toolset-12 python3-pip\*
 pip3 install --user conan
+pip3 install numpy
 
 # Required libraries
-dnf -y install newt-devel
+dnf -y install newt-devel cppcheck
 
 echo
 echo Development tools, packages and libraries were installed on your system.
