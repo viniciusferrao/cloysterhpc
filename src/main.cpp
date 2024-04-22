@@ -36,6 +36,9 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
 
+    app.add_flag("-n, --nodeless", cloyster::nodeless,
+        "Perform a nodeless installation (for workstation or fat machines)");
+
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
