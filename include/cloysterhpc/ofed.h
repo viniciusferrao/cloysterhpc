@@ -14,6 +14,7 @@ public:
 
 private:
     Kind m_kind { Kind::Inbox };
+    void patchMellanox() const;
 
 public:
     OFED() = default;

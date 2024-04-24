@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/services/log.h"
 #include <cloysterhpc/ofed.h>
 
 using cloyster::runCommand;
@@ -26,7 +27,7 @@ void OFED::install() const
 
         case OFED::Kind::Mellanox:
             throw std::logic_error("MLNX OFED is not yet supported");
-
+            patchMellanox();
             break;
 
         case OFED::Kind::Oracle:
@@ -34,4 +35,13 @@ void OFED::install() const
 
             break;
     }
+}
+
+void OFED::patchMellanox() const
+{
+    LOG_TRACE("Patching Mellanox OFED")
+
+    runCommand("wget -O - "
+               "https://raw.githubusercontent.com/viniciusferrao/"
+               "mlnxofed-patch/master/patch-mlnxofed.sh | bash");
 }
