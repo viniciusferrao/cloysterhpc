@@ -114,7 +114,7 @@ void Shell::configureHostsFile()
 
     auto& headnode = m_cluster->getHeadnode();
 
-    const auto& ip = headnode.getConnection(Network::Profile::External)
+    const auto& ip = headnode.getConnection(Network::Profile::Management)
                          .getAddress()
                          .to_string();
     const auto& fqdn = headnode.getFQDN();
