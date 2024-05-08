@@ -100,22 +100,6 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName);
 
     try {
-        while (!unattended) {
-            char response = 'N';
-            fmt::print("{} will now modify your system, do you want to "
-                       "continue? [Y/N]\n",
-                cloyster::productName);
-            std::cin >> response;
-
-            if (response == 'Y' || response == 'y') {
-                LOG_INFO("Running {}.\n", cloyster::productName)
-                break;
-            } else if (response == 'N' || response == 'n') {
-                LOG_INFO("Stopping {}.\n", cloyster::productName);
-                return EXIT_SUCCESS;
-            }
-        }
-
         if (cloyster::showVersion) {
             fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
@@ -127,6 +111,22 @@ int main(int argc, const char** argv)
 
         if (cloyster::dryRun) {
             fmt::print("Dry run enabled.\n");
+        } else {
+            while (!unattended) {
+                char response = 'N';
+                fmt::print("{} will now modify your system, do you want to "
+                           "continue? [Y/N]\n",
+                    cloyster::productName);
+                std::cin >> response;
+
+                if (response == 'Y' || response == 'y') {
+                    LOG_INFO("Running {}.\n", cloyster::productName)
+                    break;
+                } else if (response == 'N' || response == 'n') {
+                    LOG_INFO("Stopping {}.\n", cloyster::productName);
+                    return EXIT_SUCCESS;
+                }
+            }
         }
 
         //@TODO implement CLI feature

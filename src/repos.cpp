@@ -236,6 +236,11 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
 
 void Repos::configureRepositories() const
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create and configure repositories")
+        return;
+    }
+
     LOG_INFO("Setting up repositories")
 
     createCloysterRepo();
