@@ -18,6 +18,7 @@ bool dryRun = false;
 bool enableTUI = false;
 bool enableCLI = false;
 bool runAsDaemon = false;
+bool nodeless = false;
 std::string logLevelInput
     = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
 std::string answerfile;

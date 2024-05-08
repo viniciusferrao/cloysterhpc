@@ -14,6 +14,7 @@
 namespace cloyster {
 // Globals
 extern bool dryRun;
+extern bool nodeless;
 
 /**
  * A command proxy, to us to be able to get the

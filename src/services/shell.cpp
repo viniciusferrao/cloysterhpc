@@ -392,37 +392,39 @@ void Shell::install()
 
     installDevelopmentComponents();
 
-    const auto& provisionerName { magic_enum::enum_name(
-        m_cluster->getProvisioner()) };
+    if (!cloyster::nodeless) {
+        const auto& provisionerName { magic_enum::enum_name(
+            m_cluster->getProvisioner()) };
 
-    LOG_DEBUG("Setting up the provisioner: {}", provisionerName);
-    // std::unique_ptr<Provisioner> provisioner;
-    std::unique_ptr<XCAT> provisioner;
-    switch (m_cluster->getProvisioner()) {
-        case Cluster::Provisioner::xCAT:
-            provisioner = std::make_unique<XCAT>(m_cluster);
-            break;
+        LOG_DEBUG("Setting up the provisioner: {}", provisionerName);
+        // std::unique_ptr<Provisioner> provisioner;
+        std::unique_ptr<XCAT> provisioner;
+        switch (m_cluster->getProvisioner()) {
+            case Cluster::Provisioner::xCAT:
+                provisioner = std::make_unique<XCAT>(m_cluster);
+                break;
+        }
+
+        LOG_INFO("Setting up compute node images... This may take a while");
+
+        LOG_INFO("[{}] Installing packages", provisionerName);
+        provisioner->installPackages();
+
+        LOG_INFO("[{}] Setting up the provisioner", provisionerName);
+        provisioner->setup();
+
+        LOG_INFO("[{}] Creating node images", provisionerName);
+        provisioner->createImage();
+
+        LOG_INFO("[{}] Adding compute nodes", provisionerName);
+        provisioner->addNodes();
+
+        LOG_INFO("[{}] Setting up image on nodes", provisionerName);
+        provisioner->setNodesImage();
+
+        LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
+            provisionerName);
+        provisioner->setNodesBoot();
+        provisioner->resetNodes();
     }
-
-    LOG_INFO("Setting up compute node images... This may take a while");
-
-    LOG_INFO("[{}] Installing packages", provisionerName);
-    provisioner->installPackages();
-
-    LOG_INFO("[{}] Setting up the provisioner", provisionerName);
-    provisioner->setup();
-
-    LOG_INFO("[{}] Creating node images", provisionerName);
-    provisioner->createImage();
-
-    LOG_INFO("[{}] Adding compute nodes", provisionerName);
-    provisioner->addNodes();
-
-    LOG_INFO("[{}] Setting up image on nodes", provisionerName);
-    provisioner->setNodesImage();
-
-    LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
-        provisionerName);
-    provisioner->setNodesBoot();
-    provisioner->resetNodes();
 }
