@@ -105,6 +105,10 @@ int main(int argc, const char** argv)
             return EXIT_SUCCESS;
         }
 
+        if (cloyster::runAsRoot) {
+            cloyster::checkEffectiveUserId();
+        }
+
         if (cloyster::dryRun) {
             fmt::print("Dry run enabled.\n");
         } else {
@@ -123,10 +127,6 @@ int main(int argc, const char** argv)
                     return EXIT_SUCCESS;
                 }
             }
-        }
-
-        if (cloyster::runAsRoot) {
-            cloyster::checkEffectiveUserId();
         }
 
         //@TODO implement CLI feature
