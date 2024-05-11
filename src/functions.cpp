@@ -21,7 +21,7 @@ namespace cloyster {
 CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
 {
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running command: {}", command);
+        LOG_DEBUG("Running command: {}", command)
         boost::process::ipstream pipe_stream;
         boost::process::child child(
             command, boost::process::std_out > pipe_stream);
@@ -41,7 +41,7 @@ int runCommand(const std::string& command,
 {
 
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running command: {}", command);
+        LOG_DEBUG("Running command: {}", command)
         boost::process::ipstream pipe_stream;
         boost::process::child child(
             command, boost::process::std_out > pipe_stream);
@@ -50,15 +50,15 @@ int runCommand(const std::string& command,
 
         while (
             pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
-            LOG_TRACE("{}", line);
+            LOG_TRACE("{}", line)
             output.emplace_back(line);
         }
 
         child.wait();
-        LOG_DEBUG("Exit code: {}", child.exit_code());
+        LOG_DEBUG("Exit code: {}", child.exit_code())
         return child.exit_code();
     } else {
-        LOG_WARN("Dry Run: {}", command);
+        LOG_WARN("Dry Run: {}", command)
         return 0;
     }
 }
@@ -91,13 +91,13 @@ std::string readConfig(const std::string& filename)
     }
 
     catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what());
+        LOG_ERROR("Error: {}", ex.what())
     }
 
     std::string value = tree.get<std::string>("headnode.LANG", "en_US.utf8");
 
-    LOG_TRACE("Read configFile variables:");
-    LOG_TRACE("LANG: {}", value);
+    LOG_TRACE("Read configFile variables:")
+    LOG_TRACE("LANG: {}", value)
 
     return value;
 }
@@ -115,29 +115,29 @@ void writeConfig(const std::string& filename)
 void createDirectory(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create directory {}", path.string());
+        LOG_INFO("Would create directory {}", path.string())
         return;
     }
 
     std::filesystem::create_directories(path);
-    LOG_DEBUG("Created directory: {}", path.string());
+    LOG_DEBUG("Created directory: {}", path.string())
 }
 
 /* Remove file */
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would remove file {}, if exists", filename);
+        LOG_INFO("Would remove file {}, if exists", filename)
         return;
     }
 
-    LOG_DEBUG("Checking if file {} already exists on filesystem", filename);
+    LOG_DEBUG("Checking if file {} already exists on filesystem", filename)
     if (std::filesystem::exists(filename)) {
-        LOG_DEBUG("Already exists");
+        LOG_DEBUG("Already exists")
         std::filesystem::remove(filename);
-        LOG_DEBUG("File {} deleted", filename);
+        LOG_DEBUG("File {} deleted", filename)
     } else {
-        LOG_DEBUG("File does not exist");
+        LOG_DEBUG("File does not exist")
     }
 }
 
@@ -159,7 +159,7 @@ void backupFile(std::string_view filename)
     if (!file.is_open()) {
         // Backup the file
         std::filesystem::copy_file(filename, backupFile);
-        LOG_DEBUG("Created a backup copy of {} on {}", filename, backupFile);
+        LOG_DEBUG("Created a backup copy of {} on {}", filename, backupFile)
     }
 }
 
@@ -183,7 +183,7 @@ void changeValueInConfigurationFile(
     try {
         boost::property_tree::ini_parser::read_ini(filename, tree);
     } catch (boost::property_tree::ini_parser_error& ex) {
-        LOG_ERROR("Error: {}", ex.what());
+        LOG_ERROR("Error: {}", ex.what())
     }
 
     tree.put(key, value);
@@ -198,7 +198,7 @@ void addStringToFile(std::string_view filename, std::string_view string)
         (std::istreambuf_iterator<char>()));
 
     if (content.find(string) != std::string::npos) {
-        LOG_DEBUG("File {} already contains line(s):\n{}\n", filename, string);
+        LOG_DEBUG("File {} already contains line(s):\n{}\n", filename, string)
         return;
     }
 
@@ -209,8 +209,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #endif
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would add a string in file {}", filename);
-        LOG_TRACE("Added: \"{}\"", string);
+        LOG_INFO("Would add a string in file {}", filename)
+        LOG_TRACE("Added: \"{}\"", string)
         return;
     }
 
@@ -219,7 +219,7 @@ void addStringToFile(std::string_view filename, std::string_view string)
             fmt::format("Error opening file: {}", filename));
 
     file << string;
-    LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename);
+    LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename)
 }
 
 } // namespace cloyster

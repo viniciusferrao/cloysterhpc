@@ -317,7 +317,7 @@ std::string Network::fetchDomainName()
     if (getdomainname(domainName, sizeof(domainName)) == -1)
         throw std::runtime_error("Failed to fetch domain name");
 
-    LOG_TRACE("Got domain name {}", domainName);
+    LOG_TRACE("Got domain name {}", domainName)
 
     return std::string(domainName);
 }
@@ -377,14 +377,14 @@ std::vector<address> Network::fetchNameservers()
         nameservers.emplace_back(formattedNs);
     }
 
-    LOG_TRACE("Got nameservers {}", nameservers.data()->to_string());
+    LOG_TRACE("Got nameservers {}", nameservers.data()->to_string())
     return nameservers;
 }
 
 #ifndef NDEBUG
 void Network::dumpNetwork() const
 {
-    LOG_DEBUG("Profile: {}", magic_enum::enum_name(m_profile));
-    LOG_DEBUG("Type: {}", magic_enum::enum_name(m_type));
+    LOG_DEBUG("Profile: {}", magic_enum::enum_name(m_profile))
+    LOG_DEBUG("Type: {}", magic_enum::enum_name(m_type))
 }
 #endif

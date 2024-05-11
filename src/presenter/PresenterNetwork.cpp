@@ -95,9 +95,9 @@ void PresenterNetwork::createNetwork()
 
     // Move the data
     m_model->addNetwork(std::move(m_network));
-    LOG_TRACE("Hopefully we have moved m_network to m_model");
+    LOG_TRACE("Hopefully we have moved m_network to m_model")
     m_model->getHeadnode().addConnection(std::move(m_connection));
-    LOG_TRACE("Hopefully we have moved m_connection to m_model");
+    LOG_TRACE("Hopefully we have moved m_connection to m_model")
 
     // Check moved data
     LOG_DEBUG("Added {} connection on headnode: {} -> {}",

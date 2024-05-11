@@ -142,10 +142,10 @@ public:
 
         for (const auto& string : tempStrings) {
             cStrings.push_back(string.c_str());
-            LOG_TRACE("Pushed back std::string {}", string.c_str());
+            LOG_TRACE("Pushed back std::string {}", string.c_str())
         }
         cStrings.push_back(nullptr);
-        LOG_TRACE("Pushed back nullptr");
+        LOG_TRACE("Pushed back nullptr")
 
 #if 1
     // goto implementation
@@ -231,7 +231,7 @@ public:
         for (std::size_t i = 0; i < arraySize; i++) {
             field[i].text = const_cast<char*>(items[i].first.c_str());
             fieldEntries[i] = const_cast<char*>((items[i].second).c_str());
-            LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i]);
+            LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i])
 
             // TODO: Check is there's a way to hide &
             field[i].value = &fieldEntries[i];

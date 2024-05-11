@@ -94,10 +94,10 @@ int main(int argc, const char** argv)
     }());
 
 #ifndef NDEBUG
-    LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput);
+    LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput)
 #endif
 
-    LOG_INFO("{} Started", productName);
+    LOG_INFO("{} Started", productName)
 
     try {
         if (cloyster::showVersion) {
@@ -123,7 +123,7 @@ int main(int argc, const char** argv)
                     LOG_INFO("Running {}.\n", cloyster::productName)
                     break;
                 } else if (response == 'N' || response == 'n') {
-                    LOG_INFO("Stopping {}.\n", cloyster::productName);
+                    LOG_INFO("Stopping {}.\n", cloyster::productName)
                     return EXIT_SUCCESS;
                 }
             }
@@ -144,7 +144,7 @@ int main(int argc, const char** argv)
         auto model = std::make_unique<Cluster>();
 
         if (!cloyster::answerfile.empty()) {
-            LOG_TRACE("Answerfile: {}", cloyster::answerfile);
+            LOG_TRACE("Answerfile: {}", cloyster::answerfile)
             model->fillData(cloyster::answerfile);
         }
 
@@ -159,17 +159,17 @@ int main(int argc, const char** argv)
         model->printData();
 #endif
 
-        LOG_TRACE("Starting execution engine");
+        LOG_TRACE("Starting execution engine")
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<Shell>(model);
         executionEngine->install();
 
     } catch (const std::exception& e) {
-        LOG_ERROR("ERROR: {}", e.what());
+        LOG_ERROR("ERROR: {}", e.what())
         return EXIT_FAILURE;
     }
 
-    LOG_INFO("{} has successfully ended", productName);
+    LOG_INFO("{} has successfully ended", productName)
     Log::shutdown();
 
     return EXIT_SUCCESS;

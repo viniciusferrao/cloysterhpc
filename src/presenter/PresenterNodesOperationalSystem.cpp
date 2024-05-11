@@ -73,7 +73,7 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             fmt::format("wget -NP /root {}", distroDownloadURL));
 
         m_model->setDiskImage(fmt::format("/root/{}", isoName));
-        LOG_DEBUG("Selected ISO: {}", fmt::format("/root/{}", isoName));
+        LOG_DEBUG("Selected ISO: {}", fmt::format("/root/{}", isoName))
 
     } else {
         // Operational system directory path selection

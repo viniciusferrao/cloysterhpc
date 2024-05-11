@@ -54,9 +54,9 @@
     }
 #else
 // Disabled for RELEASE builds
-#define LOG_TRACE(...) (void)0
-#define LOG_DEBUG(...) (void)0
-#define LOG_ASSERT(x, msg) (void)0
+#define LOG_TRACE(...) (void)0;
+#define LOG_DEBUG(...) (void)0;
+#define LOG_ASSERT(x, msg) (void)0;
 #endif
 
 namespace Log {

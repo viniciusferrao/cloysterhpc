@@ -25,7 +25,7 @@ PresenterTime::PresenterTime(
 
     std::string_view timezoneArea = m_model->getTimezone().getTimezoneArea();
 
-    LOG_DEBUG("Timezone area set to: {}", timezoneArea);
+    LOG_DEBUG("Timezone area set to: {}", timezoneArea)
 
     // Timezone location selection
 
@@ -44,7 +44,7 @@ PresenterTime::PresenterTime(
         fmt::format("{}/{}", timezoneArea, selectedTimezoneLocation));
 
     // FIXME: Horrible call; getTimezone() two times? Srsly?
-    LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone());
+    LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone())
 
     // Timeserver settings
     // FIXME: We left std::to_array if we want to manage the input on the view,
