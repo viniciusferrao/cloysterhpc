@@ -1,122 +1,195 @@
 {
-    "version": 3,
-    "cmakeMinimumRequired": {
-        "major": 3,
-        "minor": 24,
-        "patch": 0
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 26,
+    "patch": 5
+  },
+  "configurePresets": [
+    {
+      "name": "conf-common",
+      "description": "General settings that apply to all configurations",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}"
     },
-    "configurePresets": [
-        {
-            "name": "conf-common",
-            "description": "General settings that apply to all configurations",
-            "hidden": true,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}"
+    {
+      "name": "conf-linux-common",
+      "description": "Linux common settings",
+      "hidden": true,
+      "inherits": "conf-common",
+      "condition": {
+        "type": "inList",
+        "string": "${hostSystemName}",
+        "list": ["Linux"]
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+          "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
         },
-        {
-            "name": "conf-linux-common",
-            "description": "Linux OS settings for gcc and clang toolchains",
-            "hidden": true,
-            "inherits": "conf-common",
-            "condition": {
-                "type": "inList",
-                "string": "${hostSystemName}",
-                "list": [
-                    "Linux"
-                ]
-            },
-            "vendor": {
-                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
-                    "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
-                }
-            }
-        },
-        {
-            "name": "linux-gcc-debug",
-            "displayName": "gcc Debug",
-            "description": "Target Linux OS with the gcc compiler, debug build type",
-            "inherits": "conf-linux-common",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "linux-gcc-release",
-            "displayName": "gcc Release",
-            "description": "Target Linux OS with the gcc compiler, release build type",
-            "inherits": "conf-linux-common",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_BUILD_TYPE": "Release"
-            }
-        },
-        {
-            "name": "linux-clang-debug",
-            "displayName": "clang Debug",
-            "description": "Target Linux OS with the clang compiler, debug build type",
-            "inherits": "conf-linux-common",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "linux-clang-release",
-            "displayName": "clang Release",
-            "description": "Target Linux OS with the clang compiler, release build type",
-            "inherits": "conf-linux-common",
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_BUILD_TYPE": "Release"
-            }
+        "jetbrains.com/clion": {
+          "toolchain": "CloysterHPC RHEL9 Dev"
         }
-    ],
-    "testPresets": [
-        {
-            "name": "test-common",
-            "description": "Test CMake settings that apply to all configurations",
-            "hidden": true,
-            "output": {
-                "outputOnFailure": true
-            },
-            "execution": {
-                "noTestsAction": "error",
-                "stopOnFailure": true
-            }
-        },
-        {
-            "name": "test-linux-gcc-debug",
-            "displayName": "Strict",
-            "description": "Enable output and stop on failure",
-            "inherits": "test-common",
-            "configurePreset": "linux-gcc-debug"
-        },
-        {
-            "name": "test-linux-gcc-release",
-            "displayName": "Strict",
-            "description": "Enable output and stop on failure",
-            "inherits": "test-common",
-            "configurePreset": "linux-gcc-release"
-        },
-        {
-            "name": "test-linux-clang-debug",
-            "displayName": "Strict",
-            "description": "Enable output and stop on failure",
-            "inherits": "test-common",
-            "configurePreset": "linux-clang-debug"
-        },
-        {
-            "name": "test-linux-clang-release",
-            "displayName": "Strict",
-            "description": "Enable output and stop on failure",
-            "inherits": "test-common",
-            "configurePreset": "linux-clang-release"
-        }
-    ]
+      }
+    },
+    {
+      "name": "conf-linux-gcc-common",
+      "description": "Target Linux OS with the gcc compiler",
+      "hidden": true,
+      "inherits": "conf-linux-common",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "rhel9-gcc-release",
+      "displayName": "RHEL9 GCC Release",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc compiler, release build type",
+      "inherits": "conf-linux-gcc-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "rhel9-gcc-debug",
+      "displayName": "RHEL9 GCC Debug",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc compiler, debug build type",
+      "inherits": "conf-linux-gcc-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "conf-linux-gcc-toolset-13-common",
+      "description": "Target Linux OS with the gcc toolset 13 compiler",
+      "hidden": true,
+      "inherits": "conf-linux-common",
+      "environment": {
+        "PATH": "/opt/rh/gcc-toolset-13/root/usr/bin:$penv{PATH}",
+        "MANPATH": "/opt/rh/gcc-toolset-13/root/usr/share/man:$penv{MANPATH}",
+        "INFOPATH": "/opt/rh/gcc-toolset-13/root/usr/share/info:$penv{INFOPATH}",
+        "PCP_DIR": "/opt/rh/gcc-toolset-13/root",
+        "LD_LIBRARY_PATH": "/opt/rh/gcc-toolset-13/root/usr/lib64:$penv{LD_LIBRARY_PATH}",
+        "PKG_CONFIG_PATH": "/opt/rh/gcc-toolset-13/root/usr/lib64/pkgconfig:$penv{PKG_CONFIG_PATH}",
+        "X_SCLS": "gcc-toolset-13"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/rh/gcc-toolset-13/root/usr/bin/gcc",
+        "CMAKE_CXX_COMPILER": "/opt/rh/gcc-toolset-13/root/usr/bin/g++"
+      }
+    },
+    {
+      "name": "rhel9-gcc-toolset-13-release",
+      "displayName": "RHEL9 GCC 13 Release",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 13 compiler, release build type",
+      "inherits": "conf-linux-gcc-toolset-13-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "rhel9-gcc-toolset-13-debug",
+      "displayName": "RHEL9 GCC 13 Debug",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 13 compiler, debug build type",
+      "inherits": "conf-linux-gcc-toolset-13-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "conf-linux-clang-common",
+      "description": "Target Linux OS with the clang compiler",
+      "hidden": true,
+      "inherits": "conf-linux-common",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "linux-clang-release",
+      "displayName": "clang Release",
+      "description": "Target Linux OS with the clang compiler, release build type",
+      "hidden": true,
+      "inherits": "conf-linux-clang-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-clang-debug",
+      "displayName": "clang Debug",
+      "description": "Target Linux OS with the clang compiler, debug build type",
+      "hidden": true,
+      "inherits": "conf-linux-clang-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "rhel9-gcc-release",
+      "displayName": "gcc build release",
+      "configurePreset": "rhel9-gcc-release"
+    },
+    {
+      "name": "rhel9-gcc-debug",
+      "displayName": "gcc build debug",
+      "configurePreset": "rhel9-gcc-debug"
+    },
+    {
+      "name": "rhel9-gcc-toolset-13-release",
+      "displayName": "gcc toolset 13 build release",
+      "configurePreset": "rhel9-gcc-toolset-13-release"
+    },
+    {
+      "name": "rhel9-gcc-toolset-13-debug",
+      "displayName": "gcc toolset 13 build debug",
+      "configurePreset": "rhel9-gcc-toolset-13-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-common",
+      "description": "Test CMake settings that apply to all configurations",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "test-linux-gcc-debug",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "linux-gcc-debug"
+    },
+    {
+      "name": "test-linux-gcc-release",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "linux-gcc-release"
+    },
+    {
+      "name": "test-linux-clang-debug",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "linux-clang-debug"
+    },
+    {
+      "name": "test-linux-clang-release",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "linux-clang-release"
+    }
+  ]
 }

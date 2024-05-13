@@ -114,7 +114,7 @@ nature and `root` execution requirements.
 
 ### Recommended VM settings
 
-* EL8 based system with **minimal** package selection
+* EL8.9 or EL9.4 and higher based system with **minimal** package selection
 * Half of system CPU cores as vCPU
 * At least 4GB of RAM
 * 50GB of Disk
@@ -131,20 +131,18 @@ All dependencies should be installed after its execution and then follow
 with standard [CMake](https://cmake.org) procedure.
 
 All default [CMake](https://cmake.org) targets are supported. By default, it
-builds a **Debug** target with sanitizers enabled that modifies the
-running OS, so be **advised to run the code on a development system only**.
+builds a **Release** target that modifies the running OS, so be **advised to
+run the code on a development system only**.
 
 Finally, to build the software just run the commands:
 
 ```
- $ git submodule init
- $ git submodule update
  $ cmake -S . -B ./build
  $ cmake --build ./build
 ```
 
-Resulting binary will be available on `/build/src` directory in the root directory of
-the project.
+Resulting binary will be available on `/build/src` directory in the root
+directory of the project.
 
 As a final warning: running the software without **DUMMY** option will probably
 damage the running OS if they run as **root**. Be advised.
