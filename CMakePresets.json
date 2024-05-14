@@ -10,6 +10,7 @@
       "name": "conf-common",
       "description": "General settings that apply to all configurations",
       "hidden": true,
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}"
     },
@@ -28,7 +29,7 @@
           "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
         },
         "jetbrains.com/clion": {
-          "toolchain": "CloysterHPC RHEL9 Dev"
+          "toolchain": "OpenCATTUS RHEL9 Dev"
         }
       }
     },
@@ -108,20 +109,18 @@
       }
     },
     {
-      "name": "linux-clang-release",
+      "name": "rhel9-clang-release",
       "displayName": "clang Release",
       "description": "Target Linux OS with the clang compiler, release build type",
-      "hidden": true,
       "inherits": "conf-linux-clang-common",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "linux-clang-debug",
+      "name": "rhel9-clang-debug",
       "displayName": "clang Debug",
       "description": "Target Linux OS with the clang compiler, debug build type",
-      "hidden": true,
       "inherits": "conf-linux-clang-common",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
@@ -130,24 +129,34 @@
   ],
   "buildPresets": [
     {
-      "name": "rhel9-gcc-release",
+      "name": "rhel9-gcc-release-build",
       "displayName": "gcc build release",
       "configurePreset": "rhel9-gcc-release"
     },
     {
-      "name": "rhel9-gcc-debug",
+      "name": "rhel9-gcc-debug-build",
       "displayName": "gcc build debug",
       "configurePreset": "rhel9-gcc-debug"
     },
     {
-      "name": "rhel9-gcc-toolset-13-release",
+      "name": "rhel9-gcc-toolset-13-release-build",
       "displayName": "gcc toolset 13 build release",
       "configurePreset": "rhel9-gcc-toolset-13-release"
     },
     {
-      "name": "rhel9-gcc-toolset-13-debug",
+      "name": "rhel9-gcc-toolset-13-debug-build",
       "displayName": "gcc toolset 13 build debug",
       "configurePreset": "rhel9-gcc-toolset-13-debug"
+    },
+    {
+      "name": "rhel9-clang-release-build",
+      "displayName": "clang build debug",
+      "configurePreset": "rhel9-clang-release"
+    },
+    {
+      "name": "rhel9-clang-debug-build",
+      "displayName": "clang build debug",
+      "configurePreset": "rhel9-clang-debug"
     }
   ],
   "testPresets": [
@@ -164,32 +173,46 @@
       }
     },
     {
-      "name": "test-linux-gcc-debug",
+      "name": "test-rhel9-gcc-release",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "linux-gcc-debug"
+      "configurePreset": "rhel9-gcc-release"
     },
     {
-      "name": "test-linux-gcc-release",
+      "name": "test-rhel9-gcc-debug",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "linux-gcc-release"
+      "configurePreset": "rhel9-gcc-debug"
     },
     {
-      "name": "test-linux-clang-debug",
+      "name": "test-rhel9-gcc-toolset-13-release",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "linux-clang-debug"
+      "configurePreset": "rhel9-gcc-toolset-13-release"
     },
     {
-      "name": "test-linux-clang-release",
+      "name": "test-rhel9-gcc-toolset-13-debug",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "linux-clang-release"
+      "configurePreset": "rhel9-gcc-toolset-13-debug"
+    },
+    {
+      "name": "test-rhel9-clang-release",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "rhel9-clang-release"
+    },
+    {
+      "name": "test-rhel9-clang-debug",
+      "displayName": "Strict",
+      "description": "Enable output and stop on failure",
+      "inherits": "test-common",
+      "configurePreset": "rhel9-clang-debug"
     }
   ]
 }

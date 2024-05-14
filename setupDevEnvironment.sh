@@ -101,7 +101,7 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset, packages and utils
-dnf -y install git gcc-c++ cmake ccache cppcheck rsync
+dnf -y install rsync git gcc-c++ ninja-build cmake ccache cppcheck
 
 if [ "$os_version" = "8" ]; then
   dnf -y install python3 python3-pip\* llvm-toolset compiler-rt \
