@@ -8,8 +8,20 @@
 
 #include <cloysterhpc/functions.h>
 
+/**
+ * @class OFED
+ * @brief A class representing the OpenFabrics Enterprise Distribution (OFED).
+ *
+ * OFED is a software package that provides a set of high-performance
+ * communication libraries and drivers for use with InfiniBand and Ethernet
+ * hardware.
+ */
 class OFED {
 public:
+    /**
+     * @enum Kind
+     * @brief Enumeration representing different kinds of OFED installations.
+     */
     enum class Kind { Inbox, Mellanox, Oracle };
 
 private:
@@ -22,6 +34,12 @@ public:
     void setKind(Kind kind);
     [[nodiscard]] Kind getKind() const;
 
+    /**
+     * @brief Installs the OFED software package.
+     *
+     * This method installs the appropriate OFED components based on the
+     * specified kind.
+     */
     void install() const;
 };
 

@@ -31,6 +31,14 @@
 
 using boost::asio::ip::address;
 
+/**
+ * @class Connection
+ * @brief Manages network connection details for a cluster node.
+ *
+ * The Connection class provides functionality to manage the network details
+ * for a cluster node, including interface names, MAC addresses, IP addresses,
+ * MTU settings, and more.
+ */
 class Connection {
 private:
     // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c12-dont-make-data-members-const-or-references
@@ -51,6 +59,15 @@ private:
 public:
     Connection() = delete;
     explicit Connection(Network* network);
+
+    /**
+     * @brief Constructs a Connection object with the given parameters.
+     *
+     * @param network Pointer to the Network object.
+     * @param interface Optional network interface name.
+     * @param mac Optional MAC address.
+     * @param ip IP address as a string.
+     */
     Connection(Network* network, std::optional<std::string_view> interface,
         std::optional<std::string_view> mac, const std::string& ip);
 
@@ -65,6 +82,12 @@ public:
     // TODO: OOP those methods. There's a lot of code repetition on set/fetch
     [[nodiscard]] std::optional<std::string_view> getInterface() const;
     void setInterface(std::string_view interface);
+
+    /**
+     * @brief Fetches the list of network interfaces.
+     *
+     * @return A vector of network interface names.
+     */
     [[nodiscard]] static std::vector<std::string> fetchInterfaces();
 
     [[nodiscard]] std::optional<std::string_view> getMAC() const;
@@ -76,7 +99,20 @@ public:
     [[nodiscard]] const address getAddress() const;
     void setAddress(const address& address);
     void setAddress(const std::string& address);
+
+    /**
+     * @brief Increments the IP address by the given amount.
+     *
+     * @param increment Amount to increment the IP address by.
+     */
     void incrementAddress(const std::size_t increment = 1) noexcept;
+
+    /**
+     * @brief Fetches the IP address of a given network interface.
+     *
+     * @param interface Network interface name.
+     * @return IP address.
+     */
     [[nodiscard]] static address fetchAddress(const std::string& interface);
 
     [[nodiscard]] const std::string& getHostname() const;
@@ -88,6 +124,9 @@ public:
     [[nodiscard]] const Network* getNetwork() const;
 
 #ifndef NDEBUG
+    /**
+     * @brief Dumps the connection details for debugging purposes.
+     */
     void dumpConnection() const;
 #endif
 };

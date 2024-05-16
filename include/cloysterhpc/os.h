@@ -10,11 +10,38 @@
 #include <string>
 
 // Darwin added for development reasons, not really supported.
+/**
+ * @class OS
+ * @brief A class representing an Operating System (OS).
+ *
+ * This class provides functionality to manage various attributes of an
+ * operating system, including architecture, family, platform, distribution,
+ * kernel version, and version number.
+ */
 class OS {
 public:
+    /**
+     * @enum Arch
+     * @brief Enumeration representing different architectures of the OS.
+     */
     enum class Arch { x86_64, ppc64le };
+
+    /**
+     * @enum Family
+     * @brief Enumeration representing different families of the OS.
+     */
     enum class Family { Linux, Darwin };
+
+    /**
+     * @enum Platform
+     * @brief Enumeration representing different platforms of the OS.
+     */
     enum class Platform { el8, el9 };
+
+    /**
+     * @enum Distro
+     * @brief Enumeration representing different distributions of the OS.
+     */
     enum class Distro { RHEL, OL, Rocky, AlmaLinux };
 
 private:
@@ -31,10 +58,28 @@ private:
 
     void setMinorVersion(unsigned int minorVersion);
 
+    /**
+     * @brief Extracts the value from a key-value pair string.
+     *
+     * @param line The key-value pair string.
+     * @return The value extracted from the key-value pair string.
+     */
     std::string getValueFromKey(const std::string& line);
 
 public:
     OS();
+
+    /**
+     * @brief Constructs an OS object with the specified attributes.
+     *
+     * @param arch The architecture of the OS.
+     * @param family The family of the OS.
+     * @param platform The platform of the OS.
+     * @param distro The distribution of the OS.
+     * @param kernel The kernel version of the OS.
+     * @param majorVersion The major version number of the OS.
+     * @param minorVersion The minor version number of the OS.
+     */
     OS(OS::Arch arch, OS::Family family, OS::Platform platform,
         OS::Distro distro, std::string_view kernel, unsigned majorVersion,
         unsigned minorVersion);
@@ -65,6 +110,11 @@ public:
     [[nodiscard]] unsigned int getMinorVersion() const;
 
 #ifndef NDEBUG
+    /**
+     * @brief Prints the data of the OS.
+     *
+     * This method is available only in debug mode.
+     */
     void printData() const;
 #endif
 };

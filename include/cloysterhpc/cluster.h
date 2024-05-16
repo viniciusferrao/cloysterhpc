@@ -23,9 +23,26 @@
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/timezone.h>
 
+/**
+ * @class Cluster
+ * @brief Represents a cluster environment.
+ *
+ * This class manages various configuration settings and resources for a cluster
+ * environment, including headnode, nodes, networks, provisioner, timezone,
+ * locale, and more.
+ */
 class Cluster {
 public:
+    /**
+     * @enum SELinuxMode
+     * @brief Enumeration for SELinux modes.
+     */
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
+
+    /**
+     * @enum Provisioner
+     * @brief Enumeration for cluster provisioners.
+     */
     enum class Provisioner { xCAT };
 
 private:
@@ -73,15 +90,73 @@ public:
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
+
+    /**
+     * @brief Add a new network to the cluster.
+     *
+     */
     void addNetwork();
+
+    /**
+     * @brief Add a new network to the cluster.
+     *
+     * @param profile Profile of the network.
+     */
     void addNetwork(Network::Profile profile);
+
+    /**
+     * @brief Add a new network to the cluster.
+     *
+     * @param profile Profile of the network.
+     * @param type Type of the network.
+     */
     void addNetwork(Network::Profile profile, Network::Type type);
+
+    /**
+     * @brief Adds a new network to the cluster with formatted nameservers.
+     *
+     * This function adds a new network to the cluster with the provided
+     * configuration, including IP address, subnet mask, gateway, VLAN, domain
+     * name, and formatted nameservers.
+     *
+     * @param profile Profile of the network.
+     * @param type Type of the network.
+     * @param ip IP address of the network.
+     * @param subnetMask Subnet mask of the network.
+     * @param gateway Gateway address of the network.
+     * @param vlan VLAN ID of the network.
+     * @param domainName Domain name of the network.
+     * @param nameserver List of nameservers in address format.
+     */
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
         const std::string&, const std::string&, const uint16_t&,
         const std::string&, const std::vector<address>&);
+
+    /**
+     * @brief Adds a new network to the cluster with formatted nameservers.
+     *
+     * This function adds a new network to the cluster with the provided
+     * configuration, including IP address, subnet mask, gateway, VLAN, domain
+     * name, and formatted nameservers.
+     *
+     * @param profile Profile of the network.
+     * @param type Type of the network.
+     * @param ip IP address of the network.
+     * @param subnetMask Subnet mask of the network.
+     * @param gateway Gateway address of the network.
+     * @param vlan VLAN ID of the network.
+     * @param domainName Domain name of the network.
+     * @param nameserver List of nameservers in string format.
+     */
     void addNetwork(Network::Profile profile, Network::Type, const std::string&,
         const std::string&, const std::string&, const uint16_t&,
         const std::string&, const std::vector<std::string>&);
+
+    /**
+     * @brief Add a new network to the cluster.
+     *
+     * @param network The network.
+     */
     void addNetwork(std::unique_ptr<Network>&& network);
 
     bool isUpdateSystem() const;
@@ -104,12 +179,50 @@ public:
 
     // TODO: Add std::optional to BMC with std::nullopt as default initializer
     [[nodiscard]] const std::vector<Node>& getNodes() const;
+
+    /**
+     * @brief Adds a new node to the cluster.
+     *
+     * This function adds a new node to the cluster with the provided hostname,
+     * operating system, CPU, connections, and BMC configuration.
+     *
+     * @param hostname The hostname of the node.
+     * @param os Reference to the operating system object.
+     * @param cpu Reference to the CPU object.
+     * @param connections Rvalue reference to a list of connections.
+     * @param bmc Reference to the BMC object.
+     */
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections, BMC& bmc);
+
+    /**
+     * @brief Adds a new node to the cluster without BMC configuration.
+     *
+     * This function adds a new node to the cluster with the provided hostname,
+     * operating system, CPU, and connections.
+     *
+     * @param hostname The hostname of the node.
+     * @param os Reference to the operating system object.
+     * @param cpu Reference to the CPU object.
+     * @param connections Rvalue reference to a list of connections.
+     */
     void addNode(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections);
+
+    /**
+     * @brief Adds an existing node to the cluster.
+     *
+     * This function adds an existing node to the cluster.
+     *
+     * @param node The node object to be added.
+     */
     void addNode(Node node);
 
+    /**
+     * @brief Fills cluster data from the specified answer file.
+     *
+     * @param answerfilePath Path to the answer file.
+     */
     void fillData(const std::string& answerfilePath);
 
 #ifndef NDEBUG

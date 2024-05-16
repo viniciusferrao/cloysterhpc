@@ -8,6 +8,10 @@
 
 #include <cloysterhpc/queuesystem/queuesystem.h>
 
+/**
+ * @class SLURM
+ * @brief Manages SLURM server installation and configuration.
+ */
 class SLURM : public QueueSystem {
 private:
     bool m_accounting { false };
@@ -15,9 +19,24 @@ private:
 public:
     explicit SLURM(const Cluster& cluster);
 
+    /**
+     * @brief Installs the SLURM server package on the system.
+     */
     void installServer();
+
+    /**
+     * @brief Configures the SLURM server.
+     */
     void configureServer();
+
+    /**
+     * @brief Enables the SLURM server to start at boot.
+     */
     void enableServer();
+
+    /**
+     * @brief Starts the SLURM server.
+     */
     void startServer();
 };
 

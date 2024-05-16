@@ -21,11 +21,25 @@ extern bool dryRun;
  *
  * We will use this in the progress dialog
  */
+/**
+ * @struct CommandProxy
+ * @brief A command proxy to capture the command output while the command is
+ * running.
+ *
+ * This structure is used to capture the output of a command in real-time,
+ * useful for displaying progress in a dialog.
+ */
 struct CommandProxy {
     bool valid = false;
     boost::process::child child;
     boost::process::ipstream pipe_stream;
 
+    /**
+     * @brief Gets a line of output from the command.
+     *
+     * @return An optional string containing a line of output if available,
+     * otherwise std::nullopt.
+     */
     std::optional<std::string> getline()
     {
         if (!valid)
@@ -48,27 +62,105 @@ struct CommandProxy {
 };
 
 /* shell execution */
+
+/**
+ * @brief Executes a command and captures its output.
+ *
+ * @param command The command to execute.
+ * @param output A list to store the output lines of the command.
+ * @param overrideDryRun A flag to override the dryRun setting.
+ * @return The exit code of the command.
+ */
 int runCommand(const std::string& command,
     // std::optional<std::list<std::string>>& output,
     std::list<std::string>& output, bool overrideDryRun = false);
+
+/**
+ * @brief Executes a command.
+ *
+ * @param command The command to execute.
+ * @param overrideDryRun A flag to override the dryRun setting.
+ * @return The exit code of the command.
+ */
 int runCommand(const std::string& command, bool overrideDryRun = false);
 
+/**
+ * @brief Executes a command and provides a proxy to capture its output
+ * iteratively.
+ *
+ * @param command The command to execute.
+ * @param overrideDryRun A flag to override the dryRun setting.
+ * @return A CommandProxy to capture the command's output.
+ */
 CommandProxy runCommandIter(
     const std::string& command, bool overrideDryRun = false);
 
 /* environment variables helper functions */
+
+/**
+ * @brief Retrieves the value of an environment variable.
+ *
+ * @param variable The name of the environment variable.
+ * @return The value of the environment variable.
+ */
 std::string getEnvironmentVariable(const std::string&);
 
 /* conf manipulation functions */
+
+/**
+ * @brief Reads a configuration value from a file.
+ *
+ * @param filename The name of the file to read from.
+ * @return The configuration value as a string.
+ */
 std::string readConfig(const std::string&);
+
+/**
+ * @brief Writes a configuration value to a file.
+ *
+ * @param filename The name of the file to write to.
+ */
 void writeConfig(const std::string&);
 
 /* helper function */
+
+/**
+ * @brief Creates a directory at the specified path.
+ *
+ * @param path The path where the directory should be created.
+ */
 void createDirectory(const std::filesystem::path& path);
+
+/**
+ * @brief Removes a file.
+ *
+ * @param filename The name of the file to remove.
+ */
 void removeFile(std::string_view filename);
+
+/**
+ * @brief Creates a backup of a file.
+ *
+ * @param filename The name of the file to backup.
+ */
 void backupFile(std::string_view filename);
+
+/**
+ * @brief Changes a value in a configuration file.
+ *
+ * @param filename The name of the configuration file.
+ * @param key The key of the value to change.
+ * @param value The new value to set.
+ */
 void changeValueInConfigurationFile(
     const std::string&, const std::string&, std::string_view);
+
+/**
+ * @brief Adds a string to a file.
+ *
+ * @param filename The name of the file to add the string to.
+ * @param string The string to add to the file.
+ */
 void addStringToFile(std::string_view filename, std::string_view string);
 
 } /* namespace cloyster */
