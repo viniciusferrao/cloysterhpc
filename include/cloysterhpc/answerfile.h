@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include "cluster.h"
 #include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
@@ -52,6 +53,7 @@ private:
         OS::Distro distro;
         std::string version;
         std::string kernel;
+        Cluster::SELinuxMode selinuxmode;
     };
 
     struct AFNode {
@@ -91,6 +93,7 @@ private:
     void loadNodes();
     AFNode loadNode(const std::string& section);
     AFNode validateNode(AFNode node);
+    Cluster::SELinuxMode checkSELinuxMode(const std::string& mode);
 
     template <typename T>
     void validateAttribute(const std::string& sectionName,

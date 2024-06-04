@@ -169,6 +169,19 @@ void AnswerFile::loadHostnameSettings()
         = m_ini.getValue("hostname", "domain_name", false, false);
 }
 
+Cluster::SELinuxMode AnswerFile::checkSELinuxMode(const std::string& mode)
+{
+    if (mode == "enforcing") {
+        return Cluster::SELinuxMode::Enforcing;
+    } else if (mode == "permissive") {
+        return Cluster::SELinuxMode::Permissive;
+    } else if (mode == "disabled") {
+        return Cluster::SELinuxMode::Disabled;
+    } else {
+        return Cluster::SELinuxMode::Enforcing;
+    }
+}
+
 void AnswerFile::loadSystemSettings()
 {
     system.disk_image = m_ini.getValue("system", "disk_image", false, false);
@@ -185,6 +198,8 @@ void AnswerFile::loadSystemSettings()
 
     system.version = m_ini.getValue("system", "version", false, false);
     system.kernel = m_ini.getValue("system", "kernel", false, false);
+    system.selinuxmode
+        = checkSELinuxMode(m_ini.getValue("system", "selinuxmode"));
 }
 
 AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)

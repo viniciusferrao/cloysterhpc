@@ -503,6 +503,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     setTimezone(answerfile.time.timezone);
     setLocale(answerfile.time.locale);
+    setSELinux(answerfile.system.selinuxmode);
 
     this->m_headnode.setHostname(answerfile.hostname.hostname);
     setDomainName(answerfile.hostname.domain_name);

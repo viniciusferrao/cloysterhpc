@@ -62,6 +62,7 @@ deploy_cloyster() {
 
     # Run Cloyster
     vagrant ssh "$machine_name" -c "sudo ./cloyster -l 6 -a answerfile.ini -u"
+    vagrant ssh "$machine_name" -c "getenforce"
 }
 
 destroy_vm_and_cleanup() {
