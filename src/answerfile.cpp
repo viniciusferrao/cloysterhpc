@@ -198,8 +198,8 @@ void AnswerFile::loadSystemSettings()
 
     system.version = m_ini.getValue("system", "version", false, false);
     system.kernel = m_ini.getValue("system", "kernel", false, false);
-    system.selinuxmode
-        = checkSELinuxMode(m_ini.getValue("system", "selinuxmode"));
+    system.selinuxmode = checkSELinuxMode(
+        m_ini.getValue("system", "selinuxmode", true, false));
 }
 
 AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
