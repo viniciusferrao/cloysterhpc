@@ -75,6 +75,9 @@ int main(int argc, const char** argv)
     app.add_option(
         "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
+    app.add_option("--customrepo", cloyster::customRepofilePath,
+        "Full path to a custom repofile");
+
     bool unattended = false;
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");

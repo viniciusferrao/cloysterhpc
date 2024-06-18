@@ -21,6 +21,7 @@ bool runAsDaemon = false;
 std::string logLevelInput
     = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
 std::string answerfile;
+std::string customRepofilePath;
 }
 
 #endif // CLOYSTERHPC_CLOYSTER_H_

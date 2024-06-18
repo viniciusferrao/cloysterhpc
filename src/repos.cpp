@@ -17,16 +17,6 @@ using cloyster::runCommand;
 Repos::Repos(const OS& m_os)
     : m_os(m_os)
 {
-    switch (m_os.getPlatform()) {
-        case OS::Platform::el8:
-            m_family = EL8;
-            break;
-        case OS::Platform::el9:
-            m_family = EL9;
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
 }
 
 void Repos::createConfigurationFile(const repofile& repo) const
@@ -87,27 +77,66 @@ void Repos::disable(const std::string& id)
     runCommand(fmt::format("sudo dnf config-manager --set-disabled {}", id));
 }
 
-void Repos::configureRHEL() const { enable(m_family.RHEL.joinDependencies()); }
-
-void Repos::configureOL() const
+void Repos::configureEL() const
 {
-    createGPGKeyFile(
-        m_family.Oracle.repo_gpg_filename, m_family.Oracle.repo_gpg);
-    enable(m_family.Oracle.joinDependencies());
+    switch (m_os.getPlatform()) {
+        case OS::Platform::el8:
+            configureEL8();
+            break;
+        case OS::Platform::el9:
+            configureEL9();
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
 }
 
-void Repos::configureRocky() const
+void Repos::configureEL8() const
 {
-    disable("baseos");
-    createGPGKeyFile(m_family.Rocky.repo_gpg_filename, m_family.Rocky.repo_gpg);
-    enable(m_family.Rocky.joinDependencies());
+    std::string dependencies;
+
+    switch (m_os.getDistro()) {
+        case OS::Distro::AlmaLinux:
+            dependencies = "cloyster-AlmaLinux-BaseOS,powertools";
+            break;
+        case OS::Distro::RHEL:
+            dependencies = "codeready-builder-for-rhel-8-x86_64-rpms";
+            break;
+        case OS::Distro::OL:
+            dependencies = "cloyster-OL-BaseOS,ol8_codeready_builder";
+            break;
+        case OS::Distro::Rocky:
+            dependencies = "cloyster-Rocky-BaseOS,powertools";
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
+
+    enable(dependencies);
 }
 
-void Repos::configureAlma() const
+void Repos::configureEL9() const
 {
-    createGPGKeyFile(
-        m_family.AlmaLinux.repo_gpg_filename, m_family.AlmaLinux.repo_gpg);
-    enable(m_family.AlmaLinux.joinDependencies());
+    std::string dependencies;
+
+    switch (m_os.getDistro()) {
+        case OS::Distro::AlmaLinux:
+            dependencies = "cloyster-AlmaLinux-BaseOS,crb";
+            break;
+        case OS::Distro::RHEL:
+            dependencies = "codeready-builder-for-rhel-9-x86_64-rpms";
+            break;
+        case OS::Distro::OL:
+            dependencies = "cloyster-OL-BaseOS,ol9_codeready_builder";
+            break;
+        case OS::Distro::Rocky:
+            dependencies = "cloyster-Rocky-BaseOS,crb";
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
+
+    enable(dependencies);
 }
 
 void Repos::configureXCAT() const
@@ -244,41 +273,45 @@ void Repos::configureRepositories() const
     LOG_INFO("Setting up repositories")
 
     createCloysterRepo();
+    configureEL();
+    configureXCAT();
+}
 
-    switch (m_os.getDistro()) {
-        using enum OS::Distro;
-        case RHEL:
-            configureRHEL();
-            break;
-        case OL:
-            configureOL();
-            break;
-        case Rocky:
-            configureRocky();
-            break;
-        case AlmaLinux:
-            configureAlma();
-            break;
+void Repos::createCloysterRepo() const
+{
+    LOG_INFO("Creating Cloyster repofile")
+    std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
+
+    inifile repofile;
+    std::string repodata;
+
+    if (cloyster::customRepofilePath.empty()) {
+        switch (m_os.getPlatform()) {
+            case OS::Platform::el8:
+                CLOYSTER_REPO_EL8.save(repodata);
+                break;
+            case OS::Platform::el9:
+                CLOYSTER_REPO_EL9.save(repodata);
+                break;
+            default:
+                throw std::runtime_error("Unsupported platform");
+        }
+
+        repofile.loadData(repodata);
+    } else {
+        LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath)
+        repofile.loadFile(cloyster::customRepofilePath);
     }
 
-    //@TODO Let user choose the optional repos.
+    // @TODO call to configureAdditionalRepos should be done here
+    // @TODO Let user choose the optional repos.
     configureAdditionalRepos(
         { AdditionalType::beegfs, AdditionalType::ELRepo, AdditionalType::EPEL,
             AdditionalType::Grafana, AdditionalType::influxData,
             AdditionalType::oneAPI, AdditionalType::OpenHPC,
             AdditionalType::Zabbix, AdditionalType::RPMFusionUpdates });
 
-    configureXCAT();
-}
-
-void Repos::createCloysterRepo() const
-{
-    LOG_INFO("Creating Cloyster repo")
-    std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
-
-    std::ofstream repofile(path);
-    repofile << m_family.repo;
-    repofile.close();
+    repofile.saveFile(path);
 }
 
 void Repos::configureAdditionalRepos(
@@ -286,11 +319,8 @@ void Repos::configureAdditionalRepos(
 {
     LOG_INFO("Setting up additional repositories")
 
-    for (AdditionalType type : additional) {
-        for (const AdditionalRepo& repo : m_family.additionalRepos) {
-            if (repo.type == type) {
-                createGPGKeyFile(repo.gpg_filename, repo.gpg_key);
-            }
-        }
-    }
+    /*
+     * @TODO This function should enable/disable the additional repos on
+     * cloyster.repo
+     */
 }
