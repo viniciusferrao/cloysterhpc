@@ -151,11 +151,11 @@ void removeFile(std::string_view filename)
  */
 std::string getCurrentTimestamp()
 {
-    auto now = std::chrono::system_clock::now();
-    auto time_t_now = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time_t_now), "%Y%m%d_%H%M%S");
-    return ss.str();
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+    return buf;
 }
 
 /* Backup file */
