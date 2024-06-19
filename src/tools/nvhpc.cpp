@@ -4,6 +4,11 @@
  */
 
 #include "cloysterhpc/tools/nvhpc.h"
-#include "cloysterhpc/functions.h"
 
-void NVhpc::install() { cloyster::runCommand("dnf -y install nvhpc-24.3"); }
+void NVhpc::install()
+{
+    LOG_TRACE("Installing Nvidia HPC SDK");
+    cloyster::runCommand("dnf -y install nvhpc-24.3");
+}
+
+void NVhpc::configure() {};

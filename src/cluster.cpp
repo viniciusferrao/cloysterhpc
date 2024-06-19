@@ -605,6 +605,10 @@ void Cluster::fillData(const std::string& answerfilePath)
     setProvisioner(Provisioner::xCAT);
     m_headnode.setOS(nodeOS);
 
+    for (const auto& tool : answerfile.getTools()) {
+        tool->install();
+    }
+
     LOG_TRACE("Configure Nodes")
     for (auto node : answerfile.nodes.nodes) {
 

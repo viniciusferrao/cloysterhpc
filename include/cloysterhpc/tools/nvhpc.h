@@ -6,9 +6,14 @@
 #ifndef CLOYSTERHPC_NVHPC_H_
 #define CLOYSTERHPC_NVHPC_H_
 
-class NVhpc {
+#include <cloysterhpc/tools/ITool.h>
+
+class NVhpc : public ITool {
+private:
+    void configure() override;
+
 public:
-    void install();
+    void install() override;
 };
 
 #endif // CLOYSTERHPC_NVHPC_H_
