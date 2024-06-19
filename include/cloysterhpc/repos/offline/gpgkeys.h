@@ -53,6 +53,10 @@ constexpr const char* GPG_KEY_ZABBIX_8 =
 #include "cloysterhpc/repos/offline/el8/RPM-GPG-KEY-zabbix"
     ;
 
+constexpr const char* GPG_KEY_NVHPCSDK_8 =
+#include "cloysterhpc/repos/offline/el8/RPM-GPG-KEY-NVIDIA-HPC-SDK"
+    ;
+
 // EL9 KEYS
 constexpr const char* GPG_KEY_ALMA_9 =
 #include "cloysterhpc/repos/offline/el9/RPM-GPG-KEY-AlmaLinux"
@@ -103,4 +107,8 @@ constexpr const char* GPG_KEY_RPMFUSIONUPDATES_9 =
 
 constexpr const char* GPG_KEY_ZABBIX_9 =
 #include "cloysterhpc/repos/offline/el9/RPM-GPG-KEY-zabbix"
+    ;
+
+constexpr const char* GPG_KEY_NVHPCSDK_9 =
+#include "cloysterhpc/repos/offline/el9/RPM-GPG-KEY-NVIDIA-HPC-SDK"
     ;

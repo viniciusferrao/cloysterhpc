@@ -23,7 +23,8 @@ enum class AddonType {
     oneAPI,
     OpenHPC,
     Zabbix,
-    RPMFusionUpdates
+    RPMFusionUpdates,
+    NvidiaHPCSDK
 };
 
 enum class Platform { el8, el9 };
@@ -34,27 +35,31 @@ protected:
 
 public:
     GPGVerifier()
-        : m_gpg_keys{
-            { AddonType::beegfs, { Platform::el8, GPG_KEY_BEEGFS_8 }},
-            { AddonType::beegfs, { Platform::el9, GPG_KEY_BEEGFS_9 }},
-            { AddonType::ELRepo, { Platform::el8, GPG_KEY_ELREPO_8 }},
-            { AddonType::ELRepo, { Platform::el9, GPG_KEY_ELREPO_9 }},
-            { AddonType::EPEL, { Platform::el8, GPG_KEY_EPEL_8 }},
-            { AddonType::EPEL, { Platform::el9, GPG_KEY_EPEL_9 }},
-            { AddonType::Grafana, { Platform::el8, GPG_KEY_GRAFANA_8 }},
-            { AddonType::Grafana, { Platform::el9, GPG_KEY_GRAFANA_9 }},
-            { AddonType::influxData, { Platform::el8, GPG_KEY_INFLUXDATA_8 }},
-            { AddonType::influxData, { Platform::el9, GPG_KEY_INFLUXDATA_9 }},
-            { AddonType::oneAPI, { Platform::el8, GPG_KEY_ONEAPI_8 }},
-            { AddonType::oneAPI, { Platform::el9, GPG_KEY_ONEAPI_9 }},
-            { AddonType::OpenHPC, { Platform::el8, GPG_KEY_OPENHPC_8 }},
-            { AddonType::OpenHPC, { Platform::el9, GPG_KEY_OPENHPC_9 }},
-            { AddonType::RPMFusionUpdates, { Platform::el8, GPG_KEY_RPMFUSIONUPDATES_8 }},
-            { AddonType::RPMFusionUpdates, { Platform::el9, GPG_KEY_RPMFUSIONUPDATES_9 }},
-            { AddonType::Zabbix, { Platform::el8, GPG_KEY_ZABBIX_8 }},
-            { AddonType::Zabbix, { Platform::el9, GPG_KEY_ZABBIX_9 }}
-        }
-    {}
+        : m_gpg_keys { { AddonType::beegfs,
+                           { Platform::el8, GPG_KEY_BEEGFS_8 } },
+            { AddonType::beegfs, { Platform::el9, GPG_KEY_BEEGFS_9 } },
+            { AddonType::ELRepo, { Platform::el8, GPG_KEY_ELREPO_8 } },
+            { AddonType::ELRepo, { Platform::el9, GPG_KEY_ELREPO_9 } },
+            { AddonType::EPEL, { Platform::el8, GPG_KEY_EPEL_8 } },
+            { AddonType::EPEL, { Platform::el9, GPG_KEY_EPEL_9 } },
+            { AddonType::Grafana, { Platform::el8, GPG_KEY_GRAFANA_8 } },
+            { AddonType::Grafana, { Platform::el9, GPG_KEY_GRAFANA_9 } },
+            { AddonType::influxData, { Platform::el8, GPG_KEY_INFLUXDATA_8 } },
+            { AddonType::influxData, { Platform::el9, GPG_KEY_INFLUXDATA_9 } },
+            { AddonType::oneAPI, { Platform::el8, GPG_KEY_ONEAPI_8 } },
+            { AddonType::oneAPI, { Platform::el9, GPG_KEY_ONEAPI_9 } },
+            { AddonType::OpenHPC, { Platform::el8, GPG_KEY_OPENHPC_8 } },
+            { AddonType::OpenHPC, { Platform::el9, GPG_KEY_OPENHPC_9 } },
+            { AddonType::RPMFusionUpdates,
+                { Platform::el8, GPG_KEY_RPMFUSIONUPDATES_8 } },
+            { AddonType::RPMFusionUpdates,
+                { Platform::el9, GPG_KEY_RPMFUSIONUPDATES_9 } },
+            { AddonType::Zabbix, { Platform::el8, GPG_KEY_ZABBIX_8 } },
+            { AddonType::Zabbix, { Platform::el9, GPG_KEY_ZABBIX_9 } },
+            { AddonType::NvidiaHPCSDK, { Platform::el8, GPG_KEY_NVHPCSDK_8 } },
+            { AddonType::NvidiaHPCSDK, { Platform::el9, GPG_KEY_NVHPCSDK_9 } } }
+    {
+    }
 
     std::vector<std::pair<Platform, std::string>> getGPGKeys(AddonType type)
     {
@@ -68,7 +73,8 @@ public:
         return result;
     }
 
-    bool verifyGPGKey(AddonType type, Platform platform, const std::string& gpgKey)
+    bool verifyGPGKey(
+        AddonType type, Platform platform, const std::string& gpgKey)
     {
         auto range = m_gpg_keys.equal_range(type);
         for (auto it = range.first; it != range.second; ++it) {
