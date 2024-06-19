@@ -6,9 +6,13 @@
 #ifndef CLOYSTERHPC_REPOS_H_
 #define CLOYSTERHPC_REPOS_H_
 
+#include "inifile.h"
 #include <cloysterhpc/os.h>
 #include <string>
-#include <cloysterhpc/repos/repoimport.h>
+
+namespace cloyster {
+extern std::string customRepofilePath;
+};
 
 struct repofile {
     std::string id;
@@ -34,20 +38,40 @@ struct repofile {
 };
 
 class Repos {
+public:
+    enum class AdditionalType {
+        beegfs,
+        ELRepo,
+        EPEL,
+        Grafana,
+        influxData,
+        oneAPI,
+        OpenHPC,
+        Zabbix,
+        RPMFusionUpdates
+    };
+
 private:
-    void configureRHEL() const;
-    void configureRocky() const;
-    void configureOL() const;
-    void configureAlma() const;
+    void configureEL() const;
+    void configureEL8() const;
+    void configureEL9() const;
     void configureXCAT() const;
-    void configureAdditionalRepos(const std::vector<AdditionalType>& additional) const;
-    void createGPGKeyFile(const std::string& filename, const std::string& key) const;
-    void createGPGKeyFile(const std::filesystem::path& path, const std::string& key)const;
+    void configureAdditionalRepos(
+        const std::vector<AdditionalType>& additional) const;
+    void createGPGKeyFile(
+        const std::string& filename, const std::string& key) const;
+    void createGPGKeyFile(
+        const std::filesystem::path& path, const std::string& key) const;
     void createGPGKeyFile(const repofile& repo) const;
     void createCloysterRepo() const;
     OS m_os;
-    Family m_family;
 
+    inifile CLOYSTER_REPO_EL8 {
+#include "cloysterhpc/repos/el8/cloyster.repo"
+    };
+    inifile CLOYSTER_REPO_EL9 = {
+#include "cloysterhpc/repos/el9/cloyster.repo"
+    };
 
 public:
     explicit Repos(const OS& osinfo);

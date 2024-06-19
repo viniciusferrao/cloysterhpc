@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/answerfile.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
@@ -19,7 +20,6 @@
 #include <regex>
 
 #ifndef NDEBUG
-#include "cloysterhpc/answerfile.h"
 #include <fmt/format.h>
 #endif
 
@@ -276,7 +276,7 @@ void Cluster::printNetworks(
     const std::list<std::unique_ptr<Network>>& networks) const
 {
 
-    LOG_DEBUG("Dump network data:");
+    LOG_DEBUG("Dump network data:")
 
 #if __cplusplus < 202002L
     size_t i, j;
@@ -285,20 +285,20 @@ void Cluster::printNetworks(
 #else
     for (size_t i = 0; const auto& network : networks) {
 #endif
-        LOG_DEBUG("Network [{}]", i++);
-        LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()));
-        LOG_DEBUG("Address: {}", network->getAddress().to_string());
-        LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string());
-        LOG_DEBUG("Gateway: {}", network->getGateway().to_string());
-        LOG_DEBUG("VLAN: {}", network->getVLAN());
-        LOG_DEBUG("Domain Name: {}", network->getDomainName());
+        LOG_DEBUG("Network [{}]", i++)
+        LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()))
+        LOG_DEBUG("Address: {}", network->getAddress().to_string())
+        LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string())
+        LOG_DEBUG("Gateway: {}", network->getGateway().to_string())
+        LOG_DEBUG("VLAN: {}", network->getVLAN())
+        LOG_DEBUG("Domain Name: {}", network->getDomainName())
 #if __cplusplus < 202002L
         j = 0;
         for (const auto& nameserver : network.getNameserver()) {
 #else
         for (size_t j = 0; const auto& nameserver : network->getNameservers()) {
 #endif
-            LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver.to_string());
+            LOG_DEBUG("Nameserver [{}]: {}", j++, nameserver.to_string())
         }
     }
 }
@@ -312,31 +312,31 @@ void Cluster::printConnections()
 
 void Cluster::printData()
 {
-    LOG_DEBUG("Dump cluster data:");
-    LOG_DEBUG("Cluster attributes defined:");
+    LOG_DEBUG("Dump cluster data:")
+    LOG_DEBUG("Cluster attributes defined:")
     LOG_DEBUG("OS Data:")
     m_headnode.getOS().printData();
-    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone());
-    LOG_DEBUG("Locale: {}", getLocale().getLocale());
-    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname());
-    LOG_DEBUG("DomainName: {}", getDomainName());
-    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
+    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone())
+    LOG_DEBUG("Locale: {}", getLocale().getLocale())
+    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname())
+    LOG_DEBUG("DomainName: {}", getDomainName())
+    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN())
 
     printNetworks(m_network);
     printConnections();
 
-    LOG_DEBUG("Provisioner: {}", static_cast<int>(getProvisioner()));
-    //    LOG_DEBUG("nodePrefix: {}", nodePrefix);
-    //    LOG_DEBUG("nodePadding: {}", nodePadding);
-    //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP);
-    //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword);
-    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string());
+    LOG_DEBUG("Provisioner: {}", static_cast<int>(getProvisioner()))
+    //    LOG_DEBUG("nodePrefix: {}", nodePrefix)
+    //    LOG_DEBUG("nodePadding: {}", nodePadding)
+    //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP)
+    //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword)
+    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string())
 
-    LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"));
-    //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"));
+    LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"))
+    //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"))
 
-    LOG_DEBUG("Firewall: {}", (isFirewall() ? "true" : "false"));
-    LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()));
+    LOG_DEBUG("Firewall: {}", (isFirewall() ? "true" : "false"))
+    LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()))
 }
 
 void Cluster::fillTestData()
@@ -430,7 +430,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     AnswerFile answerfile(answerfilePath);
 
-    LOG_TRACE("Configure Management Network");
+    LOG_TRACE("Configure Management Network")
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
@@ -454,7 +454,7 @@ void Cluster::fillData(const std::string& answerfilePath)
     managementNetwork->setAddress(managementNetwork->calculateAddress(
         answerfile.management.con_ip_addr.value()));
 
-    LOG_TRACE("Configure External Network");
+    LOG_TRACE("Configure External Network")
     // External Network
     auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
@@ -495,7 +495,7 @@ void Cluster::fillData(const std::string& answerfilePath)
     nodeOS.setKernel(answerfile.system.kernel);
     nodeOS.setVersion(answerfile.system.version);
 
-    LOG_TRACE("Cluster name: {}", answerfile.information.cluster_name);
+    LOG_TRACE("Cluster name: {}", answerfile.information.cluster_name)
 
     setName(answerfile.information.cluster_name);
     setCompanyName(answerfile.information.company_name);
@@ -515,7 +515,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     addNetwork(std::move(managementNetwork));
 
-    LOG_TRACE("Configure Management Connection");
+    LOG_TRACE("Configure Management Connection")
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
     managementConnection.setInterface(
@@ -531,7 +531,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     addNetwork(std::move(externalNetwork));
 
-    LOG_TRACE("Configure External Connection");
+    LOG_TRACE("Configure External Connection")
     auto externalConnection
         = Connection(&getNetwork(Network::Profile::External));
     externalConnection.setInterface(answerfile.external.con_interface.value());
@@ -561,7 +561,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // Infiniband (Application) Network
     if (answerfile.application.con_interface.has_value()) {
-        LOG_TRACE("Configure Application Network");
+        LOG_TRACE("Configure Application Network")
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
@@ -605,10 +605,10 @@ void Cluster::fillData(const std::string& answerfilePath)
     setProvisioner(Provisioner::xCAT);
     m_headnode.setOS(nodeOS);
 
-    LOG_TRACE("Configure Nodes");
+    LOG_TRACE("Configure Nodes")
     for (auto node : answerfile.nodes.nodes) {
 
-        LOG_TRACE("Configure node {}", node.hostname.value());
+        LOG_TRACE("Configure node {}", node.hostname.value())
 
         std::list<Connection> nodeConnections;
         auto& connection = nodeConnections.emplace_back(

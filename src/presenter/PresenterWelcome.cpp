@@ -11,5 +11,5 @@ PresenterWelcome::PresenterWelcome(
 {
 
     m_view->message(Messages::Welcome::message);
-    LOG_DEBUG("Welcome message displayed");
+    LOG_DEBUG("Welcome message displayed")
 }

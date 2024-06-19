@@ -231,12 +231,12 @@ std::string OS::getValueFromKey(const std::string& line)
 #ifndef NDEBUG
 void OS::printData() const
 {
-    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(m_arch));
-    LOG_DEBUG("Family: {}", magic_enum::enum_name(m_family));
-    LOG_DEBUG("Kernel Release: {}", m_kernel);
-    LOG_DEBUG("Platform: {}", magic_enum::enum_name(m_platform));
-    LOG_DEBUG("Distribution: {}", magic_enum::enum_name(m_distro));
-    LOG_DEBUG("Major Version: {}", m_majorVersion);
-    LOG_DEBUG("Minor Version: {}", m_minorVersion);
+    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(m_arch))
+    LOG_DEBUG("Family: {}", magic_enum::enum_name(m_family))
+    LOG_DEBUG("Kernel Release: {}", m_kernel)
+    LOG_DEBUG("Platform: {}", magic_enum::enum_name(m_platform))
+    LOG_DEBUG("Distribution: {}", magic_enum::enum_name(m_distro))
+    LOG_DEBUG("Major Version: {}", m_majorVersion)
+    LOG_DEBUG("Minor Version: {}", m_minorVersion)
 }
 #endif

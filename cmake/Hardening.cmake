@@ -17,8 +17,19 @@ macro(
     set(NEW_CXX_DEFINITIONS "${NEW_CXX_DEFINITIONS} -D_GLIBCXX_ASSERTIONS")
     message(STATUS "*** GLIBC++ Assertions (vector[], string[], ...) enabled")
 
-    set(NEW_COMPILE_OPTIONS "${NEW_COMPILE_OPTIONS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3")
-    message(STATUS "*** g++/clang _FORTIFY_SOURCE=3 enabled")
+    # Only enable _FORTIFY_SOURCE if not running in DEBUG mode.
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(STATUS "*** g++ _FORTIFY_SOURCE is not defined due to DEBUG mode")
+    else()
+      # If running GCC and version is lower than 12 set _FORTIFY_SOURCE to 2.
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12)
+        set(NEW_COMPILE_OPTIONS "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2")
+        message(STATUS "*** g++ _FORTIFY_SOURCE=2 enabled (GCC < 12)")
+      else()
+        set(NEW_COMPILE_OPTIONS "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3")
+        message(STATUS "*** g++/clang _FORTIFY_SOURCE=3 enabled")
+      endif()
+    endif()
 
     #    check_cxx_compiler_flag(-fpie PIE)
     #if(PIE)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.26.5)
 
 # This template attempts to be "fetch_content"-able
 # so that it works well with tools like CPM or other
@@ -23,9 +23,9 @@ endif()
 # Set a default build type if none was specified
 # This is required for Conan 2.0 to work properly
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'Debug' as none was specified.")
+  message(STATUS "Setting build type to 'Release' as none was specified.")
   set(CMAKE_BUILD_TYPE
-          Debug
+          Release
           CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui, ccmake
   set_property(

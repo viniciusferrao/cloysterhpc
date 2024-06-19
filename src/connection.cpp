@@ -71,7 +71,7 @@ std::optional<std::string_view> Connection::getInterface() const
 
 void Connection::setInterface(std::string_view interface)
 {
-    LOG_DEBUG("Checking if interface {} exists", interface);
+    LOG_DEBUG("Checking if interface {} exists", interface)
 
     if (interface == "lo")
         throw std::runtime_error("Cannot use the loopback interface");
@@ -136,7 +136,7 @@ std::optional<std::string_view> Connection::getMAC() const { return m_mac; }
 
 void Connection::setMAC(std::string_view mac)
 {
-    LOG_DEBUG("Checking MAC address: {}", mac);
+    LOG_DEBUG("Checking MAC address: {}", mac)
 
     if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
         throw std::runtime_error("Invalid MAC address size");
@@ -305,9 +305,9 @@ void Connection::dumpConnection() const
         magic_enum::enum_name(m_network->getProfile()),
         magic_enum::enum_name(m_network->getType()));
 
-    LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"));
-    LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"));
-    LOG_DEBUG("IP Address: {}", getAddress().to_string());
+    LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"))
+    LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"))
+    LOG_DEBUG("IP Address: {}", getAddress().to_string())
 
     LOG_DEBUG("===================================")
 }

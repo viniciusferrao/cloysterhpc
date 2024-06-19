@@ -81,6 +81,6 @@ PresenterMailSystem::PresenterMailSystem(
         }
 
     } else {
-        LOG_DEBUG("Postfix wasn't enabled");
+        LOG_DEBUG("Postfix wasn't enabled")
     }
 }

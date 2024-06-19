@@ -22,6 +22,8 @@ void inifile::loadFile(const std::filesystem::path& filepath)
     ini.LoadFile(filepath.c_str());
 }
 
+void inifile::loadData(const std::string& data) { ini.LoadData(data); }
+
 std::string inifile::getValue(const std::string& section,
     const std::string& key, const bool optional, const bool canBeNull)
 {
@@ -42,6 +44,12 @@ std::string inifile::getValue(const std::string& section,
 
 inifile::inifile() { ini.SetUnicode(); }
 
+inifile::inifile(const std::string& file)
+{
+    ini.SetUnicode();
+    loadData(file);
+}
+
 void inifile::setValue(const std::string& section, const std::string& key,
     const std::string& newValue)
 {
@@ -52,6 +60,10 @@ bool inifile::deleteValue(const std::string& section, const std::string& key)
 {
     return ini.Delete(section.c_str(), key.c_str());
 }
+
+// Saves inifile data in a std::string
+void inifile::save(std::string& holder) const { ini.Save(holder); }
+
 void inifile::saveFile(const std::string& filepath)
 {
     ini.SaveFile(filepath.c_str());

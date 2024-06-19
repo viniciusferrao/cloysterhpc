@@ -30,7 +30,7 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
 {
     for (const auto& image : m_knownImageFilename)
         if (path.filename().string() == image) {
-            LOG_TRACE("Disk image is recognized");
+            LOG_TRACE("Disk image is recognized")
             return true;
         }
 
@@ -42,11 +42,11 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
     if (!isKnownImage(path)) {
-        LOG_TRACE("Disk image is unknown. Can't verify checksum");
+        LOG_TRACE("Disk image is unknown. Can't verify checksum")
         return false;
     }
 
-    LOG_TRACE("Verifying disk image checksum... This may take a while");
+    LOG_TRACE("Verifying disk image checksum... This may take a while")
 
     std::unordered_map<std::string, std::string> hash_map = {
         { "rhel-8.8-x86_64-dvd.iso",
@@ -82,7 +82,7 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
     filter.release();
 
     if (output == isoHash) {
-        LOG_TRACE("Checksum - The disk image is valid");
+        LOG_TRACE("Checksum - The disk image is valid")
         return true;
     }
 
