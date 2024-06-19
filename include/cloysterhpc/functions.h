@@ -70,6 +70,7 @@ void backupFile(std::string_view filename);
 void changeValueInConfigurationFile(
     const std::string&, const std::string&, std::string_view);
 void addStringToFile(std::string_view filename, std::string_view string);
+std::string getCurrentTimestamp();
 
 } /* namespace cloyster */
 

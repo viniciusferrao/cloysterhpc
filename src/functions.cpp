@@ -141,10 +141,28 @@ void removeFile(std::string_view filename)
     }
 }
 
+/**
+ * \brief Get the current timestamp as a string.
+ *
+ * This function generates the current timestamp in the format
+ * "YYYYMMDD_HHMMSS".
+ *
+ * \return A string with the current timestamp.
+ */
+std::string getCurrentTimestamp()
+{
+    time_t now;
+    time(&now);
+    char buf[sizeof "2011-10-08T07:07:09Z"];
+    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
+    return buf;
+}
+
 /* Backup file */
 void backupFile(std::string_view filename)
 {
-    const auto& backupFile = fmt::format("{}/backup{}", installPath, filename);
+    const auto& backupFile = fmt::format(
+        "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
     if (cloyster::dryRun) {
         LOG_INFO(
