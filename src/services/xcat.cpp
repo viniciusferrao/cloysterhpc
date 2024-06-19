@@ -77,7 +77,7 @@ void XCAT::nodeset(std::string_view nodes)
 void XCAT::createDirectoryTree()
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create the directory CHROOT/install/custom/netboot");
+        LOG_INFO("Would create the directory CHROOT/install/custom/netboot")
         return;
     }
 
@@ -202,7 +202,7 @@ void XCAT::generatePostinstallFile()
     }
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change file {} permissions", filename);
+        LOG_INFO("Would change file {} permissions", filename)
         return;
     }
 
@@ -363,7 +363,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
 
 void XCAT::addNode(const Node& node)
 {
-    LOG_DEBUG("Adding node {} to xCAT", node.getHostname());
+    LOG_DEBUG("Adding node {} to xCAT", node.getHostname())
 
     std::string command = fmt::format(
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "

@@ -28,7 +28,7 @@ void AnswerFile::loadFile(const std::filesystem::path& path)
 
 void AnswerFile::loadOptions()
 {
-    LOG_TRACE("Verify answerfile variables");
+    LOG_TRACE("Verify answerfile variables")
 
     loadExternalNetwork();
     loadManagementNetwork();
@@ -236,7 +236,7 @@ void AnswerFile::loadNodes()
             break;
         }
 
-        LOG_TRACE("Configure {}", nodeSection);
+        LOG_TRACE("Configure {}", nodeSection)
         AFNode newNode = loadNode(nodeSection);
 
         if (newNode.hostname->empty()) {

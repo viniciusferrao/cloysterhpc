@@ -15,7 +15,7 @@ PresenterInfiniband::PresenterInfiniband(
     auto interfaces = Connection::fetchInterfaces();
     if (std::find(interfaces.begin(), interfaces.end(), "ib0")
         == interfaces.end()) {
-        LOG_WARN("No Infiniband interfaces found.");
+        LOG_WARN("No Infiniband interfaces found.")
         return;
     }
 

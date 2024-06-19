@@ -39,12 +39,12 @@ void Shell::disableSELinux()
     cloyster::backupFile(filename);
     cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 
-    LOG_WARN("SELinux has been disabled");
+    LOG_WARN("SELinux has been disabled")
 }
 
 void Shell::configureSELinuxMode()
 {
-    LOG_INFO("Setting up SELinux");
+    LOG_INFO("Setting up SELinux")
 
     switch (m_cluster->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
@@ -69,7 +69,7 @@ void Shell::configureSELinuxMode()
 //    network exists on the cluster.
 void Shell::configureFirewall()
 {
-    LOG_INFO("Setting up firewall");
+    LOG_INFO("Setting up firewall")
 
     if (m_cluster->isFirewall()) {
         runCommand("systemctl enable --now firewalld");
@@ -95,13 +95,13 @@ void Shell::configureFirewall()
     } else {
         runCommand("systemctl disable --now firewalld");
 
-        LOG_WARN("Firewalld has been disabled");
+        LOG_WARN("Firewalld has been disabled")
     }
 }
 
 void Shell::configureFQDN()
 {
-    LOG_INFO("Setting up hostname");
+    LOG_INFO("Setting up hostname")
 
     runCommand(fmt::format(
         "hostnamectl set-hostname {}", m_cluster->getHeadnode().getFQDN()));
@@ -110,11 +110,11 @@ void Shell::configureFQDN()
 // TODO: Proper file parsing
 void Shell::configureHostsFile()
 {
-    LOG_INFO("Setting up additional entries on hosts file");
+    LOG_INFO("Setting up additional entries on hosts file")
 
     auto& headnode = m_cluster->getHeadnode();
 
-    const auto& ip = headnode.getConnection(Network::Profile::External)
+    const auto& ip = headnode.getConnection(Network::Profile::Management)
                          .getAddress()
                          .to_string();
     const auto& fqdn = headnode.getFQDN();
@@ -129,7 +129,7 @@ void Shell::configureHostsFile()
 
 void Shell::configureTimezone()
 {
-    LOG_INFO("Setting up timezone");
+    LOG_INFO("Setting up timezone")
 
     runCommand(fmt::format(
         "timedatectl set-timezone {}", m_cluster->getTimezone().getTimezone()));
@@ -137,7 +137,7 @@ void Shell::configureTimezone()
 
 void Shell::configureLocale()
 {
-    LOG_INFO("Setting up locale");
+    LOG_INFO("Setting up locale")
 
     runCommand(fmt::format(
         "localectl set-locale {}", m_cluster->getLocale().getLocale()));
@@ -145,7 +145,7 @@ void Shell::configureLocale()
 
 void Shell::disableNetworkManagerDNSOverride()
 {
-    LOG_INFO("Disabling DNS override on NetworkManager");
+    LOG_INFO("Disabling DNS override on NetworkManager")
 
     std::string_view filename
         = CHROOT "/etc/NetworkManager/conf.d/90-dns-none.conf";
@@ -169,7 +169,7 @@ void Shell::disableNetworkManagerDNSOverride()
  */
 void Shell::configureNetworks(const std::list<Connection>& connections)
 {
-    LOG_INFO("Setting up networks");
+    LOG_INFO("Setting up networks")
 
     runCommand("systemctl enable --now NetworkManager");
 
@@ -213,21 +213,29 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 void Shell::runSystemUpdate()
 {
     if (m_cluster->isUpdateSystem()) {
-        LOG_INFO("Checking if system updates are available");
+        LOG_INFO("Checking if system updates are available")
         runCommand("dnf -y update");
     }
 }
 
 void Shell::installRequiredPackages()
 {
-    LOG_INFO("Installing required system packages");
+    LOG_INFO("Installing required system packages")
 
     runCommand("dnf -y install wget dnf-plugins-core");
 }
 
+void Shell::disallowSSHRootPasswordLogin()
+{
+    LOG_INFO("Allowing root login only through public key authentication (SSH)")
+
+    runCommand("sed -i s/PermitRootLogin\\ yes/PermitRootLogin\\ "
+               "without-password/g /etc/ssh/sshd_config");
+}
+
 void Shell::installOpenHPCBase()
 {
-    LOG_INFO("Installing base OpenHPC packages");
+    LOG_INFO("Installing base OpenHPC packages")
 
     runCommand("dnf -y install ohpc-base");
 }
@@ -265,7 +273,7 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
 
 void Shell::configureQueueSystem()
 {
-    LOG_INFO("Setting up the queue system");
+    LOG_INFO("Setting up the queue system")
 
     if (const auto& queue = m_cluster->getQueueSystem()) {
         switch (queue.value()->getKind()) {
@@ -302,14 +310,14 @@ void Shell::configureQueueSystem()
 void Shell::configureInfiniband()
 {
     if (const auto& ofed = m_cluster->getOFED()) {
-        LOG_INFO("Setting up Infiniband support");
+        LOG_INFO("Setting up Infiniband support")
         ofed->install();
     }
 }
 
 void Shell::removeMemlockLimits()
 {
-    LOG_INFO("Removing memlock limits on headnode");
+    LOG_INFO("Removing memlock limits on headnode")
 
     std::string_view filename = CHROOT "/etc/security/limits.conf";
 
@@ -348,6 +356,7 @@ void Shell::install()
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
+    disallowSSHRootPasswordLogin();
 
     configureHostsFile();
     configureTimezone();
@@ -386,7 +395,7 @@ void Shell::install()
     const auto& provisionerName { magic_enum::enum_name(
         m_cluster->getProvisioner()) };
 
-    LOG_DEBUG("Setting up the provisioner: {}", provisionerName);
+    LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
     // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
@@ -395,21 +404,21 @@ void Shell::install()
             break;
     }
 
-    LOG_INFO("Setting up compute node images... This may take a while");
+    LOG_INFO("Setting up compute node images... This may take a while")
 
-    LOG_INFO("[{}] Installing packages", provisionerName);
+    LOG_INFO("[{}] Installing packages", provisionerName)
     provisioner->installPackages();
 
-    LOG_INFO("[{}] Setting up the provisioner", provisionerName);
+    LOG_INFO("[{}] Setting up the provisioner", provisionerName)
     provisioner->setup();
 
-    LOG_INFO("[{}] Creating node images", provisionerName);
+    LOG_INFO("[{}] Creating node images", provisionerName)
     provisioner->createImage();
 
-    LOG_INFO("[{}] Adding compute nodes", provisionerName);
+    LOG_INFO("[{}] Adding compute nodes", provisionerName)
     provisioner->addNodes();
 
-    LOG_INFO("[{}] Setting up image on nodes", provisionerName);
+    LOG_INFO("[{}] Setting up image on nodes", provisionerName)
     provisioner->setNodesImage();
 
     LOG_INFO("[{}] Setting up boot settings via IPMI, if available",

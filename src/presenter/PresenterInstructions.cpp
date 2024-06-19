@@ -11,5 +11,5 @@ PresenterInstructions::PresenterInstructions(
 {
 
     m_view->message(Messages::Instructions::message);
-    LOG_DEBUG("Install instructions displayed");
+    LOG_DEBUG("Install instructions displayed")
 }

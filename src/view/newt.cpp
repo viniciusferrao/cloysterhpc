@@ -49,7 +49,7 @@ void Newt::abort()
 {
     // TODO: We should only destroy the view and not terminate the application
     this->~Newt();
-    LOG_WARN("{}", TUIText::abort);
+    LOG_WARN("{}", TUIText::abort)
     std::exit(EXIT_SUCCESS);
 }
 

@@ -26,7 +26,7 @@ std::string_view Timezone::getTimezoneArea() const { return m_timezoneArea; }
 
 void Timezone::setSystemTimezone()
 {
-    LOG_DEBUG("Setting system timezone to {}\n", m_timezone);
+    LOG_DEBUG("Setting system timezone to {}\n", m_timezone)
     cloyster::runCommand(
         fmt::format("timedatectl set timezone {}", m_timezone));
 }
@@ -38,7 +38,7 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
-    LOG_DEBUG("Fetching available system timezones");
+    LOG_DEBUG("Fetching available system timezones")
     std::list<std::string> output;
 
 // TODO: Remove this hack
