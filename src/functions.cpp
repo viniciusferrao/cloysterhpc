@@ -227,9 +227,11 @@ void addStringToFile(std::string_view filename, std::string_view string)
  * @param filename The filename
  * @param mode The wanted permissions (mode). By default it is set to 0600.
  */
-void setFilePermissions(const std::string& filename, mode_t mode) {
+void setFilePermissions(const std::string& filename, mode_t mode)
+{
     if (chmod(filename.c_str(), mode) != 0) {
-        throw std::runtime_error(fmt::format("Error setting permissions on file: {}", filename));
+        throw std::runtime_error(
+            fmt::format("Error setting permissions on file: {}", filename));
     }
 }
 
