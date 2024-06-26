@@ -70,6 +70,8 @@ void backupFile(std::string_view filename);
 void changeValueInConfigurationFile(
     const std::string&, const std::string&, std::string_view);
 void addStringToFile(std::string_view filename, std::string_view string);
+void setFilePermissions(
+    const std::string& filename, mode_t mode = S_IRUSR | S_IWUSR);
 
 } /* namespace cloyster */
 
