@@ -1,0 +1,68 @@
+module xCAT-rsync 2.0;
+
+require {
+    class capability dac_override;
+    class chr_file write;
+    class dir { getattr search write };
+    class file { execute execute_no_trans getattr map open read };
+    class lnk_file read;
+    class tcp_socket name_connect;
+    type bin_t;
+    type dhcpd_t;
+    type etc_t;
+    type groupadd_t;
+    type httpd_sys_content_t;
+    type kpatch_exec_t;
+    type krb5_keytab_t;
+    type rhsmcertd_t;
+    type root_t;
+    type rsync_t;
+    type rsync_t;
+    type setfiles_t;
+    type shell_exec_t;
+    type ssh_exec_t;
+    type ssh_home_t;
+    type ssh_keysign_exec_t;
+    type ssh_port_t;
+    type sshd_key_t;
+    type sysctl_net_t;
+    type useradd_t;
+}
+
+#============= rsync_t ==============
+
+allow rsync_t bin_t:file map;
+allow rsync_t bin_t:file { execute execute_no_trans map };
+allow rsync_t bin_t:file { execute execute_no_trans };
+allow rsync_t etc_t:dir write;
+allow rsync_t krb5_keytab_t:dir search;
+allow rsync_t self:capability dac_override;
+allow rsync_t shell_exec_t:file map;
+allow rsync_t shell_exec_t:file { execute execute_no_trans map };
+allow rsync_t shell_exec_t:file { execute execute_no_trans };
+allow rsync_t ssh_exec_t:file { execute execute_no_trans map open read };
+allow rsync_t ssh_home_t:dir { getattr search };
+allow rsync_t ssh_home_t:file { getattr open read };
+allow rsync_t ssh_keysign_exec_t:file { execute execute_no_trans getattr map open read };
+allow rsync_t ssh_keysign_exec_t:file { execute execute_no_trans };
+allow rsync_t ssh_keysign_exec_t:file { getattr map open read };
+allow rsync_t ssh_port_t:tcp_socket name_connect;
+allow rsync_t sshd_key_t:file { getattr open read };
+
+#============= dhcpd_t ==============
+allow dhcpd_t sysctl_net_t:dir search;
+
+#============= groupadd_t ==============
+allow groupadd_t httpd_sys_content_t:chr_file write;
+allow groupadd_t httpd_sys_content_t:lnk_file read;
+
+#============= rhsmcertd_t ==============
+allow rhsmcertd_t kpatch_exec_t:file getattr;
+allow rhsmcertd_t root_t:file read;
+
+#============= setfiles_t ==============
+allow setfiles_t httpd_sys_content_t:chr_file write;
+
+#============= useradd_t ==============
+allow useradd_t httpd_sys_content_t:chr_file write;
+allow useradd_t httpd_sys_content_t:lnk_file read;

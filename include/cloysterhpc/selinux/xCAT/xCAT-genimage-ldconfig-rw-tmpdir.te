@@ -1,0 +1,16 @@
+module xCAT-genimage-ldconfig-rw-tmpdir 1.0;
+
+require {
+    type initrc_tmp_t;
+    type ldconfig_t;
+    class lnk_file { create getattr unlink };
+    class file { create rename setattr };
+    class dir { add_name read remove_name write };
+}
+
+#============= ldconfig_t ==============
+
+allow ldconfig_t initrc_tmp_t:dir { add_name read remove_name write };
+allow ldconfig_t initrc_tmp_t:file { create rename setattr };
+allow ldconfig_t initrc_tmp_t:lnk_file create;
+allow ldconfig_t initrc_tmp_t:lnk_file { getattr unlink };

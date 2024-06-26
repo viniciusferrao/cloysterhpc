@@ -20,6 +20,7 @@
 #include <regex>
 
 #ifndef NDEBUG
+#include "cloysterhpc/selinux/selinux.h"
 #include <fmt/format.h>
 #endif
 
@@ -503,6 +504,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     setTimezone(answerfile.time.timezone);
     setLocale(answerfile.time.locale);
+    setSELinux(answerfile.system.selinuxmode);
 
     this->m_headnode.setHostname(answerfile.hostname.hostname);
     setDomainName(answerfile.hostname.domain_name);
@@ -604,6 +606,12 @@ void Cluster::fillData(const std::string& answerfilePath)
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
     m_headnode.setOS(nodeOS);
+
+    // SELinux policies
+    if (getSELinux() != SELinuxMode::Disabled) {
+        SELinux SELinuxConfigurer;
+        SELinuxConfigurer.configureProvisioner(getProvisioner());
+    }
 
     LOG_TRACE("Configure Nodes")
     for (auto node : answerfile.nodes.nodes) {
