@@ -7,7 +7,7 @@
 
 void NVhpc::install()
 {
-    LOG_TRACE("Installing Nvidia HPC SDK");
+    LOG_TRACE("Installing NVIDIA HPC SDK");
     cloyster::runCommand("dnf -y install nvhpc-24.3");
 }
 
