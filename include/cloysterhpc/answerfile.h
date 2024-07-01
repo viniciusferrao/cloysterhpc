@@ -6,10 +6,12 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include "cloysterhpc/tools/ITool.h"
 #include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <optional>
+#include <utility>
 #include <vector>
 
 using boost::asio::ip::address;
@@ -76,6 +78,8 @@ private:
         std::vector<AFNode> nodes;
     };
 
+    std::vector<std::shared_ptr<ITool>> m_tools;
+
     std::filesystem::path m_path;
     inifile m_ini;
 
@@ -89,6 +93,9 @@ private:
     void loadHostnameSettings();
     void loadSystemSettings();
     void loadNodes();
+    void loadTools();
+    void loadNVHPC();
+    bool checkEnabled(const std::string& section);
     AFNode loadNode(const std::string& section);
     AFNode validateNode(AFNode node);
 
@@ -115,6 +122,7 @@ public:
     AFNodes nodes;
 
     void loadFile(const std::filesystem::path& path);
+    std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);

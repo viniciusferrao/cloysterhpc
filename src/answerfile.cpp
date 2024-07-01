@@ -5,6 +5,7 @@
 
 #include "cloysterhpc/answerfile.h"
 #include "cloysterhpc/services/log.h"
+#include "cloysterhpc/tools/nvhpc.h"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <magic_enum.hpp>
@@ -38,6 +39,7 @@ void AnswerFile::loadOptions()
     loadHostnameSettings();
     loadSystemSettings();
     loadNodes();
+    loadTools();
 }
 
 address AnswerFile::convertStringToAddress(const std::string& addr)
@@ -293,6 +295,25 @@ AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
 
     return node;
 }
+
+bool AnswerFile::checkEnabled(const std::string& section)
+{
+    return m_ini.exists(section, "enabled")
+        && m_ini.getValue(section, "enabled") == "1";
+}
+
+void AnswerFile::loadTools() { loadNVHPC(); }
+
+void AnswerFile::loadNVHPC()
+{
+    if (!checkEnabled("nvhpc")) {
+        return;
+    }
+
+    m_tools.emplace_back(std::make_shared<NVhpc>());
+}
+
+std::vector<std::shared_ptr<ITool>> AnswerFile::getTools() { return m_tools; }
 
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
