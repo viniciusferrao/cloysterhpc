@@ -4,8 +4,6 @@
  */
 
 #include "cloysterhpc/services/fail2ban.h"
-#include "cloysterhpc/functions.h"
-#include "cloysterhpc/services/log.h"
 
 void fail2ban::install()
 {
