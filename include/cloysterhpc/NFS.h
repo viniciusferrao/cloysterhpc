@@ -23,7 +23,8 @@ public:
         const boost::asio::ip::address& address,
         const std::string& permissions);
 
-    void configure();
+    void install() final {};
+    void configure() final;
     void enable() final;
     void disable() final;
     void start() final;

@@ -609,6 +609,10 @@ void Cluster::fillData(const std::string& answerfilePath)
         tool->install();
     }
 
+    for (const auto& service : answerfile.getServices()) {
+        service->install();
+    }
+
     LOG_TRACE("Configure Nodes")
     for (auto node : answerfile.nodes.nodes) {
 
