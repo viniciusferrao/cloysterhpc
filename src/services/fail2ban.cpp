@@ -39,7 +39,10 @@ void fail2ban::configure()
         "enabled = true\n");
 }
 
-void fail2ban::enable() { cloyster::runCommand("systemctl enable fail2ban"); }
+void fail2ban::enable()
+{
+    cloyster::runCommand("systemctl enable --now fail2ban");
+}
 
 void fail2ban::disable() { cloyster::runCommand("systemctl disable fail2ban"); }
 

@@ -667,6 +667,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     for (const auto& service : answerfile.getServices()) {
         service->install();
+        service->enable();
     }
 
     LOG_TRACE("Configure Nodes")
