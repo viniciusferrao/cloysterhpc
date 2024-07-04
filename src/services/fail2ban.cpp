@@ -15,8 +15,7 @@ void fail2ban::install()
 void fail2ban::configure()
 {
     //  Create the local configuration file for fail2ban
-    cloyster::runCommand(
-        "cat > /etc/fail2ban/jail.local << EOF\n"
+    cloyster::addStringToFile("/etc/fail2ban/jail.local",
         "[DEFAULT]\n"
         "# Ban IP/hosts for 24 hour ( 24h*3600s = 86400s):\n"
         "bantime = 86400\n"
@@ -37,8 +36,7 @@ void fail2ban::configure()
         "  \n"
         "# Enable sshd protection\n"
         "[sshd]\n"
-        "enabled = true\n"
-        "EOF");
+        "enabled = true\n");
 }
 
 void fail2ban::enable() { cloyster::runCommand("systemctl enable fail2ban"); }
