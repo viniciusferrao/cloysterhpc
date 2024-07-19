@@ -7,13 +7,15 @@
 
 #include <cstdlib> /* getenv() */
 #include <iostream>
+#include <chrono>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <fmt/format.h>
-
 #include <cloysterhpc/services/log.h>
+
+#include <fmt/format.h>
+#include <fmt/chrono.h>
 #include <fstream>
 
 namespace cloyster {
@@ -151,11 +153,13 @@ void removeFile(std::string_view filename)
  */
 std::string getCurrentTimestamp()
 {
-    time_t now;
-    time(&now);
-    char buf[sizeof "2011-10-08T07:07:09Z"];
-    strftime(buf, sizeof buf, "%FT%TZ", gmtime(&now));
-    return buf;
+    using clock = std::chrono::system_clock;
+    using sec = std::chrono::seconds;
+
+    std::chrono::time_point<clock> current_time = clock::now();
+    auto result = fmt::format("{:%FT%TZ}", std::chrono::time_point_cast<sec>(current_time));
+
+    return result;
 }
 
 /* Backup file */
