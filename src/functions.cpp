@@ -5,17 +5,17 @@
 
 #include <cloysterhpc/functions.h>
 
+#include <chrono>
 #include <cstdlib> /* getenv() */
 #include <iostream>
-#include <chrono>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <cloysterhpc/services/log.h>
 
-#include <fmt/format.h>
 #include <fmt/chrono.h>
+#include <fmt/format.h>
 #include <fstream>
 
 namespace cloyster {
@@ -157,7 +157,8 @@ std::string getCurrentTimestamp()
     using sec = std::chrono::seconds;
 
     std::chrono::time_point<clock> current_time = clock::now();
-    auto result = fmt::format("{:%FT%TZ}", std::chrono::time_point_cast<sec>(current_time));
+    auto result = fmt::format(
+        "{:%FT%TZ}", std::chrono::time_point_cast<sec>(current_time));
 
     return result;
 }
