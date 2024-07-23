@@ -33,7 +33,9 @@ function(cloysterhpc_setup_dependencies)
 
   if(NOT TARGET spdlog::spdlog)
     if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME spdlog)
+      CPMFindPackage(NAME spdlog
+       OPTIONS
+        "SPDLOG_FMT_EXTERNAL ON")
     else()
       CPMAddPackage(
         NAME

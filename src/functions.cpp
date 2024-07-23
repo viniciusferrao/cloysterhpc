@@ -5,15 +5,17 @@
 
 #include <cloysterhpc/functions.h>
 
+#include <chrono>
 #include <cstdlib> /* getenv() */
 #include <iostream>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <fmt/format.h>
-
 #include <cloysterhpc/services/log.h>
+
+#include <fmt/chrono.h>
+#include <fmt/format.h>
 #include <fstream>
 
 namespace cloyster {
@@ -141,10 +143,31 @@ void removeFile(std::string_view filename)
     }
 }
 
+/**
+ * \brief Get the current timestamp as a string.
+ *
+ * This function generates the current timestamp in the format
+ * "YYYYMMDD_HHMMSS".
+ *
+ * \return A string with the current timestamp.
+ */
+std::string getCurrentTimestamp()
+{
+    using clock = std::chrono::system_clock;
+    using sec = std::chrono::seconds;
+
+    std::chrono::time_point<clock> current_time = clock::now();
+    auto result = fmt::format(
+        "{:%FT%TZ}", std::chrono::time_point_cast<sec>(current_time));
+
+    return result;
+}
+
 /* Backup file */
 void backupFile(std::string_view filename)
 {
-    const auto& backupFile = fmt::format("{}/backup{}", installPath, filename);
+    const auto& backupFile = fmt::format(
+        "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
     if (cloyster::dryRun) {
         LOG_INFO(
