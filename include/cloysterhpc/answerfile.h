@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include "cloysterhpc/services/IService.h"
 #include "cloysterhpc/tools/ITool.h"
 #include "os.h"
 #include <boost/asio.hpp>
@@ -79,6 +80,7 @@ private:
     };
 
     std::vector<std::shared_ptr<ITool>> m_tools;
+    std::vector<std::shared_ptr<IService>> m_services;
 
     std::filesystem::path m_path;
     inifile m_ini;
@@ -95,6 +97,8 @@ private:
     void loadNodes();
     void loadTools();
     void loadNVHPC();
+    void loadServices();
+    void loadFail2ban();
     bool checkEnabled(const std::string& section);
     AFNode loadNode(const std::string& section);
     AFNode validateNode(AFNode node);
@@ -123,6 +127,7 @@ public:
 
     void loadFile(const std::filesystem::path& path);
     std::vector<std::shared_ptr<ITool>> getTools();
+    std::vector<std::shared_ptr<IService>> getServices();
 
     AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);

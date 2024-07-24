@@ -4,6 +4,7 @@
  */
 
 #include "cloysterhpc/answerfile.h"
+#include "cloysterhpc/services/fail2ban.h"
 #include "cloysterhpc/services/log.h"
 #include "cloysterhpc/tools/nvhpc.h"
 #include <boost/algorithm/string/classification.hpp>
@@ -313,7 +314,23 @@ void AnswerFile::loadNVHPC()
     m_tools.emplace_back(std::make_shared<NVhpc>());
 }
 
+void AnswerFile::loadServices() { loadFail2ban(); }
+
+void AnswerFile::loadFail2ban()
+{
+    if (!checkEnabled("fail2ban")) {
+        return;
+    }
+
+    m_services.emplace_back(std::make_shared<fail2ban>());
+}
+
 std::vector<std::shared_ptr<ITool>> AnswerFile::getTools() { return m_tools; }
+
+std::vector<std::shared_ptr<IService>> AnswerFile::getServices()
+{
+    return m_services;
+}
 
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
