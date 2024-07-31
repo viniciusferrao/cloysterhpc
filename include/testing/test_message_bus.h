@@ -25,7 +25,6 @@ private:
 
     void registerCall(FunctionStore s, FunctionParameters p)
     {
-        auto count = this->callCount(s);
         m_functions[makeStoreName(s)].push_back(p);
     }
 
@@ -33,7 +32,7 @@ public:
     std::unique_ptr<MessageBusMethod> method(
         std::string interface, std::string method);
 
-    void dump() const;
+    [[maybe_unused]] void dump() const;
 
     unsigned callCount(FunctionStore s) const;
     FunctionParameters calledWith(FunctionStore s, unsigned index) const;

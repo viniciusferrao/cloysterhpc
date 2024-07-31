@@ -48,6 +48,6 @@ std::unique_ptr<MessageBusMethod> TestMessageBus::method(
 MessageReply TestMessageMethod::callMethod()
 {
     m_bus->registerCall(m_store, m_params);
-    return MessageReply(
-        std::make_any<sdbus::ObjectPath>(sdbus::ObjectPath("123")));
+    auto reply = std::make_any<sdbus::ObjectPath>(sdbus::ObjectPath("123"));
+    return MessageReply(std::move(reply));
 }

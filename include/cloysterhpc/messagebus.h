@@ -37,7 +37,7 @@ public:
     }
 
     explicit MessageReply(std::any&& reply)
-        : m_base_reply(std::move(reply))
+        : m_base_reply(reply)
     {
     }
 
@@ -81,7 +81,10 @@ protected:
     virtual MessageReply callMethod() = 0;
 
 public:
-    void addParams() { }
+    void addParams()
+    {
+        // end case for the variadic template below
+    }
 
     template <typename T, typename... Ts> void addParams(T param, Ts... params)
     {
