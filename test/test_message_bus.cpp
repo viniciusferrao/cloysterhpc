@@ -41,9 +41,8 @@ void TestMessageBus::dump() const
 std::unique_ptr<MessageBusMethod> TestMessageBus::method(
     std::string interface, std::string method)
 {
-    auto store = std::make_tuple(interface, method);
     return std::unique_ptr<MessageBusMethod>(
-        new TestMessageMethod { this, store });
+        new TestMessageMethod { this, std::make_tuple(interface, method) });
 }
 
 MessageReply TestMessageMethod::callMethod()

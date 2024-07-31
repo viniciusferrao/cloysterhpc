@@ -14,14 +14,15 @@
  * tell this to the user
  */
 template <typename T>
-concept MessageReturnable = std::is_nothrow_default_constructible<T>::value;
+concept MessageReturnable = std::is_nothrow_default_constructible_v<T>;
 
 /**
  * A more or less "generic"-ish way to refer to a message reply
  * Encapsulates the sdbus answer so we can mock answers for testing
  *
- * Unfortunately, to increase testability (and mockability), we need to
- * make this class aware of the real answer type and the mock answer type
+ * Unfortunately, to increase testability (and mockability), we need
+ * to make this class aware of both the real answer type and the mock
+ * answer type
  *
  * This will be worth when we start mocking services, I promise...
  */
@@ -30,13 +31,13 @@ private:
     std::variant<sdbus::MethodReply, std::any> m_base_reply;
 
 public:
-    MessageReply(sdbus::MethodReply&& reply)
+    explicit MessageReply(sdbus::MethodReply&& reply)
         : m_base_reply(reply)
     {
     }
 
-    MessageReply(std::any&& reply)
-        : m_base_reply(reply)
+    explicit MessageReply(std::any&& reply)
+        : m_base_reply(std::move(reply))
     {
     }
 
@@ -72,10 +73,12 @@ using MethodParamVariant
         std::vector<std::string>, std::vector<sdbus::ObjectPath>>;
 
 class MessageBusMethod {
+private:
+    bool finished = false;
+
 protected:
     virtual void pushSingleParam(MethodParamVariant param) = 0;
     virtual MessageReply callMethod() = 0;
-    bool finished = false;
 
 public:
     void addParams() { }
@@ -100,7 +103,7 @@ public:
         return this->callMethod();
     }
 
-    virtual ~MessageBusMethod() { }
+    virtual ~MessageBusMethod() = default;
 };
 
 /**
@@ -127,5 +130,5 @@ public:
     [[nodiscard]] virtual std::unique_ptr<MessageBusMethod> method(
         std::string interface, std::string method)
         = 0;
-    virtual ~MessageBus() { }
+    virtual ~MessageBus() = default;
 };

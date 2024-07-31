@@ -12,7 +12,7 @@ std::string DaemonHandler::fixServiceName(std::string name)
 bool DaemonHandler::exists()
 {
     auto path = this->callObjectFunction("GetUnit");
-    return path.size() > 0;
+    return !path.empty();
 }
 
 void DaemonHandler::start()

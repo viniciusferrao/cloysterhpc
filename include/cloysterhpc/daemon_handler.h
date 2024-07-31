@@ -23,7 +23,7 @@ private:
     static std::string fixServiceName(std::string name);
 
 public:
-    DaemonHandler(std::shared_ptr<MessageBus> bus, const std::string name)
+    DaemonHandler(std::shared_ptr<MessageBus> bus, const std::string& name)
         : m_bus(bus)
         , m_name(DaemonHandler::fixServiceName(name))
     {
