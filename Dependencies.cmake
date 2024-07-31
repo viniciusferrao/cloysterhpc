@@ -94,6 +94,20 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
+  if(NOT TARGET SDBusCpp::sdbus-c++)
+    if (cloysterhpc_ENABLE_CONAN)
+      CPMFindPackage(NAME sdbus-c++)
+    else()
+      CPMAddPackage(
+        NAME
+        sdbus-c++
+        VERSION
+        2.0.0
+        GITHUB_REPOSITORY
+        "Kistler-Groups/sdbus-cpp")
+    endif()
+  endif()
+
   # Packages only available with CPM
   #if(NOT TARGET tools::tools)
   #  CPMAddPackage("gh:lefticus/tools#update_build_system")
