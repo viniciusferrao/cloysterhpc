@@ -181,7 +181,7 @@ address Network::fetchSubnetMask(const std::string& interface)
             LOG_TRACE("Got subnet mask address {} from interface {}",
                 result.to_string(), interface);
 #endif
-
+            freeifaddrs(ifaddr);
             return result;
         }
     }

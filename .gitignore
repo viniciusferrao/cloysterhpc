@@ -315,3 +315,5 @@ tags
 
 # Vagrant auto-generated folder
 .vagrant
+
+.cache/

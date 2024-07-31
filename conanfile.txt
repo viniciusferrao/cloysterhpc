@@ -8,6 +8,7 @@ magic_enum/0.9.2
 gsl-lite/0.40.0
 doctest/2.4.11
 cryptopp/8.7.0
+sdbus-cpp/2.0.0
 
 [layout]
 cmake_layout
