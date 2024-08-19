@@ -6,10 +6,12 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
+#include "cloysterhpc/tools/ITool.h"
 #include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <optional>
+#include <utility>
 #include <vector>
 
 using boost::asio::ip::address;
@@ -129,6 +131,8 @@ private:
         std::vector<AFNode> nodes;
     };
 
+    std::vector<std::shared_ptr<ITool>> m_tools;
+
     std::filesystem::path m_path;
     inifile m_ini;
 
@@ -203,8 +207,10 @@ private:
      * This function parses and loads the settings for all nodes.
      */
     void loadNodes();
-
-    /**
+    void loadTools();
+    void loadNVHPC();
+    bool checkEnabled(const std::string& section);
+     /**
      * @brief Loads the settings for a specific node.
      *
      * @param section The section in the answer file representing the node.
@@ -275,6 +281,7 @@ public:
      * @param path The path to the answer file.
      */
     void loadFile(const std::filesystem::path& path);
+    std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);

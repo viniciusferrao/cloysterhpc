@@ -162,6 +162,7 @@ void changeValueInConfigurationFile(
  * @param string The string to add to the file.
  */
 void addStringToFile(std::string_view filename, std::string_view string);
+std::string getCurrentTimestamp();
 
 } /* namespace cloyster */
 

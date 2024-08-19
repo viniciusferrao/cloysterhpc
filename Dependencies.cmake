@@ -33,7 +33,9 @@ function(cloysterhpc_setup_dependencies)
 
   if(NOT TARGET spdlog::spdlog)
     if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME spdlog)
+      CPMFindPackage(NAME spdlog
+       OPTIONS
+        "SPDLOG_FMT_EXTERNAL ON")
     else()
       CPMAddPackage(
         NAME
@@ -89,6 +91,20 @@ function(cloysterhpc_setup_dependencies)
       CPMFindPackage(NAME cryptopp)
     else()
       CPMAddPackage("gh:cryptopp/cryptopp@8.7.0")
+    endif()
+  endif()
+
+  if(NOT TARGET SDBusCpp::sdbus-c++)
+    if (cloysterhpc_ENABLE_CONAN)
+      CPMFindPackage(NAME sdbus-c++)
+    else()
+      CPMAddPackage(
+        NAME
+        sdbus-c++
+        VERSION
+        2.0.0
+        GITHUB_REPOSITORY
+        "Kistler-Groups/sdbus-cpp")
     endif()
   endif()
 

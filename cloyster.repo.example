@@ -1,4 +1,6 @@
-R"([cloyster-OL-BaseOS]
+# Example repofile model to use with Cloyster.
+
+[cloyster-OL-BaseOS]
 name=Oracle Linux 8 BaseOS Latest ($basearch)
 baseurl=https://yum$ociregion.oracle.com/repo/OracleLinux/OL9/baseos/latest/$basearch/
 enabled=0
@@ -102,12 +104,3 @@ baseurl=https://mirror.versatushpc.com.br/openhpc/3/updates/EL_9/
 enabled=1
 gpgcheck=1
 gpgkey=https://obs.openhpc.community/projects/OpenHPC3/public_key
-
-[cloyster-nvhpc]
-name=NVIDIA HPC SDK
-baseurl=https://developer.download.nvidia.com/hpc-sdk/rhel/$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://developer.download.nvidia.com/hpc-sdk/rhel/RPM-GPG-KEY-NVIDIA-HPC-SDK
-
-)"
