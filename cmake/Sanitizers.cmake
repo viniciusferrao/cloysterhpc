@@ -10,6 +10,11 @@ function(
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     set(SANITIZERS "")
 
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+      message(STATUS, "Release build detected. disabling sanitizers...")
+      return()
+    endif()
+    
     if(${ENABLE_SANITIZER_ADDRESS})
       list(APPEND SANITIZERS "address")
     endif()
