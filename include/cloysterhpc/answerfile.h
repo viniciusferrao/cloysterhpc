@@ -210,7 +210,7 @@ private:
     void loadTools();
     void loadNVHPC();
     bool checkEnabled(const std::string& section);
-     /**
+    /**
      * @brief Loads the settings for a specific node.
      *
      * @param section The section in the answer file representing the node.

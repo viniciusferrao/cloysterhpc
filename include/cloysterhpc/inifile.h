@@ -43,16 +43,16 @@ public:
     void loadFile(const std::filesystem::path& filepath);
     void loadData(const std::string& data);
     /**
- * @brief Retrieves a value from the INI file.
- *
- * @param section The section in the INI file.
- * @param key The key in the section.
- * @param optional If true, the method will not throw an error if the key
- * does not exist.
- * @param canBeNull If true, the method will return an empty string if the
- * key does not exist.
- * @return The value associated with the specified key in the section.
- */
+     * @brief Retrieves a value from the INI file.
+     *
+     * @param section The section in the INI file.
+     * @param key The key in the section.
+     * @param optional If true, the method will not throw an error if the key
+     * does not exist.
+     * @param canBeNull If true, the method will return an empty string if the
+     * key does not exist.
+     * @return The value associated with the specified key in the section.
+     */
     std::string getValue(const std::string& section, const std::string& key,
         const bool optional = true, const bool canBeNull = true);
 
