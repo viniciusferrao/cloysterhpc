@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/inifile.h>
+#include <filesystem>
 #include <fmt/format.h>
 
 // TODO: Template<T> the next three functions
@@ -109,7 +110,7 @@ TEST_SUITE("Load .ini files")
     {
         inifile ini;
         std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
+        path = TEST_SAMPLE_DIR  / std::filesystem::path{"inifile.ini"};
         ini.loadFile(path);
         const std::string clusterName
             = ini.getValue("information", "cluster_name");
@@ -120,7 +121,7 @@ TEST_SUITE("Load .ini files")
     {
         inifile ini;
         std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
+        path = TEST_SAMPLE_DIR  / std::filesystem::path{"inifile.ini"};
         ini.loadFile(path);
         const std::string newValue = "modified";
         ini.setValue("information", "cluster_name", newValue);
@@ -131,7 +132,7 @@ TEST_SUITE("Load .ini files")
     {
         inifile ini;
         std::filesystem::path path;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
+        path = TEST_SAMPLE_DIR  / std::filesystem::path{"inifile.ini"};
         ini.loadFile(path);
         const bool result = ini.deleteValue("information", "company_name");
         CHECK(result);
@@ -142,8 +143,8 @@ TEST_SUITE("Load .ini files")
         inifile ini;
         std::filesystem::path path;
         std::filesystem::path newFile;
-        path = std::filesystem::current_path() / "sample/inifile.ini";
-        newFile = std::filesystem::current_path() / "sample/newinifile.ini";
+        path = TEST_SAMPLE_DIR / std::filesystem::path{"inifile.ini"};
+        newFile = std::filesystem::current_path() / "newinifile.ini";
         ini.loadFile(path);
         ini.saveFile(newFile);
         CHECK(std::filesystem::exists(newFile));
