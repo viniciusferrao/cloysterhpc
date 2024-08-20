@@ -10,9 +10,7 @@
 #include <filesystem>
 
 namespace tests {
-inline std::filesystem::path sampleDirectory {
-    std::filesystem::current_path().parent_path().parent_path() / "test/sample"
-}; // current_path corresponds to '<cloyster_main_dir>/<build_dir>/test'
+const std::filesystem::path sampleDirectory { TEST_SAMPLE_DIR }; // current_path corresponds to '<cloyster_main_dir>/<build_dir>/test'
 }
 
 #endif // CLOYSTERHPC_TESTS_H_
