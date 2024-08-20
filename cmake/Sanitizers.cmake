@@ -11,7 +11,7 @@ function(
     set(SANITIZERS "")
  
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      message(STATUS, "Release build detected. disabling sanitizers...")
+      message(STATUS, "Non debug build detected. disabling sanitizers...")
       return()
     endif()
     
