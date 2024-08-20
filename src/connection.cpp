@@ -333,7 +333,8 @@ TEST_SUITE("Test MAC address validity")
 
     TEST_CASE("Invalid Separators")
     {
-        //CHECK_THROWS(connection.setMAC("ab-cd-ef-01-23-45")); // Wrong separator
+        // CHECK_THROWS(connection.setMAC("ab-cd-ef-01-23-45")); // Wrong
+        // separator
         CHECK_THROWS(connection.setMAC("ab?cd/ef-01?23/45")); // Wrong separator
         CHECK_THROWS(
             connection.setMAC("ab:cd.ef:01:23:45")); // Inconsistent separators

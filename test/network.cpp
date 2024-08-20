@@ -5,8 +5,8 @@
 
 #include <doctest/doctest.h>
 
-#include <cloysterhpc/network.h>
 #include <boost/asio.hpp>
+#include <cloysterhpc/network.h>
 
 TEST_SUITE("Network setters and getters")
 {
