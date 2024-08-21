@@ -4,7 +4,7 @@
 require 'yaml'
 
 # Load the shared config file
-config_file = File.join(File.dirname(__FILE__), 'config.yml')
+config_file = File.join(File.dirname(__FILE__), 'roles/cloyster_setup/vars/machines.yml')
 config = YAML.load_file(config_file)
 machines = config['machines']
 
@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
         lv.uri = 'qemu:///system'
       end
       m.vm.provision "ansible" do |ansible|
-        ansible.playbook = "provision/#{conf['provision']}"
+        ansible.playbook = "roles/cloyster_setup/provision/#{conf['provision']}"
         ansible.compatibility_mode = "2.0"
       end
       m.vm.synced_folder '.', '/vagrant', type: "rsync"

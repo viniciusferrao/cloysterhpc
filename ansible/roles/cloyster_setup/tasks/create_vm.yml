@@ -1,4 +1,7 @@
 ---
+- name: Destroy VM if already exists
+  shell: vagrant destroy "{{ vagrant_machine_name }}" -f
+
 - name: Run Vagrant up
   shell: MACHINES="{{ vagrant_machine_name }}" vagrant up
 
@@ -6,7 +9,7 @@
   command: qemu-img create -f raw "{{ disk_image_path }}" 50G
 
 - name: Attach and configure the disk
-  command: virsh attach-disk "vagrant_{{ vagrant_machine_name }}" "{{ disk_image_path }}" "{{ new_filesystem }}" --cache none --subdriver raw --persistent
+  command: virsh attach-disk "ansible_{{ vagrant_machine_name }}" "{{ disk_image_path }}" "{{ new_filesystem }}" --cache none --subdriver raw --persistent
 
 - name: Create partition on the new disk
   shell: >

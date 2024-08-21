@@ -1,5 +1,15 @@
 ---
-- include_tasks: install_plugin.yml
-- include_tasks: create_vm.yml
-- include_tasks: run_cloyster.yml
-- include_tasks: cleanup.yml
+- name: Include machines variables
+  include_vars: machines.yml
+
+- name: Install required plugins
+  include_tasks: install_plugin.yml
+
+- name: Create virtual machines
+  include_tasks: create_vm.yml
+
+- name: Run Cloyster setup
+  include_tasks: run_cloyster.yml
+
+- name: Cleanup after setup
+  include_tasks: cleanup.yml

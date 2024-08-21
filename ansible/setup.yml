@@ -1,12 +1,7 @@
 ---
 - name: Cloyster Vagrant Setup
   hosts: localhost
+  become: yes
   gather_facts: false
-  tasks:
-    - name: Load configuration variables
-      include_vars:
-        file: "./config.yml"
-        name: config_vars
-
   roles:
     - cloyster_setup
