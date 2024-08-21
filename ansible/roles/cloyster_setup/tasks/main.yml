@@ -1,4 +1,7 @@
 ---
+- name: Precaution clean up before setup
+  include_tasks: cleanup.yml
+
 - name: Include machines variables
   include_vars: machines.yml
 
@@ -11,5 +14,6 @@
 - name: Run Cloyster setup
   include_tasks: run_cloyster.yml
 
-- name: Cleanup after setup
+- name: Clean up after setup
   include_tasks: cleanup.yml
+  when: cleanup_needed
