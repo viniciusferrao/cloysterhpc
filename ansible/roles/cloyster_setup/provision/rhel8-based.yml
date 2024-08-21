@@ -1,0 +1,11 @@
+---
+- name: Provision RHEL8 based system
+  hosts: all
+  become: true
+  tasks:
+    - name: Install libasan8 and libubsan
+      ansible.builtin.dnf:
+        name:
+          - libasan8
+          - libubsan
+        state: present

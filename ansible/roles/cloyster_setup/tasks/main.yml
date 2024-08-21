@@ -1,0 +1,5 @@
+---
+- include_tasks: install_plugin.yml
+- include_tasks: create_vm.yml
+- include_tasks: run_cloyster.yml
+- include_tasks: cleanup.yml

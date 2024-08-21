@@ -1,0 +1,9 @@
+---
+- name: Copy files to the VM
+  shell: >
+    vagrant scp {{ cloyster_binary_path }} {{ vagrant_machine_name }}:~/cloyster &&
+    vagrant scp {{ iso_image_path }} {{ vagrant_machine_name }}:/opt/iso &&
+    vagrant scp files/{{ vagrant_machine_name }}.answerfile.ini {{ vagrant_machine_name }}:~/answerfile.ini
+
+- name: Run Cloyster on the VM
+  shell: vagrant ssh "{{ vagrant_machine_name }}" -c "sudo ./cloyster -l 6 -a answerfile.ini -u"

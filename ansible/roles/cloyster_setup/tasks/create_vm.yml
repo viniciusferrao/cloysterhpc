@@ -1,0 +1,27 @@
+---
+- name: Run Vagrant up
+  shell: MACHINES="{{ vagrant_machine_name }}" vagrant up
+
+- name: Create disk image
+  command: qemu-img create -f raw "{{ disk_image_path }}" 50G
+
+- name: Attach and configure the disk
+  command: virsh attach-disk "vagrant_{{ vagrant_machine_name }}" "{{ disk_image_path }}" "{{ new_filesystem }}" --cache none --subdriver raw --persistent
+
+- name: Create partition on the new disk
+  shell: >
+    vagrant ssh "{{ vagrant_machine_name }}" -c "sudo parted /dev/{{ new_filesystem }} mklabel msdos &&
+    sudo parted /dev/{{ new_filesystem }} mkpart primary xfs 2048s 100% &&
+    sudo partprobe /dev/{{ new_filesystem }} &&
+    sudo mkfs.xfs /dev/{{ new_filesystem }}1"
+
+- name: Mount the new partition
+  shell: >
+    vagrant ssh "{{ vagrant_machine_name }}" -c "sudo mkdir -p /opt &&
+    sudo mount /dev/{{ new_filesystem }}1 /opt &&
+    echo '/dev/{{ new_filesystem }}1 /opt xfs defaults 0 0' | sudo tee -a /etc/fstab &&
+    sudo mkdir /opt/iso &&
+    sudo chown vagrant:vagrant /opt/ -R"
+
+- name: Reload Vagrant machine
+  command: vagrant reload "{{ vagrant_machine_name }}"

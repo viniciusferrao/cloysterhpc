@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'yaml'
+
+# Load the shared config file
+config_file = File.join(File.dirname(__FILE__), 'config.yml')
+config = YAML.load_file(config_file)
+machines = config['machines']
+
+specified_machines = ENV['MACHINES'].to_s.split(',')
+
+Vagrant.configure("2") do |config|
+  config.vm.box_check_update = false
+
+  machines.each do |name, conf|
+    next unless specified_machines.empty? || specified_machines.include?(name)
+
+    config.vm.define "#{name}" do |m|
+      m.vm.box = "#{conf['box']}"
+      m.vm.network 'private_network', ip: "#{conf['vagrant_external_network_address']}", name: "external_network"
+      m.vm.network 'private_network', ip: "#{conf['vagrant_management_network_address']}", name: "management_network"
+      m.vm.hostname = "cloyster.hpc"
+      m.vm.provider 'libvirt' do |lv|
+        lv.memory = conf['memory']
+        lv.cpus = conf['cpus']
+        lv.host = 'localhost'
+        lv.driver = 'kvm'
+        lv.uri = 'qemu:///system'
+      end
+      m.vm.provision "ansible" do |ansible|
+        ansible.playbook = "provision/#{conf['provision']}"
+        ansible.compatibility_mode = "2.0"
+      end
+      m.vm.synced_folder '.', '/vagrant', type: "rsync"
+    end
+  end
+end
