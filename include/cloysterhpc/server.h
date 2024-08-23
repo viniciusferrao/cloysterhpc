@@ -16,6 +16,14 @@
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/bmc.h>
 
+/**
+ * @class Server
+ * @brief Represents a server in a cluster.
+ *
+ * This class encapsulates the properties and behavior of a server in a cluster,
+ * including its hostname, operating system, CPU configuration, network connections,
+ * and Baseboard Management Controller (BMC).
+ */
 class Server {
 protected:
     std::string m_hostname;
@@ -26,6 +34,14 @@ protected:
     std::string m_fqdn; // TODO: Remove?
 
 protected:
+    /**
+     * @brief Protected constructor to initialize a Server object.
+     * @param hostname The hostname of the server.
+     * @param os The operating system installed on the server.
+     * @param cpu The CPU configuration of the server.
+     * @param connections The network connections of the server.
+     * @param bmc Optional Baseboard Management Controller (BMC) of the server.
+     */
     Server(std::string_view hostname, OS& os, CPU& cpu,
         std::list<Connection>&& connections,
         std::optional<BMC> bmc = std::nullopt);
@@ -43,10 +59,28 @@ public:
     void setFQDN(const std::string& fqdn);
 
     [[nodiscard]] const std::list<Connection>& getConnections() const;
+
+    /**
+     * @brief Adds a network connection to the server.
+     * @param network The network to add.
+     */
     void addConnection(Network& network);
+
+    /**
+     * @brief Adds a network connection to the server.
+     * @param network The network to add.
+     * @param interface The interface for the connection (optional).
+     * @param mac The MAC address for the connection.
+     * @param ip The IP address for the connection.
+     */
     void addConnection(Network& network,
         std::optional<std::string_view> interface, std::string_view mac,
         const std::string& ip);
+
+    /**
+     * @brief Adds a network connection to the server.
+     * @param connection The connection to add.
+     */
     void addConnection(Connection&& connection);
 
     void setConnection(const std::list<Connection>& connection);

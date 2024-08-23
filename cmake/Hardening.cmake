@@ -73,7 +73,7 @@ macro(
   if(${ubsan_minimal_runtime})
     check_cxx_compiler_flag("-fsanitize=undefined -fno-sanitize-recover=undefined -fsanitize-minimal-runtime"
                             MINIMAL_RUNTIME)
-    if(MINIMAL_RUNTIME)
+    if(MINIMAL_RUNTIME AND CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(NEW_COMPILE_OPTIONS "${NEW_COMPILE_OPTIONS} -fsanitize=undefined -fsanitize-minimal-runtime")
       set(NEW_LINK_OPTIONS "${NEW_LINK_OPTIONS} -fsanitize=undefined -fsanitize-minimal-runtime")
 
@@ -86,7 +86,7 @@ macro(
 
       message(STATUS "*** ubsan minimal runtime enabled")
     else()
-      message(STATUS "*** ubsan minimal runtime NOT enabled (not supported)")
+      message(STATUS "*** ubsan minimal runtime NOT enabled (not supported or not applicable)")
     endif()
   else()
     message(STATUS "*** ubsan minimal runtime NOT enabled (not requested)")

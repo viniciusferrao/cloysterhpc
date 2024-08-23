@@ -9,6 +9,13 @@
 #include <list>
 #include <string>
 
+/**
+ * @class Locale
+ * @brief Manages the locale settings and available locales.
+ *
+ * This class provides functionalities to set and get the current locale,
+ * as well as to retrieve a list of available locales.
+ */
 class Locale {
 private:
     std::string m_locale;
@@ -18,9 +25,22 @@ public:
     Locale();
     void setLocale(std::string_view locale);
     [[nodiscard]] std::string_view getLocale() const;
+
+    /**
+     * @brief Gets the list of available locales.
+     *
+     * @return The list of available locales.
+     */
     [[nodiscard]] std::list<std::string> getAvailableLocales() const;
 
 private:
+    /**
+     * @brief Fetches the list of available locales.
+     *
+     * This method retrieves the list of locales that are available for use.
+     *
+     * @return The list of available locales.
+     */
     [[nodiscard]] std::list<std::string> fetchAvailableLocales() const;
 };
 

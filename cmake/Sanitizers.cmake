@@ -9,7 +9,12 @@ function(
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     set(SANITIZERS "")
-
+ 
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(STATUS, "Non debug build detected. Disabling sanitizers...")
+      return()
+    endif()
+    
     if(${ENABLE_SANITIZER_ADDRESS})
       list(APPEND SANITIZERS "address")
     endif()
