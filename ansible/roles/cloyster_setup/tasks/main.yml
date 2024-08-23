@@ -8,12 +8,21 @@
 - name: Install required plugins
   include_tasks: install_plugin.yml
 
-- name: Create virtual machines
-  include_tasks: create_vm.yml
+- block:
+    - name: Create virtual machines
+      include_tasks: create_vm.yml
 
-- name: Run Cloyster setup
-  include_tasks: run_cloyster.yml
+    - name: Run Cloyster setup
+      include_tasks: run_cloyster.yml
+  rescue:
+    - name: Set trigger to avoid final cleanup
+      set_fact:
+        skip_final_cleanup: true
+
+    - name: Clean up after failed setup
+      include_tasks: cleanup.yml
+      when: cleanup_needed
 
 - name: Clean up after setup
   include_tasks: cleanup.yml
-  when: cleanup_needed
+  when: cleanup_needed and not skip_final_cleanup | default(false)
