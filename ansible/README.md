@@ -1,13 +1,13 @@
 # Ansible role for Cloyster
 An Ansible role that provision a Vagrant virtual machine with Cloyster and runs it, for tests purpose.
 
-# Requirements
+## Requirements
 - Ansible
 - Vagrant
 - Cloyster binary
 - A ISO for the nodes (WIP)
 
-# Example Playbook
+## Example Playbook
 ```yaml
 ---
 - name: Cloyster Vagrant Setup
@@ -18,7 +18,7 @@ An Ansible role that provision a Vagrant virtual machine with Cloyster and runs 
     - cloyster_setup
 ```
 
-# Example Vagrantfile
+## Example Vagrantfile
 **This Vagrantfile should be in the same directory as your playbook**
 
 ```
@@ -62,7 +62,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-# How to use
-Run `ansible-playbook setup.yml --extra-vars "cloyster_binary_path=/path/to/local/cloyster/binary vagrant_machine_name=machine_name iso_image_path=/path/to/iso/image"` in the same folder of "setup.yml" or the playbook you created.
+## How to use
+Run `ansible-playbook setup.yml --extra-vars "cloyster_binary_path=/path/to/local/cloyster/binary vagrant_machine_name=machine_name iso_image_path=/path/to/iso/image"` in the same folder of "`setup.yml`" or the playbook you created.
 
 If you don't want to clean up (remove the virtual machine) after Cloyster ends, set `"cleanup_needed=false"` on the `--extra-vars`.
