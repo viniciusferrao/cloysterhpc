@@ -139,6 +139,14 @@ void AnswerFile::loadManagementNetwork()
     loadNetwork("network_management", management);
 }
 
+void AnswerFile::loadServiceNetwork()
+{
+    if (!m_ini.exists("network_service"))
+        return;
+
+    loadNetwork("network_service", service);
+}
+
 void AnswerFile::loadApplicationNetwork()
 {
     if (!m_ini.exists("network_application"))
