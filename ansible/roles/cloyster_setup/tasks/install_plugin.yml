@@ -1,0 +1,9 @@
+---
+- name: Check if vagrant-scp plugin is installed
+  shell: vagrant plugin list | grep -q vagrant-scp
+  ignore_errors: yes
+  register: plugin_check
+
+- name: Install vagrant-scp plugin if not present
+  shell: vagrant plugin install vagrant-scp
+  when: plugin_check.rc != 0

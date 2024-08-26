@@ -1,0 +1,21 @@
+---
+- name: Provision RHEL8 based system
+  hosts: all
+  become: true
+  tasks:
+    - name: Update all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_only: yes
+
+    - name: Perform autoremove to clean up unnecessary packages
+      ansible.builtin.dnf:
+        autoremove: yes
+
+    - name: Install libasan8 and libubsan
+      ansible.builtin.dnf:
+        name:
+          - libasan8
+          - libubsan
+        state: present

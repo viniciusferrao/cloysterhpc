@@ -1,0 +1,7 @@
+---
+- name: Cloyster Vagrant Setup
+  hosts: localhost
+  become: yes
+  gather_facts: false
+  roles:
+    - cloyster_setup

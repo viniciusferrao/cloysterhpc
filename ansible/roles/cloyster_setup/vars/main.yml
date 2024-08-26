@@ -1,0 +1,10 @@
+---
+# General variables
+new_filesystem: "vdb"
+disk_image_path: "/var/lib/libvirt/images/{{ vagrant_machine_name }}_extra.img"
+
+# Vagrant machine configuration
+vagrant_machine_name: "{{ lookup('env', 'VAGRANT_MACHINE_NAME') }}"
+cloyster_binary_path: "{{ lookup('env', 'LOCAL_FILE_PATH') }}"
+iso_image_path: "{{ lookup('env', 'ISO_IMAGE_PATH') }}"
+cleanup_needed: true

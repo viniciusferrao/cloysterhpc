@@ -1,0 +1,8 @@
+---
+- name: Destroy Vagrant machine
+  command: vagrant destroy "{{ vagrant_machine_name }}" -f
+
+- name: Remove the disk image
+  file:
+    path: "{{ disk_image_path }}"
+    state: absent

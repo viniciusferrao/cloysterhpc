@@ -1,0 +1,75 @@
+---
+# Machines variables
+machines:
+  alma-8:
+    distro_name: "alma"
+    distro_version: "8"
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.22"
+    vagrant_management_network_address: "192.168.30.22"
+    box: "almalinux/8"
+    provision: "rhel8-based.yml"
+  rhel-8:
+    distro_name: "rhel"
+    distro_version: "8"
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.23"
+    vagrant_management_network_address: "192.168.30.23"
+    box: "generic/rhel8"
+    provision: "rhel8.yml"
+  oracle-8:
+    distro_name: "oracle"
+    distro_version: "8"
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.24"
+    vagrant_management_network_address: "192.168.30.24"
+    box: "generic/oracle8"
+    provision: "rhel8-based.yml"
+  rocky-8:
+    distro_name: "rocky"
+    distro_version: "8"
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.25"
+    vagrant_management_network_address: "192.168.30.25"
+    box: "generic/rocky8"
+    provision: "rhel8-based.yml"
+  rocky-9:
+    distro_name: rocky
+    distro_version: 9
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.26"
+    vagrant_management_network_address: "192.168.30.26"
+    box: "generic/rocky9"
+    provision: "rhel9-based.yml"
+  oracle-9:
+    distro_name: oracle
+    distro_version: 9
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.27"
+    vagrant_management_network_address: "192.168.30.27"
+    box: "generic/oracle9"
+    provision: "rhel9-based.yml"
+  rhel-9:
+    distro_name: rhel
+    distro_version: 9
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.28"
+    vagrant_management_network_address: "192.168.30.28"
+    box: "generic/rhel9"
+    provision: "rhel9.yml"
+  alma-9:
+    distro_name: alma
+    distro_version: 9
+    memory: "4096"
+    cpus: "2"
+    vagrant_external_network_address: "192.168.20.29"
+    vagrant_management_network_address: "192.168.30.29"
+    box: "generic/alma9"
+    provision: "rhel9-based.yml"

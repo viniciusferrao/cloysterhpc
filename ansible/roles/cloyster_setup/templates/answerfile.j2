@@ -17,7 +17,7 @@ domain_name=cluster.example.com
 # Cloyster must have an external network
 [network_external]
 interface=eth1
-#ip_address=172.16.144.0
+ip_address={{ machines[vagrant_machine_name].vagrant_external_network_address }}
 #subnet_mask=255.255.255.0
 #gateway=192.168.122.1
 domain_name=cluster.external.example.com
@@ -27,7 +27,7 @@ domain_name=cluster.external.example.com
 # Cloyster must have an management network
 [network_management]
 interface=eth2
-ip_address=172.26.30.10
+ip_address={{ machines[vagrant_machine_name].vagrant_management_network_address }}
 subnet_mask=255.255.255.0
 #gateway=172.26.0.1
 domain_name=cluster.management.example.com
@@ -47,10 +47,10 @@ domain_name=cluster.management.example.com
 
 [system]
 # Full path to the disk image
-disk_image=/opt/iso/Rocky-8.8-x86_64-dvd1.iso
+disk_image=/opt/iso/cloyster-iso.iso
 # Supported distros: rhel, ol, rocky
-distro=rocky
-version=8.8
+distro={{ machines[vagrant_machine_name].distro_name }}
+version={{ machines[vagrant_machine_name].distro_version }}
 kernel=4.18.0-513.5.1.el8_9.x86_64
 
 # Generic. If a node.XX section does not have one of these options, they are obtained here.
