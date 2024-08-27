@@ -167,6 +167,13 @@ private:
     void loadManagementNetwork();
 
     /**
+     * @brief Loads the service network configuration.
+     *
+     * This function parses and loads the settings for the service network.
+     */
+    void loadServiceNetwork();
+
+    /**
      * @brief Loads the application network configuration.
      *
      * This function parses and loads the settings for the application network.
@@ -269,6 +276,7 @@ public:
     AFNetwork external;
     AFNetwork management;
     AFNetwork application;
+    AFNetwork service;
     AFInformation information;
     AFTime time;
     AFHostname hostname;

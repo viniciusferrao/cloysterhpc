@@ -559,6 +559,62 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     getHeadnode().addConnection(std::move(externalConnection));
 
+    // Service Network
+    if (answerfile.service.con_interface.has_value()) {
+        LOG_TRACE("Configure Service Network")
+        auto serviceNetwork = std::make_unique<Network>(
+            Network::Profile::Service, Network::Type::Ethernet);
+
+        if (answerfile.service.subnet_mask.has_value()) {
+            serviceNetwork->setSubnetMask(
+                answerfile.service.subnet_mask.value());
+        } else {
+            serviceNetwork->setSubnetMask(externalNetwork->fetchSubnetMask(
+                answerfile.service.con_interface.value()));
+        }
+
+        if (answerfile.service.gateway.has_value()) {
+            serviceNetwork->setGateway(answerfile.service.gateway.value());
+        } else {
+            serviceNetwork->setGateway(serviceNetwork->fetchGateway(
+                answerfile.service.con_interface.value()));
+        }
+
+        if (answerfile.service.domain_name->empty()) {
+            serviceNetwork->setDomainName(
+                answerfile.service.domain_name.value());
+        } else {
+            serviceNetwork->setDomainName(serviceNetwork->fetchDomainName());
+        }
+
+        if (answerfile.service.nameservers.has_value()) {
+            serviceNetwork->setNameservers(
+                answerfile.service.nameservers.value());
+        } else {
+            serviceNetwork->setNameservers(serviceNetwork->fetchNameservers());
+        }
+
+        addNetwork(std::move(serviceNetwork));
+
+        auto serviceConnection
+            = Connection(&getNetwork(Network::Profile::Service));
+
+        if (!answerfile.service.con_mac_addr->empty()) {
+            serviceConnection.setMAC(answerfile.service.con_mac_addr.value());
+        }
+
+        serviceConnection.setInterface(
+            answerfile.application.con_interface.value());
+        serviceConnection.setAddress(answerfile.service.con_ip_addr.value());
+
+        getNetwork(Network::Profile::Service)
+            .setAddress(
+                getNetwork(Network::Profile::Service)
+                    .calculateAddress(answerfile.service.con_ip_addr.value()));
+
+        m_headnode.addConnection(std::move(serviceConnection));
+    }
+
     // Infiniband (Application) Network
     if (answerfile.application.con_interface.has_value()) {
         LOG_TRACE("Configure Application Network")
