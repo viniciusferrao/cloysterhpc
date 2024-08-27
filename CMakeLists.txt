@@ -71,6 +71,8 @@ string(
 
 target_compile_features(cloysterhpc_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
+add_compile_definitions(TEST_SAMPLE_DIR="${CMAKE_SOURCE_DIR}/test/sample")
+
 add_library(cloysterhpc::cloysterhpc_options ALIAS cloysterhpc_options)
 add_library(cloysterhpc::cloysterhpc_warnings ALIAS cloysterhpc_warnings)
 
