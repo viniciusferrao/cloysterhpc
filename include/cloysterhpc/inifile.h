@@ -8,6 +8,7 @@
 
 #include <SimpleIni.h>
 #include <filesystem>
+#include <vector>
 
 /**
  * @class inifile
@@ -54,8 +55,22 @@ public:
      * @return The value associated with the specified key in the section.
      */
     std::string getValue(const std::string& section, const std::string& key,
-        const bool optional = true, const bool canBeNull = true);
+                         const bool optional = true, const bool canBeNull = true);
 
+    /**
+     * @brief List all the sections in a file
+     *
+     * @return The names of the sections found
+     */
+    std::vector<std::string> listAllSections() const;
+
+    /**
+     * @brief List all the entries of a section
+     *
+     * @return The names of the entries found
+     */
+    std::vector<std::string> listAllEntries(const std::string& section) const;
+    
     /**
      * @brief Sets a value in the INI file.
      *
