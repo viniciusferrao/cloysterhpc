@@ -3,22 +3,284 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/inifile.h>
+#include <cloysterhpc/runner.h>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/repos.h>
 #include <cloysterhpc/services/log.h>
+#include <filesystem>
 #include <fstream>
 #include <magic_enum.hpp>
+#include <ranges>
 
-using boost::property_tree::ptree;
-using cloyster::runCommand;
+#include <boost/algorithm/string.hpp>
 
-Repos::Repos(const OS& m_os)
-    : m_os(m_os)
+std::string CLOYSTER_REPO_EL8 {
+#include "cloysterhpc/repos/el8/cloyster.repo"
+};
+
+std::string CLOYSTER_REPO_EL9 = {
+#include "cloysterhpc/repos/el9/cloyster.repo"
+};
+
+static repository loadSection(const std::filesystem::path& source,
+    inifile& file, const std::string& section)
 {
+    auto name = file.getValue(section, "name");
+    auto baseurl = file.getValue(section, "baseurl");
+    auto enabled = file.getValue(section, "enabled");
+    auto gpgcheck = file.getValue(section, "gpgcheck");
+    auto gpgkey = file.getValue(section, "gpgkey");
+
+    boost::trim(name);
+    boost::trim(baseurl);
+    boost::trim(enabled);
+    boost::trim(gpgcheck);
+    boost::trim(gpgkey);
+
+    LOG_DEBUG("found repo <{}> (id {}) at {}", name, section, source.string());
+
+    repository r = { .id = section,
+        .enabled = (enabled == "1"),
+        .name = name,
+        .baseurl = baseurl,
+        .metalink = "",
+        .gpgcheck = (gpgcheck == "1"),
+        .gpgkey = gpgkey,
+        .source = source };
+
+    return r;
 }
 
+static void writeSection(inifile& file, const repository& repo)
+{
+    std::string section = repo.id;
+
+    file.setValue(section, "name", repo.name);
+    file.setValue(section, "baseurl", repo.baseurl);
+    file.setValue(section, "enabled", repo.enabled ? "1" : "0");
+    file.setValue(section, "gpgcheck", repo.gpgcheck ? "1" : "0");
+    file.setValue(section, "gpgkey", repo.gpgkey);
+
+    LOG_INFO("writing repo <{}> (id {}) at {}", repo.name, section,
+        repo.source.string());
+}
+
+static void loadFromINI(const std::filesystem::path& source, inifile& file,
+    std::vector<repository>& out)
+{
+    auto sections = file.listAllSections();
+
+    for (const auto& reponame : sections) {
+        auto r = loadSection(source, file, reponame);
+        out.push_back(r);
+    }
+}
+
+void RepoManager::loadSingleFile(std::filesystem::path source)
+{
+    inifile file;
+    file.loadFile(source);
+    loadFromINI(source, file, m_repos);
+}
+
+void RepoManager::loadFiles(const std::filesystem::path& basedir)
+{
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { basedir }) {
+        auto path = dir_entry.path();
+        if (path.extension() == ".repo")
+            loadSingleFile(path);
+    }
+
+    auto cloyster_repos = buildCloysterTree(basedir);
+    mergeWithCurrentList(std::move(cloyster_repos));
+
+    configureEL();
+    configureXCAT();
+}
+
+void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path) {
+    std::vector<repository> data;
+    loadFromINI(path, file, data);
+    mergeWithCurrentList(std::move(data));
+}
+
+void RepoManager::setEnableState(const std::string& id, bool value)
+{
+    for (auto& repo : m_repos) {
+        if (repo.id == id) {
+            repo.enabled = value;
+            return;
+        }
+    }
+}
+
+void RepoManager::enable(const std::string& id) { setEnableState(id, true); }
+
+void RepoManager::enableMultiple(std::initializer_list<std::string> ids)
+{
+    std::ranges::for_each(ids, [&](const auto& id) { this->enable(id); });
+}
+
+void RepoManager::disable(const std::string& id) { setEnableState(id, false); }
+
+static std::vector<std::string> getDependenciesEL8(const OS& os)
+{
+    std::vector<std::string> dependencies;
+
+    switch (os.getDistro()) {
+        case OS::Distro::AlmaLinux:
+            dependencies = { "cloyster-AlmaLinux-BaseOS", "powertools" };
+            break;
+        case OS::Distro::RHEL:
+            dependencies = { "codeready-builder-for-rhel-8-x86_64-rpms" };
+            break;
+        case OS::Distro::OL:
+            dependencies = { "cloyster-OL-BaseOS", "ol8_codeready_builder" };
+            break;
+        case OS::Distro::Rocky:
+            dependencies = { "cloyster-Rocky-BaseOS", "powertools" };
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
+
+    return dependencies;
+}
+
+static std::vector<std::string> getDependenciesEL9(const OS& os)
+{
+    std::vector<std::string> dependencies;
+
+    switch (os.getDistro()) {
+        case OS::Distro::AlmaLinux:
+            dependencies = { "cloyster-AlmaLinux-BaseOS", "crb" };
+            break;
+        case OS::Distro::RHEL:
+            dependencies = { "codeready-builder-for-rhel-9-x86_64-rpms" };
+            break;
+        case OS::Distro::OL:
+            dependencies = { "cloyster-OL-BaseOS", "ol9_codeready_builder" };
+            break;
+        case OS::Distro::Rocky:
+            dependencies = { "cloyster-Rocky-BaseOS", "crb" };
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
+
+    return dependencies;
+}
+
+void RepoManager::configureEL()
+{
+    std::vector<std::string> deps;
+    switch (m_os.getPlatform()) {
+        case OS::Platform::el8:
+            deps = getDependenciesEL8(m_os);
+            break;
+        case OS::Platform::el9:
+            deps = getDependenciesEL9(m_os);
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform");
+    }
+
+    std::for_each(
+        deps.begin(), deps.end(), [this](const auto& id) { this->enable(id); });
+}
+
+void RepoManager::commitStatus()
+{
+    createFileFor("/etc/yum.repos.d/cloyster.repo");
+
+    std::vector<std::string> to_enable;
+    std::vector<std::string> to_disable;
+
+    for (const auto& repo : m_repos) {
+        if (repo.enabled) {
+            to_enable.push_back(repo.id);
+        } else {
+            to_disable.push_back(repo.id);
+        }
+    }
+
+    if (!to_enable.empty()) {
+        m_runner.executeCommand(
+            fmt::format("sudo dnf config-manager --set-enabled {}",
+                fmt::join(to_enable, ",")));
+    }
+
+    if (!to_disable.empty()) {
+        m_runner.executeCommand(
+            fmt::format("sudo dnf config-manager --set-disabled {}",
+                fmt::join(to_disable, ",")));
+    }
+}
+
+std::vector<repository> RepoManager::buildCloysterTree(const std::filesystem::path& basedir)
+{
+
+    std::vector<repository> cloyster_repos;
+    inifile file;
+
+    if (cloyster::customRepofilePath.empty()) {
+        switch (m_os.getPlatform()) {
+            case OS::Platform::el8:
+                file.loadData(CLOYSTER_REPO_EL8);
+                break;
+            case OS::Platform::el9:
+                file.loadData(CLOYSTER_REPO_EL9);
+                break;
+            default:
+                throw std::runtime_error("Unsupported platform");
+        }
+
+    } else {
+        LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath);
+        file.loadFile(cloyster::customRepofilePath);
+    }
+
+    auto outpath = basedir / "cloyster.repo";
+    loadFromINI(outpath, file, cloyster_repos);
+
+    return cloyster_repos;
+}
+
+void RepoManager::createFileFor(std::filesystem::path path)
+{
+    if (std::filesystem::exists(path)) {
+        LOG_INFO("repository file {} already exists...", path.string());
+        return;
+    }
+
+    inifile file;
+
+    auto filtered = m_repos
+        | std::views::filter([&path](auto& r) { return path == r.source; });
+
+    for (auto repo : filtered) {
+        writeSection(file, repo);
+    }
+
+    file.saveFile(path);
+}
+
+void RepoManager::mergeWithCurrentList(std::vector<repository>&& repo)
+{
+    for (auto&& r : repo) {
+        if (std::find_if(m_repos.begin(), m_repos.end(),
+                [&](auto& v) { return v.id == r.id; })
+            == m_repos.end()) {
+            m_repos.push_back(r);
+        }
+    }
+}
+
+/*
 void Repos::createConfigurationFile(const repofile& repo) const
 {
     if (cloyster::dryRun) {
@@ -34,28 +296,18 @@ void Repos::createConfigurationFile(const repofile& repo) const
     repof.put(fmt::format("{}.enabled", repo.id), repo.enabled ? 1 : 0);
     repof.put(fmt::format("{}.baseurl", repo.id), repo.baseurl);
 
-    boost::property_tree::ini_parser::write_ini(
-        fmt::format("/etc/yum.repos.d/{}.repo", repo.id), repof);
+    std::string outfile =
+            fmt::format("/etc/yum.repos.d/{}.repo", repo.id);
 
+    // boost::property_tree::ini_parser::write_ini(outfile, repof);
+
+    printf(">>>> %s %s\n", repo.id.c_str(), repo.name.c_str());
     createGPGKeyFile(repo);
     LOG_INFO("Created repofile {}", repo.name)
 }
-
-void Repos::createGPGKeyFile(const repofile& repo) const
-{
-    std::filesystem::path path = repo.gpgkey.substr(7);
-    createGPGKeyFile(path, repo.gpgkeyContent);
-}
-
-void Repos::createGPGKeyFile(
-    const std::string& filename, const std::string& key) const
-{
-    std::filesystem::path path = fmt::format("/etc/pki/rpm-gpg/{}", filename);
-    createGPGKeyFile(path, key);
-}
-
-void Repos::createGPGKeyFile(
-    const std::filesystem::path& path, const std::string& key) const
+*/
+static void createGPGKey(
+    const std::filesystem::path& path, const std::string& key)
 {
     if (cloyster::dryRun) {
         LOG_INFO("Would create GPG Key file {}", path.filename().string())
@@ -67,104 +319,48 @@ void Repos::createGPGKeyFile(
     gpgkey.close();
 }
 
-void Repos::enable(const std::string& id)
+/*
+void Repos::createGPGKeyFile(const repofile& repo) const
 {
-    runCommand(fmt::format("sudo dnf config-manager --set-enabled {}", id));
+    std::filesystem::path path = repo.gpgkey.substr(7);
+    createGPGKey(path, repo.gpgkeyContent);
 }
 
-void Repos::disable(const std::string& id)
+void Repos::createGPGKeyFile(
+    const std::string& filename, const std::string& key) const
 {
-    runCommand(fmt::format("sudo dnf config-manager --set-disabled {}", id));
+    std::filesystem::path path = fmt::format("/etc/pki/rpm-gpg/{}", filename);
+    createGPGKey(path, key);
 }
 
-void Repos::configureEL() const
-{
-    switch (m_os.getPlatform()) {
-        case OS::Platform::el8:
-            configureEL8();
-            break;
-        case OS::Platform::el9:
-            configureEL9();
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
-}
+*/
 
-void Repos::configureEL8() const
-{
-    std::string dependencies;
-
-    switch (m_os.getDistro()) {
-        case OS::Distro::AlmaLinux:
-            dependencies = "cloyster-AlmaLinux-BaseOS,powertools";
-            break;
-        case OS::Distro::RHEL:
-            dependencies = "codeready-builder-for-rhel-8-x86_64-rpms";
-            break;
-        case OS::Distro::OL:
-            dependencies = "cloyster-OL-BaseOS,ol8_codeready_builder";
-            break;
-        case OS::Distro::Rocky:
-            dependencies = "cloyster-Rocky-BaseOS,powertools";
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
-
-    enable(dependencies);
-}
-
-void Repos::configureEL9() const
-{
-    std::string dependencies;
-
-    switch (m_os.getDistro()) {
-        case OS::Distro::AlmaLinux:
-            dependencies = "cloyster-AlmaLinux-BaseOS,crb";
-            break;
-        case OS::Distro::RHEL:
-            dependencies = "codeready-builder-for-rhel-9-x86_64-rpms";
-            break;
-        case OS::Distro::OL:
-            dependencies = "cloyster-OL-BaseOS,ol9_codeready_builder";
-            break;
-        case OS::Distro::Rocky:
-            dependencies = "cloyster-Rocky-BaseOS,crb";
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
-
-    enable(dependencies);
-}
-
-void Repos::configureXCAT() const
+void RepoManager::configureXCAT()
 {
     LOG_INFO("Setting up XCAT repositories")
 
-    runCommand("wget -NP /etc/yum.repos.d "
-               "https://xcat.org/files/xcat/repos/yum/latest/"
-               "xcat-core/xcat-core.repo");
+    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
+                          "xcat-core/xcat-core.repo",
+                          "/etc/yum.repos.d");
 
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
-            runCommand("wget -NP /etc/yum.repos.d "
-                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                       "rh8/x86_64/xcat-dep.repo");
+            m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                                  "rh8/x86_64/xcat-dep.repo",
+                                  "/etc/yum.repos.d");
             break;
         case OS::Platform::el9:
-            runCommand("dnf -y install initscripts");
-            runCommand("wget -NP /etc/yum.repos.d "
-                       "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                       "rh9/x86_64/xcat-dep.repo");
+            m_runner.executeCommand("dnf -y install initscripts");
+            m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                                  "rh9/x86_64/xcat-dep.repo",
+                                  "/etc/yum.repos.d");
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
     }
 }
 
-std::vector<std::string> Repos::getxCATOSImageRepos() const
+std::vector<std::string> RepoManager::getxCATOSImageRepos() const
 {
     const auto osArch = magic_enum::enum_name(m_os.getArch());
     const auto osMajorVersion = m_os.getMajorVersion();
@@ -252,7 +448,7 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
                 osMajorVersion, osArch));
     }
 
-    /* TODO: if OpenHPC statement */
+    //    TODO: if OpenHPC statement
     repos.emplace_back(
         fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
             OpenHPCVersion, osMajorVersion));
@@ -263,7 +459,14 @@ std::vector<std::string> Repos::getxCATOSImageRepos() const
     return repos;
 }
 
-void Repos::configureRepositories() const
+const std::vector<repository>& RepoManager::listRepos() const
+{
+    return m_repos;
+}
+
+
+/*
+void Repos::configureRepositories()
 {
     if (cloyster::dryRun) {
         LOG_INFO("Would create and configure repositories")
@@ -277,50 +480,175 @@ void Repos::configureRepositories() const
     configureXCAT();
 }
 
-void Repos::createCloysterRepo() const
+void Repos::createCloysterRepo()
 {
     LOG_INFO("Creating Cloyster repofile")
-    std::filesystem::path path = "/etc/yum.repos.d/cloyster.repo";
-
-    inifile repofile;
-    std::string repodata;
-
-    if (cloyster::customRepofilePath.empty()) {
-        switch (m_os.getPlatform()) {
-            case OS::Platform::el8:
-                CLOYSTER_REPO_EL8.save(repodata);
-                break;
-            case OS::Platform::el9:
-                CLOYSTER_REPO_EL9.save(repodata);
-                break;
-            default:
-                throw std::runtime_error("Unsupported platform");
-        }
-
-        repofile.loadData(repodata);
-    } else {
-        LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath)
-        repofile.loadFile(cloyster::customRepofilePath);
-    }
 
     // @TODO call to configureAdditionalRepos should be done here
     // @TODO Let user choose the optional repos.
     configureAdditionalRepos(
         { AdditionalType::beegfs, AdditionalType::ELRepo, AdditionalType::EPEL,
-            AdditionalType::Grafana, AdditionalType::influxData,
-            AdditionalType::oneAPI, AdditionalType::OpenHPC,
-            AdditionalType::Zabbix, AdditionalType::RPMFusionUpdates });
+          //AdditionalType::Grafana,
+          //AdditionalType::influxData,
+          //AdditionalType::oneAPI,
+          AdditionalType::OpenHPC,
+          //AdditionalType::Zabbix,
+          AdditionalType::RPMFusionUpdates });
 
-    repofile.saveFile(path);
+    m_repository.saveFile(m_outfile);
 }
 
-void Repos::configureAdditionalRepos(
-    const std::vector<AdditionalType>& additional) const
+void Repos::resetRepositories()
 {
+    auto repos = m_repository.listAllSections();
+    for (const auto& section : repos) {
+        m_repository.setValue(section, "enabled", "0");
+    }
+
+}
+
+
+void Repos::configureAdditionalRepos(
+    const std::vector<AdditionalType>& additional)
+{
+    resetRepositories();
     LOG_INFO("Setting up additional repositories")
 
     /*
      * @TODO This function should enable/disable the additional repos on
      * cloyster.repo
      */
+/*
+    static std::unordered_map<AdditionalType, std::string> sections = {
+        {AdditionalType::beegfs, "cloyster-beegfs"},
+        {AdditionalType::ELRepo, "cloyster-elrepo"},
+        {AdditionalType::EPEL, "cloyster-epel"},
+        {AdditionalType::Grafana, "cloyster-grafana"},
+        {AdditionalType::influxData, "cloyster-influxData"},
+        {AdditionalType::oneAPI, "cloyster-oneAPI"},
+        {AdditionalType::OpenHPC, "cloyster-openhpc"},
+        {AdditionalType::Zabbix, "cloyster-zabbix"},
+        {AdditionalType::RPMFusionUpdates, "cloyster-rpmfusion-free-updates"}
+    };
+
+    resetRepositories();
+    for (const auto type : additional) {
+        m_repository.setValue(sections[type], "enabled", "1");
+    }
 }
+*/
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+#include <cloysterhpc/tests.h>
+
+class TempDir {
+private:
+    std::filesystem::path m_path;
+    
+public:
+    [[nodiscard]] const std::filesystem::path& name() const;
+
+    TempDir();
+    ~TempDir();
+
+    TempDir(TempDir&) = delete;
+    TempDir(TempDir&&) = delete;
+    
+};
+
+TempDir::TempDir() {
+    auto path = std::string{tmpnam(nullptr)};
+    std::filesystem::create_directory(m_path);
+    m_path = m_path;
+}
+
+TempDir::~TempDir() {
+    std::filesystem::remove_all(m_path);
+}
+
+const std::filesystem::path& TempDir::name() const
+{
+    return m_path;
+}
+    
+
+TEST_SUITE("Test repository file read and write")
+{        
+    TEST_CASE("Check if the default cloyster repository file is correctly parsed")
+    {
+        MockRunner mr;
+        OS osinfo{
+            OS::Arch::x86_64,
+            OS::Family::Linux,
+            OS::Platform::el9,
+            OS::Distro::Rocky,
+            "6.69.6969",
+            9, 9
+        };
+        
+        RepoManager repo{mr, osinfo};
+        repo.loadFiles(tests::sampleDirectory);
+
+        auto rlist = repo.listRepos();
+
+        REQUIRE(rlist.size() == 16);
+
+        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b)
+        {            
+            return (a.id <=> b.id) == std::strong_ordering::less;
+        });
+
+        CHECK(rlist[0].id == "cloyster-AlmaLinux-BaseOS");
+        CHECK(rlist[0].name == "AlmaLinux $releasever - BaseOS");
+        CHECK(rlist[0].baseurl == "https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/");
+        CHECK(rlist[5].id == "cloyster-epel");
+        CHECK(rlist[5].name == "Extra Packages for Enterprise Linux 9 - $basearch");
+        CHECK(rlist[5].baseurl == "https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/");
+        CHECK(rlist[15].id == "cloyster-zabbix");
+        CHECK(rlist[15].name == "zabbix");
+        CHECK(rlist[15].baseurl == "https://mirror.versatushpc.com.br/zabbix/zabbix/6.5/rhel/9/x86_64/");        
+        
+    }
+
+    TEST_CASE("Check if the repository enable operations are run")
+    {
+        MockRunner mr;
+        OS osinfo{
+            OS::Arch::x86_64,
+            OS::Family::Linux,
+            OS::Platform::el9,
+            OS::Distro::Rocky,
+            "6.69.6969",
+            9, 9
+        };
+
+        TempDir d;
+        
+        RepoManager repo{mr, osinfo};
+        repo.loadFiles(d.name());
+
+        auto rlist = repo.listRepos();
+
+        REQUIRE(rlist.size() == 16);
+
+        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b)
+        {            
+            return (a.id <=> b.id) == std::strong_ordering::less;
+        });
+        
+    }
+    
+    /*
+        for (const auto& c : rlist) {
+            printf("%s '%s' %s\n", c.id.c_str(), c.name.c_str(), c.baseurl.c_str());
+        }        
+
+     */
+}
+

@@ -8,7 +8,8 @@
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
-#include "cloysterhpc/repos.h"
+#include <cloysterhpc/repos.h>
+#include <cloysterhpc/runner.h>
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
@@ -228,26 +229,28 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    cloyster::runCommand(
+    Runner r;
+    r.executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkglist="
                     "/install/custom/netboot/compute.otherpkglist",
             m_stateless.osimage));
 
-    cloyster::runCommand(
+    r.executeCommand(
         fmt::format("chdef -t osimage {} --plus postinstall="
                     "/install/custom/netboot/compute.postinstall",
             m_stateless.osimage));
 
-    cloyster::runCommand(
+    r.executeCommand(
         fmt::format("chdef -t osimage {} --plus synclists="
                     "/install/custom/netboot/compute.synclists",
             m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-    Repos repoManager(m_cluster->getNodes()[0].getOS());
-    auto repos = repoManager.getxCATOSImageRepos();
+    
+    RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
+    std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
 
-    cloyster::runCommand(
+    r.executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
             m_stateless.osimage, fmt::join(repos, ",")));
 }

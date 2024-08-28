@@ -17,6 +17,8 @@
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/repos.h>
+#include <cloysterhpc/runner.h>
+#include <sys/socket.h>
 
 using cloyster::runCommand;
 
@@ -370,8 +372,19 @@ void Shell::install()
 
     installRequiredPackages();
 
-    const auto& repos = Repos(m_cluster->getHeadnode().getOS());
-    repos.configureRepositories();
+    auto runner = Runner{};
+    RepoManager repos{runner, m_cluster->getHeadnode().getOS()};
+    repos.loadFiles();
+    repos.enableMultiple({
+            "cloyster-beegfs",
+            "cloyster-elrepo",
+            "cloyster-epel",
+            "cloyster-openhpc",
+            //            "cloyster-influxdata",
+            "cloyster-rpmfusion-free-updates"
+        });
+    repos.commitStatus();
+    
     runSystemUpdate();
 
     installOpenHPCBase();
