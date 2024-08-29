@@ -61,3 +61,5 @@ target_include_directories(main ${WARNING_GUARD} PRIVATE
 #    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
 #    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 #)
+
+include(../cmake/CPackProperties.cmake)
