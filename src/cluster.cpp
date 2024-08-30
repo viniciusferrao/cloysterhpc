@@ -8,6 +8,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
 #include <cloysterhpc/inifile.h>
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -114,6 +115,26 @@ void Cluster::setDomainName(const std::string& domainName)
 std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 {
     return m_network;
+}
+
+void Cluster::initRepoManager()
+{
+    if (cloyster::dryRun) {
+        auto runner = DryRunner {};
+        m_repos.emplace(runner, this->getHeadnode().getOS());
+    } else {
+        auto runner = Runner {};
+        m_repos.emplace(runner, this->getHeadnode().getOS());
+    }
+}
+
+RepoManager& Cluster::getRepoManager()
+{
+    if (!m_repos) {
+        initRepoManager();
+    }
+
+    return m_repos.value();
 }
 
 Network& Cluster::getNetwork(Network::Profile profile)

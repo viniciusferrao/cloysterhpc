@@ -30,7 +30,7 @@ private:
      * This function sets the appropriate SELinux mode for the system.
      */
     void configureSELinuxMode();
-    
+
     /**
      * @brief Configures the system firewall.
      *
@@ -112,6 +112,13 @@ private:
      * This function installs the base packages required for OpenHPC.
      */
     void installOpenHPCBase();
+
+    /**
+     * @brief Configure repositories
+     *
+     * This function configure the required repos
+     */
+    void configureRepositories();
 
     /**
      * @brief Configures the time service.

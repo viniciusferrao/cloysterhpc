@@ -20,6 +20,7 @@
 #include <cloysterhpc/ofed.h>
 #include <cloysterhpc/queuesystem/pbs.h>
 #include <cloysterhpc/queuesystem/slurm.h>
+#include <cloysterhpc/repos.h>
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/timezone.h>
 
@@ -67,6 +68,8 @@ private:
     bool m_updateSystem { false };
     DiskImage m_diskImage;
 
+    std::optional<RepoManager> m_repos;
+
 public:
     [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
@@ -90,6 +93,9 @@ public:
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
+
+    void initRepoManager();
+    RepoManager& getRepoManager();
 
     /**
      * @brief Add a new network to the cluster.

@@ -14,6 +14,7 @@
 #include <cloysterhpc/presenter/PresenterNodes.h>
 #include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
 #include <cloysterhpc/presenter/PresenterQueueSystem.h>
+#include <cloysterhpc/presenter/PresenterRepository.h>
 #include <cloysterhpc/presenter/PresenterTime.h>
 #include <cloysterhpc/presenter/PresenterWelcome.h>
 
@@ -38,6 +39,10 @@ PresenterInstall::PresenterInstall(
 
 #if 1 // Hostname and domain
     Call<PresenterHostId>();
+#endif
+
+#if 1 // Hostname and domain
+    Call<PresenterRepository>();
 #endif
 
 #if 1 // Networking

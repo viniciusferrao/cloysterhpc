@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/inifile.h>
-#include <cloysterhpc/runner.h>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/repos.h>
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/log.h>
 #include <filesystem>
 #include <fstream>
@@ -102,7 +102,8 @@ void RepoManager::loadFiles(const std::filesystem::path& basedir)
     configureXCAT();
 }
 
-void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path) {
+void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path)
+{
     std::vector<repository> data;
     loadFromINI(path, file, data);
     mergeWithCurrentList(std::move(data));
@@ -221,7 +222,8 @@ void RepoManager::commitStatus()
     }
 }
 
-std::vector<repository> RepoManager::buildCloysterTree(const std::filesystem::path& basedir)
+std::vector<repository> RepoManager::buildCloysterTree(
+    const std::filesystem::path& basedir)
 {
 
     std::vector<repository> cloyster_repos;
@@ -252,6 +254,11 @@ std::vector<repository> RepoManager::buildCloysterTree(const std::filesystem::pa
 
 void RepoManager::createFileFor(std::filesystem::path path)
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would create file {}", path.string());
+        return;
+    }
+
     if (std::filesystem::exists(path)) {
         LOG_INFO("repository file {} already exists...", path.string());
         return;
@@ -341,19 +348,21 @@ void RepoManager::configureXCAT()
 
     m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
                           "xcat-core/xcat-core.repo",
-                          "/etc/yum.repos.d");
+        "/etc/yum.repos.d");
 
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
-            m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                                  "rh8/x86_64/xcat-dep.repo",
-                                  "/etc/yum.repos.d");
+            m_runner.downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh8/x86_64/xcat-dep.repo",
+                "/etc/yum.repos.d");
             break;
         case OS::Platform::el9:
             m_runner.executeCommand("dnf -y install initscripts");
-            m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                                  "rh9/x86_64/xcat-dep.repo",
-                                  "/etc/yum.repos.d");
+            m_runner.downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh9/x86_64/xcat-dep.repo",
+                "/etc/yum.repos.d");
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
@@ -464,7 +473,6 @@ const std::vector<repository>& RepoManager::listRepos() const
     return m_repos;
 }
 
-
 /*
 void Repos::configureRepositories()
 {
@@ -550,7 +558,7 @@ void Repos::configureAdditionalRepos(
 class TempDir {
 private:
     std::filesystem::path m_path;
-    
+
 public:
     [[nodiscard]] const std::filesystem::path& name() const;
 
@@ -559,96 +567,81 @@ public:
 
     TempDir(TempDir&) = delete;
     TempDir(TempDir&&) = delete;
-    
 };
 
-TempDir::TempDir() {
-    auto path = std::string{tmpnam(nullptr)};
+TempDir::TempDir()
+{
+    auto path = std::string { tmpnam(nullptr) };
     std::filesystem::create_directory(m_path);
     m_path = m_path;
 }
 
-TempDir::~TempDir() {
-    std::filesystem::remove_all(m_path);
-}
+TempDir::~TempDir() { std::filesystem::remove_all(m_path); }
 
-const std::filesystem::path& TempDir::name() const
-{
-    return m_path;
-}
-    
+const std::filesystem::path& TempDir::name() const { return m_path; }
 
 TEST_SUITE("Test repository file read and write")
-{        
-    TEST_CASE("Check if the default cloyster repository file is correctly parsed")
+{
+    TEST_CASE(
+        "Check if the default cloyster repository file is correctly parsed")
     {
         MockRunner mr;
-        OS osinfo{
-            OS::Arch::x86_64,
-            OS::Family::Linux,
-            OS::Platform::el9,
-            OS::Distro::Rocky,
-            "6.69.6969",
-            9, 9
-        };
-        
-        RepoManager repo{mr, osinfo};
+        OS osinfo { OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el9,
+            OS::Distro::Rocky, "6.69.6969", 9, 9 };
+
+        RepoManager repo { mr, osinfo };
         repo.loadFiles(tests::sampleDirectory);
 
         auto rlist = repo.listRepos();
 
         REQUIRE(rlist.size() == 16);
 
-        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b)
-        {            
+        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b) {
             return (a.id <=> b.id) == std::strong_ordering::less;
         });
 
         CHECK(rlist[0].id == "cloyster-AlmaLinux-BaseOS");
         CHECK(rlist[0].name == "AlmaLinux $releasever - BaseOS");
-        CHECK(rlist[0].baseurl == "https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/");
+        CHECK(rlist[0].baseurl
+            == "https://repo.almalinux.org/almalinux/$releasever/BaseOS/"
+               "$basearch/os/");
         CHECK(rlist[5].id == "cloyster-epel");
-        CHECK(rlist[5].name == "Extra Packages for Enterprise Linux 9 - $basearch");
-        CHECK(rlist[5].baseurl == "https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/");
+        CHECK(rlist[5].name
+            == "Extra Packages for Enterprise Linux 9 - $basearch");
+        CHECK(rlist[5].baseurl
+            == "https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/");
         CHECK(rlist[15].id == "cloyster-zabbix");
         CHECK(rlist[15].name == "zabbix");
-        CHECK(rlist[15].baseurl == "https://mirror.versatushpc.com.br/zabbix/zabbix/6.5/rhel/9/x86_64/");        
-        
+        CHECK(rlist[15].baseurl
+            == "https://mirror.versatushpc.com.br/zabbix/zabbix/6.5/rhel/9/"
+               "x86_64/");
     }
 
     TEST_CASE("Check if the repository enable operations are run")
     {
         MockRunner mr;
-        OS osinfo{
-            OS::Arch::x86_64,
-            OS::Family::Linux,
-            OS::Platform::el9,
-            OS::Distro::Rocky,
-            "6.69.6969",
-            9, 9
-        };
+        OS osinfo { OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el9,
+            OS::Distro::Rocky, "6.69.6969", 9, 9 };
 
         TempDir d;
-        
-        RepoManager repo{mr, osinfo};
+
+        RepoManager repo { mr, osinfo };
         repo.loadFiles(d.name());
 
         auto rlist = repo.listRepos();
 
         REQUIRE(rlist.size() == 16);
 
-        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b)
-        {            
+        std::sort(rlist.begin(), rlist.end(), [](auto a, auto b) {
             return (a.id <=> b.id) == std::strong_ordering::less;
         });
-        
     }
-    
+
     /*
         for (const auto& c : rlist) {
-            printf("%s '%s' %s\n", c.id.c_str(), c.name.c_str(), c.baseurl.c_str());
-        }        
+            printf("%s '%s' %s\n", c.id.c_str(), c.name.c_str(),
+       c.baseurl.c_str());
+        }
 
      */
 }
-

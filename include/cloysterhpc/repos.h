@@ -10,9 +10,9 @@
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/runner.h>
 
-#include <string>
 #include <filesystem>
 #include <ranges>
+#include <string>
 
 namespace cloyster {
 extern std::string customRepofilePath;
@@ -27,7 +27,7 @@ struct repository {
     bool gpgcheck = true;
     std::string gpgkey;
     std::filesystem::path source;
-    
+
     /* repofile(const std::string& id, const std::string& name,
         const std::string& baseurl, const std::string& metalink,
         const std::string& gpgkey, const std::string& gpgkeyContent)
@@ -40,7 +40,6 @@ struct repository {
     {
     } */
 };
-
 
 class RepoManager {
 public:
@@ -55,10 +54,12 @@ public:
         Zabbix,
         RPMFusionUpdates
     };
-    
+
     RepoManager(BaseRunner& runner, const OS& osinfo)
-        : m_runner(runner), m_os(osinfo)
-    {}
+        : m_runner(runner)
+        , m_os(osinfo)
+    {
+    }
 
     void loadFiles(const std::filesystem::path& basedir = "/etc/yum.repos.d");
     void loadCustom(inifile& file, const std::filesystem::path& path);
@@ -70,8 +71,9 @@ public:
     void commitStatus();
 
     const std::vector<repository>& listRepos() const;
-    
+
     std::vector<std::string> getxCATOSImageRepos() const;
+
 private:
     std::vector<repository> m_repos;
     BaseRunner& m_runner;
@@ -79,16 +81,17 @@ private:
 
     void createFileFor(std::filesystem::path path);
 
-    std::vector<repository> buildCloysterTree(const std::filesystem::path& basedir);
-    
+    std::vector<repository> buildCloysterTree(
+        const std::filesystem::path& basedir);
+
     void loadSingleFile(std::filesystem::path source);
     void saveRepositories();
-    
+
     void configureXCAT();
     void configureEL();
     void setEnableState(const std::string& id, bool value);
 
-    void mergeWithCurrentList(std::vector<repository>&& repo);    
+    void mergeWithCurrentList(std::vector<repository>&& repo);
 };
 
 #endif // CLOYSTERHPC_REPOS_H_

@@ -230,29 +230,25 @@ void XCAT::generateSynclistsFile()
 void XCAT::configureOSImageDefinition()
 {
     Runner r;
-    r.executeCommand(
-        fmt::format("chdef -t osimage {} --plus otherpkglist="
-                    "/install/custom/netboot/compute.otherpkglist",
-            m_stateless.osimage));
+    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
+                                 "/install/custom/netboot/compute.otherpkglist",
+        m_stateless.osimage));
 
-    r.executeCommand(
-        fmt::format("chdef -t osimage {} --plus postinstall="
-                    "/install/custom/netboot/compute.postinstall",
-            m_stateless.osimage));
+    r.executeCommand(fmt::format("chdef -t osimage {} --plus postinstall="
+                                 "/install/custom/netboot/compute.postinstall",
+        m_stateless.osimage));
 
-    r.executeCommand(
-        fmt::format("chdef -t osimage {} --plus synclists="
-                    "/install/custom/netboot/compute.synclists",
-            m_stateless.osimage));
+    r.executeCommand(fmt::format("chdef -t osimage {} --plus synclists="
+                                 "/install/custom/netboot/compute.synclists",
+        m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-    
+
     RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
     std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
 
-    r.executeCommand(
-        fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
-            m_stateless.osimage, fmt::join(repos, ",")));
+    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
+        m_stateless.osimage, fmt::join(repos, ",")));
 }
 
 void XCAT::customizeImage()

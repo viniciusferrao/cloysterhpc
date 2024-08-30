@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cloysterhpc/inifile.h>
 #include <filesystem>
 #include <fmt/format.h>
-#include <algorithm>
 
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
@@ -97,37 +97,33 @@ bool inifile::exists(const std::string& section)
     return ini.SectionExists(section.c_str());
 }
 
-static std::vector<std::string> convertIniNames(CSimpleIniA::TNamesDepend&& names)
+static std::vector<std::string> convertIniNames(
+    CSimpleIniA::TNamesDepend&& names)
 {
     std::vector<std::string> ret;
 
-    std::transform(names.begin(), names.end(),
-                   std::back_inserter(ret),
-                   [](auto entry) {
-                       return std::string{entry.pItem};
-                   });
+    std::transform(names.begin(), names.end(), std::back_inserter(ret),
+        [](auto entry) { return std::string { entry.pItem }; });
 
     return ret;
-
 }
 
 std::vector<std::string> inifile::listAllSections() const
 {
     CSimpleIniA::TNamesDepend sections;
-	ini.GetAllSections(sections);\
+    ini.GetAllSections(sections);
 
     return convertIniNames(std::move(sections));
 }
 
-std::vector<std::string> inifile::listAllEntries(const std::string& section) const
+std::vector<std::string> inifile::listAllEntries(
+    const std::string& section) const
 {
     CSimpleIniA::TNamesDepend keys;
-	ini.GetAllKeys(section.c_str(), keys);
+    ini.GetAllKeys(section.c_str(), keys);
 
     return convertIniNames(std::move(keys));
 }
-
-
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

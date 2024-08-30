@@ -372,19 +372,14 @@ void Shell::install()
 
     installRequiredPackages();
 
-    auto runner = Runner{};
-    RepoManager repos{runner, m_cluster->getHeadnode().getOS()};
+    auto repos = m_cluster->getRepoManager();
     repos.loadFiles();
-    repos.enableMultiple({
-            "cloyster-beegfs",
-            "cloyster-elrepo",
-            "cloyster-epel",
-            "cloyster-openhpc",
-            //            "cloyster-influxdata",
-            "cloyster-rpmfusion-free-updates"
-        });
+    repos.enableMultiple({ "cloyster-beegfs", "cloyster-elrepo",
+        "cloyster-epel", "cloyster-openhpc",
+        //            "cloyster-influxdata",
+        "cloyster-rpmfusion-free-updates" });
     repos.commitStatus();
-    
+
     runSystemUpdate();
 
     installOpenHPCBase();
