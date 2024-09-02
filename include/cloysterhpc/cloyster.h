@@ -12,16 +12,16 @@
 #include <string>
 
 namespace cloyster {
-    extern bool showVersion;
-    extern bool runAsRoot;
-    extern bool dryRun;
-    extern bool enableTUI;
-    extern bool enableCLI;
-    extern bool runAsDaemon;
-    
-    extern std::string logLevelInput;
-    extern std::string answerfile;
-    extern std::string customRepofilePath;
+extern bool showVersion;
+extern bool runAsRoot;
+extern bool dryRun;
+extern bool enableTUI;
+extern bool enableCLI;
+extern bool runAsDaemon;
+
+extern std::string logLevelInput;
+extern std::string answerfile;
+extern std::string customRepofilePath;
 }
 
 #endif // CLOYSTERHPC_CLOYSTER_H_

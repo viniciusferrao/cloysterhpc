@@ -13,10 +13,10 @@ private:
 
         struct General {
             static constexpr const auto question
-                = "Enable/disable the repositories you want to install. Use SPACE for selecting/deselecting";
+                = "Enable/disable the repositories you want to install. Use "
+                  "SPACE for selecting/deselecting";
             static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
-
         };
     };
 
@@ -24,4 +24,3 @@ public:
     PresenterRepository(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
-

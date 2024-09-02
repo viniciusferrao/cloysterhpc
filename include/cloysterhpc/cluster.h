@@ -72,7 +72,6 @@ private:
     std::optional<RepoManager> m_repos = std::nullopt;
 
 public:
-
     Cluster();
 
     [[nodiscard]] Headnode& getHeadnode();

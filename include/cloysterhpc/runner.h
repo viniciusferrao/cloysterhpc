@@ -20,7 +20,6 @@ public:
     virtual ~BaseRunner() = default;
 };
 
-
 class Runner : public BaseRunner {
 public:
     int executeCommand(const std::string&) override;
@@ -35,7 +34,7 @@ public:
     virtual ~DryRunner() = default;
 };
 
-class MockRunner : public BaseRunner {    
+class MockRunner : public BaseRunner {
 public:
     int executeCommand(const std::string&) override;
 
