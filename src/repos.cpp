@@ -571,9 +571,10 @@ public:
 
 TempDir::TempDir()
 {
-    auto path = std::string { tmpnam(nullptr) };
-    std::filesystem::create_directory(m_path);
-    m_path = m_path;
+    char* temp = "tempdirXXXXXX";   
+    
+    auto path = std::string { mkdtemp(temp) };
+    m_path = path;
 }
 
 TempDir::~TempDir() { std::filesystem::remove_all(m_path); }
