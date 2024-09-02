@@ -2,16 +2,15 @@
 set(CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set(CPACK_PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
 set(CPACK_PACKAGE_CONTACT "vinicius@ferrao.net.br")
-set(CPACK_PACKAGE_VENDOR "ferrao.net.br")
+set(CPACK_PACKAGE_VENDOR "CloysterHPC")
 
 # Specify RPM-specific configurations
 set(CPACK_GENERATOR "RPM")
 set(CPACK_RPM_PACKAGE_RELEASE "1")
 set(CPACK_RPM_PACKAGE_LICENSE "Apache-2.0")
-set(CPACK_RPM_PACKAGE_GROUP "System Environment/Daemons")
 set(CPACK_RPM_PACKAGE_URL "https://github.com/viniciusferrao/cloysterhpc")
 set(CPACK_RPM_PACKAGE_DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer.")
-# set(CPACK_RPM_PACKAGE_REQUIRES "") # We need to figure out what dependencies Cloyster requires
+set(CPACK_RPM_PACKAGE_REQUIRES "newt")
 
 # Experience shows that explicit package naming can help make it easier to sort
 # out potential ABI related issues before they start, while helping you
