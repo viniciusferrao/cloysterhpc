@@ -12,16 +12,16 @@
 #include <string>
 
 namespace cloyster {
-bool showVersion = false;
-bool runAsRoot = false;
-bool dryRun = false;
-bool enableTUI = false;
-bool enableCLI = false;
-bool runAsDaemon = false;
-std::string logLevelInput
-    = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
-std::string answerfile;
-std::string customRepofilePath;
+    extern bool showVersion;
+    extern bool runAsRoot;
+    extern bool dryRun;
+    extern bool enableTUI;
+    extern bool enableCLI;
+    extern bool runAsDaemon;
+    
+    extern std::string logLevelInput;
+    extern std::string answerfile;
+    extern std::string customRepofilePath;
 }
 
 #endif // CLOYSTERHPC_CLOYSTER_H_

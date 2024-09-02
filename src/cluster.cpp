@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/cloyster.h"
 #include <cloysterhpc/answerfile.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
@@ -28,8 +29,15 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
+Cluster::Cluster()
+{
+    if (cloyster::dryRun) {
+        m_runner = std::make_unique<DryRunner>();
+    } else {
+        m_runner = std::make_unique<Runner>();
+    }
+}
 // The rule of zero
-// Cluster::Cluster() = default;
 // Cluster::~Cluster() = default;
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
@@ -119,13 +127,7 @@ std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 
 void Cluster::initRepoManager()
 {
-    if (cloyster::dryRun) {
-        auto runner = DryRunner {};
-        m_repos.emplace(runner, this->getHeadnode().getOS());
-    } else {
-        auto runner = Runner {};
-        m_repos.emplace(runner, this->getHeadnode().getOS());
-    }
+    m_repos.emplace(*m_runner, this->getHeadnode().getOS());
 }
 
 RepoManager& Cluster::getRepoManager()

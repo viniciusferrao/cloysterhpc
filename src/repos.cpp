@@ -287,32 +287,6 @@ void RepoManager::mergeWithCurrentList(std::vector<repository>&& repo)
     }
 }
 
-/*
-void Repos::createConfigurationFile(const repofile& repo) const
-{
-    if (cloyster::dryRun) {
-        LOG_INFO("Would create repofile {}", repo.name)
-        return;
-    }
-
-    ptree repof {};
-
-    repof.put(fmt::format("{}.name", repo.id), repo.name);
-    repof.put(fmt::format("{}.gpgcheck", repo.id), repo.gpgcheck ? 1 : 0);
-    repof.put(fmt::format("{}.gpgkey", repo.id), repo.gpgkey);
-    repof.put(fmt::format("{}.enabled", repo.id), repo.enabled ? 1 : 0);
-    repof.put(fmt::format("{}.baseurl", repo.id), repo.baseurl);
-
-    std::string outfile =
-            fmt::format("/etc/yum.repos.d/{}.repo", repo.id);
-
-    // boost::property_tree::ini_parser::write_ini(outfile, repof);
-
-    printf(">>>> %s %s\n", repo.id.c_str(), repo.name.c_str());
-    createGPGKeyFile(repo);
-    LOG_INFO("Created repofile {}", repo.name)
-}
-*/
 static void createGPGKey(
     const std::filesystem::path& path, const std::string& key)
 {
@@ -325,22 +299,6 @@ static void createGPGKey(
     gpgkey << key;
     gpgkey.close();
 }
-
-/*
-void Repos::createGPGKeyFile(const repofile& repo) const
-{
-    std::filesystem::path path = repo.gpgkey.substr(7);
-    createGPGKey(path, repo.gpgkeyContent);
-}
-
-void Repos::createGPGKeyFile(
-    const std::string& filename, const std::string& key) const
-{
-    std::filesystem::path path = fmt::format("/etc/pki/rpm-gpg/{}", filename);
-    createGPGKey(path, key);
-}
-
-*/
 
 void RepoManager::configureXCAT()
 {
@@ -473,79 +431,6 @@ const std::vector<repository>& RepoManager::listRepos() const
     return m_repos;
 }
 
-/*
-void Repos::configureRepositories()
-{
-    if (cloyster::dryRun) {
-        LOG_INFO("Would create and configure repositories")
-        return;
-    }
-
-    LOG_INFO("Setting up repositories")
-
-    createCloysterRepo();
-    configureEL();
-    configureXCAT();
-}
-
-void Repos::createCloysterRepo()
-{
-    LOG_INFO("Creating Cloyster repofile")
-
-    // @TODO call to configureAdditionalRepos should be done here
-    // @TODO Let user choose the optional repos.
-    configureAdditionalRepos(
-        { AdditionalType::beegfs, AdditionalType::ELRepo, AdditionalType::EPEL,
-          //AdditionalType::Grafana,
-          //AdditionalType::influxData,
-          //AdditionalType::oneAPI,
-          AdditionalType::OpenHPC,
-          //AdditionalType::Zabbix,
-          AdditionalType::RPMFusionUpdates });
-
-    m_repository.saveFile(m_outfile);
-}
-
-void Repos::resetRepositories()
-{
-    auto repos = m_repository.listAllSections();
-    for (const auto& section : repos) {
-        m_repository.setValue(section, "enabled", "0");
-    }
-
-}
-
-
-void Repos::configureAdditionalRepos(
-    const std::vector<AdditionalType>& additional)
-{
-    resetRepositories();
-    LOG_INFO("Setting up additional repositories")
-
-    /*
-     * @TODO This function should enable/disable the additional repos on
-     * cloyster.repo
-     */
-/*
-    static std::unordered_map<AdditionalType, std::string> sections = {
-        {AdditionalType::beegfs, "cloyster-beegfs"},
-        {AdditionalType::ELRepo, "cloyster-elrepo"},
-        {AdditionalType::EPEL, "cloyster-epel"},
-        {AdditionalType::Grafana, "cloyster-grafana"},
-        {AdditionalType::influxData, "cloyster-influxData"},
-        {AdditionalType::oneAPI, "cloyster-oneAPI"},
-        {AdditionalType::OpenHPC, "cloyster-openhpc"},
-        {AdditionalType::Zabbix, "cloyster-zabbix"},
-        {AdditionalType::RPMFusionUpdates, "cloyster-rpmfusion-free-updates"}
-    };
-
-    resetRepositories();
-    for (const auto type : additional) {
-        m_repository.setValue(sections[type], "enabled", "1");
-    }
-}
-*/
-
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
 #else
@@ -553,33 +438,8 @@ void Repos::configureAdditionalRepos(
 #include <doctest/doctest.h>
 #endif
 
+#include <cloysterhpc/tempdir.h>
 #include <cloysterhpc/tests.h>
-
-class TempDir {
-private:
-    std::filesystem::path m_path;
-
-public:
-    [[nodiscard]] const std::filesystem::path& name() const;
-
-    TempDir();
-    ~TempDir();
-
-    TempDir(TempDir&) = delete;
-    TempDir(TempDir&&) = delete;
-};
-
-TempDir::TempDir()
-{
-    char* temp = "tempdirXXXXXX";   
-    
-    auto path = std::string { mkdtemp(temp) };
-    m_path = path;
-}
-
-TempDir::~TempDir() { std::filesystem::remove_all(m_path); }
-
-const std::filesystem::path& TempDir::name() const { return m_path; }
 
 TEST_SUITE("Test repository file read and write")
 {
@@ -637,12 +497,4 @@ TEST_SUITE("Test repository file read and write")
             return (a.id <=> b.id) == std::strong_ordering::less;
         });
     }
-
-    /*
-        for (const auto& c : rlist) {
-            printf("%s '%s' %s\n", c.id.c_str(), c.name.c_str(),
-       c.baseurl.c_str());
-        }
-
-     */
 }

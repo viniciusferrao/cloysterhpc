@@ -56,6 +56,7 @@ private:
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
+    std::unique_ptr<BaseRunner> m_runner;
 
     bool m_firewall { false };
     SELinuxMode m_selinux { SELinuxMode::Disabled };
@@ -68,9 +69,12 @@ private:
     bool m_updateSystem { false };
     DiskImage m_diskImage;
 
-    std::optional<RepoManager> m_repos;
+    std::optional<RepoManager> m_repos = std::nullopt;
 
 public:
+
+    Cluster();
+
     [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
 
@@ -240,9 +244,9 @@ public:
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */
-    std::size_t nodeQuantity;
+    std::size_t nodeQuantity = 0;
     std::string nodePrefix;
-    std::size_t nodePadding;
+    std::size_t nodePadding = 0;
     address nodeStartIP;
     std::string nodeRootPassword;
 };
