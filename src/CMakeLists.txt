@@ -61,5 +61,3 @@ target_include_directories(${cloysterhpc_BINARY_NAME} ${WARNING_GUARD} PRIVATE
 #    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
 #    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
 #)
-
-include(../cmake/CPackProperties.cmake)
