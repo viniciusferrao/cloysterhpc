@@ -69,6 +69,8 @@ string(
             8
             GIT_SHORT_SHA)
 
+set(BINARY_NAME "cloysterhpc")
+
 target_compile_features(cloysterhpc_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 add_compile_definitions(TEST_SAMPLE_DIR="${CMAKE_SOURCE_DIR}/test/sample")
@@ -116,7 +118,7 @@ if(MSVC)
 endif()
 
 # set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT main)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${BINARY_NAME})
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
@@ -128,7 +130,7 @@ include(cmake/PackageProject.cmake)
 # we know we want to ship
 cloysterhpc_package_project(
   TARGETS
-  main
+  ${BINARY_NAME}
   cloysterhpc_options
   cloysterhpc_warnings
   # FIXME: this does not work! CK

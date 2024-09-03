@@ -145,7 +145,7 @@ function(cloysterhpc_package_project)
       "The package ${_PackageProject_NAME} provides CMake targets:
 
     find_package(${_PackageProject_NAME} CONFIG REQUIRED)
-    target_link_libraries(main PRIVATE ${_targets_str})
+    target_link_libraries(${BINARY_NAME} PRIVATE ${_targets_str})
   ")
   install(CODE "MESSAGE(STATUS \"${USAGE_FILE_CONTENT}\")")
   file(WRITE "${_PackageProject_EXPORT_DESTINATION}/usage" "${USAGE_FILE_CONTENT}")
