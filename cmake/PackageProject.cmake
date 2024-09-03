@@ -128,14 +128,14 @@ function(cloysterhpc_package_project)
   list(APPEND _PackageProject_PRIVATE_DEPENDENCIES ${_PRIVATE_DEPENDENCIES_CONFIG})
 
   # Installation of package (compatible with vcpkg, etc)
-  set(CMAKE_INSTALL_BINDIR "opt/${CMAKE_PROJECT_NAME}/sbin")
+  set(CMAKE_INSTALL_PREFIX "/opt/${CMAKE_PROJECT_NAME}")
 
   install(
     TARGETS ${_PackageProject_TARGETS}
     EXPORT ${_PackageProject_EXPORT}
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
+    LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" COMPONENT shlib
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" COMPONENT lib
+    RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/sbin" COMPONENT bin
     PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${_PackageProject_NAME}" COMPONENT dev)
 
   # install the usage file
@@ -147,7 +147,7 @@ function(cloysterhpc_package_project)
       "The package ${_PackageProject_NAME} provides CMake targets:
 
     find_package(${_PackageProject_NAME} CONFIG REQUIRED)
-    target_link_libraries(${BINARY_NAME} PRIVATE ${_targets_str})
+    target_link_libraries(${cloysterhpc_BINARY_NAME} PRIVATE ${_targets_str})
   ")
   install(CODE "MESSAGE(STATUS \"${USAGE_FILE_CONTENT}\")")
   file(WRITE "${_PackageProject_EXPORT_DESTINATION}/usage" "${USAGE_FILE_CONTENT}")

@@ -30,7 +30,7 @@ set(CPACK_COMPONENTS_GROUPING ONE_PER_GROUP)
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL bin)
 
-## Override the binary component package name to remove the '-bin' suffix
+## Override the binary component package name to re move the '-bin' suffix
 set(CPACK_RPM_${COMPONENT_BINARY}_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
 
 # Include CPack
