@@ -12,13 +12,6 @@ set(CPACK_RPM_PACKAGE_URL "https://github.com/viniciusferrao/cloysterhpc")
 set(CPACK_RPM_PACKAGE_DESCRIPTION "Cloyster HPC is a turnkey HPC cluster solution with an user-friendly installer.")
 set(CPACK_RPM_PACKAGE_REQUIRES "newt")
 
-# Experience shows that explicit package naming can help make it easier to sort
-# out potential ABI related issues before they start, while helping you
-# track a build to a specific GIT SHA
-set(CPACK_PACKAGE_FILE_NAME
-        "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${GIT_SHORT_SHA}-${CMAKE_SYSTEM_NAME}-${CMAKE_BUILD_TYPE}-${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}"
-)
-
 # Optionally set the RPM build root directory
 set(CPACK_RPM_PACKAGE_BUILD_ROOT "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}")
 
@@ -28,9 +21,17 @@ set(CPACK_RPM_CREATE_SOURCE_RPM ON)
 # Use components to install only the binary
 set(CPACK_COMPONENTS_GROUPING ONE_PER_GROUP)
 set(CPACK_RPM_COMPONENT_INSTALL ON)
-set(CPACK_COMPONENTS_ALL bin)
+set(COMPONENT_BINARY bin)
+set(CPACK_COMPONENTS_ALL ${COMPONENT_BINARY})
 
-## Override the binary component package name to re move the '-bin' suffix
+# Experience shows that explicit package naming can help make it easier to sort
+# out potential ABI related issues before they start, while helping you
+# track a build to a specific GIT SHA
+set(CPACK_RPM_${COMPONENT_BINARY}_FILE_NAME
+        "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${GIT_SHORT_SHA}-${CMAKE_SYSTEM_NAME}-${CMAKE_BUILD_TYPE}-${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}.rpm"
+)
+
+## Override the binary component package name to remove the '-bin' suffix
 set(CPACK_RPM_${COMPONENT_BINARY}_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
 
 # Include CPack
