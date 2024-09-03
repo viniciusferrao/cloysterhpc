@@ -128,6 +128,8 @@ function(cloysterhpc_package_project)
   list(APPEND _PackageProject_PRIVATE_DEPENDENCIES ${_PRIVATE_DEPENDENCIES_CONFIG})
 
   # Installation of package (compatible with vcpkg, etc)
+  set(CMAKE_INSTALL_BINDIR "opt/${CMAKE_PROJECT_NAME}/sbin")
+
   install(
     TARGETS ${_PackageProject_TARGETS}
     EXPORT ${_PackageProject_EXPORT}

@@ -25,5 +25,13 @@ set(CPACK_RPM_PACKAGE_BUILD_ROOT "${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}")
 # Generate a Source RPM (SRPM) as well
 set(CPACK_RPM_CREATE_SOURCE_RPM ON)
 
+# Use components to install only the binary
+set(CPACK_COMPONENTS_GROUPING ONE_PER_GROUP)
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL bin)
+
+## Override the binary component package name to remove the '-bin' suffix
+set(CPACK_RPM_${COMPONENT_BINARY}_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
+
 # Include CPack
 include(CPack)
