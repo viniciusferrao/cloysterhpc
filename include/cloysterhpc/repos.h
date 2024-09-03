@@ -27,18 +27,6 @@ struct repository {
     bool gpgcheck = true;
     std::string gpgkey;
     std::filesystem::path source;
-
-    /* repofile(const std::string& id, const std::string& name,
-        const std::string& baseurl, const std::string& metalink,
-        const std::string& gpgkey, const std::string& gpgkeyContent)
-        : id(id)
-        , name(name)
-        , baseurl(baseurl)
-        , metalink(metalink)
-        , gpgkey(gpgkey)
-        , gpgkeyContent(gpgkeyContent)
-    {
-    } */
 };
 
 class RepoManager {

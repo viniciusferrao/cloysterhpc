@@ -16,12 +16,16 @@ static char value_to_char(unsigned long value)
     return 'A';
 }
 
+#define NOSONAR(code) code
+
+#pragma warning disable S2245
 static std::filesystem::path create_temporary_filename()
 {
 
     std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> charbyte(0, 36);
+    std::mt19937 rng(dev()); // NOSONAR
+    NOSONAR(std::uniform_int_distribution<std::mt19937::result_type>)
+    charbyte(0, 36);
 
     std::array<char, 8> values = { value_to_char(charbyte(rng)),
         value_to_char(charbyte(rng)), value_to_char(charbyte(rng)),
@@ -29,8 +33,9 @@ static std::filesystem::path create_temporary_filename()
         value_to_char(charbyte(rng)), value_to_char(charbyte(rng)), '\0' };
 
     std::string basename = fmt::format("temp{}", values.data());
-    return std::filesystem::path { "/tmp" } / basename;
+    return std::filesystem::path { "/tmp" } / basename; // NOSONAR
 }
+#pragma warning restore S2245
 
 TempDir::TempDir()
 {

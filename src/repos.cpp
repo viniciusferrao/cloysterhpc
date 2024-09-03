@@ -17,11 +17,11 @@
 
 #include <boost/algorithm/string.hpp>
 
-std::string CLOYSTER_REPO_EL8 {
+const std::string CLOYSTER_REPO_EL8 {
 #include "cloysterhpc/repos/el8/cloyster.repo"
 };
 
-std::string CLOYSTER_REPO_EL9 = {
+const std::string CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
 };
 
@@ -90,7 +90,7 @@ void RepoManager::loadFiles(const std::filesystem::path& basedir)
 {
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { basedir }) {
-        auto path = dir_entry.path();
+        const auto path = dir_entry.path();
         if (path.extension() == ".repo")
             loadSingleFile(path);
     }
@@ -269,7 +269,7 @@ void RepoManager::createFileFor(std::filesystem::path path)
     auto filtered = m_repos
         | std::views::filter([&path](auto& r) { return path == r.source; });
 
-    for (auto repo : filtered) {
+    for (const auto repo : filtered) {
         writeSection(file, repo);
     }
 
@@ -415,7 +415,6 @@ std::vector<std::string> RepoManager::getxCATOSImageRepos() const
                 osMajorVersion, osArch));
     }
 
-    //    TODO: if OpenHPC statement
     repos.emplace_back(
         fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
             OpenHPCVersion, osMajorVersion));
