@@ -60,14 +60,29 @@ cloysterhpc_local_options()
 # don't know if this should be set globally from here or not...
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-set(GIT_SHA
-    "Unknown"
-    CACHE STRING "SHA this build was generated from")
-string(
-  SUBSTRING "${GIT_SHA}"
-            0
-            8
-            GIT_SHORT_SHA)
+# Get the GIT SHA of the current commit
+execute_process(
+        COMMAND git rev-parse HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_SHA
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Check if GIT_SHA is empty and set to "Unknown" if it is
+if("${GIT_SHA}" STREQUAL "")
+  set(GIT_SHA "Unknown")
+endif()
+
+# Get the short SHA (first 8 characters) if GIT_SHA is not "Unknown"
+if(NOT "${GIT_SHA}" STREQUAL "Unknown")
+  string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
+else()
+  set(GIT_SHORT_SHA "Unknown")
+endif()
+
+# Cache the variables for future use
+set(GIT_SHA "${GIT_SHA}" CACHE STRING "SHA this build was generated from")
+set(GIT_SHORT_SHA "${GIT_SHORT_SHA}" CACHE STRING "Short SHA this build was generated from")
 
 set(cloysterhpc_BINARY_NAME "cloysterhpc")
 
