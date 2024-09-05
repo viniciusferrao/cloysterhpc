@@ -60,14 +60,31 @@ cloysterhpc_local_options()
 # don't know if this should be set globally from here or not...
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-set(GIT_SHA
-    "Unknown"
-    CACHE STRING "SHA this build was generated from")
-string(
-  SUBSTRING "${GIT_SHA}"
-            0
-            8
-            GIT_SHORT_SHA)
+# Get the GIT SHA of the current commit
+execute_process(
+        COMMAND git rev-parse HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_SHA
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Check if GIT_SHA is empty and set to "Unknown" if it is
+if("${GIT_SHA}" STREQUAL "")
+  set(GIT_SHA "Unknown")
+endif()
+
+# Get the short SHA (first 8 characters) if GIT_SHA is not "Unknown"
+if(NOT "${GIT_SHA}" STREQUAL "Unknown")
+  string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
+else()
+  set(GIT_SHORT_SHA "Unknown")
+endif()
+
+# Cache the variables for future use
+set(GIT_SHA "${GIT_SHA}" CACHE STRING "SHA this build was generated from")
+set(GIT_SHORT_SHA "${GIT_SHORT_SHA}" CACHE STRING "Short SHA this build was generated from")
+
+set(cloysterhpc_BINARY_NAME "cloysterhpc")
 
 target_compile_features(cloysterhpc_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
@@ -116,7 +133,7 @@ if(MSVC)
 endif()
 
 # set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT main)
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${cloysterhpc_BINARY_NAME})
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
@@ -128,18 +145,9 @@ include(cmake/PackageProject.cmake)
 # we know we want to ship
 cloysterhpc_package_project(
   TARGETS
-  main
+  ${cloysterhpc_BINARY_NAME}
   cloysterhpc_options
   cloysterhpc_warnings
   # FIXME: this does not work! CK
   # PRIVATE_DEPENDENCIES_CONFIGURED project_options project_warnings
 )
-
-# Experience shows that explicit package naming can help make it easier to sort
-# out potential ABI related issues before they start, while helping you
-# track a build to a specific GIT SHA
-set(CPACK_PACKAGE_FILE_NAME
-    "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${GIT_SHORT_SHA}-${CMAKE_SYSTEM_NAME}-${CMAKE_BUILD_TYPE}-${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}"
-)
-
-include(CPack)

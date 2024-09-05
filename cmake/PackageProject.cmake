@@ -6,38 +6,38 @@ function(cloysterhpc_package_project)
   set(_options ARCH_INDEPENDENT # default to false
   )
   set(_oneValueArgs
-      # default to the project_name:
-      NAME
-      COMPONENT
-      # default to project version:
-      VERSION
-      # default to semver
-      COMPATIBILITY
-      # default to ${CMAKE_BINARY_DIR}
-      CONFIG_EXPORT_DESTINATION
-      # default to ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${NAME} suitable for vcpkg, etc.
-      CONFIG_INSTALL_DESTINATION)
+          # default to the project_name:
+          NAME
+          COMPONENT
+          # default to project version:
+          VERSION
+          # default to semver
+          COMPATIBILITY
+          # default to ${CMAKE_BINARY_DIR}
+          CONFIG_EXPORT_DESTINATION
+          # default to ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${NAME} suitable for vcpkg, etc.
+          CONFIG_INSTALL_DESTINATION)
   set(_multiValueArgs
-      # recursively found for the current folder if not specified
-      TARGETS
-      # a list of public/interface include directories or files
-      PUBLIC_INCLUDES
-      # the names of the INTERFACE/PUBLIC dependencies that are found using `CONFIG`
-      PUBLIC_DEPENDENCIES_CONFIGURED
-      # the INTERFACE/PUBLIC dependencies that are found by any means using `find_dependency`.
-      # the arguments must be specified within double quotes (e.g. "<dependency> 1.0.0 EXACT" or "<dependency> CONFIG").
-      PUBLIC_DEPENDENCIES
-      # the names of the PRIVATE dependencies that are found using `CONFIG`. Only included when BUILD_SHARED_LIBS is OFF.
-      PRIVATE_DEPENDENCIES_CONFIGURED
-      # PRIVATE dependencies that are only included when BUILD_SHARED_LIBS is OFF
-      PRIVATE_DEPENDENCIES)
+          # recursively found for the current folder if not specified
+          TARGETS
+          # a list of public/interface include directories or files
+          PUBLIC_INCLUDES
+          # the names of the INTERFACE/PUBLIC dependencies that are found using `CONFIG`
+          PUBLIC_DEPENDENCIES_CONFIGURED
+          # the INTERFACE/PUBLIC dependencies that are found by any means using `find_dependency`.
+          # the arguments must be specified within double quotes (e.g. "<dependency> 1.0.0 EXACT" or "<dependency> CONFIG").
+          PUBLIC_DEPENDENCIES
+          # the names of the PRIVATE dependencies that are found using `CONFIG`. Only included when BUILD_SHARED_LIBS is OFF.
+          PRIVATE_DEPENDENCIES_CONFIGURED
+          # PRIVATE dependencies that are only included when BUILD_SHARED_LIBS is OFF
+          PRIVATE_DEPENDENCIES)
 
   cmake_parse_arguments(
-    _PackageProject
-    "${_options}"
-    "${_oneValueArgs}"
-    "${_multiValueArgs}"
-    "${ARGN}")
+          _PackageProject
+          "${_options}"
+          "${_oneValueArgs}"
+          "${_multiValueArgs}"
+          "${ARGN}")
 
   # Set default options
   include(GNUInstallDirs) # Define GNU standard installation directories such as CMAKE_INSTALL_DATADIR
@@ -82,9 +82,9 @@ function(cloysterhpc_package_project)
 
   # Installation of the public/interface includes
   if(NOT
-     "${_PackageProject_PUBLIC_INCLUDES}"
-     STREQUAL
-     "")
+          "${_PackageProject_PUBLIC_INCLUDES}"
+          STREQUAL
+          "")
     foreach(_INC ${_PackageProject_PUBLIC_INCLUDES})
       # make include absolute
       if(NOT IS_ABSOLUTE ${_INC})
@@ -102,9 +102,9 @@ function(cloysterhpc_package_project)
 
   # Append the configured public dependencies
   if(NOT
-     "${_PackageProject_PUBLIC_DEPENDENCIES_CONFIGURED}"
-     STREQUAL
-     "")
+          "${_PackageProject_PUBLIC_DEPENDENCIES_CONFIGURED}"
+          STREQUAL
+          "")
     set(_PUBLIC_DEPENDENCIES_CONFIG)
     foreach(DEP ${_PackageProject_PUBLIC_DEPENDENCIES_CONFIGURED})
       list(APPEND _PUBLIC_DEPENDENCIES_CONFIG "${DEP} CONFIG")
@@ -116,9 +116,9 @@ function(cloysterhpc_package_project)
 
   # Append the configured private dependencies
   if(NOT
-     "${_PackageProject_PRIVATE_DEPENDENCIES_CONFIGURED}"
-     STREQUAL
-     "")
+          "${_PackageProject_PRIVATE_DEPENDENCIES_CONFIGURED}"
+          STREQUAL
+          "")
     set(_PRIVATE_DEPENDENCIES_CONFIG)
     foreach(DEP ${_PackageProject_PRIVATE_DEPENDENCIES_CONFIGURED})
       list(APPEND _PRIVATE_DEPENDENCIES_CONFIG "${DEP} CONFIG")
@@ -128,13 +128,15 @@ function(cloysterhpc_package_project)
   list(APPEND _PackageProject_PRIVATE_DEPENDENCIES ${_PRIVATE_DEPENDENCIES_CONFIG})
 
   # Installation of package (compatible with vcpkg, etc)
+  set(CMAKE_INSTALL_PREFIX "/opt/${CMAKE_PROJECT_NAME}")
+
   install(
-    TARGETS ${_PackageProject_TARGETS}
-    EXPORT ${_PackageProject_EXPORT}
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT shlib
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${_PackageProject_NAME}" COMPONENT dev)
+          TARGETS ${_PackageProject_TARGETS}
+          EXPORT ${_PackageProject_EXPORT}
+          LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" COMPONENT shlib
+          ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" COMPONENT lib
+          RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/sbin" COMPONENT bin
+          PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${_PackageProject_NAME}" COMPONENT dev)
 
   # install the usage file
   set(_targets_str "")
@@ -142,7 +144,7 @@ function(cloysterhpc_package_project)
     set(_targets_str "${_targets_str} ${_PackageProject_NAMESPACE}${_target}")
   endforeach()
   set(USAGE_FILE_CONTENT
-      "The package ${_PackageProject_NAME} provides CMake targets:
+          "The package ${_PackageProject_NAME} provides CMake targets:
 
     find_package(${_PackageProject_NAME} CONFIG REQUIRED)
     target_link_libraries(main PRIVATE ${_targets_str})
@@ -156,8 +158,8 @@ function(cloysterhpc_package_project)
 
   # download ForwardArguments
   FetchContent_Declare(
-    _fargs
-    URL https://github.com/polysquare/cmake-forward-arguments/archive/8c50d1f956172edb34e95efa52a2d5cb1f686ed2.zip)
+          _fargs
+          URL https://github.com/polysquare/cmake-forward-arguments/archive/8c50d1f956172edb34e95efa52a2d5cb1f686ed2.zip)
   FetchContent_GetProperties(_fargs)
   if(NOT _fargs_POPULATED)
     FetchContent_Populate(_fargs)
@@ -167,14 +169,14 @@ function(cloysterhpc_package_project)
   # prepare the forward arguments for ycm
   set(_FARGS_LIST)
   cmake_forward_arguments(
-    _PackageProject
-    _FARGS_LIST
-    OPTION_ARGS
-    "${_options};"
-    SINGLEVAR_ARGS
-    "${_oneValueArgs};EXPORT_DESTINATION;INSTALL_DESTINATION;NAMESPACE;VARS_PREFIX;EXPORT"
-    MULTIVAR_ARGS
-    "${_multiValueArgs};DEPENDENCIES;PRIVATE_DEPENDENCIES")
+          _PackageProject
+          _FARGS_LIST
+          OPTION_ARGS
+          "${_options};"
+          SINGLEVAR_ARGS
+          "${_oneValueArgs};EXPORT_DESTINATION;INSTALL_DESTINATION;NAMESPACE;VARS_PREFIX;EXPORT"
+          MULTIVAR_ARGS
+          "${_multiValueArgs};DEPENDENCIES;PRIVATE_DEPENDENCIES")
 
   # download ycm
   FetchContent_Declare(_ycm URL https://github.com/robotology/ycm/archive/refs/tags/v0.13.0.zip)
@@ -187,4 +189,6 @@ function(cloysterhpc_package_project)
   install_basic_package_files(${_PackageProject_NAME} "${_FARGS_LIST}")
 
   include("${_ycm_SOURCE_DIR}/modules/AddUninstallTarget.cmake")
+
+  include(cmake/CPackProperties.cmake)
 endfunction()
