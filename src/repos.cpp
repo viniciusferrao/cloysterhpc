@@ -128,46 +128,26 @@ void RepoManager::enableMultiple(std::initializer_list<std::string> ids)
 
 void RepoManager::disable(const std::string& id) { setEnableState(id, false); }
 
-static std::vector<std::string> getDependenciesEL8(const OS& os)
+static std::vector<std::string> getDependenciesEL(const OS& os, int version)
 {
     std::vector<std::string> dependencies;
 
-    switch (os.getDistro()) {
-        case OS::Distro::AlmaLinux:
-            dependencies = { "cloyster-AlmaLinux-BaseOS", "powertools" };
-            break;
-        case OS::Distro::RHEL:
-            dependencies = { "codeready-builder-for-rhel-8-x86_64-rpms" };
-            break;
-        case OS::Distro::OL:
-            dependencies = { "cloyster-OL-BaseOS", "ol8_codeready_builder" };
-            break;
-        case OS::Distro::Rocky:
-            dependencies = { "cloyster-Rocky-BaseOS", "powertools" };
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
-
-    return dependencies;
-}
-
-static std::vector<std::string> getDependenciesEL9(const OS& os)
-{
-    std::vector<std::string> dependencies;
+    const char* powertools = version <= 8 ? "powertools" : "crb";
 
     switch (os.getDistro()) {
         case OS::Distro::AlmaLinux:
-            dependencies = { "cloyster-AlmaLinux-BaseOS", "crb" };
+            dependencies = { "cloyster-AlmaLinux-BaseOS", powertools };
             break;
         case OS::Distro::RHEL:
-            dependencies = { "codeready-builder-for-rhel-9-x86_64-rpms" };
+            dependencies = { fmt::format(
+                "codeready-builder-for-rhel-{}-x86_64-rpms", version) };
             break;
         case OS::Distro::OL:
-            dependencies = { "cloyster-OL-BaseOS", "ol9_codeready_builder" };
+            dependencies = { "cloyster-OL-BaseOS",
+                fmt::format("ol{}_codeready_builder", version) };
             break;
         case OS::Distro::Rocky:
-            dependencies = { "cloyster-Rocky-BaseOS", "crb" };
+            dependencies = { "cloyster-Rocky-BaseOS", powertools };
             break;
         default:
             throw std::runtime_error("Unsupported platform");
@@ -181,10 +161,10 @@ void RepoManager::configureEL()
     std::vector<std::string> deps;
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
-            deps = getDependenciesEL8(m_os);
+            deps = getDependenciesEL(m_os, 8);
             break;
         case OS::Platform::el9:
-            deps = getDependenciesEL9(m_os);
+            deps = getDependenciesEL(m_os, 9);
             break;
         default:
             throw std::runtime_error("Unsupported platform");
