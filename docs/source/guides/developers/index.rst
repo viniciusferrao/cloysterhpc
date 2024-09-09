@@ -10,6 +10,6 @@ Content
 
    contributing.rst
    submission-guidelines.rst
-   testing/vagrant.rst
+   testing/ansible.rst
 
 
