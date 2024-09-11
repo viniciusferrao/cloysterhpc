@@ -56,6 +56,20 @@ inifile::inifile(const std::string& file)
     loadData(file);
 }
 
+inifile&& inifile::mergeInto(const std::filesystem::path& other)
+{
+    inifile otherfile(other);
+
+    for (const auto& sec : this->listAllSections()) {
+        for (const auto& entry : this->listAllEntries(sec)) {
+            const auto thisval = this->getValue(sec, entry);
+            otherfile.setValue(sec, entry, thisval);
+        }
+    }
+
+    return std::move(otherfile);
+}
+
 void inifile::setValue(const std::string& section, const std::string& key,
     const std::string& newValue)
 {

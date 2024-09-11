@@ -116,21 +116,22 @@ void Postfix::createFiles()
 {
     LOG_INFO("Creating Postfix configuration files");
     const std::string mainFile { "/etc/postfix/main.cf" };
-    cloyster::removeFile(mainFile);
     const std::string masterFile { "/etc/postfix/master.cf" };
     cloyster::removeFile(masterFile);
 
-    inifile ini;
+    inifile baseini;
     ini.loadData(
 #include "cloysterhpc/tmpl/postfix/main.cf.tmpl"
     );
 
-    ini.setValue("", "myhostname", m_hostname.value());
-    ini.setValue("", "mydomain", m_domain.value());
-    ini.setValue("", "mydestination",
+    baseini.setValue("", "myhostname", m_hostname.value());
+    baseini.setValue("", "mydomain", m_domain.value());
+    baseini.setValue("", "mydestination",
         fmt::format("{}", fmt::join(m_destination.value(), ",")));
-    ini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
-    ini.setValue("", "smtpd_tls_key_file", m_key_file->string());
+    baseini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
+    baseini.setValue("", "smtpd_tls_key_file", m_key_file->string());
+
+    inifile&& ini = std::move(baseini.mergeInto(mainFile));
 
     //@TODO Check if m_domain is the right key. Maybe a new variable is needed
     // here, m_relayhost_domain?.
@@ -138,9 +139,6 @@ void Postfix::createFiles()
         case Profile::Local:
             break;
         case Profile::SASL:
-            ini.setValue("", "relayhost",
-                fmt::format("{}:{}", m_domain.value(), m_port.value()));
-            break;
         case Profile::Relay:
             ini.setValue("", "relayhost",
                 fmt::format("[{}]:{}", m_domain.value(), m_port.value()));
@@ -172,7 +170,7 @@ void Postfix::createFiles()
     }
 
     if (!std::filesystem::exists("/etc/postfix/aliases")) {
-        runCommand("touch /etc/postfix/aliases");
+        cloyster::touchFile("/etc/postfix/aliases");
     }
 }
 
