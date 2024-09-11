@@ -125,6 +125,11 @@ void writeConfig(const std::string&);
 /* helper function */
 
 /**
+ * @brief Creates an empty file, analogous to the `touch` command
+ */
+void touchFile(const std::filesystem::path& path);
+
+/**
  * @brief Creates a directory at the specified path.
  *
  * @param path The path where the directory should be created.
