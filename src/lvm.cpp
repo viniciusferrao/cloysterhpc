@@ -180,9 +180,9 @@ void LVM::verifyBootIsNotLVM()
     });
 
     if (m_hasBootPartition) {
-        LOG_INFO("/boot is mounted and not part of LVM.");
+        LOG_INFO("LVM: /boot is mounted and not part of LVM.");
     } else {
-        LOG_WARN("LVM ERROR: /boot is not found or is part of LVM. Check your system configuration.");
+        LOG_WARN("LVM: /boot is not found or is part of LVM. Check your system configuration.");
     }
 }
 
