@@ -22,6 +22,7 @@ private:
     void checkSystemSupport();
     void checkEnoughDiskSpaceAvailable();
     void verifyAvailablePartitions();
+
 public:
     void createSnapshot(const std::string& snapshotName);
     void rollbackSnapshot(const std::string& snapshotName);
