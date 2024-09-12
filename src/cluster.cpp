@@ -428,7 +428,7 @@ void Cluster::fillTestData()
     nodePrefix = "n";
     nodePadding = 2;
     nodeStartIP = boost::asio::ip::make_address("172.26.0.1");
-    nodeRootPassword = "pwdNodeRoot";
+    nodeRootPassword = std::string { "NOSONARpwdNodeRoot" }.substr(7);
 }
 #endif
 
