@@ -4,6 +4,8 @@
  */
 
 #include <cctype>
+#include <cloysterhpc/lvm.h>
+
 #include <cstdlib>
 
 #include <CLI/CLI.hpp>
@@ -40,6 +42,13 @@ int main(int argc, const char** argv)
 #if 0    
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
 #endif
+
+    auto LVMSnapshot = app.add_subcommand(
+        "LVM", "LVM snapshot configuration. Check usage with 'LVM -h'");
+    LVMSnapshot->add_flag("-a", "Check system availability for LVM snapshot.");
+    LVMSnapshot->add_flag("-c", "Create a LVM snapshot.");
+    LVMSnapshot->add_flag("-r", "Rollback to the LVM snapshot created.");
+    LVMSnapshot->add_flag("-d", "Destroy the LVM snapshot created.");
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -113,6 +122,33 @@ int main(int argc, const char** argv)
         if (showHardwareInfo) {
             Hardware hardware;
             hardware.printOverview();
+            return EXIT_SUCCESS;
+        }
+
+        if (*LVMSnapshot) {
+            LVM lvm;
+
+            if (LVMSnapshot->count("-a") != 0U) {
+                lvm.checkLVMAvailability();
+            }
+
+            if (LVMSnapshot->count("-c") != 0U) {
+                lvm.createSnapshotWithBootBackup(PRODUCT_NAME);
+            }
+
+            if (LVMSnapshot->count("-r") != 0U) {
+                lvm.rollbackSnapshotWithBootRestore(PRODUCT_NAME);
+            }
+
+            if (LVMSnapshot->count("-d") != 0U) {
+                lvm.removeSnapshot(PRODUCT_NAME);
+            }
+
+            return EXIT_SUCCESS;
+        }
+
+        if (cloyster::showVersion) {
+            fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
         }
 
