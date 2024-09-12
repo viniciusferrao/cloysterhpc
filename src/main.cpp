@@ -122,7 +122,7 @@ int main(int argc, const char** argv)
         }
 
         if (createLVMSnapshot) {
-            fmt::print("LVM Snapshot in progress.");
+            LOG_INFO("LVM Snapshot in progress.");
             LVM lvm;
             return EXIT_SUCCESS;
         }
