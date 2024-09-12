@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/functions.h"
-#include "cloysterhpc/services/log.h"
-
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/lvm.h>
 
 /*
@@ -22,12 +21,12 @@ void LVM::checkUEFIMode()
     if (exitCode == 0) {
         auto it = std::find(output.begin(), output.end(), "UEFI");
         if (it != output.end()) {
-            LOG_TRACE("System boot mode: UEFI\n");
+            LOG_TRACE("LVM: System boot mode: UEFI\n");
         } else {
-            LOG_WARN("System is not booted in UEFI mode.");
+            LOG_WARN("LVM: System is not booted in UEFI mode.");
         }
     } else {
-        LOG_WARN("Failed to check system boot mode.");
+        LOG_WARN("LVM: Failed to check system boot mode.");
     }
 }
 
@@ -74,8 +73,8 @@ void LVM::checkThinProvisioning()
 void LVM::checkEnoughDiskSpaceAvailable()
 {
     std::list<std::string> output;
-    const std::string checkDiskSpaceCommand
-        = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
+    const std::string checkDiskSpaceCommand = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
+
     int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output, false);
 
     if (exitCode == 0 && !output.empty()) {
@@ -93,9 +92,12 @@ void LVM::checkEnoughDiskSpaceAvailable()
                 std::istringstream iss(cleanLine);
                 std::string vgName, vgSizeStr, vgFreeStr;
                 if (!(iss >> vgName >> vgSizeStr >> vgFreeStr)) {
-                    throw std::runtime_error(
-                        "LVM ERROR: Failed to parse volume group information.");
+                    throw std::runtime_error("LVM ERROR: Failed to parse volume group information.");
                 }
+
+                // Remove 'G' from size and free space strings
+                vgSizeStr.erase(std::remove(vgSizeStr.begin(), vgSizeStr.end(), 'G'), vgSizeStr.end());
+                vgFreeStr.erase(std::remove(vgFreeStr.begin(), vgFreeStr.end(), 'G'), vgFreeStr.end());
 
                 // Convert vg_size and vg_free from string to double
                 double vgSizeGB = std::stod(vgSizeStr);
@@ -104,33 +106,27 @@ void LVM::checkEnoughDiskSpaceAvailable()
                 // Calculate the percentage of free space
                 double freePercentage = (vgFreeGB / vgSizeGB) * 100;
 
-                LOG_TRACE("LVM Volume Group: {}, Total Size: {} GB, Free "
-                          "Space: {} GB, Free Percentage: {:.2f}%",
+                LOG_TRACE("LVM Volume Group: {}, Total Size: {} GB, Free Space: {} GB, Free Percentage: {:.2f}%",
                     vgName, vgSizeGB, vgFreeGB, freePercentage);
 
                 // Check if the free space is less than 50%
                 if (freePercentage < 50.0) {
-                    LOG_WARN("LVM Volume Group '{}' does not have enough free "
-                             "space (only {:.2f}% available).",
+                    LOG_WARN("LVM Volume Group '{}' does not have enough free space (only {:.2f}% available).",
                         vgName, freePercentage);
                     allVGsHaveEnoughSpace = false;
                 }
             }
 
             if (!allVGsHaveEnoughSpace) {
-                throw std::runtime_error("LVM ERROR: Not all LVM volume groups "
-                                         "have at least 50% free space.");
+                throw std::runtime_error("LVM ERROR: Not all LVM volume groups have at least 50% free space.");
             }
 
-            LOG_INFO(
-                "LVM: All LVM volume groups have at least 50% free space.");
+            LOG_INFO("LVM: All LVM volume groups have at least 50% free space.");
         } catch (const std::exception& e) {
-            throw std::runtime_error(
-                "LVM ERROR: Failed to parse disk space information.");
+            throw std::runtime_error(fmt::format("LVM ERROR: Failed to parse disk space information: {}", e.what()));
         }
     } else {
-        throw std::runtime_error(
-            "LVM ERROR: Failed to check available disk space.");
+        throw std::runtime_error("LVM ERROR: Failed to check available disk space.");
     }
 }
 
@@ -169,33 +165,24 @@ void LVM::verifyAvailablePartitions()
 void LVM::verifyBootIsNotLVM()
 {
     std::list<std::string> output;
-    const std::string checkBootCommand
-        = "lsblk --noheadings --output MOUNTPOINT";
 
-    int exitCode = cloyster::runCommand(checkBootCommand, output, false);
+    const std::string listCommand = "lsblk --noheadings --output MOUNTPOINT";
+    int exitCodeList = cloyster::runCommand(listCommand, output, false);
 
-    if (exitCode == 0 && !output.empty()) {
-        for (const auto& line : output) {
-            std::string cleanLine = line;
-            cleanLine.erase(
-                remove_if(cleanLine.begin(), cleanLine.end(), isspace),
-                cleanLine.end());
+    if (exitCodeList != 0) {
+        throw std::runtime_error("LVM ERROR: Failed to list mount points.");
+    }
 
-            if (cleanLine == "/boot") {
-                m_hasBootPartition = true;
-                break;
-            }
-        }
+    bool m_hasBootPartition = std::any_of(output.begin(), output.end(), [](const std::string& line) {
+        std::string cleanLine = line;
+        cleanLine.erase(remove_if(cleanLine.begin(), cleanLine.end(), isspace), cleanLine.end());
+        return cleanLine == "/boot";
+    });
 
-        if (m_hasBootPartition) {
-            LOG_TRACE("/boot is not part of any LVM volume group.");
-        } else {
-            throw std::runtime_error("LVM ERROR: /boot is not found. Check "
-                                     "your system configuration.");
-        }
+    if (m_hasBootPartition) {
+        LOG_INFO("/boot is mounted and not part of LVM.");
     } else {
-        throw std::runtime_error(
-            "LVM ERROR: Failed to check if /boot is part of LVM.");
+        LOG_WARN("LVM ERROR: /boot is not found or is part of LVM. Check your system configuration.");
     }
 }
 
@@ -293,7 +280,6 @@ LVM::LVM()
     checkUEFIMode();
     checkLVMEnabled();
     checkThinProvisioning();
-    checkSystemSupport();
     checkEnoughDiskSpaceAvailable();
     verifyAvailablePartitions();
 }

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/lvm.h"
+
 #include <cstdlib>
 
 #include <CLI/CLI.hpp>
@@ -41,6 +43,9 @@ int main(int argc, const char** argv)
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
 
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
+
+    bool createLVMSnapshot = false;
+    app.add_flag("-L, --lvm", createLVMSnapshot, "Create a LVM snapshot before Cloyster setup");
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -103,6 +108,12 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName)
 
     try {
+        if (createLVMSnapshot) {
+            fmt::print("LVM Snapshot in progress.");
+            LVM lvm;
+            return EXIT_SUCCESS;
+        }
+
         if (cloyster::showVersion) {
             fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
