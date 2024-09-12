@@ -4,6 +4,8 @@
  */
 
 #include <cctype>
+#include "cloysterhpc/lvm.h"
+
 #include <cstdlib>
 
 #include "cloysterhpc/hardware.h"
@@ -40,6 +42,9 @@ int main(int argc, const char** argv)
 #if 0    
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
 #endif
+
+    bool createLVMSnapshot = false;
+    app.add_flag("-L, --lvm", createLVMSnapshot, "Create a LVM snapshot before Cloyster setup");
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -113,6 +118,17 @@ int main(int argc, const char** argv)
         if (showHardwareInfo) {
             Hardware hardware;
             hardware.printOverview();
+            return EXIT_SUCCESS;
+        }
+
+        if (createLVMSnapshot) {
+            fmt::print("LVM Snapshot in progress.");
+            LVM lvm;
+            return EXIT_SUCCESS;
+        }
+
+        if (cloyster::showVersion) {
+            fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
         }
 

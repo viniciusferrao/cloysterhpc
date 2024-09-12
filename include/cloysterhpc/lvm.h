@@ -5,6 +5,7 @@
 
 #ifndef LVM_H
 #define LVM_H
+#include <string>;
 
 class LVM {
 private:
@@ -19,7 +20,6 @@ private:
     void checkUEFIMode();
     void checkLVMEnabled();
     void checkThinProvisioning();
-    void checkSystemSupport();
     void checkEnoughDiskSpaceAvailable();
     void verifyAvailablePartitions();
 
