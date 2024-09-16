@@ -12,7 +12,7 @@ private:
     bool m_hasVarPartition = false;
     bool m_hasOptPartition = false;
     bool m_hasHomePartition = false;
-    bool m_hasBootPartition = false;
+    bool git status = false;
     const std::string m_snapshotVolumeGroup = "cloyster";
     void verifyBootIsNotLVM();
     void backupBoot();

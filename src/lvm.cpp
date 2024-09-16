@@ -4,8 +4,8 @@
  */
 
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/lvm.h>
+#include <cloysterhpc/services/log.h>
 
 /*
 @TODO -> Preeinstalar os requisitos: boom-boot e rsync.
@@ -14,8 +14,8 @@
 void LVM::checkUEFIMode()
 {
     std::list<std::string> output;
-    const std::string checkUEFICommand
-        = "[ -d /sys/firmware/efi ] && echo UEFI || echo Legacy";
+    const std::string checkUEFICommand = "/bin/bash -c \"[ -d /sys/firmware/efi ] && echo UEFI || echo Legacy\"";
+
     int exitCode = cloyster::runCommand(checkUEFICommand, output, false);
 
     if (exitCode == 0) {
@@ -73,7 +73,8 @@ void LVM::checkThinProvisioning()
 void LVM::checkEnoughDiskSpaceAvailable()
 {
     std::list<std::string> output;
-    const std::string checkDiskSpaceCommand = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
+    const std::string checkDiskSpaceCommand
+        = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
 
     int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output, false);
 
@@ -82,16 +83,27 @@ void LVM::checkEnoughDiskSpaceAvailable()
             bool allVGsHaveEnoughSpace = true;
 
             for (const std::string& line : output) {
+                LOG_DEBUG("LVM: Check disks space - Raw output line: {}", line);
+
                 // Remove leading/trailing whitespaces
                 std::string cleanLine = line;
-                cleanLine.erase(
-                    remove_if(cleanLine.begin(), cleanLine.end(), isspace),
-                    cleanLine.end());
+                cleanLine.erase(cleanLine.begin(), std::find_if(cleanLine.begin(), cleanLine.end(), [](unsigned char ch) {
+                    return !std::isspace(ch);
+                }));
+                cleanLine.erase(std::find_if(cleanLine.rbegin(), cleanLine.rend(), [](unsigned char ch) {
+                    return !std::isspace(ch);
+                }).base(), cleanLine.end());
+
+                if (cleanLine.empty()) {
+                    LOG_DEBUG("LVM: Skipping empty or malformed line.");
+                    continue;
+                }
 
                 // Split the line into vg_name, vg_size, and vg_free
                 std::istringstream iss(cleanLine);
                 std::string vgName, vgSizeStr, vgFreeStr;
                 if (!(iss >> vgName >> vgSizeStr >> vgFreeStr)) {
+                    LOG_DEBUG("LVM: Failed to split line into expected fields. Line: {}", cleanLine);
                     throw std::runtime_error("LVM ERROR: Failed to parse volume group information.");
                 }
 
@@ -118,15 +130,20 @@ void LVM::checkEnoughDiskSpaceAvailable()
             }
 
             if (!allVGsHaveEnoughSpace) {
-                throw std::runtime_error("LVM ERROR: Not all LVM volume groups have at least 50% free space.");
+                throw std::runtime_error("LVM ERROR: Not all LVM volume groups "
+                                         "have at least 50% free space.");
             }
 
-            LOG_INFO("LVM: All LVM volume groups have at least 50% free space.");
+            LOG_INFO(
+                "LVM: All LVM volume groups have at least 50% free space.");
         } catch (const std::exception& e) {
-            throw std::runtime_error(fmt::format("LVM ERROR: Failed to parse disk space information: {}", e.what()));
+            throw std::runtime_error(fmt::format(
+                "LVM ERROR: Failed to parse disk space information: {}",
+                e.what()));
         }
     } else {
-        throw std::runtime_error("LVM ERROR: Failed to check available disk space.");
+        throw std::runtime_error(
+            "LVM ERROR: Failed to check available disk space.");
     }
 }
 
@@ -166,21 +183,34 @@ void LVM::verifyBootIsNotLVM()
 {
     std::list<std::string> output;
 
-    const std::string listCommand = "lsblk --noheadings --output MOUNTPOINT";
+    const std::string listCommand = "lsblk --noheadings --output MOUNTPOINT,TYPE";
     int exitCodeList = cloyster::runCommand(listCommand, output, false);
 
     if (exitCodeList != 0) {
         throw std::runtime_error("LVM ERROR: Failed to list mount points.");
     }
 
-    bool m_hasBootPartition = std::any_of(output.begin(), output.end(), [](const std::string& line) {
-        std::string cleanLine = line;
-        cleanLine.erase(remove_if(cleanLine.begin(), cleanLine.end(), isspace), cleanLine.end());
-        return cleanLine == "/boot";
-    });
+    bool isBootPartitionFound = false;
 
-    if (m_hasBootPartition) {
+    for (const auto& line : output) {
+        std::istringstream iss(line);
+        std::string mountPoint, type;
+        if (!(iss >> mountPoint >> type)) {
+            continue;
+        }
+
+        if (mountPoint == "/boot") {
+            isBootPartitionFound = true;
+            if (type == "lvm") {
+                m_hasBootPartition = true;
+            }
+        }
+    }
+
+    if (isBootPartitionFound && !m_hasBootPartition) {
         LOG_INFO("LVM: /boot is mounted and not part of LVM.");
+    } else if (m_hasBootPartition) {
+        throw std::runtime_error("LVM ERROR: /boot is part of LVM. Check your system configuration.");
     } else {
         LOG_WARN("LVM: /boot is not found or is part of LVM. Check your system configuration.");
     }
