@@ -259,7 +259,7 @@ std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
 void Cluster::setMailSystem(Postfix::Profile profile)
 {
-    m_mailSystem = Postfix(profile);
+    m_mailSystem.emplace(profile, *m_runner);
 }
 
 const std::filesystem::path& Cluster::getDiskImage() const

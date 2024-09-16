@@ -6,9 +6,11 @@
 #ifndef CLOYSTERHPC_POSTFIX_H_
 #define CLOYSTERHPC_POSTFIX_H_
 
+#include <cloysterhpc/runner.h>
+#include <cstdint>
+#include <filesystem>
 #include <optional>
 #include <string>
-#include <cstdint>
 
 class Postfix {
 public:
@@ -16,6 +18,7 @@ public:
 
 private:
     Profile m_profile;
+    BaseRunner& m_runner;
     std::optional<std::string> m_hostname {};
     std::optional<std::string> m_domain {};
     std::optional<std::string> m_smtp_server {};
@@ -26,9 +29,9 @@ private:
     std::optional<std::filesystem::path> m_cert_file {};
     std::optional<std::filesystem::path> m_key_file {};
     void install();
-    void createFiles();
-    void configureSASL();
-    void configureRelay();
+    void createFiles(const std::filesystem::path& basedir);
+    void configureSASL(const std::filesystem::path& basedir);
+    void configureRelay(const std::filesystem::path& basedir);
 
 public:
     [[nodiscard]] const Profile& getProfile() const;
@@ -64,14 +67,14 @@ public:
     getKeyFile() const;
     void setKeyFile(const std::optional<std::filesystem::path>& cert_file);
 
-    void setup();
+    void setup(const std::filesystem::path& basedir = "/etc/postfix");
     void enable();
     void disable();
     void start();
     void restart();
     void stop();
 
-    explicit Postfix(Profile profile);
+    explicit Postfix(Profile profile, BaseRunner& runner);
 };
 
 #endif // CLOYSTERHPC_POSTFIX_H_

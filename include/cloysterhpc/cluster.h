@@ -11,7 +11,8 @@
 #include <optional>
 #include <string>
 
-#include "cloysterhpc/services/locale.h"
+#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/headnode.h>
 #include <cloysterhpc/mailsystem/postfix.h>

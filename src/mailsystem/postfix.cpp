@@ -3,15 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/inifile.h"
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/log.h>
 
 using cloyster::runCommand;
 
-Postfix::Postfix(Profile profile)
+Postfix::Postfix(Profile profile, BaseRunner& runner)
     : m_profile(profile)
+    , m_runner(runner)
 {
 }
 
@@ -109,29 +111,43 @@ void Postfix::setKeyFile(const std::optional<std::filesystem::path>& key_file)
 void Postfix::install()
 {
     LOG_INFO("Installing Postfix")
-    runCommand("dnf -y install postfix");
+    // runCommand("dnf -y install postfix");
 }
 
-void Postfix::createFiles()
+void Postfix::createFiles(const std::filesystem::path& basedir)
 {
     LOG_INFO("Creating Postfix configuration files");
-    const std::string mainFile { "/etc/postfix/main.cf" };
-    const std::string masterFile { "/etc/postfix/master.cf" };
-    cloyster::removeFile(masterFile);
+    const std::filesystem::path mainFile = basedir / "main.cf";
+    const std::filesystem::path masterFile = basedir / "master.cf";
+    cloyster::removeFile(masterFile.string());
 
     inifile baseini;
-    ini.loadData(
+    baseini.loadData(
 #include "cloysterhpc/tmpl/postfix/main.cf.tmpl"
     );
 
-    baseini.setValue("", "myhostname", m_hostname.value());
-    baseini.setValue("", "mydomain", m_domain.value());
-    baseini.setValue("", "mydestination",
-        fmt::format("{}", fmt::join(m_destination.value(), ",")));
-    baseini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
-    baseini.setValue("", "smtpd_tls_key_file", m_key_file->string());
+    if (m_hostname) {
+        baseini.setValue("", "myhostname", m_hostname.value());
+    }
 
-    inifile&& ini = std::move(baseini.mergeInto(mainFile));
+    if (m_domain) {
+        baseini.setValue("", "mydomain", m_domain.value());
+    }
+
+    if (m_destination) {
+        baseini.setValue("", "mydestination",
+            fmt::format("{}", fmt::join(m_destination.value(), ",")));
+    }
+
+    if (m_cert_file) {
+        baseini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
+    }
+
+    if (m_key_file) {
+        baseini.setValue("", "smtpd_tls_key_file", m_key_file->string());
+    }
+
+    inifile ini = baseini.mergeInto(mainFile);
 
     //@TODO Check if m_domain is the right key. Maybe a new variable is needed
     // here, m_relayhost_domain?.
@@ -140,8 +156,10 @@ void Postfix::createFiles()
             break;
         case Profile::SASL:
         case Profile::Relay:
-            ini.setValue("", "relayhost",
-                fmt::format("[{}]:{}", m_domain.value(), m_port.value()));
+            if (m_domain && m_port) {
+                ini.setValue("", "relayhost",
+                    fmt::format("[{}]:{}", m_domain.value(), m_port.value()));
+            }
             break;
     }
 
@@ -163,49 +181,51 @@ void Postfix::createFiles()
                 "local     unix  -       n       n       -       -       ");
     }
 
-    cloyster::addStringToFile(masterFile, masterConf);
+    cloyster::addStringToFile(masterFile.string(), masterConf);
 
-    if (!std::filesystem::exists("/etc/postfix/transport.db")) {
-        runCommand("postmap hash:/etc/postfix/transport");
+    if (!std::filesystem::exists(basedir / "transport.db")) {
+        auto transport = basedir / "transport";
+        m_runner.executeCommand(
+            fmt::format("postmap hash:{}", transport.string()));
     }
 
-    if (!std::filesystem::exists("/etc/postfix/aliases")) {
-        cloyster::touchFile("/etc/postfix/aliases");
+    if (!std::filesystem::exists(basedir / "aliases")) {
+        cloyster::touchFile(basedir / "aliases");
     }
 }
 
-void Postfix::setup()
+void Postfix::setup(const std::filesystem::path& basedir)
 {
     LOG_INFO("Configuring Postfix")
 
     install();
-    createFiles();
+    createFiles(basedir);
 
     switch (m_profile) {
 
         case Profile::Local:
             break;
         case Profile::Relay:
-            configureRelay();
+            configureRelay(basedir);
             break;
         case Profile::SASL:
-            configureSASL();
+            configureSASL(basedir);
             break;
     }
 
-    enable();
-    start();
+    // enable();
+    // start();
 }
 
-void Postfix::configureSASL()
+void Postfix::configureSASL(const std::filesystem::path& basedir)
 {
-    const std::string dbFilename { "/etc/postfix/sasl_password.db" };
-    const std::string filename { "/etc/postfix/sasl_password" };
+    const std::filesystem::path dbFilename = basedir / "sasl_password.db";
+    const std::filesystem::path filename = basedir / "sasl_password";
     if (std::filesystem::exists(dbFilename)) {
         return;
     }
 
-    cloyster::addStringToFile(filename,
+    cloyster::addStringToFile(filename.string(),
         fmt::format("[{}]:{} {}:{}", m_smtp_server.value(), m_port.value(),
             m_username.value(), m_password.value()));
 
@@ -214,7 +234,8 @@ void Postfix::configureSASL()
             | std::filesystem::perms::group_read,
         std::filesystem::perm_options::add);
 
-    runCommand("postmap /etc/postfix/sasl_password");
+    auto passwordFile = basedir / "sasl_password";
+    m_runner.executeCommand(fmt::format("postmap {}", passwordFile.string()));
 
     std::filesystem::permissions(dbFilename,
         std::filesystem::perms::owner_write
@@ -222,13 +243,17 @@ void Postfix::configureSASL()
         std::filesystem::perm_options::add);
 }
 
-void Postfix::configureRelay()
+void Postfix::configureRelay(const std::filesystem::path& basedir)
 {
-    const std::string mainFile { "/etc/postfix/main.cf" };
+    const std::filesystem::path mainFile = basedir / "main.cf";
     inifile ini;
     ini.loadData(mainFile);
-    ini.setValue("", "relayhost",
-        fmt::format("{}:{}", m_smtp_server.value(), m_port.value()));
+
+    if (m_smtp_server && m_port) {
+        ini.setValue("", "relayhost",
+            fmt::format("{}:{}", m_smtp_server.value(), m_port.value()));
+    }
+
     ini.saveFile(mainFile);
 }
 
@@ -238,3 +263,31 @@ void Postfix::disable() { runCommand("systemctl disable postfix"); }
 void Postfix::start() { runCommand("systemctl start postfix"); }
 void Postfix::restart() { runCommand("systemctl restart postfix"); }
 void Postfix::stop() { runCommand("systemctl stop postfix"); }
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
+
+#include <cloysterhpc/tempdir.h>
+#include <cloysterhpc/tests.h>
+
+TEST_SUITE("Test repository file read and write")
+{
+    TEST_CASE("Test if Postfix files generate correctly in the Local profile")
+    {
+        MockRunner mr;
+        Postfix pfix { Postfix::Profile::Local, mr };
+        TempDir d;
+
+        cloyster::touchFile(d.name() / "main.cf");
+        cloyster::touchFile(d.name() / "master.cf");
+
+        pfix.setup(d.name());
+
+        CHECK(std::filesystem::file_size(d.name() / "main.cf") > 10);
+        CHECK(std::filesystem::file_size(d.name() / "master.cf") > 10);
+    }
+}

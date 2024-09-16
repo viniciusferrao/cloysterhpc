@@ -56,7 +56,7 @@ inifile::inifile(const std::string& file)
     loadData(file);
 }
 
-inifile&& inifile::mergeInto(const std::filesystem::path& other)
+inifile inifile::mergeInto(const std::filesystem::path& other)
 {
     inifile otherfile(other);
 
@@ -67,7 +67,14 @@ inifile&& inifile::mergeInto(const std::filesystem::path& other)
         }
     }
 
-    return std::move(otherfile);
+    /* Since the CSimpleIniA class we encapsulate, for some reason, does not
+     * have a copy constructor, we need to save the object into a string
+     * (that can be copied somewhat) and recreate the object before returning
+     */
+    std::string data;
+    otherfile.save(data);
+
+    return inifile { data };
 }
 
 void inifile::setValue(const std::string& section, const std::string& key,
