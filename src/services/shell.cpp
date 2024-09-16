@@ -18,7 +18,6 @@
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/repos.h>
 #include <cloysterhpc/runner.h>
-#include <sys/socket.h>
 
 using cloyster::runCommand;
 
