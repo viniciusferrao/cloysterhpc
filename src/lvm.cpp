@@ -169,7 +169,7 @@ void LVM::verifyAvailablePartitions()
             LOG_TRACE("/home is in a separate partition. We can proceed with "
                       "LVM snapshot.");
         } else {
-            throw std::runtime_error(
+            LOG_WARN(
                 "LVM ERROR: /home is not a separate partition. This may lead "
                 "to issues when rolling back the snapshot.");
         }
@@ -248,6 +248,8 @@ void LVM::restoreBoot()
 
 void LVM::createSnapshot(const std::string& snapshotName)
 {
+    LOG_INFO("LVM Snapshot in progress.");
+
     const std::string createSnapshotCommand = fmt::format(
         "lvcreate -s -n {} {}/root", snapshotName, m_snapshotVolumeGroup);
 
