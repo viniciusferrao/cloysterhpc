@@ -109,7 +109,6 @@ int main(int argc, const char** argv)
 
     try {
         if (createLVMSnapshot) {
-            LOG_INFO("LVM Snapshot in progress.");
             LVM lvm;
             return EXIT_SUCCESS;
         }
