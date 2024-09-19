@@ -289,7 +289,7 @@ void LVM::checkVolumeGroup()
 
 void LVM::createSnapshot(const std::string& snapshotName)
 {
-    LOG_INFO("LVM Snapshot in progress.");
+    LOG_INFO("LVM Snapshot creation in progress.");
     checkVolumeGroup();
 
     const std::string createSnapshotCommand = fmt::format(
@@ -307,6 +307,7 @@ void LVM::createSnapshot(const std::string& snapshotName)
 
 void LVM::rollbackSnapshot(const std::string& snapshotName)
 {
+    LOG_INFO("LVM Snapshot rollback in progress.");
     checkVolumeGroup();
 
     const std::string rollbackSnapshotCommand = fmt::format(
@@ -317,6 +318,8 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
     if (exitCode == 0) {
         LOG_INFO(
             "LVM successfully rolled back to snapshot '{}'.", snapshotName);
+
+        LOG_WARN("Don't forget to reboot after rollback is complete.");
     } else {
         throw std::runtime_error(fmt::format(
             "LVM ERROR: Failed to roll back to snapshot '{}'.", snapshotName));
@@ -325,18 +328,32 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
 
 void LVM::removeSnapshot(const std::string& snapshotName)
 {
+    LOG_INFO("LVM Snapshot removal in progress.");
     checkVolumeGroup();
 
-    const std::string removeSnapshotCommand
-        = fmt::format("lvremove {}/{}", m_snapshotVolumeGroup, snapshotName);
+    std::list<std::string> output;
+    const std::string checkSnapshotCommand = fmt::format("lvs --noheadings -o lv_attr {}/{}", m_snapshotVolumeGroup, snapshotName);
 
-    int exitCode = cloyster::runCommand(removeSnapshotCommand);
+    int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
 
-    if (exitCode == 0) {
-        LOG_INFO("LVM Snapshot '{}' removed successfully.", snapshotName);
+    if (exitCode == 0 && !output.empty()) {
+        std::string lvAttr = output.front();
+
+        // Check if the snapshot is merged (state will be inactive or missing)
+        if (lvAttr.find("M") != std::string::npos) {
+            LOG_WARN("LVM Snapshot '{}' is already merged and cannot be removed.", snapshotName);
+        } else {
+            const std::string removeSnapshotCommand = fmt::format("lvremove {}/{}", m_snapshotVolumeGroup, snapshotName);
+            exitCode = cloyster::runCommand(removeSnapshotCommand);
+
+            if (exitCode == 0) {
+                LOG_INFO("LVM Snapshot '{}' removed successfully.", snapshotName);
+            } else {
+                throw std::runtime_error(fmt::format("LVM ERROR: Failed to remove snapshot '{}'.", snapshotName));
+            }
+        }
     } else {
-        throw std::runtime_error(fmt::format(
-            "LVM ERROR: Failed to remove snapshot '{}'.", snapshotName));
+        throw std::runtime_error("LVM ERROR: Failed to check snapshot status.");
     }
 }
 
