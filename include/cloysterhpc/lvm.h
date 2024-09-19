@@ -13,10 +13,11 @@ private:
     bool m_hasOptPartition = false;
     bool m_hasHomePartition = false;
     bool m_hasBootPartition = false;
-    const std::string m_snapshotVolumeGroup = "cloyster";
+    std::string m_snapshotVolumeGroup = "cloyster";
     void verifyBootIsNotLVM();
     void backupBoot();
     void restoreBoot();
+    void checkVolumeGroup();
     void checkUEFIMode();
     void checkLVMEnabled();
     void checkThinProvisioning();
@@ -24,12 +25,12 @@ private:
     void verifyAvailablePartitions();
 
 public:
+    void checkLVMAvailability();
     void createSnapshot(const std::string& snapshotName);
     void rollbackSnapshot(const std::string& snapshotName);
     void removeSnapshot(const std::string& snapshotName);
     void createSnapshotWithBootBackup(const std::string& snapshotName);
     void rollbackSnapshotWithBootRestore(const std::string& snapshotName);
-    LVM();
 };
 
 #endif // LVM_H

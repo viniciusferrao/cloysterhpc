@@ -44,8 +44,12 @@ int main(int argc, const char** argv)
 
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
 
-    bool createLVMSnapshot = false;
-    app.add_flag("-L, --lvm", createLVMSnapshot, "Create a LVM snapshot before Cloyster setup");
+    auto LVMSnapshot = app.add_subcommand("L", "LVM snapshot configuration. Check usage with 'L -h'");
+    LVMSnapshot->add_flag("-a", "Check system availability for LVM snapshot.");
+    LVMSnapshot->add_flag("-c", "Create a LVM snapshot.");
+    LVMSnapshot->add_flag("-r", "Rollback to the LVM snapshot created.");
+    LVMSnapshot->add_flag("-d", "Destroy the LVM snapshot created.");
+
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -108,8 +112,29 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName)
 
     try {
-        if (createLVMSnapshot) {
+        if (*LVMSnapshot) {
             LVM lvm;
+
+            if (LVMSnapshot->count("-a") != 0U) {
+                lvm.checkLVMAvailability();
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-c") != 0U) {
+                lvm.createSnapshotWithBootBackup(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-r") != 0U) {
+                lvm.rollbackSnapshotWithBootRestore(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-d") != 0U) {
+                lvm.removeSnapshot(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
             return EXIT_SUCCESS;
         }
 
