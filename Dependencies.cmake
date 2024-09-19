@@ -108,13 +108,12 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET hwinfo::HWinfo)
+  if(NOT TARGET lfreist-hwinfo::hwinfo)
     CPMAddPackage(
-      NAME hwinfo
-      GITHUB_REPOSITORY lfreist/hwinfo
-      GIT_TAG main
-      OPTIONS "NO_OCL ON"
-    )
+            NAME lfreist-hwinfo
+            GITHUB_REPOSITORY lfreist/hwinfo
+            GIT_TAG main
+            OPTIONS "NO_OCL ON")
   endif()
 
   # Packages only available with CPM
