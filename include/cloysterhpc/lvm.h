@@ -13,7 +13,7 @@ private:
     bool m_hasOptPartition = false;
     bool m_hasHomePartition = false;
     bool m_hasBootPartition = false;
-    std::string m_snapshotVolumeGroup = "cloyster";
+    std::string m_snapshotVolumeGroup;
     void verifyBootIsNotLVM();
     void backupBoot();
     void restoreBoot();
