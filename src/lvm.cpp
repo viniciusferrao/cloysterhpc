@@ -166,17 +166,28 @@ void LVM::verifyAvailablePartitions()
         }
 
         if (m_hasHomePartition) {
-            LOG_TRACE("/home is in a separate partition. We can proceed with "
+            LOG_TRACE("LVM: /home is in a separate partition. We can proceed with "
                       "LVM snapshot.");
         } else {
             LOG_WARN(
-                "LVM ERROR: /home is not a separate partition. This may lead "
+                "LVM: /home is not a separate partition. This may lead "
                 "to issues when rolling back the snapshot.");
         }
     } else {
         throw std::runtime_error(
             "LVM ERROR: Failed to list available partitions.");
     }
+}
+void LVM::checkLVMAvailability()
+{
+    LOG_INFO("LVM: Begin of availability check.")
+    verifyBootIsNotLVM();
+    checkUEFIMode();
+    checkLVMEnabled();
+    checkThinProvisioning();
+    checkEnoughDiskSpaceAvailable();
+    verifyAvailablePartitions();
+    LOG_INFO("LVM: End of availability check.")
 }
 
 void LVM::verifyBootIsNotLVM()
@@ -220,7 +231,7 @@ void LVM::backupBoot()
 {
     //@TODO We need a better way to store the backup path
     const std::string backupCommand
-        = "rsync -a /boot/ /opt/opencattus/backup/boot/";
+        = "rsync -a /boot/ /opt/cloysterhpc/backup/boot/";
 
     int exitCode = cloyster::runCommand(backupCommand);
 
@@ -235,7 +246,7 @@ void LVM::restoreBoot()
 {
     //@TODO We need a better way to store the backup path
     const std::string restoreCommand
-        = "rsync -a /opt/opencattus/backup/boot/ /boot/";
+        = "rsync -a /opt/cloysterhpc/backup/boot/ /boot/";
 
     int exitCode = cloyster::runCommand(restoreCommand);
 
@@ -246,9 +257,40 @@ void LVM::restoreBoot()
     }
 }
 
+void LVM::checkVolumeGroup()
+{
+    std::list<std::string> output;
+    const std::string checkVGCommand = "vgs --noheadings -o vg_name";
+
+    int exitCode = cloyster::runCommand(checkVGCommand, output, false);
+
+    if (exitCode == 0 && !output.empty()) {
+        // Assuming we want to get the first volume group found
+        std::string vgName = output.front();
+
+        // Trim any leading/trailing whitespaces
+        vgName.erase(vgName.begin(), std::find_if(vgName.begin(), vgName.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }));
+        vgName.erase(std::find_if(vgName.rbegin(), vgName.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }).base(), vgName.end());
+
+        if (vgName.empty()) {
+            throw std::runtime_error("LVM ERROR: Volume group name is empty.");
+        } else {
+            m_snapshotVolumeGroup = vgName;
+            LOG_INFO("LVM Volume Group found: {}", vgName);
+        }
+    } else {
+        throw std::runtime_error("LVM ERROR: Failed to find volume group.");
+    }
+}
+
 void LVM::createSnapshot(const std::string& snapshotName)
 {
     LOG_INFO("LVM Snapshot in progress.");
+    checkVolumeGroup();
 
     const std::string createSnapshotCommand = fmt::format(
         "lvcreate -s -n {} {}/root", snapshotName, m_snapshotVolumeGroup);
@@ -265,6 +307,8 @@ void LVM::createSnapshot(const std::string& snapshotName)
 
 void LVM::rollbackSnapshot(const std::string& snapshotName)
 {
+    checkVolumeGroup();
+
     const std::string rollbackSnapshotCommand = fmt::format(
         "lvconvert --merge {}/{}", m_snapshotVolumeGroup, snapshotName);
 
@@ -281,6 +325,8 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
 
 void LVM::removeSnapshot(const std::string& snapshotName)
 {
+    checkVolumeGroup();
+
     const std::string removeSnapshotCommand
         = fmt::format("lvremove {}/{}", m_snapshotVolumeGroup, snapshotName);
 
@@ -305,23 +351,3 @@ void LVM::rollbackSnapshotWithBootRestore(const std::string& snapshotName)
     rollbackSnapshot(snapshotName);
     restoreBoot();
 }
-
-LVM::LVM()
-{
-    verifyBootIsNotLVM();
-    checkUEFIMode();
-    checkLVMEnabled();
-    checkThinProvisioning();
-    checkEnoughDiskSpaceAvailable();
-    verifyAvailablePartitions();
-}
-
-#ifdef BUILD_TESTING
-#include <cloysterhpc/tests.h>
-
-TEST_SUITE("Test LVM")
-{
-
-    TEST_CASE("Check if system supports LVM snapshots") { }
-}
-#endif
