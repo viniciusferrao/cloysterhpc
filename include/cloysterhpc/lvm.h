@@ -32,6 +32,7 @@ public:
     void removeSnapshot(const std::string& snapshotName);
     void createSnapshotWithBootBackup(const std::string& snapshotName);
     void rollbackSnapshotWithBootRestore(const std::string& snapshotName);
+    LVM();
 };
 
 #endif // LVM_H

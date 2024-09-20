@@ -194,18 +194,14 @@ bool LVM::snapshotExists(const std::string& snapshotName)
 {
     std::list<std::string> output;
 
-    // Construct the command to check if the snapshot exists
     const std::string checkSnapshotCommand = fmt::format("lvs --noheadings -o lv_name {}/{}", m_snapshotVolumeGroup, snapshotName);
-
-    // Run the command
     int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
 
     // If the command succeeded (exitCode 0) and output is not empty, snapshot exists
     if (exitCode == 0 && !output.empty()) {
-        // We can further check if the first line matches the snapshot name (sanity check)
         std::string lvName = output.front();
 
-        // Trim leading/trailing whitespaces (just in case)
+        // Trim leading/trailing whitespaces
         lvName.erase(lvName.begin(), std::find_if(lvName.begin(), lvName.end(), [](unsigned char ch) {
             return !std::isspace(ch);
         }));
@@ -215,13 +211,15 @@ bool LVM::snapshotExists(const std::string& snapshotName)
 
         // Check if the name matches the expected snapshot name
         if (lvName == snapshotName) {
-            LOG_INFO("LVM: Snapshot {} exists.", snapshotName)
+            LOG_INFO("LVM: Snapshot {} exists.", snapshotName);
             return true;
+        } else {
+            LOG_INFO("LVM: Snapshot found but name mismatch: expected '{}', got '{}'", snapshotName, lvName);
         }
     }
 
     // If the command failed or the snapshot was not found
-    LOG_INFO("LVM: Snapshot {} does not exist.", snapshotName)
+    LOG_INFO("LVM: Snapshot {} does not exist.", snapshotName);
     return false;
 }
 
@@ -417,4 +415,9 @@ void LVM::rollbackSnapshotWithBootRestore(const std::string& snapshotName)
 {
     rollbackSnapshot(snapshotName);
     restoreBoot();
+}
+
+LVM::LVM()
+{
+    checkVolumeGroup();
 }
