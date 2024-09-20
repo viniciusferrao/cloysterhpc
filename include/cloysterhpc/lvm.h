@@ -26,6 +26,7 @@ private:
 
 public:
     void checkLVMAvailability();
+    bool snapshotExists(const std::string& snapshotName);
     void createSnapshot(const std::string& snapshotName);
     void rollbackSnapshot(const std::string& snapshotName);
     void removeSnapshot(const std::string& snapshotName);
