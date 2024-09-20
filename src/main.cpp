@@ -44,12 +44,12 @@ int main(int argc, const char** argv)
 
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
 
-    auto LVMSnapshot = app.add_subcommand("L", "LVM snapshot configuration. Check usage with 'L -h'");
+    auto LVMSnapshot = app.add_subcommand(
+        "L", "LVM snapshot configuration. Check usage with 'L -h'");
     LVMSnapshot->add_flag("-a", "Check system availability for LVM snapshot.");
     LVMSnapshot->add_flag("-c", "Create a LVM snapshot.");
     LVMSnapshot->add_flag("-r", "Rollback to the LVM snapshot created.");
     LVMSnapshot->add_flag("-d", "Destroy the LVM snapshot created.");
-
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));

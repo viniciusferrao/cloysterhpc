@@ -14,7 +14,9 @@
 void LVM::checkUEFIMode()
 {
     std::list<std::string> output;
-    const std::string checkUEFICommand = "/bin/bash -c \"[ -d /sys/firmware/efi ] && echo UEFI || echo Legacy\"";
+    const std::string checkUEFICommand
+        = "/bin/bash -c \"[ -d /sys/firmware/efi ] && echo UEFI || echo "
+          "Legacy\"";
 
     int exitCode = cloyster::runCommand(checkUEFICommand, output, false);
 
@@ -87,12 +89,14 @@ void LVM::checkEnoughDiskSpaceAvailable()
 
                 // Remove leading/trailing whitespaces
                 std::string cleanLine = line;
-                cleanLine.erase(cleanLine.begin(), std::find_if(cleanLine.begin(), cleanLine.end(), [](unsigned char ch) {
-                    return !std::isspace(ch);
-                }));
-                cleanLine.erase(std::find_if(cleanLine.rbegin(), cleanLine.rend(), [](unsigned char ch) {
-                    return !std::isspace(ch);
-                }).base(), cleanLine.end());
+                cleanLine.erase(cleanLine.begin(),
+                    std::find_if(cleanLine.begin(), cleanLine.end(),
+                        [](unsigned char ch) { return !std::isspace(ch); }));
+                cleanLine.erase(
+                    std::find_if(cleanLine.rbegin(), cleanLine.rend(),
+                        [](unsigned char ch) { return !std::isspace(ch); })
+                        .base(),
+                    cleanLine.end());
 
                 if (cleanLine.empty()) {
                     LOG_DEBUG("LVM: Skipping empty or malformed line.");
@@ -103,13 +107,20 @@ void LVM::checkEnoughDiskSpaceAvailable()
                 std::istringstream iss(cleanLine);
                 std::string vgName, vgSizeStr, vgFreeStr;
                 if (!(iss >> vgName >> vgSizeStr >> vgFreeStr)) {
-                    LOG_DEBUG("LVM: Failed to split line into expected fields. Line: {}", cleanLine);
-                    throw std::runtime_error("LVM ERROR: Failed to parse volume group information.");
+                    LOG_DEBUG("LVM: Failed to split line into expected fields. "
+                              "Line: {}",
+                        cleanLine);
+                    throw std::runtime_error(
+                        "LVM ERROR: Failed to parse volume group information.");
                 }
 
                 // Remove 'G' from size and free space strings
-                vgSizeStr.erase(std::remove(vgSizeStr.begin(), vgSizeStr.end(), 'G'), vgSizeStr.end());
-                vgFreeStr.erase(std::remove(vgFreeStr.begin(), vgFreeStr.end(), 'G'), vgFreeStr.end());
+                vgSizeStr.erase(
+                    std::remove(vgSizeStr.begin(), vgSizeStr.end(), 'G'),
+                    vgSizeStr.end());
+                vgFreeStr.erase(
+                    std::remove(vgFreeStr.begin(), vgFreeStr.end(), 'G'),
+                    vgFreeStr.end());
 
                 // Convert vg_size and vg_free from string to double
                 double vgSizeGB = std::stod(vgSizeStr);
@@ -118,12 +129,14 @@ void LVM::checkEnoughDiskSpaceAvailable()
                 // Calculate the percentage of free space
                 double freePercentage = (vgFreeGB / vgSizeGB) * 100;
 
-                LOG_TRACE("LVM Volume Group: {}, Total Size: {} GB, Free Space: {} GB, Free Percentage: {:.2f}%",
+                LOG_TRACE("LVM Volume Group: {}, Total Size: {} GB, Free "
+                          "Space: {} GB, Free Percentage: {:.2f}%",
                     vgName, vgSizeGB, vgFreeGB, freePercentage);
 
                 // Check if the free space is less than 50%
                 if (freePercentage < 50.0) {
-                    LOG_WARN("LVM Volume Group '{}' does not have enough free space (only {:.2f}% available).",
+                    LOG_WARN("LVM Volume Group '{}' does not have enough free "
+                             "space (only {:.2f}% available).",
                         vgName, freePercentage);
                     allVGsHaveEnoughSpace = false;
                 }
@@ -166,12 +179,12 @@ void LVM::verifyAvailablePartitions()
         }
 
         if (m_hasHomePartition) {
-            LOG_TRACE("LVM: /home is in a separate partition. We can proceed with "
-                      "LVM snapshot.");
+            LOG_TRACE(
+                "LVM: /home is in a separate partition. We can proceed with "
+                "LVM snapshot.");
         } else {
-            LOG_WARN(
-                "LVM: /home is not a separate partition. This may lead "
-                "to issues when rolling back the snapshot.");
+            LOG_WARN("LVM: /home is not a separate partition. This may lead "
+                     "to issues when rolling back the snapshot.");
         }
     } else {
         throw std::runtime_error(
@@ -194,27 +207,33 @@ bool LVM::snapshotExists(const std::string& snapshotName)
 {
     std::list<std::string> output;
 
-    const std::string checkSnapshotCommand = fmt::format("lvs --noheadings -o lv_name {}/{}", m_snapshotVolumeGroup, snapshotName);
+    const std::string checkSnapshotCommand
+        = fmt::format("lvs --noheadings -o lv_name {}/{}",
+            m_snapshotVolumeGroup, snapshotName);
     int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
 
-    // If the command succeeded (exitCode 0) and output is not empty, snapshot exists
+    // If the command succeeded (exitCode 0) and output is not empty, snapshot
+    // exists
     if (exitCode == 0 && !output.empty()) {
         std::string lvName = output.front();
 
         // Trim leading/trailing whitespaces
-        lvName.erase(lvName.begin(), std::find_if(lvName.begin(), lvName.end(), [](unsigned char ch) {
-            return !std::isspace(ch);
-        }));
-        lvName.erase(std::find_if(lvName.rbegin(), lvName.rend(), [](unsigned char ch) {
-            return !std::isspace(ch);
-        }).base(), lvName.end());
+        lvName.erase(lvName.begin(),
+            std::find_if(lvName.begin(), lvName.end(),
+                [](unsigned char ch) { return !std::isspace(ch); }));
+        lvName.erase(std::find_if(lvName.rbegin(), lvName.rend(),
+                         [](unsigned char ch) { return !std::isspace(ch); })
+                         .base(),
+            lvName.end());
 
         // Check if the name matches the expected snapshot name
         if (lvName == snapshotName) {
             LOG_INFO("LVM: Snapshot {} exists.", snapshotName);
             return true;
         } else {
-            LOG_INFO("LVM: Snapshot found but name mismatch: expected '{}', got '{}'", snapshotName, lvName);
+            LOG_INFO("LVM: Snapshot found but name mismatch: expected '{}', "
+                     "got '{}'",
+                snapshotName, lvName);
         }
     }
 
@@ -227,7 +246,8 @@ void LVM::verifyBootIsNotLVM()
 {
     std::list<std::string> output;
 
-    const std::string listCommand = "lsblk --noheadings --output MOUNTPOINT,TYPE";
+    const std::string listCommand
+        = "lsblk --noheadings --output MOUNTPOINT,TYPE";
     int exitCodeList = cloyster::runCommand(listCommand, output, false);
 
     if (exitCodeList != 0) {
@@ -254,9 +274,11 @@ void LVM::verifyBootIsNotLVM()
     if (isBootPartitionFound && !m_hasBootPartition) {
         LOG_INFO("LVM: /boot is mounted and not part of LVM.");
     } else if (m_hasBootPartition) {
-        throw std::runtime_error("LVM ERROR: /boot is part of LVM. Check your system configuration.");
+        throw std::runtime_error("LVM ERROR: /boot is part of LVM. Check your "
+                                 "system configuration.");
     } else {
-        LOG_WARN("LVM: /boot is not found or is part of LVM. Check your system configuration.");
+        LOG_WARN("LVM: /boot is not found or is part of LVM. Check your system "
+                 "configuration.");
     }
 }
 
@@ -305,12 +327,13 @@ void LVM::checkVolumeGroup()
         std::string vgName = output.front();
 
         // Trim any leading/trailing whitespaces
-        vgName.erase(vgName.begin(), std::find_if(vgName.begin(), vgName.end(), [](unsigned char ch) {
-            return !std::isspace(ch);
-        }));
-        vgName.erase(std::find_if(vgName.rbegin(), vgName.rend(), [](unsigned char ch) {
-            return !std::isspace(ch);
-        }).base(), vgName.end());
+        vgName.erase(vgName.begin(),
+            std::find_if(vgName.begin(), vgName.end(),
+                [](unsigned char ch) { return !std::isspace(ch); }));
+        vgName.erase(std::find_if(vgName.rbegin(), vgName.rend(),
+                         [](unsigned char ch) { return !std::isspace(ch); })
+                         .base(),
+            vgName.end());
 
         if (vgName.empty()) {
             throw std::runtime_error("LVM ERROR: Volume group name is empty.");
@@ -325,7 +348,7 @@ void LVM::checkVolumeGroup()
 
 void LVM::createSnapshot(const std::string& snapshotName)
 {
-    if(snapshotExists(snapshotName)) {
+    if (snapshotExists(snapshotName)) {
         return;
     }
 
@@ -347,7 +370,7 @@ void LVM::createSnapshot(const std::string& snapshotName)
 
 void LVM::rollbackSnapshot(const std::string& snapshotName)
 {
-    if(!snapshotExists(snapshotName)) {
+    if (!snapshotExists(snapshotName)) {
         return;
     }
 
@@ -372,7 +395,7 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
 
 void LVM::removeSnapshot(const std::string& snapshotName)
 {
-    if(!snapshotExists(snapshotName)) {
+    if (!snapshotExists(snapshotName)) {
         return;
     }
 
@@ -380,7 +403,9 @@ void LVM::removeSnapshot(const std::string& snapshotName)
     checkVolumeGroup();
 
     std::list<std::string> output;
-    const std::string checkSnapshotCommand = fmt::format("lvs --noheadings -o lv_attr {}/{}", m_snapshotVolumeGroup, snapshotName);
+    const std::string checkSnapshotCommand
+        = fmt::format("lvs --noheadings -o lv_attr {}/{}",
+            m_snapshotVolumeGroup, snapshotName);
 
     int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
 
@@ -389,15 +414,21 @@ void LVM::removeSnapshot(const std::string& snapshotName)
 
         // Check if the snapshot is merged (state will be inactive or missing)
         if (lvAttr.find("M") != std::string::npos) {
-            LOG_WARN("LVM Snapshot '{}' is already merged and cannot be removed.", snapshotName);
+            LOG_WARN(
+                "LVM Snapshot '{}' is already merged and cannot be removed.",
+                snapshotName);
         } else {
-            const std::string removeSnapshotCommand = fmt::format("lvremove {}/{}", m_snapshotVolumeGroup, snapshotName);
+            const std::string removeSnapshotCommand = fmt::format(
+                "lvremove {}/{}", m_snapshotVolumeGroup, snapshotName);
             exitCode = cloyster::runCommand(removeSnapshotCommand);
 
             if (exitCode == 0) {
-                LOG_INFO("LVM Snapshot '{}' removed successfully.", snapshotName);
+                LOG_INFO(
+                    "LVM Snapshot '{}' removed successfully.", snapshotName);
             } else {
-                throw std::runtime_error(fmt::format("LVM ERROR: Failed to remove snapshot '{}'.", snapshotName));
+                throw std::runtime_error(
+                    fmt::format("LVM ERROR: Failed to remove snapshot '{}'.",
+                        snapshotName));
             }
         }
     } else {
@@ -417,7 +448,4 @@ void LVM::rollbackSnapshotWithBootRestore(const std::string& snapshotName)
     restoreBoot();
 }
 
-LVM::LVM()
-{
-    checkVolumeGroup();
-}
+LVM::LVM() { checkVolumeGroup(); }
