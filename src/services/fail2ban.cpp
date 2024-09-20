@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/services/fail2ban.h"
+#include <cloysterhpc/inifile.h>
+#include <cloysterhpc/services/fail2ban.h>
 
 void fail2ban::install()
 {
@@ -14,8 +15,11 @@ void fail2ban::install()
 
 void fail2ban::configure()
 {
-    //  Create the local configuration file for fail2ban
-    cloyster::addStringToFile("/etc/fail2ban/jail.local",
+    std::filesystem::path dest = "/etc/fail2ban/jail.local";
+
+    inifile configfile;
+
+    configfile.loadData(
         "[DEFAULT]\n"
         "# Ban IP/hosts for 24 hour ( 24h*3600s = 86400s):\n"
         "bantime = 86400\n"
@@ -37,6 +41,8 @@ void fail2ban::configure()
         "# Enable sshd protection\n"
         "[sshd]\n"
         "enabled = true\n");
+
+    configfile.saveFile(dest);
 }
 
 void fail2ban::enable()
