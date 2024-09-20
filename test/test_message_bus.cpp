@@ -7,7 +7,7 @@ unsigned TestMessageBus::callCount(FunctionStore s) const
     if (!m_functions.contains(sname)) {
         return 0;
     } else {
-        return m_functions.at(sname).size();
+        return unsigned(m_functions.at(sname).size());
     }
 }
 

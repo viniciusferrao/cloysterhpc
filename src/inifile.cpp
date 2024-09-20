@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cloysterhpc/inifile.h>
 #include <filesystem>
 #include <fmt/format.h>
@@ -96,6 +97,34 @@ bool inifile::exists(const std::string& section)
     return ini.SectionExists(section.c_str());
 }
 
+static std::vector<std::string> convertIniNames(
+    CSimpleIniA::TNamesDepend&& names)
+{
+    std::vector<std::string> ret;
+
+    std::transform(names.begin(), names.end(), std::back_inserter(ret),
+        [](auto entry) { return std::string { entry.pItem }; });
+
+    return ret;
+}
+
+std::vector<std::string> inifile::listAllSections() const
+{
+    CSimpleIniA::TNamesDepend sections;
+    ini.GetAllSections(sections);
+
+    return convertIniNames(std::move(sections));
+}
+
+std::vector<std::string> inifile::listAllEntries(
+    const std::string& section) const
+{
+    CSimpleIniA::TNamesDepend keys;
+    ini.GetAllKeys(section.c_str(), keys);
+
+    return convertIniNames(std::move(keys));
+}
+
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
 #else
@@ -115,6 +144,34 @@ TEST_SUITE("Load .ini files")
         const std::string clusterName
             = ini.getValue("information", "cluster_name");
         CHECK(clusterName == "cloyster");
+    }
+
+    TEST_CASE("Get sections")
+    {
+        inifile ini;
+        std::filesystem::path path;
+        path = TEST_SAMPLE_DIR / std::filesystem::path { "inifile.ini" };
+        ini.loadFile(path);
+
+        auto ret = ini.listAllSections();
+        REQUIRE(ret.size() == 2);
+        std::sort(ret.begin(), ret.end());
+        CHECK(ret[0] == "another");
+        CHECK(ret[1] == "information");
+    }
+
+    TEST_CASE("Get section entries")
+    {
+        inifile ini;
+        std::filesystem::path path;
+        path = TEST_SAMPLE_DIR / std::filesystem::path { "inifile.ini" };
+        ini.loadFile(path);
+
+        auto ret = ini.listAllEntries("another");
+        REQUIRE(ret.size() == 2);
+        std::sort(ret.begin(), ret.end());
+        CHECK(ret[0] == "another_key");
+        CHECK(ret[1] == "second_key");
     }
 
     TEST_CASE("Set value")

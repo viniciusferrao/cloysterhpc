@@ -20,6 +20,7 @@
 #include <cloysterhpc/ofed.h>
 #include <cloysterhpc/queuesystem/pbs.h>
 #include <cloysterhpc/queuesystem/slurm.h>
+#include <cloysterhpc/repos.h>
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/timezone.h>
 
@@ -55,6 +56,7 @@ private:
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
+    std::unique_ptr<BaseRunner> m_runner;
 
     bool m_firewall { false };
     SELinuxMode m_selinux { SELinuxMode::Disabled };
@@ -67,7 +69,11 @@ private:
     bool m_updateSystem { false };
     DiskImage m_diskImage;
 
+    std::optional<RepoManager> m_repos = std::nullopt;
+
 public:
+    Cluster();
+
     [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
 
@@ -90,6 +96,9 @@ public:
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
+
+    void initRepoManager();
+    RepoManager& getRepoManager();
 
     /**
      * @brief Add a new network to the cluster.
@@ -234,9 +243,9 @@ public:
 #endif
 
     /* TODO: Refactor all those leftovers from legacy C version */
-    std::size_t nodeQuantity;
+    std::size_t nodeQuantity = 0;
     std::string nodePrefix;
-    std::size_t nodePadding;
+    std::size_t nodePadding = 0;
     address nodeStartIP;
     std::string nodeRootPassword;
 };

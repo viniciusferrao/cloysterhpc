@@ -80,6 +80,10 @@ public:
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
 
+    std::pair<int, std::vector<std::string>> multipleSelectionMenu(
+        const char* title, const char* message, const char* help,
+        std::vector<std::tuple<std::string, std::string, bool>> items);
+
     // TODO:
     //  * Better template?
     //  * The name "okCancelMessage" of this function is not ideal

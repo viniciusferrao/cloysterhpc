@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/cloyster.h"
 #include <cloysterhpc/answerfile.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
 #include <cloysterhpc/inifile.h>
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -27,8 +29,15 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
+Cluster::Cluster()
+{
+    if (cloyster::dryRun) {
+        m_runner = std::make_unique<DryRunner>();
+    } else {
+        m_runner = std::make_unique<Runner>();
+    }
+}
 // The rule of zero
-// Cluster::Cluster() = default;
 // Cluster::~Cluster() = default;
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
@@ -114,6 +123,20 @@ void Cluster::setDomainName(const std::string& domainName)
 std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 {
     return m_network;
+}
+
+void Cluster::initRepoManager()
+{
+    m_repos.emplace(*m_runner, this->getHeadnode().getOS());
+}
+
+RepoManager& Cluster::getRepoManager()
+{
+    if (!m_repos) {
+        initRepoManager();
+    }
+
+    return m_repos.value();
 }
 
 Network& Cluster::getNetwork(Network::Profile profile)
