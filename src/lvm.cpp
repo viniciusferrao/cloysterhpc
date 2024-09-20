@@ -8,7 +8,7 @@
 #include <cloysterhpc/services/log.h>
 
 /*
-@TODO -> Preeinstalar os requisitos: boom-boot e rsync.
+@TODO -> Pre-install boom-boot and rsync.
 */
 
 void LVM::checkUEFIMode()
