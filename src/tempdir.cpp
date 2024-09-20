@@ -1,9 +1,10 @@
 #include <array>
 #include <cloysterhpc/tempdir.h>
+#include <cstdint>
 #include <fmt/format.h>
 #include <random>
 
-static char value_to_char(unsigned long value)
+static char value_to_char(std::uint64_t value)
 {
     if (value < 10) {
         return char(int('0') + value);

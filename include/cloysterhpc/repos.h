@@ -53,7 +53,7 @@ public:
     void loadCustom(inifile& file, const std::filesystem::path& path);
 
     void enable(const std::string& id);
-    void enableMultiple(std::initializer_list<std::string> ids);
+    void enableMultiple(std::vector<std::string> ids);
     void disable(const std::string& id);
 
     void commitStatus();

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#pragma once
+#ifndef CLOYSTERHPC_RUNNER_H_
+#define CLOYSTERHPC_RUNNER_H_
 
 #include <string>
 #include <vector>
@@ -45,3 +46,5 @@ public:
 private:
     std::vector<std::string> m_cmds;
 };
+
+#endif // CLOYSTERHPC_RUNNER_H_

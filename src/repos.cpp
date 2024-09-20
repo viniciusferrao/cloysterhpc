@@ -17,11 +17,11 @@
 
 #include <boost/algorithm/string.hpp>
 
-const std::string CLOYSTER_REPO_EL8 {
+constexpr std::string_view CLOYSTER_REPO_EL8 {
 #include "cloysterhpc/repos/el8/cloyster.repo"
 };
 
-const std::string CLOYSTER_REPO_EL9 = {
+constexpr std::string_view CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
 };
 
@@ -121,12 +121,17 @@ void RepoManager::setEnableState(const std::string& id, bool value)
 
 void RepoManager::enable(const std::string& id) { setEnableState(id, true); }
 
-void RepoManager::enableMultiple(std::initializer_list<std::string> ids)
+void RepoManager::enableMultiple(std::vector<std::string> ids)
 {
     std::ranges::for_each(ids, [&](const auto& id) { this->enable(id); });
 }
 
 void RepoManager::disable(const std::string& id) { setEnableState(id, false); }
+
+static std::string buildPackageName(std::string stem)
+{
+    return fmt::format("{}{}", cloyster::productName, stem);
+}
 
 static std::vector<std::string> getDependenciesEL(
     const OS& os, OS::Platform version)
@@ -139,18 +144,19 @@ static std::vector<std::string> getDependenciesEL(
 
     switch (os.getDistro()) {
         case OS::Distro::AlmaLinux:
-            dependencies = { "cloyster-AlmaLinux-BaseOS", powertools };
+            dependencies
+                = { buildPackageName("-AlmaLinux-BaseOS"), powertools };
             break;
         case OS::Distro::RHEL:
             dependencies = { fmt::format(
                 "codeready-builder-for-rhel-{}-x86_64-rpms", numversion) };
             break;
         case OS::Distro::OL:
-            dependencies = { "cloyster-OL-BaseOS",
+            dependencies = { buildPackageName("-OL-BaseOS"),
                 fmt::format("ol{}_codeready_builder", numversion) };
             break;
         case OS::Distro::Rocky:
-            dependencies = { "cloyster-Rocky-BaseOS", powertools };
+            dependencies = { buildPackageName("-Rocky-BaseOS"), powertools };
             break;
         default:
             throw std::runtime_error("Unsupported platform");
@@ -203,6 +209,8 @@ void RepoManager::commitStatus()
     }
 }
 
+#define FORMAT_TEMPLATE(src) fmt::format(src, cloyster::productName)
+
 std::vector<repository> RepoManager::buildCloysterTree(
     const std::filesystem::path& basedir)
 {
@@ -213,10 +221,10 @@ std::vector<repository> RepoManager::buildCloysterTree(
     if (cloyster::customRepofilePath.empty()) {
         switch (m_os.getPlatform()) {
             case OS::Platform::el8:
-                file.loadData(CLOYSTER_REPO_EL8);
+                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL8));
                 break;
             case OS::Platform::el9:
-                file.loadData(CLOYSTER_REPO_EL9);
+                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL9));
                 break;
             default:
                 throw std::runtime_error("Unsupported platform");
@@ -250,7 +258,7 @@ void RepoManager::createFileFor(std::filesystem::path path)
     auto filtered = m_repos
         | std::views::filter([&path](auto& r) { return path == r.source; });
 
-    for (const auto repo : filtered) {
+    for (const auto& repo : filtered) {
         writeSection(file, repo);
     }
 

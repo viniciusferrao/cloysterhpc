@@ -373,10 +373,14 @@ void Shell::install()
 
     auto repos = m_cluster->getRepoManager();
     repos.loadFiles();
-    repos.enableMultiple({ "cloyster-beegfs", "cloyster-elrepo",
-        "cloyster-epel", "cloyster-openhpc",
-        //            "cloyster-influxdata",
-        "cloyster-rpmfusion-free-updates" });
+
+    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
+        "-openhpc", "-rpmfusion-free-updates" };
+    for (auto& package : toEnable) {
+        package = cloyster::productName + package;
+    }
+
+    repos.enableMultiple(toEnable);
     repos.commitStatus();
 
     runSystemUpdate();
