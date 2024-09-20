@@ -190,6 +190,41 @@ void LVM::checkLVMAvailability()
     LOG_INFO("LVM: End of availability check.")
 }
 
+bool LVM::snapshotExists(const std::string& snapshotName)
+{
+    std::list<std::string> output;
+
+    // Construct the command to check if the snapshot exists
+    const std::string checkSnapshotCommand = fmt::format("lvs --noheadings -o lv_name {}/{}", m_snapshotVolumeGroup, snapshotName);
+
+    // Run the command
+    int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
+
+    // If the command succeeded (exitCode 0) and output is not empty, snapshot exists
+    if (exitCode == 0 && !output.empty()) {
+        // We can further check if the first line matches the snapshot name (sanity check)
+        std::string lvName = output.front();
+
+        // Trim leading/trailing whitespaces (just in case)
+        lvName.erase(lvName.begin(), std::find_if(lvName.begin(), lvName.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }));
+        lvName.erase(std::find_if(lvName.rbegin(), lvName.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }).base(), lvName.end());
+
+        // Check if the name matches the expected snapshot name
+        if (lvName == snapshotName) {
+            LOG_INFO("LVM: Snapshot {} exists.", snapshotName)
+            return true;
+        }
+    }
+
+    // If the command failed or the snapshot was not found
+    LOG_INFO("LVM: Snapshot {} does not exist.", snapshotName)
+    return false;
+}
+
 void LVM::verifyBootIsNotLVM()
 {
     std::list<std::string> output;
@@ -229,6 +264,9 @@ void LVM::verifyBootIsNotLVM()
 
 void LVM::backupBoot()
 {
+    //@TODO We need a better way to store the backup path
+    cloyster::createDirectory("/opt/cloysterhpc/backup");
+
     //@TODO We need a better way to store the backup path
     const std::string backupCommand
         = "rsync -a /boot/ /opt/cloysterhpc/backup/boot/";
@@ -289,6 +327,10 @@ void LVM::checkVolumeGroup()
 
 void LVM::createSnapshot(const std::string& snapshotName)
 {
+    if(snapshotExists(snapshotName)) {
+        return;
+    }
+
     LOG_INFO("LVM Snapshot creation in progress.");
     checkVolumeGroup();
 
@@ -307,6 +349,10 @@ void LVM::createSnapshot(const std::string& snapshotName)
 
 void LVM::rollbackSnapshot(const std::string& snapshotName)
 {
+    if(!snapshotExists(snapshotName)) {
+        return;
+    }
+
     LOG_INFO("LVM Snapshot rollback in progress.");
     checkVolumeGroup();
 
@@ -328,6 +374,10 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
 
 void LVM::removeSnapshot(const std::string& snapshotName)
 {
+    if(!snapshotExists(snapshotName)) {
+        return;
+    }
+
     LOG_INFO("LVM Snapshot removal in progress.");
     checkVolumeGroup();
 
