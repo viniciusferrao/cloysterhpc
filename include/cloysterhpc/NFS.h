@@ -38,12 +38,14 @@ public:
         const boost::asio::ip::address& address,
         const std::string& permissions);
 
+    void install() final {};
+
     /**
      * @brief Configures the NFS service with the specified settings.
      */
-    void configure();
+    void configure() final;
 
-    /**
+     /**
      * @brief Enables the NFS service.
      */
     void enable() final;
