@@ -19,7 +19,7 @@ private:
     void restoreBoot();
     void checkVolumeGroup();
     bool isUEFIModeEnabled();
-    void checkLVMEnabled();
+    bool isLVMEnabled();
     bool isRootLVMEnabled();
     void checkThinProvisioning();
     void checkEnoughDiskSpaceAvailable();
