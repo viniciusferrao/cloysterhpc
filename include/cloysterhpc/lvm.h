@@ -21,7 +21,8 @@ private:
     bool isUEFIModeEnabled();
     bool isLVMEnabled();
     bool isRootLVMEnabled();
-    void checkThinProvisioning();
+    bool isThinProvisioningEnabled();
+    bool isRootThinProvisioningEnabled();
     void checkEnoughDiskSpaceAvailable();
     void verifyAvailablePartitions();
 
