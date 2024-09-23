@@ -23,7 +23,7 @@ bool LVM::isUEFIModeEnabled()
     return false;
 }
 
-void LVM::checkLVMEnabled()
+bool LVM::isLVMEnabled()
 {
     std::list<std::string> output;
     const std::string checkLVMCommand = "vgs --noheadings";
@@ -32,13 +32,14 @@ void LVM::checkLVMEnabled()
     if (exitCode == 0) {
         if (!output.empty()) {
             LOG_INFO("LVM is enabled.\n");
+            return true;
         } else {
-            throw std::runtime_error("LVM ERROR: LVM is not enabled.");
+            LOG_WARN("LVM ERROR: LVM is not enabled.");
+            return false;
         }
-    } else {
-        throw std::runtime_error(
-            "LVM ERROR: Failed to check if LVM is enabled.");
     }
+
+    throw std::runtime_error("LVM ERROR: Failed to check if LVM is enabled.");
 }
 
 bool LVM::isRootLVMEnabled()
@@ -221,7 +222,7 @@ void LVM::checkLVMAvailability()
 {
     LOG_INFO("LVM: Begin of availability check.")
     isUEFIModeEnabled();
-    checkLVMEnabled();
+    isLVMEnabled();
     isRootLVMEnabled();
     verifyBootIsNotLVM();
     checkThinProvisioning();
