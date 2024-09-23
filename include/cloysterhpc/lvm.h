@@ -20,6 +20,7 @@ private:
     void checkVolumeGroup();
     bool isUEFIModeEnabled();
     void checkLVMEnabled();
+    bool isRootLVMEnabled();
     void checkThinProvisioning();
     void checkEnoughDiskSpaceAvailable();
     void verifyAvailablePartitions();
