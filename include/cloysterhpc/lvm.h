@@ -18,7 +18,7 @@ private:
     void backupBoot();
     void restoreBoot();
     void checkVolumeGroup();
-    void checkUEFIMode();
+    bool isUEFIModeEnabled();
     void checkLVMEnabled();
     void checkThinProvisioning();
     void checkEnoughDiskSpaceAvailable();
