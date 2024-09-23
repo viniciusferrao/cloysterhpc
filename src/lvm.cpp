@@ -41,6 +41,41 @@ void LVM::checkLVMEnabled()
     }
 }
 
+bool LVM::isRootLVMEnabled()
+{
+    std::list<std::string> output;
+    const std::string checkRootLVMCommand = "findmnt -n -o SOURCE /";
+    int exitCode = cloyster::runCommand(checkRootLVMCommand, output);
+
+    if (exitCode != 0) {
+        throw std::runtime_error(
+            "LVM ERROR: Failed to check if root filesystem is on LVM.");
+    }
+
+    if (output.empty()) {
+        throw std::runtime_error(
+            "LVM ERROR: Root filesystem check returned no output.");
+    }
+
+    const std::string& rootDevice = output.front();
+
+    // Check if the root device is managed by LVM
+    // (appears under /dev/mapper/ or /dev/<volume-group>/)
+    // When LVM creates a logical volume, it also creates a
+    // device file under /dev/mapper/<volume-group>-<logical-volume> for each
+    // logical volume, which is a symlink to
+    // /dev/<volume-group>/<logical-volume>
+    if (rootDevice.find("/dev/mapper/") != std::string::npos
+        || rootDevice.find(fmt::format("/dev/{}", m_snapshotVolumeGroup))
+            != std::string::npos) {
+        LOG_INFO("LVM: Root filesystem is on LVM.\n");
+        return true;
+    }
+
+    LOG_WARN("LVM: Root filesystem is not on LVM.\n");
+    return false;
+}
+
 void LVM::checkThinProvisioning()
 {
     std::list<std::string> output;
@@ -185,9 +220,10 @@ void LVM::verifyAvailablePartitions()
 void LVM::checkLVMAvailability()
 {
     LOG_INFO("LVM: Begin of availability check.")
-    verifyBootIsNotLVM();
     isUEFIModeEnabled();
     checkLVMEnabled();
+    isRootLVMEnabled();
+    verifyBootIsNotLVM();
     checkThinProvisioning();
     checkEnoughDiskSpaceAvailable();
     verifyAvailablePartitions();
