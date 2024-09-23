@@ -159,7 +159,7 @@ bool LVM::isRootThinProvisioningEnabled()
     }
 }
 
-void LVM::checkEnoughDiskSpaceAvailable()
+bool LVM::checkEnoughDiskSpaceAvailable()
 {
     std::list<std::string> output;
     const std::string checkDiskSpaceCommand
@@ -230,21 +230,25 @@ void LVM::checkEnoughDiskSpaceAvailable()
             }
 
             if (!allVGsHaveEnoughSpace) {
-                throw std::runtime_error("LVM ERROR: Not all LVM volume groups "
-                                         "have at least 50% free space.");
+                LOG_WARN("LVM ERROR: Not all LVM volume groups "
+                         "have at least 50% free space.");
+
+                return false;
             }
 
             LOG_INFO(
                 "LVM: All LVM volume groups have at least 50% free space.");
+
+            return true;
         } catch (const std::exception& e) {
             throw std::runtime_error(fmt::format(
                 "LVM ERROR: Failed to parse disk space information: {}",
                 e.what()));
         }
-    } else {
-        throw std::runtime_error(
-            "LVM ERROR: Failed to check available disk space.");
     }
+
+    throw std::runtime_error(
+        "LVM ERROR: Failed to check available disk space.");
 }
 
 void LVM::verifyAvailablePartitions()
