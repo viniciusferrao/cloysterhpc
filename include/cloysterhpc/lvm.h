@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef LVM_H
-#define LVM_H
-#include <string>;
+#ifndef LVM_H_
+#define LVM_H_
+#include <string>
 
 class LVM {
 private:
@@ -35,4 +35,4 @@ public:
     LVM();
 };
 
-#endif // LVM_H
+#endif // LVM_H_

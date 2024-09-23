@@ -4,7 +4,7 @@
  */
 
 #include <cctype>
-#include "cloysterhpc/lvm.h"
+#include <cloysterhpc/lvm.h>
 
 #include <cstdlib>
 
