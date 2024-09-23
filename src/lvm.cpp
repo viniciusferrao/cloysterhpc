@@ -13,22 +13,10 @@
 
 void LVM::checkUEFIMode()
 {
-    std::list<std::string> output;
-    const std::string checkUEFICommand
-        = "/bin/bash -c \"[ -d /sys/firmware/efi ] && echo UEFI || echo "
-          "Legacy\"";
-
-    int exitCode = cloyster::runCommand(checkUEFICommand, output, false);
-
-    if (exitCode == 0) {
-        auto it = std::find(output.begin(), output.end(), "UEFI");
-        if (it != output.end()) {
-            LOG_TRACE("LVM: System boot mode: UEFI\n");
-        } else {
-            LOG_WARN("LVM: System is not booted in UEFI mode.");
-        }
+    if (std::filesystem::exists("/sys/firmware/efi")) {
+        LOG_TRACE("LVM: System boot mode: UEFI\n");
     } else {
-        LOG_WARN("LVM: Failed to check system boot mode.");
+        LOG_WARN("LVM: System is not booted in UEFI mode.");
     }
 }
 
