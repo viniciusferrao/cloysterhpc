@@ -23,7 +23,7 @@ private:
     bool isRootLVMEnabled();
     bool isThinProvisioningEnabled();
     bool isRootThinProvisioningEnabled();
-    void checkEnoughDiskSpaceAvailable();
+    bool checkEnoughDiskSpaceAvailable();
     void verifyAvailablePartitions();
 
 public:
