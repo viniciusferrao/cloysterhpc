@@ -33,10 +33,10 @@ bool LVM::isLVMEnabled()
         if (!output.empty()) {
             LOG_INFO("LVM is enabled.\n");
             return true;
-        } else {
-            LOG_WARN("LVM ERROR: LVM is not enabled.");
-            return false;
         }
+
+        LOG_WARN("LVM ERROR: LVM is not enabled.");
+        return false;
     }
 
     throw std::runtime_error("LVM ERROR: Failed to check if LVM is enabled.");
