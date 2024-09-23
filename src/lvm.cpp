@@ -11,13 +11,16 @@
 @TODO -> Pre-install boom-boot and rsync.
 */
 
-void LVM::checkUEFIMode()
+//@TODO Move checkUEFIMode to a healthcheck class
+bool LVM::isUEFIModeEnabled()
 {
     if (std::filesystem::exists("/sys/firmware/efi")) {
         LOG_TRACE("LVM: System boot mode: UEFI\n");
-    } else {
-        LOG_WARN("LVM: System is not booted in UEFI mode.");
+        return true;
     }
+
+    LOG_WARN("LVM: System is not booted in UEFI mode.");
+    return false;
 }
 
 void LVM::checkLVMEnabled()
@@ -183,7 +186,7 @@ void LVM::checkLVMAvailability()
 {
     LOG_INFO("LVM: Begin of availability check.")
     verifyBootIsNotLVM();
-    checkUEFIMode();
+    isUEFIModeEnabled();
     checkLVMEnabled();
     checkThinProvisioning();
     checkEnoughDiskSpaceAvailable();
