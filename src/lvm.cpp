@@ -27,7 +27,7 @@ bool LVM::isLVMEnabled()
 {
     std::list<std::string> output;
     const std::string checkLVMCommand = "vgs --noheadings";
-    int exitCode = cloyster::runCommand(checkLVMCommand, output, false);
+    int exitCode = cloyster::runCommand(checkLVMCommand, output);
 
     if (exitCode == 0) {
         if (!output.empty()) {
@@ -165,7 +165,7 @@ void LVM::checkEnoughDiskSpaceAvailable()
     const std::string checkDiskSpaceCommand
         = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
 
-    int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output, false);
+    int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output);
 
     if (exitCode == 0 && !output.empty()) {
         try {
@@ -252,7 +252,7 @@ void LVM::verifyAvailablePartitions()
     std::list<std::string> output;
     const std::string checkPartitionsCommand
         = "lsblk --noheadings --output MOUNTPOINT";
-    int exitCode = cloyster::runCommand(checkPartitionsCommand, output, false);
+    int exitCode = cloyster::runCommand(checkPartitionsCommand, output);
 
     if (exitCode == 0) {
         for (const auto& line : output) {
@@ -301,7 +301,7 @@ bool LVM::snapshotExists(const std::string& snapshotName)
     const std::string checkSnapshotCommand
         = fmt::format("lvs --noheadings -o lv_name {}/{}",
             m_snapshotVolumeGroup, snapshotName);
-    int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
+    int exitCode = cloyster::runCommand(checkSnapshotCommand, output);
 
     // If the command succeeded (exitCode 0) and output is not empty, snapshot
     // exists
@@ -339,7 +339,7 @@ void LVM::verifyBootIsNotLVM()
 
     const std::string listCommand
         = "lsblk --noheadings --output MOUNTPOINT,TYPE";
-    int exitCodeList = cloyster::runCommand(listCommand, output, false);
+    int exitCodeList = cloyster::runCommand(listCommand, output);
 
     if (exitCodeList != 0) {
         throw std::runtime_error("LVM ERROR: Failed to list mount points.");
@@ -411,7 +411,7 @@ void LVM::checkVolumeGroup()
     std::list<std::string> output;
     const std::string checkVGCommand = "vgs --noheadings -o vg_name";
 
-    int exitCode = cloyster::runCommand(checkVGCommand, output, false);
+    int exitCode = cloyster::runCommand(checkVGCommand, output);
 
     if (exitCode == 0 && !output.empty()) {
         // Assuming we want to get the first volume group found
@@ -498,7 +498,7 @@ void LVM::removeSnapshot(const std::string& snapshotName)
         = fmt::format("lvs --noheadings -o lv_attr {}/{}",
             m_snapshotVolumeGroup, snapshotName);
 
-    int exitCode = cloyster::runCommand(checkSnapshotCommand, output, false);
+    int exitCode = cloyster::runCommand(checkSnapshotCommand, output);
 
     if (exitCode == 0 && !output.empty()) {
         std::string lvAttr = output.front();
