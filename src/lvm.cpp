@@ -77,25 +77,85 @@ bool LVM::isRootLVMEnabled()
     return false;
 }
 
-void LVM::checkThinProvisioning()
+bool LVM::isThinProvisioningEnabled()
 {
     std::list<std::string> output;
     const std::string checkThinCommand = "lvs -o+lv_layout --noheadings";
-    int exitCode = cloyster::runCommand(checkThinCommand, output, false);
+    int exitCode = cloyster::runCommand(checkThinCommand, output);
 
-    if (exitCode == 0) {
-        auto it = std::find_if(
-            output.begin(), output.end(), [](const std::string& line) {
-                return line.find("thin") != std::string::npos;
-            });
+    if (exitCode != 0) {
+        throw std::runtime_error(
+            "LVM ERROR: Failed to check thin provisioning status.");
+    }
 
-        if (it != output.end()) {
-            LOG_TRACE("LVM Thin provisioning is enabled.\n");
-        } else {
-            LOG_WARN("LVM Thin provisioning is disabled.");
-        }
+    if (output.empty()) {
+        throw std::runtime_error(
+            "LVM ERROR: No output returned from thin provisioning check.");
+    }
+
+    // Check if any of the volumes have "thin" in the layout
+    auto it = std::find_if(
+        output.begin(), output.end(), [](const std::string& line) {
+            return line.find("thin") != std::string::npos;
+        });
+
+    if (it != output.end()) {
+        LOG_INFO("LVM: Thin provisioning is enabled.\n");
+        return true;
+    }
+
+    LOG_WARN("LVM: Thin provisioning is disabled.\n");
+    return false;
+}
+
+bool LVM::isRootThinProvisioningEnabled()
+{
+    std::list<std::string> output;
+
+    const std::string checkRootCommand = "findmnt -n -o SOURCE /";
+    int exitCode = cloyster::runCommand(checkRootCommand, output);
+
+    if (exitCode != 0) {
+        throw std::runtime_error("LVM ERROR: Failed to check the root device.");
+    }
+
+    if (output.empty()) {
+        throw std::runtime_error(
+            "LVM ERROR: No output when checking the root device.");
+    }
+
+    const std::string& rootDevice = output.front();
+
+    // Step 2: Use `lvs` to check if the root device is thin-provisioned
+    std::list<std::string> lvsOutput;
+    const std::string checkThinCommand
+        = fmt::format("lvs -o+lv_layout --noheadings {}", rootDevice);
+    exitCode = cloyster::runCommand(checkThinCommand, lvsOutput);
+
+    if (exitCode != 0) {
+        throw std::runtime_error("LVM ERROR: Failed to check thin provisioning "
+                                 "for the root device.");
+    }
+
+    if (lvsOutput.empty()) {
+        throw std::runtime_error("LVM ERROR: No output when checking thin "
+                                 "provisioning for the root device.");
+    }
+
+    // Step 3: Look for "thin" in the layout of the root logical volume
+    auto it = std::find_if(
+        lvsOutput.begin(), lvsOutput.end(), [](const std::string& line) {
+            return line.find("thin") != std::string::npos;
+        });
+
+    if (it != lvsOutput.end()) {
+        LOG_INFO(
+            "LVM: Root filesystem is on LVM with Thin provisioning enabled.\n");
+        return true;
     } else {
-        LOG_WARN("Failed to check thin provisioning status.");
+        LOG_WARN("LVM: Root filesystem is on LVM but Thin provisioning is "
+                 "disabled.\n");
+        return false;
     }
 }
 
@@ -221,13 +281,16 @@ void LVM::verifyAvailablePartitions()
 void LVM::checkLVMAvailability()
 {
     LOG_INFO("LVM: Begin of availability check.")
-    isUEFIModeEnabled();
-    isLVMEnabled();
-    isRootLVMEnabled();
-    verifyBootIsNotLVM();
-    checkThinProvisioning();
-    checkEnoughDiskSpaceAvailable();
-    verifyAvailablePartitions();
+
+    if (isLVMEnabled()) {
+        isRootLVMEnabled();
+        verifyBootIsNotLVM();
+        isThinProvisioningEnabled();
+        isRootThinProvisioningEnabled();
+        checkEnoughDiskSpaceAvailable();
+        verifyAvailablePartitions();
+    }
+
     LOG_INFO("LVM: End of availability check.")
 }
 
