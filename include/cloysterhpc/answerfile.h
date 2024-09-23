@@ -133,7 +133,7 @@ private:
     };
 
     std::vector<std::shared_ptr<ITool>> m_tools;
-    
+
     struct AFPostfix {
         struct SASL {
             std::string username;

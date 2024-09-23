@@ -374,7 +374,6 @@ void AnswerFile::loadPostfix()
     postfix.key_file = m_ini.getValue("postfix", "smtpd_tls_key_file", false);
 }
 
-
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>
 

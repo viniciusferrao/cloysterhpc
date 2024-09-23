@@ -11,8 +11,6 @@
 #include <optional>
 #include <string>
 
-#include <cloysterhpc/runner.h>
-#include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/headnode.h>
 #include <cloysterhpc/mailsystem/postfix.h>
@@ -22,6 +20,7 @@
 #include <cloysterhpc/queuesystem/pbs.h>
 #include <cloysterhpc/queuesystem/slurm.h>
 #include <cloysterhpc/repos.h>
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/timezone.h>
 
