@@ -273,11 +273,11 @@ void LVM::verifyBootIsNotLVM()
 void LVM::backupBoot()
 {
     //@TODO We need a better way to store the backup path
-    cloyster::createDirectory("/opt/cloysterhpc/backup");
+    cloyster::createDirectory(fmt::format("/opt/{}/backup", PRODUCT_NAME));
 
     //@TODO We need a better way to store the backup path
     const std::string backupCommand
-        = "rsync -a /boot/ /opt/cloysterhpc/backup/boot/";
+        = fmt::format("rsync -a /boot/ /opt/{}/backup/boot/", PRODUCT_NAME);
 
     int exitCode = cloyster::runCommand(backupCommand);
 
@@ -292,7 +292,7 @@ void LVM::restoreBoot()
 {
     //@TODO We need a better way to store the backup path
     const std::string restoreCommand
-        = "rsync -a /opt/cloysterhpc/backup/boot/ /boot/";
+        = fmt::format("rsync -a /opt/{}/backup/boot/ /boot/", PRODUCT_NAME);
 
     int exitCode = cloyster::runCommand(restoreCommand);
 
