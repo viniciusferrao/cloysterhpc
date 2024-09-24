@@ -265,6 +265,7 @@ void LVM::logHomePartitionStatus() const
 void LVM::logPartitionStatus() const { logHomePartitionStatus(); }
 
 void LVM::setHomePartition(const bool& status) { m_hasHomePartition = status; }
+void LVM::setBootPartition(const bool& status) { m_hasBootPartition = status; }
 
 void LVM::fetchAvailablePartitions()
 {
@@ -277,7 +278,10 @@ void LVM::fetchAvailablePartitions()
         for (const auto& line : output) {
             if (line == "/home") {
                 setHomePartition(true);
-                break; // @TODO Add more - For now fetch only cares about home
+            }
+
+            if (line == "/boot") {
+                setBootPartition(true);
             }
         }
 
@@ -293,12 +297,12 @@ void LVM::checkLVMAvailability()
     LOG_INFO("LVM: Begin of availability check.")
 
     if (isLVMEnabled()) {
+        fetchAvailablePartitions();
         isRootLVMEnabled();
-        verifyBootIsNotLVM();
+        isBootLVM();
         isThinProvisioningEnabled();
         isRootThinProvisioningEnabled();
         checkEnoughDiskSpaceAvailable();
-        fetchAvailablePartitions();
     }
 
     LOG_INFO("LVM: End of availability check.")
@@ -343,7 +347,7 @@ bool LVM::snapshotExists(const std::string& snapshotName)
     return false;
 }
 
-void LVM::verifyBootIsNotLVM()
+bool LVM::isBootLVM()
 {
     std::list<std::string> output;
 
@@ -355,32 +359,30 @@ void LVM::verifyBootIsNotLVM()
         throw std::runtime_error("LVM ERROR: Failed to list mount points.");
     }
 
-    bool isBootPartitionFound = false;
+    bool isBootLVM = false;
 
     for (const auto& line : output) {
         std::istringstream iss(line);
-        std::string mountPoint, type;
+        std::string mountPoint;
+        std::string type;
         if (!(iss >> mountPoint >> type)) {
             continue;
         }
 
         if (mountPoint == "/boot") {
-            isBootPartitionFound = true;
             if (type == "lvm") {
-                m_hasBootPartition = true;
+                isBootLVM = true;
             }
         }
     }
 
-    if (isBootPartitionFound && !m_hasBootPartition) {
-        LOG_INFO("LVM: /boot is mounted and not part of LVM.");
-    } else if (m_hasBootPartition) {
-        throw std::runtime_error("LVM ERROR: /boot is part of LVM. Check your "
-                                 "system configuration.");
-    } else {
-        LOG_WARN("LVM: /boot is not found or is part of LVM. Check your system "
-                 "configuration.");
+    if (isBootLVM) {
+        LOG_WARN("LVM: /boot is part of LVM. Check your system configuration.");
+        return true;
     }
+
+    LOG_INFO("LVM: /boot is mounted and not part of LVM.");
+    return false;
 }
 
 void LVM::backupBoot()

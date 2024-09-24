@@ -12,7 +12,7 @@ private:
     bool m_hasHomePartition = false;
     bool m_hasBootPartition = false;
     std::string m_snapshotVolumeGroup;
-    void verifyBootIsNotLVM();
+    bool isBootLVM();
     void backupBoot();
     void restoreBoot();
     void checkVolumeGroup();
@@ -25,6 +25,7 @@ private:
     void logHomePartitionStatus() const;
     void logPartitionStatus() const;
     void setHomePartition(const bool& status);
+    void setBootPartition(const bool& status);
     void fetchAvailablePartitions();
 
 public:
