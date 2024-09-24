@@ -251,7 +251,22 @@ bool LVM::checkEnoughDiskSpaceAvailable()
         "LVM ERROR: Failed to check available disk space.");
 }
 
-void LVM::verifyAvailablePartitions()
+void LVM::logHomePartitionStatus() const
+{
+    if (m_hasHomePartition) {
+        LOG_TRACE("LVM: /home is in a separate partition. We can proceed with "
+                  "LVM snapshot.");
+    } else {
+        LOG_WARN("LVM: /home is not a separate partition. This may lead "
+                 "to issues when rolling back the snapshot.");
+    }
+}
+
+void LVM::logPartitionStatus() const { logHomePartitionStatus(); }
+
+void LVM::setHomePartition(const bool& status) { m_hasHomePartition = status; }
+
+void LVM::fetchAvailablePartitions()
 {
     std::list<std::string> output;
     const std::string checkPartitionsCommand
@@ -260,28 +275,19 @@ void LVM::verifyAvailablePartitions()
 
     if (exitCode == 0) {
         for (const auto& line : output) {
-            if (line == "/var") {
-                m_hasVarPartition = true;
-            } else if (line == "/opt") {
-                m_hasOptPartition = true;
-            } else if (line == "/home") {
-                m_hasHomePartition = true;
+            if (line == "/home") {
+                setHomePartition(true);
+                break; // @TODO Add more - For now fetch only cares about home
             }
         }
 
-        if (m_hasHomePartition) {
-            LOG_TRACE(
-                "LVM: /home is in a separate partition. We can proceed with "
-                "LVM snapshot.");
-        } else {
-            LOG_WARN("LVM: /home is not a separate partition. This may lead "
-                     "to issues when rolling back the snapshot.");
-        }
+        logPartitionStatus();
     } else {
         throw std::runtime_error(
-            "LVM ERROR: Failed to list available partitions.");
+            "LVM ERROR: Failed to fetch available partitions.");
     }
 }
+
 void LVM::checkLVMAvailability()
 {
     LOG_INFO("LVM: Begin of availability check.")
@@ -292,7 +298,7 @@ void LVM::checkLVMAvailability()
         isThinProvisioningEnabled();
         isRootThinProvisioningEnabled();
         checkEnoughDiskSpaceAvailable();
-        verifyAvailablePartitions();
+        fetchAvailablePartitions();
     }
 
     LOG_INFO("LVM: End of availability check.")

@@ -9,8 +9,6 @@
 
 class LVM {
 private:
-    bool m_hasVarPartition = false;
-    bool m_hasOptPartition = false;
     bool m_hasHomePartition = false;
     bool m_hasBootPartition = false;
     std::string m_snapshotVolumeGroup;
@@ -24,7 +22,10 @@ private:
     bool isThinProvisioningEnabled();
     bool isRootThinProvisioningEnabled();
     bool checkEnoughDiskSpaceAvailable();
-    void verifyAvailablePartitions();
+    void logHomePartitionStatus() const;
+    void logPartitionStatus() const;
+    void setHomePartition(const bool& status);
+    void fetchAvailablePartitions();
 
 public:
     void checkLVMAvailability();
