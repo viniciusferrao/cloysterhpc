@@ -1,112 +1,112 @@
-R"([cloyster-OL-BaseOS]
+R"([{0}-OL-BaseOS]
 name=Oracle Linux 8 BaseOS Latest ($basearch)
 baseurl=https://yum$ociregion.oracle.com/repo/OracleLinux/OL9/baseos/latest/$basearch/
 enabled=0
 gpgcheck=1
 gpgkey=https://yum.oracle.com/RPM-GPG-KEY-oracle-ol9
 
-[cloyster-Rocky-BaseOS]
+[{0}-Rocky-BaseOS]
 name=Rocky Linux $releasever - BaseOS
 baseurl=http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/
 enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/rocky/linux/RPM-GPG-KEY-Rocky-9
 
-[cloyster-AlmaLinux-BaseOS]
+[{0}-AlmaLinux-BaseOS]
 name=AlmaLinux $releasever - BaseOS
 baseurl=https://repo.almalinux.org/almalinux/$releasever/BaseOS/$basearch/os/
 enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/almalinux/almalinux/RPM-GPG-KEY-AlmaLinux-9
 
-[cloyster-beegfs]
+[{0}-beegfs]
 name=BeeGFS
 baseurl=https://mirror.versatushpc.com.br/beegfs/beegfs_7.4.2/dists/rhel9/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/beegfs/beegfs_7.4.2/gpg/GPG-KEY-beegfs
 
-[cloyster-grafana]
+[{0}-grafana]
 name=grafana
 baseurl=https://mirror.versatushpc.com.br/grafana/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://rpm.grafana.com/gpg.key
 
-[cloyster-influxdata]
+[{0}-influxdata]
 name=InfluxData Repository - Stable
 baseurl=https://mirror.versatushpc.com.br/influxdata/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://repos.influxdata.com/influxdata-archive_compat.key
 
-[cloyster-oneAPI]
+[{0}-oneAPI]
 name=Intel oneAPI repository
 baseurl=https://mirror.versatushpc.com.br/oneAPI/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB
 
-[cloyster-zabbix]
+[{0}-zabbix]
 name=zabbix
 baseurl=https://mirror.versatushpc.com.br/zabbix/zabbix/6.5/rhel/9/x86_64/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/zabbix/RPM-GPG-KEY-ZABBIX
 
-[cloyster-elrepo]
+[{0}-elrepo]
 name=elrepo
 baseurl=https://mirror.versatushpc.com.br/elrepo/elrepo/el9/x86_64/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
 
-[cloyster-rpmfusion-free-updates]
+[{0}-rpmfusion-free-updates]
 name=rpmfusion-free-updates
 baseurl=https://mirror.versatushpc.com.br/rpmfusion/free/el/updates/9/x86_64/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/rpmfusion/free/el/RPM-GPG-KEY-rpmfusion-free-el-9
 
-[cloyster-epel]
+[{0}-epel]
 name=Extra Packages for Enterprise Linux 9 - $basearch
 baseurl=https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/epel/RPM-GPG-KEY-EPEL-9
 
-[cloyster-epel-debuginfo]
+[{0}-epel-debuginfo]
 name=Extra Packages for Enterprise Linux 9 - $basearch - Debug
 baseurl=https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/debug/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/epel/RPM-GPG-KEY-EPEL-9
 
-[cloyster-epel-source]
+[{0}-epel-source]
 name=Extra Packages for Enterprise Linux 9 - $basearch - Source
 baseurl=https://mirror.versatushpc.com.br/epel/9/Everything/source/tree/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/epel/RPM-GPG-KEY-EPEL-9
 
-[cloyster-openhpc]
+[{0}-openhpc]
 name=OpenHPC
 baseurl=https://mirror.versatushpc.com.br/openhpc/3/EL_9/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://obs.openhpc.community/projects/OpenHPC3/public_key
 
-[cloyster-openhpc-updates]
+[{0}-openhpc-updates]
 name=OpenHPC Updates
 baseurl=https://mirror.versatushpc.com.br/openhpc/3/updates/EL_9/
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://obs.openhpc.community/projects/OpenHPC3/public_key
 
-[cloyster-nvhpc]
+[{0}-nvhpc]
 name=NVIDIA HPC SDK
 baseurl=https://developer.download.nvidia.com/hpc-sdk/rhel/$basearch
-enabled=1
+enabled=0
 gpgcheck=1
 gpgkey=https://developer.download.nvidia.com/hpc-sdk/rhel/RPM-GPG-KEY-NVIDIA-HPC-SDK
 

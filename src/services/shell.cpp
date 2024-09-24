@@ -17,6 +17,7 @@
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/repos.h>
+#include <cloysterhpc/runner.h>
 
 using cloyster::runCommand;
 
@@ -370,8 +371,18 @@ void Shell::install()
 
     installRequiredPackages();
 
-    const auto& repos = Repos(m_cluster->getHeadnode().getOS());
-    repos.configureRepositories();
+    auto repos = m_cluster->getRepoManager();
+    repos.loadFiles();
+
+    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
+        "-openhpc", "-rpmfusion-free-updates" };
+    for (auto& package : toEnable) {
+        package = cloyster::productName + package;
+    }
+
+    repos.enableMultiple(toEnable);
+    repos.commitStatus();
+
     runSystemUpdate();
 
     installOpenHPCBase();

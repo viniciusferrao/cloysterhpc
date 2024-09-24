@@ -6,15 +6,19 @@
 #ifndef CLOYSTERHPC_REPOS_H_
 #define CLOYSTERHPC_REPOS_H_
 
-#include "inifile.h"
+#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/os.h>
+#include <cloysterhpc/runner.h>
+
+#include <filesystem>
+#include <ranges>
 #include <string>
 
 namespace cloyster {
 extern std::string customRepofilePath;
 };
 
-struct repofile {
+struct repository {
     std::string id;
     bool enabled = true;
     std::string name;
@@ -22,22 +26,10 @@ struct repofile {
     std::string metalink;
     bool gpgcheck = true;
     std::string gpgkey;
-    std::string gpgkeyContent;
-
-    repofile(const std::string& id, const std::string& name,
-        const std::string& baseurl, const std::string& metalink,
-        const std::string& gpgkey, const std::string& gpgkeyContent)
-        : id(id)
-        , name(name)
-        , baseurl(baseurl)
-        , metalink(metalink)
-        , gpgkey(gpgkey)
-        , gpgkeyContent(gpgkeyContent)
-    {
-    }
+    std::filesystem::path source;
 };
 
-class Repos {
+class RepoManager {
 public:
     enum class AdditionalType {
         beegfs,
@@ -51,35 +43,43 @@ public:
         RPMFusionUpdates
     };
 
+    RepoManager(BaseRunner& runner, const OS& osinfo)
+        : m_runner(runner)
+        , m_os(osinfo)
+    {
+    }
+
+    void loadFiles(const std::filesystem::path& basedir = "/etc/yum.repos.d");
+    void loadCustom(inifile& file, const std::filesystem::path& path);
+
+    void enable(const std::string& id);
+    void enableMultiple(std::vector<std::string> ids);
+    void disable(const std::string& id);
+
+    void commitStatus();
+
+    const std::vector<repository>& listRepos() const;
+
+    std::vector<std::string> getxCATOSImageRepos() const;
+
 private:
-    void configureEL() const;
-    void configureEL8() const;
-    void configureEL9() const;
-    void configureXCAT() const;
-    void configureAdditionalRepos(
-        const std::vector<AdditionalType>& additional) const;
-    void createGPGKeyFile(
-        const std::string& filename, const std::string& key) const;
-    void createGPGKeyFile(
-        const std::filesystem::path& path, const std::string& key) const;
-    void createGPGKeyFile(const repofile& repo) const;
-    void createCloysterRepo() const;
+    std::vector<repository> m_repos;
+    BaseRunner& m_runner;
     OS m_os;
 
-    inifile CLOYSTER_REPO_EL8 {
-#include "cloysterhpc/repos/el8/cloyster.repo"
-    };
-    inifile CLOYSTER_REPO_EL9 = {
-#include "cloysterhpc/repos/el9/cloyster.repo"
-    };
+    void createFileFor(std::filesystem::path path);
 
-public:
-    explicit Repos(const OS& osinfo);
-    void createConfigurationFile(const repofile& repo) const;
-    static void enable(const std::string& id);
-    static void disable(const std::string& id);
-    void configureRepositories() const;
-    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
+    std::vector<repository> buildCloysterTree(
+        const std::filesystem::path& basedir);
+
+    void loadSingleFile(std::filesystem::path source);
+    void saveRepositories();
+
+    void configureXCAT();
+    void configureEL();
+    void setEnableState(const std::string& id, bool value);
+
+    void mergeWithCurrentList(std::vector<repository>&& repo);
 };
 
 #endif // CLOYSTERHPC_REPOS_H_

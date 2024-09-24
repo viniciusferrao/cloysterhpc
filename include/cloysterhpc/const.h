@@ -30,6 +30,8 @@ constexpr const char* installPath = INSTALL_PATH;
 
 } // namespace cloyster
 
+#define OK 0
+
 using cloyster::installPath;
 using cloyster::productName;
 using cloyster::productUrl;

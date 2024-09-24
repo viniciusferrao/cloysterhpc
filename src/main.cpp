@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 
+#include "cloysterhpc/hardware.h"
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>
@@ -84,6 +85,10 @@ int main(int argc, const char** argv)
     app.add_option(
         "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
+    bool showHardwareInfo = false;
+    app.add_flag("-i, --hardwareinfo", showHardwareInfo,
+        "Show a detailed hardware and system overview");
+
     app.add_option("--customrepo", cloyster::customRepofilePath,
         "Full path to a custom repofile");
 
@@ -112,6 +117,12 @@ int main(int argc, const char** argv)
     LOG_INFO("{} Started", productName)
 
     try {
+        if (showHardwareInfo) {
+            Hardware hardware;
+            hardware.printOverview();
+            return EXIT_SUCCESS;
+        }
+
         if (*LVMSnapshot) {
             LVM lvm;
 
