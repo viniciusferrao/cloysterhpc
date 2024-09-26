@@ -36,9 +36,14 @@ Cluster::Cluster()
     } else {
         m_runner = std::make_unique<Runner>();
     }
+
+    m_systemdBus = std::make_shared<DBusClient>(
+        "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
 }
 // The rule of zero
 // Cluster::~Cluster() = default;
+
+std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
@@ -259,7 +264,7 @@ std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
 void Cluster::setMailSystem(Postfix::Profile profile)
 {
-    m_mailSystem.emplace(profile, *m_runner);
+    m_mailSystem.emplace(m_systemdBus, *m_runner, profile);
 }
 
 const std::filesystem::path& Cluster::getDiskImage() const

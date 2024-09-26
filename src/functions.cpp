@@ -253,10 +253,10 @@ void addStringToFile(std::string_view filename, std::string_view string)
     LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename)
 }
 
-std::string findAndReplace(const std::string& source, const std::string& find,
-    const std::string& replace)
+std::string findAndReplace(const std::string_view& source,
+    const std::string_view& find, const std::string_view& replace)
 {
-    std::string result = source;
+    std::string result { source };
     std::string::size_type pos = 0;
 
     while ((pos = result.find(find, pos)) != std::string::npos) {

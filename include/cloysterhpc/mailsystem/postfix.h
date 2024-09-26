@@ -12,13 +12,16 @@
 #include <optional>
 #include <string>
 
-class Postfix {
+#include <cloysterhpc/messagebus.h>
+#include <cloysterhpc/services/IService.h>
+
+class Postfix : public IService {
 public:
     enum class Profile { Local, Relay, SASL };
 
 private:
-    Profile m_profile;
     BaseRunner& m_runner;
+    Profile m_profile;
     std::optional<std::string> m_hostname {};
     std::optional<std::string> m_domain {};
     std::optional<std::string> m_smtp_server {};
@@ -68,13 +71,9 @@ public:
     void setKeyFile(const std::optional<std::filesystem::path>& cert_file);
 
     void setup(const std::filesystem::path& basedir = "/etc/postfix");
-    void enable();
-    void disable();
-    void start();
-    void restart();
-    void stop();
 
-    explicit Postfix(Profile profile, BaseRunner& runner);
+    explicit Postfix(
+        std::shared_ptr<MessageBus> bus, BaseRunner& runner, Profile profile);
 };
 
 #endif // CLOYSTERHPC_POSTFIX_H_

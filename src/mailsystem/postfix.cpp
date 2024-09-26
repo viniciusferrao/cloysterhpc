@@ -11,9 +11,11 @@
 
 using cloyster::runCommand;
 
-Postfix::Postfix(Profile profile, BaseRunner& runner)
-    : m_profile(profile)
+Postfix::Postfix(
+    std::shared_ptr<MessageBus> bus, BaseRunner& runner, Profile profile)
+    : IService(bus, "postfix.service")
     , m_runner(runner)
+    , m_profile(profile)
 {
 }
 
@@ -110,8 +112,8 @@ void Postfix::setKeyFile(const std::optional<std::filesystem::path>& key_file)
 
 void Postfix::install()
 {
-    LOG_INFO("Installing Postfix")
-    // runCommand("dnf -y install postfix");
+    LOG_INFO("Installing Postfix");
+    m_runner.executeCommand("dnf -y install postfix");
 }
 
 void Postfix::createFiles(const std::filesystem::path& basedir)
@@ -213,8 +215,8 @@ void Postfix::setup(const std::filesystem::path& basedir)
             break;
     }
 
-    // enable();
-    // start();
+    enable();
+    start();
 }
 
 void Postfix::configureSASL(const std::filesystem::path& basedir)
@@ -257,13 +259,6 @@ void Postfix::configureRelay(const std::filesystem::path& basedir)
     ini.saveFile(mainFile);
 }
 
-void Postfix::enable() { runCommand("systemctl enable postfix"); }
-
-void Postfix::disable() { runCommand("systemctl disable postfix"); }
-void Postfix::start() { runCommand("systemctl start postfix"); }
-void Postfix::restart() { runCommand("systemctl restart postfix"); }
-void Postfix::stop() { runCommand("systemctl stop postfix"); }
-
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
 #else
@@ -273,13 +268,15 @@ void Postfix::stop() { runCommand("systemctl stop postfix"); }
 
 #include <cloysterhpc/tempdir.h>
 #include <cloysterhpc/tests.h>
+#include <testing/test_message_bus.h>
 
 TEST_SUITE("Test repository file read and write")
 {
     TEST_CASE("Test if Postfix files generate correctly in the Local profile")
     {
+        auto testbus = std::make_shared<TestMessageBus>();
         MockRunner mr;
-        Postfix pfix { Postfix::Profile::Local, mr };
+        Postfix pfix { testbus, mr, Postfix::Profile::Local };
         TempDir d;
 
         cloyster::touchFile(d.name() / "main.cf");

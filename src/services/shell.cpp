@@ -19,6 +19,8 @@
 #include <cloysterhpc/repos.h>
 #include <cloysterhpc/runner.h>
 
+#include <cloysterhpc/dbus_client.h>
+
 using cloyster::runCommand;
 
 Shell::Shell(const std::unique_ptr<Cluster>& cluster)
@@ -361,6 +363,8 @@ void Shell::installDevelopmentComponents()
  */
 void Shell::install()
 {
+    auto systemdBus = m_cluster->getDaemonBus();
+
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
@@ -396,7 +400,7 @@ void Shell::install()
 
     configureInfiniband();
 
-    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
+    NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
         m_cluster->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),

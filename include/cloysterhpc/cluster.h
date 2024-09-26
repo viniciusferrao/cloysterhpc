@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 
+#include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/headnode.h>
 #include <cloysterhpc/mailsystem/postfix.h>
@@ -57,6 +58,7 @@ private:
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
     std::unique_ptr<BaseRunner> m_runner;
+    std::shared_ptr<DBusClient> m_systemdBus;
 
     bool m_firewall { false };
     SELinuxMode m_selinux { SELinuxMode::Disabled };
@@ -96,6 +98,8 @@ public:
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
+
+    std::shared_ptr<DBusClient> getDaemonBus();
 
     void initRepoManager();
     RepoManager& getRepoManager();
