@@ -36,6 +36,8 @@ private:
     void configureSASL(const std::filesystem::path& basedir);
     void configureRelay(const std::filesystem::path& basedir);
 
+    void changeMasterFile(const std::filesystem::path& masterFile);
+
 public:
     [[nodiscard]] const Profile& getProfile() const;
     [[maybe_unused]] void setProfile(Profile profile);

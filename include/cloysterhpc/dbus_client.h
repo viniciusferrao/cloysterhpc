@@ -1,4 +1,10 @@
-#pragma once
+/*
+ * Copyright 2024 Arthur Mendes <arthurmco@gmail.com>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef CLOYSTERHPC_DBUS_CLIENT_H_
+#define CLOYSTERHPC_DBUS_CLIENT_H_
 
 #include <any>
 #include <memory>
@@ -55,3 +61,5 @@ protected:
 public:
     DBusMethod() = delete;
 };
+
+#endif

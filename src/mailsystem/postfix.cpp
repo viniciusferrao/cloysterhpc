@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/algorithm/string/split.hpp>
+#include <fstream>
+#include <iostream>
+
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
@@ -116,12 +120,48 @@ void Postfix::install()
     m_runner.executeCommand("dnf -y install postfix");
 }
 
+static void maybeDisableLocalOnMasterFile(std::string& line)
+{
+    std::vector<std::string> linedata;
+
+    boost::split(
+        linedata, line, boost::is_any_of("\t "), boost::token_compress_on);
+    if (linedata[0] == "local") {
+        std::string out = "#" + line;
+        line = out;
+    }
+}
+
+void Postfix::changeMasterFile(const std::filesystem::path& masterFile)
+{
+    std::vector<std::string> lines;
+    std::ifstream iread(masterFile);
+
+    while (iread.good()) {
+        std::string line;
+        std::getline(iread, line);
+
+        if (line[0] != '#' && m_profile != Profile::Local) {
+            maybeDisableLocalOnMasterFile(line);
+        }
+
+        lines.push_back(line);
+    }
+    iread.close();
+
+    std::ofstream iwrite(masterFile);
+    for (const auto& l : lines) {
+        iwrite << l;
+    }
+
+    iwrite.close();
+}
+
 void Postfix::createFiles(const std::filesystem::path& basedir)
 {
     LOG_INFO("Creating Postfix configuration files");
     const std::filesystem::path mainFile = basedir / "main.cf";
     const std::filesystem::path masterFile = basedir / "master.cf";
-    cloyster::removeFile(masterFile.string());
 
     inifile baseini;
     baseini.loadData(
@@ -167,23 +207,7 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
 
     ini.saveFile(mainFile);
 
-    const auto& masterConfInclude {
-#include "cloysterhpc/tmpl/postfix/master.cf.tmpl"
-    };
-
-    std::string masterConf(masterConfInclude);
-
-    if (m_profile != Profile::Local) {
-        masterConf
-            = cloyster::findAndReplace(masterConf, "{postfix_local_config}",
-                "#local     unix  -       n       n       -       -       ");
-    } else {
-        masterConf
-            = cloyster::findAndReplace(masterConf, "{postfix_local_config}",
-                "local     unix  -       n       n       -       -       ");
-    }
-
-    cloyster::addStringToFile(masterFile.string(), masterConf);
+    changeMasterFile(masterFile);
 
     if (!std::filesystem::exists(basedir / "transport.db")) {
         auto transport = basedir / "transport";
@@ -272,6 +296,25 @@ void Postfix::configureRelay(const std::filesystem::path& basedir)
 
 TEST_SUITE("Test repository file read and write")
 {
+    TEST_CASE(
+        "Test if we comment the local config correctly if not on local profile")
+    {
+        std::string isLocal
+            = "local     unix  -       n       n       -       -       local";
+        std::string notLocal = "notlocal     unix  -       n       n       -   "
+                               "    -       nlocal";
+
+        maybeDisableLocalOnMasterFile(isLocal);
+        maybeDisableLocalOnMasterFile(notLocal);
+
+        CHECK(isLocal
+            == "#local     unix  -       n       n       -       -       "
+               "local");
+        CHECK(notLocal
+            == "notlocal     unix  -       n       n       -       -       "
+               "nlocal");
+    }
+
     TEST_CASE("Test if Postfix files generate correctly in the Local profile")
     {
         auto testbus = std::make_shared<TestMessageBus>();
@@ -280,7 +323,12 @@ TEST_SUITE("Test repository file read and write")
         TempDir d;
 
         cloyster::touchFile(d.name() / "main.cf");
-        cloyster::touchFile(d.name() / "master.cf");
+        std::ofstream o { d.name() / "master.cf" };
+        const auto& content {
+#include "cloysterhpc/tmpl/postfix/master.cf.tmpl"
+        };
+        o << content;
+        o.close();
 
         pfix.setup(d.name());
 
