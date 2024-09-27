@@ -181,11 +181,8 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
             fmt::format("{}", fmt::join(m_destination.value(), ",")));
     }
 
-    if (m_cert_file) {
+    if (m_cert_file && m_key_file) {
         baseini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
-    }
-
-    if (m_key_file) {
         baseini.setValue("", "smtpd_tls_key_file", m_key_file->string());
     }
 

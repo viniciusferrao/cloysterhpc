@@ -780,6 +780,11 @@ void Cluster::fillData(const std::string& answerfilePath)
         m_mailSystem->setDomain(getDomainName());
         m_mailSystem->setDestination(answerfile.postfix.destination);
 
+        if (!m_mailSystem->getDomain()) {
+            throw std::runtime_error(
+                "A domain is needed for e-mail configuration");
+        }
+
         switch (answerfile.postfix.profile) {
             case Postfix::Profile::Local:
                 break;
