@@ -24,14 +24,14 @@ private:
     }
 
     template <typename... Ts>
-    sdbus::ObjectPath callObjectFunctionArray(
+    MessageReply callObjectFunctionArray(
         const std::string function, Ts... params)
     {
         std::vector<std::string> names = { m_name };
         MessageReply reply
             = m_bus->method("org.freedesktop.systemd1.Manager", function)
                   ->call(names, params...);
-        return reply.get<sdbus::ObjectPath>();
+        return reply;
     }
 
 public:
