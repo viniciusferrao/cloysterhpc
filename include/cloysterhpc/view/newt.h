@@ -13,6 +13,7 @@
 #include <fmt/format.h>
 #include <iostream>
 #include <newt.h>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -159,9 +160,9 @@ public:
         //       declaration so we can start at the already set option
         int selector = 0;
 
-        // TODO: Is it possible do use std::array instead?
         // TODO: Check types to avoid this copy (C++20 concepts?)
-        std::vector<std::string> tempStrings(items.begin(), items.end());
+        std::vector<std::string> tempStrings(
+            std::begin(items), std::end(items));
 
         auto cStrings = convertToNewtList(tempStrings);
 
@@ -219,7 +220,8 @@ public:
 
         // TODO: Is it possible do use std::array instead?
         // TODO: Check types to avoid this copy (C++20 concepts?)
-        std::vector<std::string> tempStrings(items.begin(), items.end());
+        std::vector<std::string> tempStrings(
+            std::begin(items), std::end(items));
 
         // Newt expects a NULL terminated array of C style strings
         std::vector<const char*> cStrings = convertToNewtList(tempStrings);
@@ -288,7 +290,6 @@ public:
         cloyster::CommandProxy&&, std::function<double(std::string)> fPercent);
 
     // TODO:
-    //  * Add C++20 concepts; limit by some types.
     //  * Optimize for std::string_view and std::string.
     //  * std::optional on second pair
     template <std::ranges::range T>
@@ -301,9 +302,9 @@ public:
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
         auto field = std::make_unique<newtWinEntry[]>(arraySize + 1);
 
-        size_t i = 0;
-        // Yes, it's like this. We need C++23 for std::views::enumerate.
-        for (const auto& item : items) {
+        // Yes, it's like this. std::views::enumerate isn't supported on clang
+        // or gcc < 13.
+        for (size_t i = 0; const auto& item : items) {
             field[i].text = const_cast<char*>(item.first.c_str());
             fieldEntries[i] = const_cast<char*>((item.second).c_str());
             LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i])
@@ -312,8 +313,8 @@ public:
             field[i].value = &fieldEntries[i];
 
             // FIXME: Fix this hack to enable password fields
-            if (item.first.find("Password") != std::string::npos
-                || item.first.find("password") != std::string::npos)
+            if (item.first.contains("Password")
+                || item.first.contains("password"))
                 field[i].flags = NEWT_FLAG_PASSWORD;
             else
                 field[i].flags = 0;

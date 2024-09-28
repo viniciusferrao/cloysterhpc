@@ -48,7 +48,7 @@ PresenterTime::PresenterTime(
 
     std::vector<std::string> defaultServers = { "0.br.pool.ntp.org" };
 
-    auto collectCallback = [&](std::vector<std::string>& items) -> bool {
+    auto collectCallback = [this](std::vector<std::string>& items) {
         // Timeserver settings
         // FIXME: We left std::to_array if we want to manage the input on the
         // view,

@@ -84,16 +84,13 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 { { Messages::OperationalSystemDirectoryPath::field,
                     "/mnt/iso" } });
 
-        bool exists = false;
-
         while (true) {
             isoDirectoryPath = m_view->fieldMenu(Messages::title,
                 Messages::OperationalSystemDirectoryPath::question,
                 isoDirectoryPath,
                 Messages::OperationalSystemDirectoryPath::help);
-            bool exists
-                = std::filesystem::exists(isoDirectoryPath.data()->second);
-            if (exists) {
+
+            if (std::filesystem::exists(isoDirectoryPath.data()->second)) {
                 break;
             }
 
