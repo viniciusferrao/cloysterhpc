@@ -174,13 +174,20 @@ address Network::fetchSubnetMask(const std::string& interface)
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
+            boost::system::error_code ec;
             address result
-                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr));
+                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr), ec);
 
-#ifndef NDEBUG
+            if (ec.value() != boost::system::errc::success) {
+                LOG_TRACE("interface {} returned an error while getting subnet "
+                          "mask address ({}): {}",
+                    interface, inet_ntoa(sa->sin_addr), ec.message());
+                continue;
+            }
+
             LOG_TRACE("Got subnet mask address {} from interface {}",
                 result.to_string(), interface);
-#endif
+
             freeifaddrs(ifaddr);
             return result;
         }
@@ -251,16 +258,23 @@ address Network::fetchGateway(const std::string& interface)
 
         // TODO: Check for leaks since we can't run freeifaddrs before return
         if (std::strcmp(ifa->ifa_name, interface.c_str()) == 0) {
+
+            boost::system::error_code ec;
             address result
-                = boost::asio::ip::make_address(ifa->ifa_dstaddr->sa_data);
+                = boost::asio::ip::make_address(ifa->ifa_dstaddr->sa_data, ec);
+
+            if (ec.value() != boost::system::errc::success) {
+                LOG_TRACE("interface {} returned an error while getting "
+                          "gateway address ({}): {}",
+                    interface, ifa->ifa_dstaddr->sa_data, ec.message());
+                continue;
+            }
 
             if (result.is_unspecified())
                 continue;
 
-#ifndef NDEBUG
             LOG_TRACE("Got gateway address {} from interface {}",
                 result.to_string(), interface);
-#endif
 
             return result;
         }
@@ -319,7 +333,11 @@ std::string Network::fetchDomainName()
 
     LOG_TRACE("Got domain name {}", domainName)
 
-    return std::string(domainName);
+    auto ret = std::string(domainName);
+    if (ret == "(none)") {
+        ret = "";
+    }
+    return ret;
 }
 
 /* TODO: Check return type

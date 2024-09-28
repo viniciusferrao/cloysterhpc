@@ -85,13 +85,11 @@ void PresenterNetwork::createNetwork()
     m_network->setGateway(networkDetails[i++].second);
 
     // Domain Data
-    m_network->setDomainName(Network::fetchDomainName());
+    m_network->setDomainName(networkDetails[i++].second);
 
     m_network->setNameservers(nameservers); // TODO: std::move
 
-#ifndef NDEBUG
     [[maybe_unused]] const auto& profile = m_network->getProfile();
-#endif
 
     // Move the data
     m_model->addNetwork(std::move(m_network));
