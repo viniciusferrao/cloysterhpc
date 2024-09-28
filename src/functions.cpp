@@ -24,7 +24,7 @@ namespace cloyster {
 CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
 {
     if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running command: {}", command)
+        LOG_DEBUG("Running interative command: {}", command)
         boost::process::ipstream pipe_stream;
         boost::process::child child(
             command, boost::process::std_out > pipe_stream);
@@ -51,8 +51,7 @@ int runCommand(const std::string& command,
 
         std::string line;
 
-        while (
-            pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
+        while (pipe_stream && std::getline(pipe_stream, line)) {
             LOG_TRACE("{}", line)
             output.emplace_back(line);
         }
