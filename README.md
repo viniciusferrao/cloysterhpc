@@ -53,7 +53,7 @@ automatic.
 
 ## Decisions
 
-* CloysterHPC uses C++20 as the programming languages. We are not looking
+* CloysterHPC uses C++23 as the programming languages. We are not looking
   for memory and performance optimization here, we strive for correctness. The
   features that we want are a
   flexible software that can interact with the Operating System without much
