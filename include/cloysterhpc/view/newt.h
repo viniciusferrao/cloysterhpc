@@ -166,47 +166,54 @@ public:
 
         auto cStrings = convertToNewtList(tempStrings);
 
-    // goto implementation
-    question:
-        returnValue = newtWinMenu(const_cast<char*>(title),
-            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
-            m_maxListHeight, const_cast<char**>(cStrings.data()), &selector,
-            const_cast<char*>(TUIText::Buttons::ok),
-            const_cast<char*>(TUIText::Buttons::cancel),
-            const_cast<char*>(TUIText::Buttons::add),
-            const_cast<char*>(TUIText::Buttons::remove),
-            const_cast<char*>(TUIText::Buttons::help), nullptr);
+        bool stay = true;
+        while (stay) {
+            returnValue = newtWinMenu(const_cast<char*>(title),
+                const_cast<char*>(message), m_suggestedWidth, m_flexDown,
+                m_flexUp, m_maxListHeight, const_cast<char**>(cStrings.data()),
+                &selector, const_cast<char*>(TUIText::Buttons::ok),
+                const_cast<char*>(TUIText::Buttons::cancel),
+                const_cast<char*>(TUIText::Buttons::add),
+                const_cast<char*>(TUIText::Buttons::remove),
+                const_cast<char*>(TUIText::Buttons::help), nullptr);
 
-        switch (returnValue) {
-            case 0:
-                /* F12 is pressed, and we don't care; continue to case 1 */
-            case 1:
-                return tempStrings;
-            case 2:
-                abort();
-                break;
-            case 3: { // add
-                bool ret = addCallback(tempStrings);
-                if (ret) {
-                    cStrings = convertToNewtList(tempStrings);
-                    goto question;
-                } else {
+            stay = false;
+
+            switch (returnValue) {
+                case 0:
+                    /* F12 is pressed, and we don't care; continue to case 1 */
+                case 1:
                     return tempStrings;
+                case 2:
+                    abort();
+                    break;
+                case 3: { // add
+                    bool ret = addCallback(tempStrings);
+                    if (ret) {
+                        cStrings = convertToNewtList(tempStrings);
+                        stay = true;
+                    } else {
+                        return tempStrings;
+                    }
+                    break;
                 }
+                case 4: // remove
+                    if (selector >= 0 && selector < cStrings.size()) {
+                        tempStrings.erase(tempStrings.begin() + selector);
+                        cStrings = convertToNewtList(tempStrings);
+                    }
+                    stay = true;
+                    break;
+                case 5:
+                    this->helpMessage(helpMessage);
+                    stay = true;
+                    break;
+                default:
+                    __builtin_unreachable();
             }
-            case 4: // remove
-                if (selector >= 0 && selector < cStrings.size()) {
-                    tempStrings.erase(tempStrings.begin() + selector);
-                    cStrings = convertToNewtList(tempStrings);
-                }
-
-                goto question;
-            case 5:
-                this->helpMessage(helpMessage);
-                goto question;
-            default:
-                __builtin_unreachable();
         }
+
+        __builtin_unreachable();
     }
 
     template <std::ranges::range T>
@@ -226,55 +233,35 @@ public:
         // Newt expects a NULL terminated array of C style strings
         std::vector<const char*> cStrings = convertToNewtList(tempStrings);
 
-#if 1
-    // goto implementation
-    question:
-        returnValue = newtWinMenu(const_cast<char*>(title),
-            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
-            m_maxListHeight, const_cast<char**>(cStrings.data()), &selector,
-            const_cast<char*>(TUIText::Buttons::ok),
-            const_cast<char*>(TUIText::Buttons::cancel),
-            const_cast<char*>(TUIText::Buttons::help), nullptr);
+        bool stay = true;
 
-        switch (returnValue) {
-            case 0:
-                /* F12 is pressed, and we don't care; continue to case 1 */
-            case 1:
-                return tempStrings[boost::lexical_cast<std::size_t>(selector)];
-            case 2:
-                abort();
-                break;
-            case 3:
-                this->helpMessage(helpMessage);
-                goto question;
-            default:
-                __builtin_unreachable();
-        }
-#else
-        // gotoless implementation
-        for (;;) {
+        while (stay) {
             returnValue = newtWinMenu(const_cast<char*>(title),
-                const_cast<char*>(message), m_suggestedWidth, m_flexUp,
-                m_flexDown, m_maxListHeight,
-                const_cast<char**>(cStrings.data()), &selector,
-                const_cast<char*>(TUIText::Buttons::ok),
+                const_cast<char*>(message), m_suggestedWidth, m_flexDown,
+                m_flexUp, m_maxListHeight, const_cast<char**>(cStrings.data()),
+                &selector, const_cast<char*>(TUIText::Buttons::ok),
                 const_cast<char*>(TUIText::Buttons::cancel),
-                const_cast<char*>(TUIText::Buttons::help), NULL);
+                const_cast<char*>(TUIText::Buttons::help), nullptr);
+            stay = false;
 
             switch (returnValue) {
                 case 0:
                     /* F12 is pressed, and we don't care; continue to case 1 */
                 case 1:
-                    return items[selector];
+                    return tempStrings[boost::lexical_cast<std::size_t>(
+                        selector)];
                 case 2:
-                    abortInstall();
+                    abort();
+                    break;
                 case 3:
                     this->helpMessage(helpMessage);
-                    continue;
+                    stay = true;
+                    break;
+                default:
+                    __builtin_unreachable();
             }
-            break; // for (;;)
         }
-#endif
+
         __builtin_unreachable();
     }
 
@@ -328,40 +315,51 @@ public:
 
         T returnArray;
 
-    question:
-        returnValue = newtWinEntries(const_cast<char*>(title),
-            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
-            m_dataWidth, field.get(), const_cast<char*>(TUIText::Buttons::ok),
-            const_cast<char*>(TUIText::Buttons::cancel),
-            const_cast<char*>(TUIText::Buttons::help), nullptr);
+        bool stay = true;
 
-        switch (returnValue) {
-            case 0:
-                /* F12 is pressed, and we don't care; continue to case 1 */
-            case 1:
-                // TODO: The view should now check for this, it's a passive view
-                if (hasEmptyField(field.get()))
-                    goto question;
+        while (stay) {
+            returnValue = newtWinEntries(const_cast<char*>(title),
+                const_cast<char*>(message), m_suggestedWidth, m_flexDown,
+                m_flexUp, m_dataWidth, field.get(),
+                const_cast<char*>(TUIText::Buttons::ok),
+                const_cast<char*>(TUIText::Buttons::cancel),
+                const_cast<char*>(TUIText::Buttons::help), nullptr);
+            stay = false;
 
-                // FIXME: We forgot that we should return size_t sometimes and
-                //        that was triggering an exception on the presenter, so
-                //        basically the std::variant is useless here, we always
-                //        return std:string.
-                for (std::size_t i = 0; field[i].text; i++) {
-                    returnArray[i] = std::make_pair<std::string, std::string>(
-                        field[i].text, *field[i].value);
-                }
+            switch (returnValue) {
+                case 0:
+                    /* F12 is pressed, and we don't care; continue to case 1 */
+                case 1:
+                    // TODO: The view should now check for this, it's a passive
+                    // view
+                    if (hasEmptyField(field.get())) {
+                        stay = true;
+                        continue;
+                    }
 
-                return returnArray;
-            case 2:
-                abort();
-                break;
-            case 3:
-                this->helpMessage(helpMessage);
-                goto question;
-            default:
-                throw std::runtime_error(
-                    "Invalid return value from fields on newt library");
+                    // FIXME: We forgot that we should return size_t sometimes
+                    // and
+                    //        that was triggering an exception on the presenter,
+                    //        so basically the std::variant is useless here, we
+                    //        always return std:string.
+                    for (std::size_t i = 0; field[i].text; i++) {
+                        returnArray[i]
+                            = std::make_pair<std::string, std::string>(
+                                field[i].text, *field[i].value);
+                    }
+
+                    return returnArray;
+                case 2:
+                    abort();
+                    break;
+                case 3:
+                    this->helpMessage(helpMessage);
+                    stay = true;
+                    break;
+                default:
+                    throw std::runtime_error(
+                        "Invalid return value from fields on newt library");
+            }
         }
         throw std::runtime_error("Invalid return path on newt library");
     }
