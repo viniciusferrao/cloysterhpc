@@ -41,6 +41,8 @@ private:
             static constexpr const auto ok = "OK";
             static constexpr const auto cancel = "Cancel";
             static constexpr const auto yes = "Yes";
+            static constexpr const auto add = "Add";
+            static constexpr const auto remove = "Remove";
             static constexpr const auto no = "No";
             static constexpr const auto help = "Help";
         };
@@ -124,10 +126,89 @@ public:
         okCancelMessage(nullptr, message, pairs);
     }
 
+    std::vector<const char*> convertToNewtList(
+        const std::vector<std::string>& s);
+
     // TODO:
-    //  * Add C++20 concepts; limit by some types.
     //  * Optimize for std::string_view and std::string.
-    template <typename T>
+
+    using ListButtonCallback = std::function<bool(std::vector<std::string>&)>;
+
+    /**
+     * Add a form screen containing a list of things, used when you need every
+     * item of that list, and not only one.
+     *
+     * @param title The window title
+     *
+     * @param message The message below the title
+     *
+     * @param items The items to be shown
+     *
+     * @param addCallback A callback function that is executed when we click on
+     * the Add button. It receives a mutable reference to the items as a
+     * parameter, and returns a boolean, the value of whether we should continue
+     * running the form (true) or not (false)
+     */
+    template <std::ranges::range T>
+    std::vector<std::string> collectListMenu(const char* title,
+        const char* message, const T& items, const char* helpMessage,
+        ListButtonCallback&& addCallback)
+    {
+        int returnValue;
+        // TODO: Initial value of selector should be available on function
+        //       declaration so we can start at the already set option
+        int selector = 0;
+
+        // TODO: Is it possible do use std::array instead?
+        // TODO: Check types to avoid this copy (C++20 concepts?)
+        std::vector<std::string> tempStrings(items.begin(), items.end());
+
+        auto cStrings = convertToNewtList(tempStrings);
+
+    // goto implementation
+    question:
+        returnValue = newtWinMenu(const_cast<char*>(title),
+            const_cast<char*>(message), m_suggestedWidth, m_flexDown, m_flexUp,
+            m_maxListHeight, const_cast<char**>(cStrings.data()), &selector,
+            const_cast<char*>(TUIText::Buttons::ok),
+            const_cast<char*>(TUIText::Buttons::cancel),
+            const_cast<char*>(TUIText::Buttons::add),
+            const_cast<char*>(TUIText::Buttons::remove),
+            const_cast<char*>(TUIText::Buttons::help), nullptr);
+
+        switch (returnValue) {
+            case 0:
+                /* F12 is pressed, and we don't care; continue to case 1 */
+            case 1:
+                return tempStrings;
+            case 2:
+                abort();
+                break;
+            case 3: { // add
+                bool ret = addCallback(tempStrings);
+                if (ret) {
+                    cStrings = convertToNewtList(tempStrings);
+                    goto question;
+                } else {
+                    return tempStrings;
+                }
+            }
+            case 4: // remove
+                if (selector >= 0 && selector < cStrings.size()) {
+                    tempStrings.erase(tempStrings.begin() + selector);
+                    cStrings = convertToNewtList(tempStrings);
+                }
+
+                goto question;
+            case 5:
+                this->helpMessage(helpMessage);
+                goto question;
+            default:
+                __builtin_unreachable();
+        }
+    }
+
+    template <std::ranges::range T>
     std::string listMenu(const char* title, const char* message, const T& items,
         const char* helpMessage)
     {
@@ -141,15 +222,7 @@ public:
         std::vector<std::string> tempStrings(items.begin(), items.end());
 
         // Newt expects a NULL terminated array of C style strings
-        std::vector<const char*> cStrings;
-        cStrings.reserve(tempStrings.size() + 1);
-
-        for (const auto& string : tempStrings) {
-            cStrings.push_back(string.c_str());
-            LOG_TRACE("Pushed back std::string {}", string.c_str())
-        }
-        cStrings.push_back(nullptr);
-        LOG_TRACE("Pushed back nullptr")
+        std::vector<const char*> cStrings = convertToNewtList(tempStrings);
 
 #if 1
     // goto implementation
@@ -218,7 +291,7 @@ public:
     //  * Add C++20 concepts; limit by some types.
     //  * Optimize for std::string_view and std::string.
     //  * std::optional on second pair
-    template <typename T>
+    template <std::ranges::range T>
     T fieldMenu(const char* title, const char* message, const T& items,
         const char* helpMessage)
     {
@@ -228,24 +301,24 @@ public:
         auto fieldEntries = std::make_unique<char*[]>(arraySize + 1);
         auto field = std::make_unique<newtWinEntry[]>(arraySize + 1);
 
-        // This "for loop" will populate newtWinEntry with the necessary data to
-        // be displayed on the interface. Please note that field[i].value is a
-        // char** because it's passing data by reference in C style, since the
-        // data can be modified by the newt form, it's not an array of char*
-        for (std::size_t i = 0; i < arraySize; i++) {
-            field[i].text = const_cast<char*>(items[i].first.c_str());
-            fieldEntries[i] = const_cast<char*>((items[i].second).c_str());
+        size_t i = 0;
+        // Yes, it's like this. We need C++23 for std::views::enumerate.
+        for (const auto& item : items) {
+            field[i].text = const_cast<char*>(item.first.c_str());
+            fieldEntries[i] = const_cast<char*>((item.second).c_str());
             LOG_TRACE("fieldEntries[{}] = {}", i, fieldEntries[i])
 
             // TODO: Check is there's a way to hide &
             field[i].value = &fieldEntries[i];
 
             // FIXME: Fix this hack to enable password fields
-            if (items[i].first.find("Password") != std::string::npos
-                || items[i].first.find("password") != std::string::npos)
+            if (item.first.find("Password") != std::string::npos
+                || item.first.find("password") != std::string::npos)
                 field[i].flags = NEWT_FLAG_PASSWORD;
             else
                 field[i].flags = 0;
+
+            i++;
         }
 
         field[arraySize].text = nullptr;

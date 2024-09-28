@@ -75,6 +75,23 @@ bool Newt::hasEmptyField(const struct newtWinEntry* entries)
     return false;
 }
 
+std::vector<const char*> Newt::convertToNewtList(
+    const std::vector<std::string>& s)
+{
+    // Newt expects a NULL terminated array of C style strings
+    std::vector<const char*> cStrings;
+    cStrings.reserve(s.size() + 1);
+
+    for (const auto& string : s) {
+        cStrings.push_back(string.c_str());
+        LOG_TRACE("Pushed back std::string {}", string.c_str())
+    }
+    cStrings.push_back(nullptr);
+    LOG_TRACE("Pushed back nullptr")
+
+    return cStrings;
+}
+
 /**
  * Show a progress message dialog
  * @param title

@@ -50,7 +50,7 @@ retry:
     // m_model->nodeRootPassword = fields[i++].second;
     // m_model->setDiskImage(fields[i++].second);
     //  FIXME: This cannot be hardcoded; we should support a variety of images
-    m_model->setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
+    // m_model->setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
 
     // Number of nodes
     // TODO: Set racks and startNumber to create things like: r01n01

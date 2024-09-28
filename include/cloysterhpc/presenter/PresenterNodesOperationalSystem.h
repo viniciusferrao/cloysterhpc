@@ -36,6 +36,9 @@ private:
             static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
             static constexpr const auto field = "Path to ISOs directory:";
+
+            static constexpr const auto nonExistent
+                = "The specified directory do not exist";
         };
 
         struct OperationalSystemDistro {
