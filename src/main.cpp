@@ -32,16 +32,13 @@ int main(int argc, const char** argv)
         "-v, --version", cloyster::showVersion, "Show version information");
 
     app.add_flag(
-        "-r, --root", cloyster::runAsRoot, "Run with root permissions");
-
-    app.add_flag(
         "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
 
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
+#if 0    
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
-
-    app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
+#endif
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -101,27 +98,24 @@ int main(int argc, const char** argv)
         }
     }());
 
-#ifndef NDEBUG
-    LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput)
-#endif
-
-    LOG_INFO("{} Started", productName)
+    if (cloyster::showVersion) {
+        fmt::print("{}: Version {}\n", productName, productVersion);
+        return EXIT_SUCCESS;
+    }
 
     try {
+#ifndef NDEBUG
+        LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput)
+#endif
+        LOG_INFO("{} Started", productName)
+
         if (showHardwareInfo) {
             Hardware hardware;
             hardware.printOverview();
             return EXIT_SUCCESS;
         }
 
-        if (cloyster::showVersion) {
-            fmt::print("{}: Version {}\n", productName, productVersion);
-            return EXIT_SUCCESS;
-        }
-
-        if (cloyster::runAsRoot) {
-            cloyster::checkEffectiveUserId();
-        }
+        cloyster::checkEffectiveUserId();
 
         if (cloyster::dryRun) {
             fmt::print("Dry run enabled.\n");
@@ -149,17 +143,13 @@ int main(int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
-        //@TODO implement run as daemon feature
-        if (cloyster::runAsDaemon) {
-            fmt::print("Daemon feature not implemented.\n");
-            return EXIT_FAILURE;
-        }
-
         auto model = std::make_unique<Cluster>();
 
         if (!cloyster::answerfile.empty()) {
             LOG_TRACE("Answerfile: {}", cloyster::answerfile)
             model->fillData(cloyster::answerfile);
+        } else {
+            cloyster::enableTUI = true;
         }
 
         if (cloyster::enableTUI) {
