@@ -16,4 +16,4 @@ set(COMMON_LIBS
   doctest::doctest
   cryptopp::cryptopp
   SDBusCpp::sdbus-c++
-  lfreist-hwinfo::hwinfo)
+  hwinfo)

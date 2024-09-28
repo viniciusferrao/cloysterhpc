@@ -34,7 +34,8 @@ public:
      * @param address The IP address of the NFS server.
      * @param permissions The permissions for the NFS share.
      */
-    NFS(const std::string& directoryName, const std::string& directoryPath,
+    NFS(std::shared_ptr<MessageBus> bus, const std::string& directoryName,
+        const std::string& directoryPath,
         const boost::asio::ip::address& address,
         const std::string& permissions);
 
@@ -42,26 +43,6 @@ public:
      * @brief Configures the NFS service with the specified settings.
      */
     void configure();
-
-    /**
-     * @brief Enables the NFS service.
-     */
-    void enable() final;
-
-    /**
-     * @brief Disables the NFS service.
-     */
-    void disable() final;
-
-    /**
-     * @brief Starts the NFS service.
-     */
-    void start() final;
-
-    /**
-     * @brief Stops the NFS service.
-     */
-    void stop() final;
 
 private:
     /**

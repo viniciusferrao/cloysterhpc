@@ -22,8 +22,7 @@ static char value_to_char(std::uint64_t value)
 #pragma warning disable S2245
 static std::filesystem::path create_temporary_filename()
 {
-
-    std::random_device dev;
+    static std::random_device dev;
     std::mt19937 rng(dev()); // NOSONAR
     NOSONAR(std::uniform_int_distribution<std::mt19937::result_type>)
     charbyte(0, 36);

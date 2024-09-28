@@ -6,6 +6,7 @@
 #include <cloysterhpc/functions.h>
 
 #include <chrono>
+#include <cstdio> /* FILE*, fopen, fclose */
 #include <cstdlib> /* getenv() */
 #include <iostream>
 
@@ -112,6 +113,13 @@ void writeConfig(const std::string& filename)
     tree.put("headnode.LANG", getEnvironmentVariable("LANG"));
 
     boost::property_tree::write_ini(filename, tree);
+}
+
+void touchFile(const std::filesystem::path& path)
+{
+    FILE* f = fopen(path.c_str(), "ab");
+    (void)fflush(f);
+    (void)fclose(f);
 }
 
 void createDirectory(const std::filesystem::path& path)
@@ -243,6 +251,20 @@ void addStringToFile(std::string_view filename, std::string_view string)
 
     file << string;
     LOG_DEBUG("Added line(s):\n{}\n => to file: {}", string, filename)
+}
+
+std::string findAndReplace(const std::string_view& source,
+    const std::string_view& find, const std::string_view& replace)
+{
+    std::string result { source };
+    std::string::size_type pos = 0;
+
+    while ((pos = result.find(find, pos)) != std::string::npos) {
+        result.replace(pos, find.length(), replace);
+        pos += replace.length();
+    }
+
+    return result;
 }
 
 } // namespace cloyster

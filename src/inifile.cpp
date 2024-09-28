@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <fmt/format.h>
 
+void inifile::loadData(const std::string& data) { ini.LoadData(data); }
+
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
 {
@@ -28,8 +30,6 @@ void inifile::loadFile(const std::filesystem::path& filepath)
                 filepath.c_str(), result));
     }
 }
-
-void inifile::loadData(const std::string& data) { ini.LoadData(data); }
 
 std::string inifile::getValue(const std::string& section,
     const std::string& key, const bool optional, const bool canBeNull)
@@ -54,6 +54,27 @@ inifile::inifile(const std::string& file)
 {
     ini.SetUnicode();
     loadData(file);
+}
+
+inifile inifile::mergeInto(const std::filesystem::path& other)
+{
+    inifile otherfile(other);
+
+    for (const auto& sec : this->listAllSections()) {
+        for (const auto& entry : this->listAllEntries(sec)) {
+            const auto thisval = this->getValue(sec, entry);
+            otherfile.setValue(sec, entry, thisval);
+        }
+    }
+
+    /* Since the CSimpleIniA class we encapsulate, for some reason, does not
+     * have a copy constructor, we need to save the object into a string
+     * (that can be copied somewhat) and recreate the object before returning
+     */
+    std::string data;
+    otherfile.save(data);
+
+    return inifile { data };
 }
 
 void inifile::setValue(const std::string& section, const std::string& key,

@@ -36,9 +36,14 @@ Cluster::Cluster()
     } else {
         m_runner = std::make_unique<Runner>();
     }
+
+    m_systemdBus = std::make_shared<DBusClient>(
+        "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
 }
 // The rule of zero
 // Cluster::~Cluster() = default;
+
+std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
@@ -259,7 +264,7 @@ std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
 void Cluster::setMailSystem(Postfix::Profile profile)
 {
-    m_mailSystem = Postfix(profile);
+    m_mailSystem.emplace(m_systemdBus, *m_runner, profile);
 }
 
 const std::filesystem::path& Cluster::getDiskImage() const
@@ -767,6 +772,39 @@ void Cluster::fillData(const std::string& answerfilePath)
         newNode.setConnection(nodeConnections);
 
         addNode(newNode);
+    }
+
+    if (answerfile.postfix.enabled) {
+        setMailSystem(answerfile.postfix.profile);
+        m_mailSystem->setHostname(this->m_headnode.getHostname());
+        m_mailSystem->setDomain(getDomainName());
+        m_mailSystem->setDestination(answerfile.postfix.destination);
+
+        if (!m_mailSystem->getDomain()) {
+            throw std::runtime_error(
+                "A domain is needed for e-mail configuration");
+        }
+
+        switch (answerfile.postfix.profile) {
+            case Postfix::Profile::Local:
+                break;
+            case Postfix::Profile::Relay:
+                m_mailSystem->setSMTPServer(
+                    answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                break;
+            case Postfix::Profile::SASL:
+                m_mailSystem->setSMTPServer(
+                    answerfile.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                m_mailSystem->setUsername(
+                    answerfile.postfix.smtp.value().sasl.value().username);
+                m_mailSystem->setPassword(
+                    answerfile.postfix.smtp.value().sasl.value().password);
+                break;
+        }
+        m_mailSystem->setCertFile(answerfile.postfix.cert_file);
+        m_mailSystem->setKeyFile(answerfile.postfix.key_file);
     }
 
     /* Bad and old data - @TODO Must improve */

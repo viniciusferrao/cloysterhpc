@@ -37,6 +37,14 @@ public:
     void loadFile(std::string_view filepath);
 
     /**
+     * @brief Merge this file with another file
+     *
+     * We simply add our parameters into the other file, and
+     * "become" the other file
+     */
+    inifile mergeInto(const std::filesystem::path& other);
+
+    /**
      * @brief Loads an INI file from the specified file path.
      *
      * @param filepath The path to the INI file.

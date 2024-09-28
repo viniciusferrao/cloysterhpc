@@ -10,9 +10,11 @@
 
 using cloyster::runCommand;
 
-NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
-    const boost::asio::ip::address& address, const std::string& permissions)
-    : m_directoryName(directoryName)
+NFS::NFS(std::shared_ptr<MessageBus> bus, const std::string& directoryName,
+    const std::string& directoryPath, const boost::asio::ip::address& address,
+    const std::string& permissions)
+    : IService(bus, "nfs-server.service")
+    , m_directoryName(directoryName)
     , m_directoryPath(directoryPath)
     , m_permissions(permissions)
     , m_address(address)
@@ -27,6 +29,11 @@ void NFS::setFullPath()
 
 void NFS::configure()
 {
+    runCommand("dnf -y install nfs-utils");
+
+    // TODO: detect nfs existence before proceeding
+    // might check if nfs-utils package is installed.
+
     const std::string_view filename = CHROOT "/etc/exports";
     cloyster::backupFile(filename);
     cloyster::addStringToFile(filename,
@@ -52,11 +59,3 @@ void NFS::configure()
         fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
         fmt::format("* {}:{}/&", m_address.to_string(), m_fullPath));
 }
-
-void NFS::enable() { runCommand("systemctl enable nfs-server"); }
-
-void NFS::disable() { runCommand("systemctl disable nfs-server"); }
-
-void NFS::start() { runCommand("systemctl start nfs-server"); }
-
-void NFS::stop() { runCommand("systemctl stop nfs-server"); }

@@ -10,6 +10,7 @@
 #include "os.h"
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
+#include <cloysterhpc/mailsystem/postfix.h>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -133,6 +134,26 @@ private:
 
     std::vector<std::shared_ptr<ITool>> m_tools;
 
+    struct AFPostfix {
+        struct SASL {
+            std::string username;
+            std::string password;
+        };
+        struct SMTP {
+            std::string server;
+            int port;
+            std::optional<SASL> sasl;
+            // Relay doesn't need to have a specific struct because it only
+            // needs 'server' and 'port'.
+        };
+        bool enabled = false;
+        std::vector<std::string> destination;
+        Postfix::Profile profile;
+        std::optional<SMTP> smtp;
+        std::filesystem::path cert_file;
+        std::filesystem::path key_file;
+    };
+
     std::filesystem::path m_path;
     inifile m_ini;
 
@@ -216,6 +237,9 @@ private:
     void loadNodes();
     void loadTools();
     void loadNVHPC();
+
+    void loadPostfix();
+
     bool checkEnabled(const std::string& section);
     /**
      * @brief Loads the settings for a specific node.
@@ -282,6 +306,7 @@ public:
     AFHostname hostname;
     AFSystem system;
     AFNodes nodes;
+    AFPostfix postfix;
 
     /**
      * @brief Loads the answer file from the specified path.
