@@ -14,9 +14,9 @@
 
 #include <sys/utsname.h>
 
-#if __cpp_lib_starts_ends_with < 201711L
-#include <boost/algorithm/string.hpp>
-#endif
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <string>
 
 /* The constructor should discover everything we need from the machine that is
  * running the software. We always consider that the software runs from the
@@ -35,9 +35,16 @@ void Headnode::discoverNames()
     struct utsname system { };
     uname(&system);
 
-    std::string hostname = system.nodename;
-    setHostname(hostname.substr(0, hostname.find('.')));
-    setFQDN(hostname);
+    std::string fqdn = system.nodename;
+    std::vector<std::string> hostparts;
+
+    boost::split(hostparts, std::string { fqdn }, boost::is_any_of("."));
+
+    std::string hostname = fqdn.empty() ? "localhost" : hostparts[0];
+    bool hasDomain = hostparts.size() > 1 && hostparts[1] != "(none)";
+
+    setHostname(hostname);
+    setFQDN(hasDomain ? fqdn : hostname + ".localdomain");
 }
 
 Headnode::BootTarget Headnode::getBootTarget() const { return m_bootTarget; }

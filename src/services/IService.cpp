@@ -22,7 +22,7 @@ void IService::enable()
 
 void IService::disable()
 {
-    LOG_TRACE("service: disbling {}", m_name);
+    LOG_TRACE("service: disabling {}", m_name);
 
     auto ret = callObjectFunctionArray("DisableUnitFiles", false, true)
                    .get<EnableRType>();

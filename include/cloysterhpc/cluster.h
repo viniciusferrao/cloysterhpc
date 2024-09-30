@@ -94,7 +94,7 @@ public:
     [[nodiscard]] const Locale& getLocale() const;
     void setLocale(const Locale& locale);
     void setLocale(const std::string& locale);
-    [[nodiscard]] const std::string& getDomainName() const;
+    [[nodiscard]] const std::string getDomainName() const;
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);

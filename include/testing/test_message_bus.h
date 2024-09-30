@@ -17,6 +17,7 @@ class TestMessageBus : public MessageBus {
 private:
     std::unordered_map<std::string, std::vector<FunctionParameters>>
         m_functions;
+    std::unordered_map<std::string, std::any> m_results;
 
     std::string makeStoreName(FunctionStore s) const
     {
@@ -36,6 +37,9 @@ public:
 
     unsigned callCount(FunctionStore s) const;
     FunctionParameters calledWith(FunctionStore s, unsigned index) const;
+
+    void registerResponse(FunctionStore s, std::any&& response);
+    std::optional<std::any> returnResponse(FunctionStore s);
 };
 
 class TestMessageMethod : public MessageBusMethod {

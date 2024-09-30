@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <optional>
 #include <testing/test_message_bus.h>
 
 unsigned TestMessageBus::callCount(FunctionStore s) const
@@ -9,6 +10,21 @@ unsigned TestMessageBus::callCount(FunctionStore s) const
     } else {
         return unsigned(m_functions.at(sname).size());
     }
+}
+
+void TestMessageBus::registerResponse(FunctionStore s, std::any&& response)
+{
+    auto sname = makeStoreName(s);
+    m_results[sname] = std::move(response);
+}
+
+std::optional<std::any> TestMessageBus::returnResponse(FunctionStore s)
+{
+    auto sname = makeStoreName(s);
+    if (auto search = m_results.find(sname); search != m_results.end())
+        return std::make_optional(search->second);
+    else
+        return std::nullopt;
 }
 
 FunctionParameters TestMessageBus::calledWith(
@@ -48,6 +64,7 @@ std::unique_ptr<MessageBusMethod> TestMessageBus::method(
 MessageReply TestMessageMethod::callMethod()
 {
     m_bus->registerCall(m_store, m_params);
-    auto reply = std::make_any<sdbus::ObjectPath>(sdbus::ObjectPath("123"));
+    auto reply = m_bus->returnResponse(m_store).value_or(
+        std::make_any<sdbus::ObjectPath>(sdbus::ObjectPath("123")));
     return MessageReply(std::move(reply));
 }

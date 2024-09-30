@@ -315,6 +315,21 @@ TEST_SUITE("Test repository file read and write")
     TEST_CASE("Test if Postfix files generate correctly in the Local profile")
     {
         auto testbus = std::make_shared<TestMessageBus>();
+
+        std::vector<sdbus::Struct<std::string, std::string, std::string>> rete
+            = { std::make_tuple("postfix.service", "", "") };
+        std::vector<sdbus::Struct<std::string, std::string, std::string>> retd
+            = { std::make_tuple("postfix.service", "", "") };
+
+        testbus->registerResponse(
+            std::make_tuple<std::string, std::string>(
+                "org.freedesktop.systemd1.Manager", "EnableUnitFiles"),
+            std::make_tuple<bool, decltype(rete)>(true, std::move(rete)));
+        testbus->registerResponse(
+            std::make_tuple<std::string, std::string>(
+                "org.freedesktop.systemd1.Manager", "DisableUnitFiles"),
+            retd);
+
         MockRunner mr;
         Postfix pfix { testbus, mr, Postfix::Profile::Local };
         TempDir d;
@@ -331,5 +346,12 @@ TEST_SUITE("Test repository file read and write")
 
         CHECK(std::filesystem::file_size(d.name() / "main.cf") > 10);
         CHECK(std::filesystem::file_size(d.name() / "master.cf") > 10);
+
+        CHECK(testbus->callCount(std::make_tuple(
+                  "org.freedesktop.systemd1.Manager", "EnableUnitFiles"))
+            == 1);
+        CHECK(testbus->callCount(std::make_tuple(
+                  "org.freedesktop.systemd1.Manager", "StartUnit"))
+            == 1);
     }
 }
