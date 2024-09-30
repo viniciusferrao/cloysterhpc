@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/lvm.h>
+
 #include <cstdlib>
 
 #include "cloysterhpc/hardware.h"
@@ -42,6 +44,13 @@ int main(int argc, const char** argv)
     app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
 
     app.add_flag("-D, --daemon", cloyster::runAsDaemon, "Run as a daemon");
+
+    auto LVMSnapshot = app.add_subcommand(
+        "L", "LVM snapshot configuration. Check usage with 'L -h'");
+    LVMSnapshot->add_flag("-a", "Check system availability for LVM snapshot.");
+    LVMSnapshot->add_flag("-c", "Create a LVM snapshot.");
+    LVMSnapshot->add_flag("-r", "Rollback to the LVM snapshot created.");
+    LVMSnapshot->add_flag("-d", "Destroy the LVM snapshot created.");
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -114,6 +123,32 @@ int main(int argc, const char** argv)
             return EXIT_SUCCESS;
         }
 
+        if (*LVMSnapshot) {
+            LVM lvm;
+
+            if (LVMSnapshot->count("-a") != 0U) {
+                lvm.checkLVMAvailability();
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-c") != 0U) {
+                lvm.createSnapshotWithBootBackup(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-r") != 0U) {
+                lvm.rollbackSnapshotWithBootRestore(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
+            if (LVMSnapshot->count("-d") != 0U) {
+                lvm.removeSnapshot(PRODUCT_NAME);
+                return EXIT_SUCCESS;
+            }
+
+            return EXIT_SUCCESS;
+        }
+
         if (cloyster::showVersion) {
             fmt::print("{}: Version {}\n", productName, productVersion);
             return EXIT_SUCCESS;
@@ -179,7 +214,7 @@ int main(int argc, const char** argv)
         executionEngine->install();
 
     } catch (const std::exception& e) {
-        LOG_ERROR("ERROR: {}", e.what());
+        LOG_ERROR("ERROR: {}", e.what())
         return EXIT_FAILURE;
     }
 
