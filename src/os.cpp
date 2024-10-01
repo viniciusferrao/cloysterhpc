@@ -154,9 +154,10 @@ void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
-// This code block is left for future reference, if an insensitive comparison in
-// magic_enum would be implemented it may easily replace the lambda block.
-// Reference: https://github.com/Neargye/magic_enum/pull/139
+    // This code block is left for future reference, if an insensitive
+    // comparison in magic_enum would be implemented it may easily replace the
+    // lambda block. Reference: https://github.com/Neargye/magic_enum/pull/139
+
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif

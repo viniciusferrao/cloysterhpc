@@ -41,7 +41,7 @@ PresenterInstall::PresenterInstall(
     Call<PresenterHostId>();
 #endif
 
-#if 1 // Hostname and domain
+#if 1 // Repository
     Call<PresenterRepository>();
 #endif
 

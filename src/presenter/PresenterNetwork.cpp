@@ -48,6 +48,11 @@ void PresenterNetwork::createNetwork()
 {
     // Get the network interface
     const auto& aux = Connection::fetchInterfaces();
+
+    if (aux.size() <= 1) {
+        m_view->fatalMessage(Messages::title, Messages::errorInsufficient);
+    }
+
     const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
@@ -85,13 +90,11 @@ void PresenterNetwork::createNetwork()
     m_network->setGateway(networkDetails[i++].second);
 
     // Domain Data
-    m_network->setDomainName(Network::fetchDomainName());
+    m_network->setDomainName(networkDetails[i++].second);
 
     m_network->setNameservers(nameservers); // TODO: std::move
 
-#ifndef NDEBUG
     [[maybe_unused]] const auto& profile = m_network->getProfile();
-#endif
 
     // Move the data
     m_model->addNetwork(std::move(m_network));

@@ -10,22 +10,44 @@ PresenterHostId::PresenterHostId(
     : Presenter(model, view)
 {
 
-    // Should this be a std::vector instead?
-    // std::vector<std::string> aux = networkHostnameSelection({"Hostname",
-    // "Domain name"});
-    const auto& entries = std::to_array<std::pair<std::string, std::string>>(
-        { { Messages::hostname, "" }, { Messages::domainName, "" } });
+    while (true) {
 
-    const auto& answers = m_view->fieldMenu(
-        Messages::title, Messages::question, entries, Messages::help);
+        // Should this be a std::vector instead?
+        // std::vector<std::string> aux = networkHostnameSelection({"Hostname",
+        // "Domain name"});
+        const auto& entries
+            = std::to_array<std::pair<std::string, std::string>>(
+                { { Messages::hostname, m_model->getHeadnode().getHostname() },
+                    { Messages::domainName, m_model->getDomainName() } });
 
-    m_model->getHeadnode().setHostname(answers[0].second);
-    // FIXME: This assert never happens since the setter may throw
-    //    LOG_DEBUG("Returned hostname: {}", answers[0].second)
-    //    LOG_ASSERT(answers[0].second == m_model->getHeadnode().getHostname(),
-    //               "Failed setting hostname");
+        const auto& answers = m_view->fieldMenu(
+            Messages::title, Messages::question, entries, Messages::help);
 
-    m_model->setDomainName(answers[1].second);
+        m_model->getHeadnode().setHostname(answers[0].second);
+        m_model->setDomainName(answers[1].second);
+
+        auto hostnameValidation = m_model->getHeadnode().validateHostname();
+        auto fqdnValidation = m_model->getHeadnode().validateFQDN();
+
+        if (!hostnameValidation.has_value()) {
+            m_view->message(Messages::title,
+                fmt::format(
+                    "Hostname validation error: {}", hostnameValidation.error())
+                    .c_str());
+            continue;
+        }
+
+        if (!fqdnValidation.has_value()) {
+            m_view->message(Messages::title,
+                fmt::format(
+                    "Domain validation error: {}", fqdnValidation.error())
+                    .c_str());
+            continue;
+        }
+
+        break;
+    }
+
     LOG_DEBUG("Hostname set to: {}", m_model->getHeadnode().getHostname())
     LOG_DEBUG("Domain name set to: {}", m_model->getDomainName())
     LOG_DEBUG("FQDN: {}", m_model->getHeadnode().getFQDN())

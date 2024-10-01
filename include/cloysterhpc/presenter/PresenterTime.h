@@ -24,7 +24,13 @@ private:
                 = "Add or change the list of available time servers";
             static constexpr const auto help
                 = Presenter::Messages::Placeholder::help;
-            static constexpr const auto field = "Time server(s)";
+        };
+
+        struct AddTimeserver {
+            static constexpr const auto question = "Add time server";
+            static constexpr const auto field = "Address:";
+            static constexpr const auto help
+                = Presenter::Messages::Placeholder::help;
         };
     };
 

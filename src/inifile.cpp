@@ -164,7 +164,7 @@ TEST_SUITE("Load .ini files")
         ini.loadFile(path);
         const std::string clusterName
             = ini.getValue("information", "cluster_name");
-        CHECK(clusterName == "cloyster");
+        CHECK(clusterName == "cluster");
     }
 
     TEST_CASE("Get sections")

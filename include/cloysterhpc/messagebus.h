@@ -14,7 +14,8 @@
  * tell this to the user
  */
 template <typename T>
-concept MessageReturnable = std::is_nothrow_default_constructible_v<T>;
+concept MessageReturnable = std::is_nothrow_default_constructible_v<
+    T> && std::is_nothrow_move_constructible_v<T>;
 
 /**
  * A more or less "generic"-ish way to refer to a message reply
@@ -56,6 +57,31 @@ public:
                 },
                 [](std::any arg) { return std::any_cast<T>(arg); },
             },
+            m_base_reply);
+    }
+
+    /**
+     * If your DBus function returns two values, use this method
+     *
+     * This seems to be rare, so making this function generic to accept
+     * a bigger tuple might seem a lot of trouble for minimum gain
+     */
+    template <MessageReturnable T1, MessageReturnable T2>
+    std::tuple<T1, T2> getPair()
+    {
+        return std::visit(overloaded {
+                              [](sdbus::MethodReply arg) {
+                                  T1 result1 {};
+                                  T2 result2 {};
+                                  arg >> result1;
+                                  arg >> result2;
+                                  return std::make_tuple<T1, T2>(
+                                      std::move(result1), std::move(result2));
+                              },
+                              [](std::any arg) {
+                                  return std::any_cast<std::tuple<T1, T2>>(arg);
+                              },
+                          },
             m_base_reply);
     }
 };

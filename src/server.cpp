@@ -5,6 +5,7 @@
 
 #include <cloysterhpc/server.h>
 #include <cloysterhpc/services/log.h>
+#include <string_view>
 
 Server::Server(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections, std::optional<BMC> bmc)
@@ -23,32 +24,33 @@ void Server::setOS(const OS& os) { m_os = os; }
 
 const std::string& Server::getHostname() const noexcept { return m_hostname; }
 
-// FIXME: A trigger to update FQDN should be made if hostname is changed
-void Server::setHostname(const std::string& hostname)
+/**
+ * @brief Validate the hostname
+ *
+ * Return the hostname if is valid, or an error message
+ */
+std::expected<std::string_view, std::string> Server::validateHostname()
 {
-    LOG_DEBUG("Running hostname checks against: {}", hostname)
+    LOG_DEBUG("Running hostname checks against: {}", m_hostname);
 
-    if (hostname.size() > 63)
-        throw std::runtime_error(
-            "Hostname cannot be bigger than 63 characters");
+    if (m_hostname.size() > 63)
+        throw std::string { "Hostname cannot be bigger than 63 characters" };
 
-#if __cpp_lib_starts_ends_with >= 201711L
-    if (hostname.starts_with('-') or hostname.ends_with('-'))
-#else
-    if (boost::algorithm::starts_with(hostname, "-")
-        or boost::algorithm::ends_with(hostname, "-"))
-#endif
-        throw std::runtime_error("Invalid hostname");
+    if (m_hostname.starts_with('-') or m_hostname.ends_with('-'))
+        throw std::string { "Invalid hostname" };
 
     /* Check if string has only digits */
-    if (std::regex_match(hostname, std::regex("^[0-9]+$")))
-        throw std::runtime_error("Hostname cannot contain only digits");
+    if (std::regex_match(m_hostname, std::regex("^[0-9]+$")))
+        throw std::string { "Hostname cannot contain only digits" };
     /* Check if string is not only alphanumerics and - */
-    if (!(std::regex_match(hostname, std::regex("^[A-Za-z0-9-]+$"))))
-        throw std::runtime_error("Hostname can only have alphanumerics");
+    if (!(std::regex_match(m_hostname, std::regex("^[A-Za-z0-9-]+$"))))
+        return std::string { "Hostname can only have alphanumerics" };
 
-    m_hostname = hostname;
+    return std::string_view { m_hostname };
 }
+
+// FIXME: A trigger to update FQDN should be made if hostname is changed
+void Server::setHostname(const std::string& hostname) { m_hostname = hostname; }
 
 // This overload is necessary for std::string_view compatibility
 void Server::setHostname(std::string_view hostname)
@@ -58,19 +60,21 @@ void Server::setHostname(std::string_view hostname)
 
 const std::string& Server::getFQDN() const noexcept { return m_fqdn; }
 
-void Server::setFQDN(const std::string& fqdn)
+void Server::setFQDN(const std::string& fqdn) { m_fqdn = fqdn; }
+
+std::expected<std::string_view, std::string> Server::validateFQDN()
 {
-    if (fqdn.size() > 255)
-        throw std::runtime_error("FQDN cannot be bigger than 255 characters");
+    if (m_fqdn.size() > 255)
+        return std::string("FQDN cannot be bigger than 255 characters");
 
     // This pattern validates whether an FQDN is valid or not.
     const std::regex fqdnPattern(
         R"regex(^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9\\-]*[A-Za-z0-9])?$)regex");
 
-    if (!std::regex_match(fqdn, fqdnPattern))
-        throw std::runtime_error("Invalid FQDN format");
+    if (!std::regex_match(m_fqdn, fqdnPattern))
+        return std::string("Invalid FQDN format");
 
-    m_fqdn = fqdn;
+    return std::string_view { m_fqdn };
 }
 
 const std::list<Connection>& Server::getConnections() const
@@ -145,19 +149,27 @@ TEST_SUITE("Test FQDN")
         SUBCASE("Valid FQDNs")
         {
             CHECK_NOTHROW(server.setFQDN("example.com"));
+            CHECK(server.validateFQDN().has_value());
             CHECK_NOTHROW(server.setFQDN("subdomain.example.com"));
+            CHECK(server.validateFQDN().has_value());
             CHECK_NOTHROW(server.setFQDN("sub-domain.example.co.uk"));
         }
 
         SUBCASE("Invalid FQDNs")
         {
             CHECK_THROWS(server.setFQDN("example")); // Missing TLD
+            CHECK(!server.validateFQDN().has_value());
             CHECK_THROWS(server.setFQDN(".example.com")); // Leading dot
+            CHECK(!server.validateFQDN().has_value());
             CHECK_THROWS(server.setFQDN("example.com.")); // Trailing dot
+            CHECK(!server.validateFQDN().has_value());
             CHECK_THROWS(server.setFQDN("example..com")); // Double dot
+            CHECK(!server.validateFQDN().has_value());
             CHECK_THROWS(server.setFQDN("example@com")); // Invalid character
+            CHECK(!server.validateFQDN().has_value());
             CHECK_THROWS(
                 server.setFQDN(std::string(256, 'a'))); // FQDN too long
+            CHECK(!server.validateFQDN().has_value());
         }
     }
 }

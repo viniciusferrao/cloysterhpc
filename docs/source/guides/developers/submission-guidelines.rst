@@ -15,7 +15,7 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 - License headers **must** be included in all files.
 - We use `clang-format` to keep the coding style consistent.
     - ``.clang-format`` file is shipped within the source, please use it.
-- The code is written in modern C++ (specifically C++20) and is **not** using any deprecated features.
+- The code is written in modern C++ (specifically C++23) and is **not** using any deprecated features.
     - We will **not** support any deprecated features.
 - External libraries are not only allowed but stimulated. Don't reinvent the wheel.
 - Prefer STL functions over external libraries functions where is possible.

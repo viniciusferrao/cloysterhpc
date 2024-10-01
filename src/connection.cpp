@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/system/detail/errc.hpp>
 #include <cloysterhpc/connection.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
@@ -207,13 +208,19 @@ address Connection::fetchAddress(const std::string& interface)
             if (inet_ntoa(sa->sin_addr) == nullptr)
                 continue;
 
+            boost::system::error_code ec;
             address result
-                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr));
+                = boost::asio::ip::make_address(inet_ntoa(sa->sin_addr), ec);
 
-#ifndef NDEBUG
+            if (ec.value() != boost::system::errc::success) {
+                LOG_TRACE("interface {} returned an error while getting "
+                          "address ({}): {}",
+                    interface, inet_ntoa(sa->sin_addr), ec.message());
+                continue;
+            }
+
             LOG_TRACE("Got address {} from interface {}", result.to_string(),
                 interface);
-#endif
 
             return result;
         }

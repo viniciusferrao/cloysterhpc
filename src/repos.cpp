@@ -449,17 +449,17 @@ TEST_SUITE("Test repository file read and write")
             return (a.id <=> b.id) == std::strong_ordering::less;
         });
 
-        CHECK(rlist[0].id == "cloyster-AlmaLinux-BaseOS");
+        CHECK(rlist[0].id == "CloysterHPC-AlmaLinux-BaseOS");
         CHECK(rlist[0].name == "AlmaLinux $releasever - BaseOS");
         CHECK(rlist[0].baseurl
             == "https://repo.almalinux.org/almalinux/$releasever/BaseOS/"
                "$basearch/os/");
-        CHECK(rlist[5].id == "cloyster-epel");
+        CHECK(rlist[5].id == "CloysterHPC-epel");
         CHECK(rlist[5].name
             == "Extra Packages for Enterprise Linux 9 - $basearch");
         CHECK(rlist[5].baseurl
             == "https://mirror.versatushpc.com.br/epel/9/Everything/x86_64/");
-        CHECK(rlist[15].id == "cloyster-zabbix");
+        CHECK(rlist[15].id == "CloysterHPC-zabbix");
         CHECK(rlist[15].name == "zabbix");
         CHECK(rlist[15].baseurl
             == "https://mirror.versatushpc.com.br/zabbix/zabbix/6.5/rhel/9/"

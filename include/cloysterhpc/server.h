@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_SERVER_H_
 #define CLOYSTERHPC_SERVER_H_
 
+#include <expected>
 #include <fmt/format.h>
 #include <list>
 #include <regex>
@@ -21,8 +22,8 @@
  * @brief Represents a server in a cluster.
  *
  * This class encapsulates the properties and behavior of a server in a cluster,
- * including its hostname, operating system, CPU configuration, network connections,
- * and Baseboard Management Controller (BMC).
+ * including its hostname, operating system, CPU configuration, network
+ * connections, and Baseboard Management Controller (BMC).
  */
 class Server {
 protected:
@@ -54,9 +55,18 @@ public:
     void setHostname(const std::string& hostname);
     void setHostname(std::string_view hostname);
 
+    /**
+     * @brief Validate the hostname
+     *
+     * Return the hostname if is valid, or an error message
+     */
+    std::expected<std::string_view, std::string> validateHostname();
+
     // TODO: FQDN should be optional if the domain isn't available
     [[nodiscard]] const std::string& getFQDN() const noexcept;
     void setFQDN(const std::string& fqdn);
+
+    std::expected<std::string_view, std::string> validateFQDN();
 
     [[nodiscard]] const std::list<Connection>& getConnections() const;
 

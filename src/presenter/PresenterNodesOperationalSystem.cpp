@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
+#include <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -83,9 +84,19 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 { { Messages::OperationalSystemDirectoryPath::field,
                     "/mnt/iso" } });
 
-        isoDirectoryPath = m_view->fieldMenu(Messages::title,
-            Messages::OperationalSystemDirectoryPath::question,
-            isoDirectoryPath, Messages::OperationalSystemDirectoryPath::help);
+        while (true) {
+            isoDirectoryPath = m_view->fieldMenu(Messages::title,
+                Messages::OperationalSystemDirectoryPath::question,
+                isoDirectoryPath,
+                Messages::OperationalSystemDirectoryPath::help);
+
+            if (std::filesystem::exists(isoDirectoryPath.data()->second)) {
+                break;
+            }
+
+            m_view->message(Messages::title,
+                Messages::OperationalSystemDirectoryPath::nonExistent);
+        }
 
         LOG_DEBUG(
             "ISO directory path set to {}", isoDirectoryPath.data()->second);
@@ -109,6 +120,23 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                     entry.path().string().find(isoDirectoryPath.data()->second),
                     isoDirectoryPath.data()->second.length() + 1);
 
+                isos.emplace_back(formattedIsoName);
+
+                // TODO: this detection method is not reliable
+                // The right way should be to mount the ISO and check inside of
+                // it.
+
+                /**
+                   [root@cloyster home]# mount -o loop /opt/iso/cloyster-iso.iso
+                 /mnt mount: /mnt: WARNING: device write-protected, mounted
+                 read-only. [root@cloyster home]# ls /mnt AppStream  BaseOS  EFI
+                 images  isolinux  LICENSE  media.repo  TRANS.TBL [root@cloyster
+                 home]# less /mnt/media.repo [InstallMedia] name=Rocky Linux 8.8
+                   mediaid=None
+                   metadata_expire=-1
+                   gpgcheck=0
+                   cost=500
+                 **/
                 switch (selectedDistro->second) {
                     case OS::Distro::RHEL:
                         if (formattedIsoName.find("rhel") != std::string::npos)

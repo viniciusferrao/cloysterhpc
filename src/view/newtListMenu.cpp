@@ -54,6 +54,8 @@ std::pair<int, std::vector<std::string>> Newt::multipleSelectionMenu(
     newtFormAddComponents(
         form, list, label, buttonOk, buttonCancel, buttonHelp, nullptr);
 
+    newtRefresh();
+
     newtExitStruct es = {};
     newtFormRun(form, &es);
 
@@ -74,6 +76,7 @@ std::pair<int, std::vector<std::string>> Newt::multipleSelectionMenu(
     }
 
     auto ret = retrieveListSelectedItems(list);
+    newtPopWindow();
     newtFormDestroy(form);
     newtRefresh();
 

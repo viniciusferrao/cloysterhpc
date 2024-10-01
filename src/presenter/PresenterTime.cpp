@@ -46,17 +46,30 @@ PresenterTime::PresenterTime(
     // FIXME: Horrible call; getTimezone() two times? Srsly?
     LOG_DEBUG("Timezone set to: {}", m_model->getTimezone().getTimezone())
 
-    // Timeserver settings
-    // FIXME: We left std::to_array if we want to manage the input on the view,
-    //        making setTimeservers a little clunky.
-    auto timeservers = std::to_array<std::pair<std::string, std::string>>(
-        { { Messages::Timeservers::field, "0.br.pool.ntp.org" } });
+    std::vector<std::string> defaultServers = { "0.br.pool.ntp.org" };
 
-    timeservers
-        = m_view->fieldMenu(Messages::title, Messages::Timeservers::question,
-            timeservers, Messages::Timeservers::help);
+    auto collectCallback = [this](std::vector<std::string>& items) {
+        // Timeserver settings
+        // FIXME: We left std::to_array if we want to manage the input on the
+        // view,
+        //        making setTimeservers a little clunky.
+        auto timeserver = std::to_array<std::pair<std::string, std::string>>(
+            { { Messages::AddTimeserver::field, "" } });
 
-    m_model->getTimezone().setTimeservers(timeservers[0].second);
+        timeserver = m_view->fieldMenu(Messages::title,
+            Messages::AddTimeserver::question, timeserver,
+            Messages::AddTimeserver::help);
+
+        items.push_back(timeserver[0].second);
+
+        return true;
+    };
+
+    auto timeservers = m_view->collectListMenu(Messages::title,
+        Messages::Timeservers::question, defaultServers,
+        Messages::Timeservers::help, std::move(collectCallback));
+
+    m_model->getTimezone().setTimeservers(timeservers);
     LOG_DEBUG("Timeservers set to {}",
         fmt::join(m_model->getTimezone().getTimeservers(), ", "));
 }
