@@ -94,16 +94,11 @@ const std::string Cluster::getDomainName() const
     return fqdn.substr(fqdn.find_first_of('.') + 1);
 }
 
-/* TODO: Fix logic, split domain to a vector after each dot (.) to check for
- *  correctness
- */
 void Cluster::setDomainName(const std::string& domainName)
 {
-    // m_domainName = domainName;
-
     // Force FQDN update if domainName is changed:
     m_headnode.setFQDN(
-        fmt::format("{}.{}", m_headnode.getHostname(), m_domainName));
+        fmt::format("{}.{}", m_headnode.getHostname(), domainName));
 }
 
 std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
