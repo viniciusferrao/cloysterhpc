@@ -589,7 +589,7 @@ void Cluster::fillData(const std::string& answerfilePath)
                 answerfile.service.con_interface.value()));
         }
 
-        if (answerfile.service.domain_name->empty()) {
+        if (!answerfile.service.domain_name->empty()) {
             serviceNetwork->setDomainName(
                 answerfile.service.domain_name.value());
         } else {

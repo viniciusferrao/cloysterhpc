@@ -41,7 +41,8 @@ void Headnode::discoverNames()
     boost::split(hostparts, std::string { fqdn }, boost::is_any_of("."));
 
     std::string hostname = fqdn.empty() ? "localhost" : hostparts[0];
-    bool hasDomain = hostparts.size() > 1 && hostparts[1] != "(none)";
+    bool hasDomain = hostparts.size() > 1 && hostparts[1] != ""
+        && hostparts[1] != "(none)";
 
     setHostname(hostname);
     setFQDN(hasDomain ? fqdn : hostname + ".localdomain");
