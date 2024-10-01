@@ -80,6 +80,8 @@ public:
     void message(const char*);
     void message(const char*, const char*);
 
+    void fatalMessage(const char*, const char*);
+
     void okCancelMessage(const char* message);
     void okCancelMessage(const char* title, const char* message);
 

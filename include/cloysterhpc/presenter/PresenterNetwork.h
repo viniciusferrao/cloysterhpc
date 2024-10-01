@@ -25,6 +25,9 @@ private:
 
     struct Messages {
         static constexpr const auto title = "Network Settings";
+        static constexpr const auto errorInsufficient
+            = "Not enough interfaces!\nYou need at least two separate cards: "
+              "one internal and one external";
 
         struct Interface {
             static std::string formatQuestion(

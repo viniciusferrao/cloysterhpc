@@ -48,6 +48,11 @@ void PresenterNetwork::createNetwork()
 {
     // Get the network interface
     const auto& aux = Connection::fetchInterfaces();
+
+    if (aux.size() <= 1) {
+        m_view->fatalMessage(Messages::title, Messages::errorInsufficient);
+    }
+
     const auto& interface = networkInterfaceSelection(aux);
     m_connection.setInterface(interface);
 
