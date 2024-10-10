@@ -8,6 +8,7 @@
 #include "cloysterhpc/tools/nvhpc.h"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <iterator>
 #include <magic_enum.hpp>
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)
@@ -50,6 +51,24 @@ address AnswerFile::convertStringToAddress(const std::string& addr)
     } catch (boost::system::system_error& e) {
         throw std::invalid_argument("Invalid address");
     }
+}
+
+std::vector<address> AnswerFile::convertStringToMultipleAddresses(
+    const std::string& addr)
+{
+    std::vector<address> out;
+    std::vector<std::string> strout;
+    try {
+        boost::split(strout, addr, boost::is_any_of(","));
+    } catch (boost::system::system_error& e) {
+        throw std::invalid_argument(
+            "Invalid character while decoding multiple addresses");
+    }
+
+    std::transform(strout.begin(), strout.end(), std::back_inserter(out),
+        [this](auto& s) { return this->convertStringToAddress(s); });
+
+    return out;
 }
 
 template <typename T>
