@@ -174,6 +174,15 @@ private:
     address convertStringToAddress(const std::string& addr);
 
     /**
+     * @brief Converts a string to multiple addresses
+     *
+     * @param addr The string representation of the address list.
+     * @return The converted address.
+     */
+    std::vector<address> convertStringToMultipleAddresses(
+        const std::string& addr);
+
+    /**
      * @brief Loads the external network configuration.
      *
      * This function parses and loads the settings for the external network.
@@ -325,17 +334,19 @@ private:
     std::string message;
 
 public:
-    answerfile_validation_exception(const char* msg)
+    explicit answerfile_validation_exception(const char* msg)
         : message(msg)
     {
     }
 
-    answerfile_validation_exception(std::string msg)
+    explicit answerfile_validation_exception(const std::string& msg)
         : message(msg)
     {
     }
 
-    const char* what() { return message.c_str(); }
+    ~answerfile_validation_exception() override = default;
+
+    const char* what() const noexcept override { return message.c_str(); }
 };
 
 #endif // CLOYSTERHPC_ANSWERFILE_H_
