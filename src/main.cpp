@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cctype>
 #include <cstdlib>
 
 #include "cloysterhpc/hardware.h"
@@ -127,10 +128,10 @@ int main(int argc, const char** argv)
                     cloyster::productName);
                 std::cin >> response;
 
-                if (response == 'Y' || response == 'y') {
+                if (std::toupper(response) == 'Y') {
                     LOG_INFO("Running {}.\n", cloyster::productName)
                     break;
-                } else if (response == 'N' || response == 'n') {
+                } else if (std::toupper(response) == 'N') {
                     LOG_INFO("Stopping {}.\n", cloyster::productName)
                     return EXIT_SUCCESS;
                 }
