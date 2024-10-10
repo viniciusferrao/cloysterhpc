@@ -8,10 +8,10 @@
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 
+#include <expected>
 #include <regex>
 #include <set>
 #include <string>
-#include <expected>
 
 #include <boost/algorithm/string.hpp>
 #include <utility>
@@ -102,7 +102,8 @@ void Connection::setInterface(std::string_view interface)
 
     freeifaddrs(ifaddr);
 
-    throw std::runtime_error(fmt::format("Cannot find network interface {}", interface));
+    throw std::runtime_error(
+        fmt::format("Cannot find network interface {}", interface));
 }
 
 std::vector<std::string> Connection::fetchInterfaces()
@@ -140,24 +141,24 @@ void Connection::setMAC(std::string_view mac)
 {
     auto validation = Connection::validateMAC(mac);
     if (validation.has_value())
-        m_mac = boost::algorithm::to_lower_copy(std::string{mac});
+        m_mac = boost::algorithm::to_lower_copy(std::string { mac });
     else
-        throw std::runtime_error{validation.error()};
-
+        throw std::runtime_error { validation.error() };
 }
 
-std::expected<bool, std::string> Connection::validateMAC(std::string_view address)
+std::expected<bool, std::string> Connection::validateMAC(
+    std::string_view address)
 {
     LOG_DEBUG("Checking MAC address: {}", address)
-    if ((address.size() != 12) && (address.size() != 14) && (address.size() != 17))
+    if ((address.size() != 12) && (address.size() != 14)
+        && (address.size() != 17))
         return std::unexpected("Invalid MAC address size");
-
 
     // This pattern validates whether an ADDRESS address is valid or not.
     static std::regex pattern(
         "^("
-        "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" // Matches ADDRESS address with
-                                                  // colons or hyphens
+        "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" // Matches ADDRESS address
+                                                  // with colons or hyphens
         "|"
         "(?:[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}" // Matches Cisco
                                                               // ADDRESS format
@@ -168,8 +169,6 @@ std::expected<bool, std::string> Connection::validateMAC(std::string_view addres
         return true;
     else
         return std::unexpected("Invalid MAC address format");
-
-    
 }
 
 const address Connection::getAddress() const { return m_address; }
@@ -339,7 +338,7 @@ TEST_SUITE("Test MAC address validity")
 {
     Network network;
     Connection connection = Connection(&network);
-    
+
     TEST_CASE("Length Issues")
     {
         CHECK_THROWS(connection.setMAC("ab:cd:ef:01:23")); // Too short

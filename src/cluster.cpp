@@ -17,10 +17,10 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <expected>
 #include <iostream>
 #include <memory>
 #include <regex>
-#include <expected>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
@@ -254,7 +254,8 @@ void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
     if (std::filesystem::exists(diskImagePath)) {
         m_diskImage.setPath(diskImagePath);
     } else {
-        throw std::runtime_error(fmt::format("Disk image path {} doesn't exist", diskImagePath.string()));
+        throw std::runtime_error(fmt::format(
+            "Disk image path {} doesn't exist", diskImagePath.string()));
     }
 }
 
@@ -626,14 +627,16 @@ void Cluster::fillData(const std::string& answerfilePath)
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
-        auto& subnet_mask =  answerfile.application.subnet_mask;
-        auto& gateway =  answerfile.application.gateway;
-        auto& domain_name =  answerfile.application.domain_name;
-        auto& nameservers =  answerfile.application.nameservers;
+        auto& subnet_mask = answerfile.application.subnet_mask;
+        auto& gateway = answerfile.application.gateway;
+        auto& domain_name = answerfile.application.domain_name;
+        auto& nameservers = answerfile.application.nameservers;
 
-        auto throwIfEmpty = [](bool optional_cast_value, const char* fieldname) {
+        auto throwIfEmpty = [](bool optional_cast_value,
+                                const char* fieldname) {
             if (!optional_cast_value) {
-                throw std::runtime_error(fmt::format("Field {} of application network is empty", fieldname));                
+                throw std::runtime_error(fmt::format(
+                    "Field {} of application network is empty", fieldname));
             }
         };
 #define THROW_IF_EMPTY(field) throwIfEmpty(field.has_value(), #field)
@@ -642,7 +645,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         THROW_IF_EMPTY(domain_name);
         THROW_IF_EMPTY(nameservers);
 #undef THROW_IF_EMPTY
-        
+
         applicationNetwork->setSubnetMask(subnet_mask.value());
         applicationNetwork->setGateway(gateway.value());
         applicationNetwork->setDomainName(domain_name.value());
@@ -682,7 +685,7 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     LOG_INFO("Configure Nodes")
-    for (const auto& node : answerfile.nodes.nodes) {        
+    for (const auto& node : answerfile.nodes.nodes) {
         LOG_TRACE("Configure node {}", node.hostname.value())
 
         std::list<Connection> nodeConnections;
@@ -701,23 +704,22 @@ void Cluster::fillData(const std::string& answerfilePath)
         LOG_TRACE("{} start ip: {}", newNode.getHostname(),
             newNode.getNodeStartIp()->to_string());
 
-        
         auto& mac_address = node.mac_address;
         if (mac_address) {
-            if (auto err = Connection::validateMAC(mac_address.value()); !err.has_value()) {
-                throw std::runtime_error
-                {
-                    fmt::format(
-                        "Error decoding MAC address (read {}) of node {}: {}",
-                        mac_address.value(), nodename, err.error())};
+            if (auto err = Connection::validateMAC(mac_address.value());
+                !err.has_value()) {
+                throw std::runtime_error { fmt::format(
+                    "Error decoding MAC address (read {}) of node {}: {}",
+                    mac_address.value(), nodename, err.error()) };
             } else {
                 newNode.setMACAddress(mac_address.value());
             }
         } else {
-            throw std::runtime_error{fmt::format("Missing MAC address on node {}", nodename)};
+            throw std::runtime_error { fmt::format(
+                "Missing MAC address on node {}", nodename) };
         }
         LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
-                  newNode.getMACAddress());
+            newNode.getMACAddress());
 
         newNode.setNodeRootPassword(node.root_password.value());
 
@@ -808,7 +810,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         m_mailSystem->setKeyFile(answerfile.postfix.key_file);
     }
 
-    /* Bad and old data - @TODO Must improve */    
+    /* Bad and old data - @TODO Must improve */
     nodeStartIP = answerfile.nodes.generic->start_ip.value();
     nodeRootPassword = answerfile.nodes.generic->root_password.value();
 }

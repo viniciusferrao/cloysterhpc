@@ -313,9 +313,10 @@ void Network::setDomainName(const std::string& domainName)
 
     /* Check if it's not only alphanumerics and - */
     if (!(std::regex_match(domainName, std::regex("^[A-Za-z0-9-.]+$"))))
-        throw std::invalid_argument(
-            fmt::format("Domain name ({}) contains invalid characters. Only alphanumeric "
-                        "characters and hyphens are allowed.", domainName));
+        throw std::invalid_argument(fmt::format(
+            "Domain name ({}) contains invalid characters. Only alphanumeric "
+            "characters and hyphens are allowed.",
+            domainName));
 
     m_domainName = domainName;
 }

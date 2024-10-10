@@ -10,10 +10,10 @@
 
 #include <arpa/inet.h>
 #include <boost/asio.hpp>
+#include <expected>
 #include <ifaddrs.h>
 #include <memory>
 #include <string>
-#include <expected>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -94,8 +94,9 @@ public:
     [[nodiscard]] std::optional<std::string_view> getMAC() const;
     void setMAC(std::string_view mac);
 
-    static std::expected<bool, std::string> validateMAC(std::string_view address);
-    
+    static std::expected<bool, std::string> validateMAC(
+        std::string_view address);
+
     [[nodiscard]] std::uint16_t getMTU() const;
     void setMTU(std::uint16_t mtu);
 
