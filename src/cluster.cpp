@@ -494,6 +494,10 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // OS and Information
 
+    LOG_INFO("Distro: {}", answerfile.system.distro);
+    LOG_INFO("Kernel: {}", answerfile.system.kernel);
+    LOG_INFO("Version: {}", answerfile.system.version);
+
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);

@@ -110,6 +110,8 @@ template <typename NetworkType>
 void AnswerFile::loadNetwork(const std::string& networkSection,
     NetworkType& network, bool optionalNameservers)
 {
+    LOG_TRACE("Loading network section {}", networkSection);
+
     network.con_interface = m_ini.getValue(networkSection, "interface", false);
     convertNetworkAddressAndValidate(
         networkSection, "ip_address", network.con_ip_addr);
