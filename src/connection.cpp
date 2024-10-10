@@ -8,6 +8,7 @@
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 
+#include <expected>
 #include <regex>
 #include <set>
 #include <string>
@@ -101,7 +102,8 @@ void Connection::setInterface(std::string_view interface)
 
     freeifaddrs(ifaddr);
 
-    throw std::runtime_error("Cannot find network interface");
+    throw std::runtime_error(
+        fmt::format("Cannot find network interface {}", interface));
 }
 
 std::vector<std::string> Connection::fetchInterfaces()
@@ -137,26 +139,36 @@ std::optional<std::string_view> Connection::getMAC() const { return m_mac; }
 
 void Connection::setMAC(std::string_view mac)
 {
-    LOG_DEBUG("Checking MAC address: {}", mac)
+    auto validation = Connection::validateMAC(mac);
+    if (validation.has_value())
+        m_mac = boost::algorithm::to_lower_copy(std::string { mac });
+    else
+        throw std::runtime_error { validation.error() };
+}
 
-    if ((mac.size() != 12) && (mac.size() != 14) && (mac.size() != 17))
-        throw std::runtime_error("Invalid MAC address size");
+std::expected<bool, std::string> Connection::validateMAC(
+    std::string_view address)
+{
+    LOG_DEBUG("Checking MAC address: {}", address)
+    if ((address.size() != 12) && (address.size() != 14)
+        && (address.size() != 17))
+        return std::unexpected("Invalid MAC address size");
 
-    // This pattern validates whether an MAC address is valid or not.
-    const std::regex pattern(
+    // This pattern validates whether an ADDRESS address is valid or not.
+    static std::regex pattern(
         "^("
-        "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" // Matches MAC address with
-                                                  // colons or hyphens
+        "(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}" // Matches ADDRESS address
+                                                  // with colons or hyphens
         "|"
         "(?:[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}" // Matches Cisco
-                                                              // MAC format
+                                                              // ADDRESS format
         "))$");
 
     // regex_match cannot work with std::string_view
-    if (std::string tempString { mac }; regex_match(tempString, pattern))
-        m_mac = boost::algorithm::to_lower_copy(tempString);
+    if (std::string tempString { address }; regex_match(tempString, pattern))
+        return true;
     else
-        throw std::runtime_error("Invalid MAC address");
+        return std::unexpected("Invalid MAC address format");
 }
 
 const address Connection::getAddress() const { return m_address; }
@@ -239,12 +251,7 @@ void Connection::setHostname(const std::string& hostname)
     if (hostname.size() > 63)
         throw std::range_error("Hostname cannot be bigger than 64 characters");
 
-#if __cpp_lib_starts_ends_with >= 201711L
     if (hostname.starts_with('-') or hostname.ends_with('-'))
-#else
-    if (boost::algorithm::starts_with(hostname, "-")
-        or boost::algorithm::ends_with(hostname, "-"))
-#endif
         throw std::runtime_error("Hostname cannot start or end with dashes");
 
     /* Check if string has only digits */

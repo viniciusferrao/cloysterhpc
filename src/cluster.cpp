@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/cloyster.h"
 #include <cloysterhpc/answerfile.h>
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
@@ -17,6 +17,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <expected>
 #include <iostream>
 #include <memory>
 #include <regex>
@@ -253,7 +254,8 @@ void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
     if (std::filesystem::exists(diskImagePath)) {
         m_diskImage.setPath(diskImagePath);
     } else {
-        throw std::runtime_error("Disk image path doesn't exist");
+        throw std::runtime_error(fmt::format(
+            "Disk image path {} doesn't exist", diskImagePath.string()));
     }
 }
 
@@ -492,6 +494,10 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // OS and Information
 
+    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfile.system.distro));
+    LOG_INFO("Kernel: {}", answerfile.system.kernel);
+    LOG_INFO("Version: {}", answerfile.system.version);
+
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
@@ -625,16 +631,29 @@ void Cluster::fillData(const std::string& answerfilePath)
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
-        applicationNetwork->setSubnetMask(
-            answerfile.application.subnet_mask.value());
+        auto& subnet_mask = answerfile.application.subnet_mask;
+        auto& gateway = answerfile.application.gateway;
+        auto& domain_name = answerfile.application.domain_name;
+        auto& nameservers = answerfile.application.nameservers;
 
-        applicationNetwork->setGateway(answerfile.application.gateway.value());
+        auto throwIfEmpty = [](bool optional_cast_value,
+                                const char* fieldname) {
+            if (!optional_cast_value) {
+                throw answerfile_validation_exception(fmt::format(
+                    "Field {} of application network is empty", fieldname));
+            }
+        };
+#define THROW_IF_EMPTY(field) throwIfEmpty(field.has_value(), #field)
+        THROW_IF_EMPTY(subnet_mask);
+        THROW_IF_EMPTY(gateway);
+        THROW_IF_EMPTY(domain_name);
+        THROW_IF_EMPTY(nameservers);
+#undef THROW_IF_EMPTY
 
-        applicationNetwork->setDomainName(
-            answerfile.application.domain_name.value());
-
-        applicationNetwork->setNameservers(
-            answerfile.application.nameservers.value());
+        applicationNetwork->setSubnetMask(subnet_mask.value());
+        applicationNetwork->setGateway(gateway.value());
+        applicationNetwork->setDomainName(domain_name.value());
+        applicationNetwork->setNameservers(nameservers.value());
 
         addNetwork(std::move(applicationNetwork));
 
@@ -669,9 +688,8 @@ void Cluster::fillData(const std::string& answerfilePath)
         tool->install();
     }
 
-    LOG_TRACE("Configure Nodes")
-    for (auto node : answerfile.nodes.nodes) {
-
+    LOG_INFO("Configure Nodes")
+    for (const auto& node : answerfile.nodes.nodes) {
         LOG_TRACE("Configure node {}", node.hostname.value())
 
         std::list<Connection> nodeConnections;
@@ -682,15 +700,28 @@ void Cluster::fillData(const std::string& answerfilePath)
         CPU newNodeCPU;
         BMC newNodeBMC;
 
-        newNode.setHostname(node.hostname.value());
+        std::string nodename = node.hostname.value();
+        newNode.setHostname(nodename);
 
         newNode.setNodeStartIp(node.start_ip.value());
 
         LOG_TRACE("{} start ip: {}", newNode.getHostname(),
             newNode.getNodeStartIp()->to_string());
 
-        newNode.setMACAddress(node.mac_address.value());
-
+        auto& mac_address = node.mac_address;
+        if (mac_address) {
+            if (auto err = Connection::validateMAC(mac_address.value());
+                !err.has_value()) {
+                throw answerfile_validation_exception { fmt::format(
+                    "Error decoding MAC address (read {}) of node {}: {}",
+                    mac_address.value(), nodename, err.error()) };
+            } else {
+                newNode.setMACAddress(mac_address.value());
+            }
+        } else {
+            throw answerfile_validation_exception { fmt::format(
+                "Missing MAC address on node {}", nodename) };
+        }
         LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
             newNode.getMACAddress());
 
@@ -699,17 +730,31 @@ void Cluster::fillData(const std::string& answerfilePath)
         LOG_TRACE("{} root password: {}", newNode.getHostname(),
             newNode.getNodeRootPassword().value());
 
-        newNodeCPU.setSockets(std::stoul(node.sockets.value()));
+        auto convertOrError
+            = [nodename](std::string value, const char* field_name) {
+                  try {
+                      return std::stoul(value);
+                  } catch (std::invalid_argument& e) {
+                      throw answerfile_validation_exception { fmt::format(
+                          "Conversion error on node {}: field {} is not a "
+                          "number (value is {})",
+                          nodename, field_name, value) };
+                  }
+              };
+
+#define CONVERT_OR_ERROR(FIELD) convertOrError(node.FIELD.value(), #FIELD)
+
+        newNodeCPU.setSockets(CONVERT_OR_ERROR(sockets));
 
         LOG_TRACE("{} CPU sockets: {}", newNode.getHostname(),
             newNodeCPU.getSockets());
 
-        newNodeCPU.setCoresPerSocket(std::stoul(node.cores_per_socket.value()));
+        newNodeCPU.setCoresPerSocket(CONVERT_OR_ERROR(cores_per_socket));
 
         LOG_TRACE("{} CPU cores per socket: {}", newNode.getHostname(),
             newNodeCPU.getCoresPerSocket());
 
-        newNodeCPU.setThreadsPerCore(std::stoul(node.threads_per_core.value()));
+        newNodeCPU.setThreadsPerCore(CONVERT_OR_ERROR(threads_per_core));
 
         LOG_TRACE("{} CPU threads per core: {}", newNode.getHostname(),
             newNodeCPU.getThreadsPerCore());
@@ -729,15 +774,17 @@ void Cluster::fillData(const std::string& answerfilePath)
         LOG_TRACE("{} BMC password: {}", newNode.getHostname(),
             newNodeBMC.getPassword());
 
-        newNodeBMC.setSerialPort(std::stoul(node.bmc_serialport.value()));
+        newNodeBMC.setSerialPort(CONVERT_OR_ERROR(bmc_serialport));
 
         LOG_TRACE("{} BMC serial port: {}", newNode.getHostname(),
             newNodeBMC.getSerialPort());
 
-        newNodeBMC.setSerialSpeed(std::stoul(node.bmc_serialspeed.value()));
+        newNodeBMC.setSerialSpeed(CONVERT_OR_ERROR(bmc_serialspeed));
 
         LOG_TRACE("{} BMC serial speed: {}", newNode.getHostname(),
             newNodeBMC.getSerialSpeed());
+
+#undef CONVERT_OR_ERROR
 
         newNode.setCPU(newNodeCPU);
         newNode.setBMC(newNodeBMC);
@@ -757,7 +804,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         m_mailSystem->setDestination(answerfile.postfix.destination);
 
         if (!m_mailSystem->getDomain()) {
-            throw std::runtime_error(
+            throw answerfile_validation_exception(
                 "A domain is needed for e-mail configuration");
         }
 
@@ -784,8 +831,6 @@ void Cluster::fillData(const std::string& answerfilePath)
     }
 
     /* Bad and old data - @TODO Must improve */
-    nodePrefix = answerfile.nodes.generic->prefix.value();
-    nodePadding = std::stoul(answerfile.nodes.generic->padding.value());
     nodeStartIP = answerfile.nodes.generic->start_ip.value();
     nodeRootPassword = answerfile.nodes.generic->root_password.value();
 }

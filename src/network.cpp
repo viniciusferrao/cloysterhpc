@@ -303,12 +303,7 @@ void Network::setDomainName(const std::string& domainName)
         throw std::length_error("Domain name exceeds the maximum allowed "
                                 "length of 255 characters.");
 
-#if __cpp_lib_starts_ends_with >= 201711L
     if (domainName.starts_with('-') or domainName.ends_with('-'))
-#else
-    if (boost::algorithm::starts_with(domainName, "-")
-        or boost::algorithm::ends_with(domainName, "-"))
-#endif
         throw std::runtime_error("Invalid hostname");
 
     /* Check if string has only digits */
@@ -318,9 +313,10 @@ void Network::setDomainName(const std::string& domainName)
 
     /* Check if it's not only alphanumerics and - */
     if (!(std::regex_match(domainName, std::regex("^[A-Za-z0-9-.]+$"))))
-        throw std::invalid_argument(
-            "Domain name contains invalid characters. Only alphanumeric "
-            "characters and hyphens are allowed.");
+        throw std::invalid_argument(fmt::format(
+            "Domain name ({}) contains invalid characters. Only alphanumeric "
+            "characters and hyphens are allowed.",
+            domainName));
 
     m_domainName = domainName;
 }
