@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/cloyster.h"
 #include <cloysterhpc/answerfile.h>
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/headnode.h>
@@ -494,7 +494,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
     // OS and Information
 
-    LOG_INFO("Distro: {}", answerfile.system.distro);
+    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfile.system.distro));
     LOG_INFO("Kernel: {}", answerfile.system.kernel);
     LOG_INFO("Version: {}", answerfile.system.version);
 
@@ -700,7 +700,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         CPU newNodeCPU;
         BMC newNodeBMC;
 
-        auto nodename = node.hostname.value();
+        std::string nodename = node.hostname.value();
         newNode.setHostname(nodename);
 
         newNode.setNodeStartIp(node.start_ip.value());
@@ -730,17 +730,31 @@ void Cluster::fillData(const std::string& answerfilePath)
         LOG_TRACE("{} root password: {}", newNode.getHostname(),
             newNode.getNodeRootPassword().value());
 
-        newNodeCPU.setSockets(std::stoul(node.sockets.value()));
+        auto convertOrError
+            = [nodename](std::string value, const char* field_name) {
+                  try {
+                      return std::stoul(value);
+                  } catch (std::invalid_argument& e) {
+                      throw std::runtime_error { fmt::format(
+                          "Conversion error on node {}: field {} is not a "
+                          "number (value is {})",
+                          nodename, field_name, value) };
+                  }
+              };
+
+#define CONVERT_OR_ERROR(FIELD) convertOrError(node.FIELD.value(), #FIELD)
+
+        newNodeCPU.setSockets(CONVERT_OR_ERROR(sockets));
 
         LOG_TRACE("{} CPU sockets: {}", newNode.getHostname(),
             newNodeCPU.getSockets());
 
-        newNodeCPU.setCoresPerSocket(std::stoul(node.cores_per_socket.value()));
+        newNodeCPU.setCoresPerSocket(CONVERT_OR_ERROR(cores_per_socket));
 
         LOG_TRACE("{} CPU cores per socket: {}", newNode.getHostname(),
             newNodeCPU.getCoresPerSocket());
 
-        newNodeCPU.setThreadsPerCore(std::stoul(node.threads_per_core.value()));
+        newNodeCPU.setThreadsPerCore(CONVERT_OR_ERROR(threads_per_core));
 
         LOG_TRACE("{} CPU threads per core: {}", newNode.getHostname(),
             newNodeCPU.getThreadsPerCore());
@@ -760,15 +774,17 @@ void Cluster::fillData(const std::string& answerfilePath)
         LOG_TRACE("{} BMC password: {}", newNode.getHostname(),
             newNodeBMC.getPassword());
 
-        newNodeBMC.setSerialPort(std::stoul(node.bmc_serialport.value()));
+        newNodeBMC.setSerialPort(CONVERT_OR_ERROR(bmc_serialport));
 
         LOG_TRACE("{} BMC serial port: {}", newNode.getHostname(),
             newNodeBMC.getSerialPort());
 
-        newNodeBMC.setSerialSpeed(std::stoul(node.bmc_serialspeed.value()));
+        newNodeBMC.setSerialSpeed(CONVERT_OR_ERROR(bmc_serialspeed));
 
         LOG_TRACE("{} BMC serial speed: {}", newNode.getHostname(),
             newNodeBMC.getSerialSpeed());
+
+#undef CONVERT_OR_ERROR
 
         newNode.setCPU(newNodeCPU);
         newNode.setBMC(newNodeBMC);
