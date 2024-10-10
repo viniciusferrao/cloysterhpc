@@ -639,7 +639,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         auto throwIfEmpty = [](bool optional_cast_value,
                                 const char* fieldname) {
             if (!optional_cast_value) {
-                throw std::runtime_error(fmt::format(
+                throw answerfile_validation_exception(fmt::format(
                     "Field {} of application network is empty", fieldname));
             }
         };
@@ -712,14 +712,14 @@ void Cluster::fillData(const std::string& answerfilePath)
         if (mac_address) {
             if (auto err = Connection::validateMAC(mac_address.value());
                 !err.has_value()) {
-                throw std::runtime_error { fmt::format(
+                throw answerfile_validation_exception { fmt::format(
                     "Error decoding MAC address (read {}) of node {}: {}",
                     mac_address.value(), nodename, err.error()) };
             } else {
                 newNode.setMACAddress(mac_address.value());
             }
         } else {
-            throw std::runtime_error { fmt::format(
+            throw answerfile_validation_exception { fmt::format(
                 "Missing MAC address on node {}", nodename) };
         }
         LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
@@ -735,7 +735,7 @@ void Cluster::fillData(const std::string& answerfilePath)
                   try {
                       return std::stoul(value);
                   } catch (std::invalid_argument& e) {
-                      throw std::runtime_error { fmt::format(
+                      throw answerfile_validation_exception { fmt::format(
                           "Conversion error on node {}: field {} is not a "
                           "number (value is {})",
                           nodename, field_name, value) };
@@ -804,7 +804,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         m_mailSystem->setDestination(answerfile.postfix.destination);
 
         if (!m_mailSystem->getDomain()) {
-            throw std::runtime_error(
+            throw answerfile_validation_exception(
                 "A domain is needed for e-mail configuration");
         }
 

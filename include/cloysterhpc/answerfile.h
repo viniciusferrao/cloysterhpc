@@ -320,4 +320,22 @@ public:
     explicit AnswerFile(const std::filesystem::path& path);
 };
 
+class answerfile_validation_exception : public std::exception {
+private:
+    std::string message;
+
+public:
+    answerfile_validation_exception(const char* msg)
+        : message(msg)
+    {
+    }
+
+    answerfile_validation_exception(std::string msg)
+        : message(msg)
+    {
+    }
+
+    const char* what() { return message.c_str(); }
+};
+
 #endif // CLOYSTERHPC_ANSWERFILE_H_
