@@ -8,8 +8,10 @@
 #include "cloysterhpc/tools/nvhpc.h"
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iterator>
 #include <magic_enum.hpp>
+#include <ranges>
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)
     : m_path(path)
@@ -261,12 +263,38 @@ void AnswerFile::loadNodes()
     const AFNode generic = loadNode("node");
     nodes.generic = generic;
 
-    int nodeCounter = 1;
-    while (true) {
-        std::string nodeSection = fmt::format("node.{}", nodeCounter);
-        if (!m_ini.exists(nodeSection)) {
-            break;
+    /**
+     * Some nodes will be out of order.
+     * For example, the first node (node.1) will be commented out, but the
+     * second node (node.2) will exist; the third (node.3) will be commented,
+     * but the fourth (node.4) will exist
+     *
+     * The only rule we have is that the node must start at 0.
+     *
+     * For user convenience, we will accept files with this configuration
+     */
+
+    LOG_INFO("Enumerating nodes in the file");
+    auto nodelist = m_ini.listAllPrefixedEntries("node.");
+
+    LOG_INFO("Found {} possible nodes", nodelist.size());
+
+    auto node_counter = [](std::string_view node) {
+        auto num = node.substr(node.find_first_of('.') + 1);
+        return boost::lexical_cast<std::size_t>(num);
+    };
+
+    auto is_node_number = [&node_counter](std::string_view node) {
+        try {
+            return node_counter(node) > 0;
+        } catch (boost::bad_lexical_cast&) {
+            return false;
         }
+    };
+
+    for (const auto& nodeSection :
+        nodelist | std::views::filter(is_node_number)) {
+        auto nodeCounter = node_counter(nodeSection);
 
         LOG_TRACE("Configure {}", nodeSection)
         AFNode newNode = loadNode(nodeSection);
@@ -282,10 +310,11 @@ void AnswerFile::loadNodes()
                     "Section node.{} must have a 'hostname' key or you must "
                     "inform a generic 'padding' value",
                     nodeCounter));
-            } else
+            } else {
                 newNode.hostname = fmt::format(fmt::runtime("{}{:0>{}}"),
                     generic.prefix.value(), nodeCounter,
                     stoi(generic.padding.value()));
+            }
         }
 
         try {
@@ -297,7 +326,6 @@ void AnswerFile::loadNodes()
         }
 
         nodes.nodes.emplace_back(newNode);
-        nodeCounter++;
     }
 }
 
@@ -404,6 +432,8 @@ TEST_SUITE("Test Answerfile Methods")
     {
         AnswerFile correct { tests::sampleDirectory
             / "answerfile/correct.answerfile.ini" };
+        AnswerFile unordered { tests::sampleDirectory
+            / "answerfile/unordered.answerfile.ini" };
         AnswerFile wrong { tests::sampleDirectory
             / "answerfile/wrong.answerfile.ini" };
 
@@ -412,12 +442,15 @@ TEST_SUITE("Test Answerfile Methods")
 
             CHECK_NOTHROW(correct.loadExternalNetwork());
             CHECK_THROWS(wrong.loadExternalNetwork());
+            CHECK_NOTHROW(unordered.loadExternalNetwork());
 
             CHECK_NOTHROW(correct.loadManagementNetwork());
             CHECK_THROWS(wrong.loadManagementNetwork());
+            CHECK_NOTHROW(unordered.loadManagementNetwork());
 
             CHECK_NOTHROW(correct.loadApplicationNetwork());
             CHECK_THROWS(wrong.loadApplicationNetwork());
+            CHECK_NOTHROW(unordered.loadApplicationNetwork());
         }
 
         SUBCASE("Information")
@@ -448,6 +481,10 @@ TEST_SUITE("Test Answerfile Methods")
         {
             CHECK_NOTHROW(correct.loadNodes());
             CHECK_THROWS(wrong.loadNodes());
+            CHECK_NOTHROW(unordered.loadNodes());
+
+            CHECK(correct.nodes.nodes.size() == 1);
+            CHECK(unordered.nodes.nodes.size() == 1);
         }
     }
 }

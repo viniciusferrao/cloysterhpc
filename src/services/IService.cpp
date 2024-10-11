@@ -15,7 +15,7 @@ void IService::enable()
 
     if (retvec.empty()) {
         throw std::runtime_error {
-            "Service enable failed, dbus call returned <= 0"
+            "Service enable failed, service not found (service count <= 0)"
         };
     }
 }
@@ -29,7 +29,7 @@ void IService::disable()
 
     if (ret.empty()) {
         throw std::runtime_error {
-            "Service disable failed, dbus call returned <= 0"
+            "Service disable failed, service not found (service count <= 0)"
         };
     }
 }
