@@ -42,7 +42,7 @@
     }
 
 // Available only with DEBUG builds
-#ifndef NDEBUG
+#if 1
 #define LOG_DEBUG(...)                                                         \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->debug(__VA_ARGS__);                          \
