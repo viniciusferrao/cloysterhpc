@@ -6,6 +6,7 @@
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/queuesystem/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <filesystem>
 
 using cloyster::runCommand;
 

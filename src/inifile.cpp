@@ -137,6 +137,24 @@ std::vector<std::string> inifile::listAllSections() const
     return convertIniNames(std::move(sections));
 }
 
+/**
+ * @brief List all the entries of a section, with a certain prefix, like
+ * "node." for nodes
+ *
+ * @return The names of the entries found
+ */
+std::vector<std::string> inifile::listAllPrefixedEntries(
+    const std::string_view prefix) const
+{
+    auto vec = listAllSections();
+    std::vector<std::string> filtered;
+
+    std::copy_if(vec.begin(), vec.end(), std::back_inserter(filtered),
+        [prefix](std::string v) { return v.starts_with(prefix); });
+
+    return filtered;
+}
+
 std::vector<std::string> inifile::listAllEntries(
     const std::string& section) const
 {
