@@ -6,6 +6,7 @@
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/log.h>
 #include <fmt/format.h>
 
 using cloyster::runCommand;
@@ -29,6 +30,8 @@ void NFS::setFullPath()
 
 void NFS::configure()
 {
+    LOG_INFO("Configuring NFS");
+
     runCommand("dnf -y install nfs-utils");
 
     // TODO: detect nfs existence before proceeding
@@ -44,17 +47,15 @@ void NFS::configure()
 
     runCommand("exportfs -a");
 
-    // @FIXME: Create a file using std::filesystem and not with touch
-    runCommand(fmt::format("touch {}/conf/node/etc/auto.master.d/{}.autofs",
+    cloyster::touchFile(fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs",
         installPath, m_directoryName));
     cloyster::addStringToFile(
         fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs", installPath,
             m_directoryName),
         fmt::format("{} /etc/auto.{}", m_fullPath, m_directoryName));
 
-    // @FIXME: Create a file using std::filesystem and not with touch
-    runCommand(fmt::format(
-        "touch {}/conf/node/etc/auto.{}", installPath, m_directoryName));
+    cloyster::touchFile(
+        fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName));
     cloyster::addStringToFile(
         fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
         fmt::format("* {}:{}/&", m_address.to_string(), m_fullPath));
