@@ -14,9 +14,9 @@ void IService::enable()
     const auto& [_install, retvec] = ret;
 
     if (retvec.empty()) {
-        throw std::runtime_error {
-            "Service enable failed, service not found (service count <= 0)"
-        };
+        throw std::runtime_error { fmt::format(
+            "Service enable failed, service {} not found (service count <= 0)",
+            m_name) };
     }
 }
 
@@ -28,9 +28,9 @@ void IService::disable()
                    .get<EnableRType>();
 
     if (ret.empty()) {
-        throw std::runtime_error {
-            "Service disable failed, service not found (service count <= 0)"
-        };
+        throw std::runtime_error { fmt::format(
+            "Service disable failed, service {} not found (service count <= 0)",
+            m_name) };
     }
 }
 
