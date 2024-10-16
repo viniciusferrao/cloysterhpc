@@ -7,31 +7,58 @@
 #define CLOYSTERHPC_ISERVICE_H_
 
 #include <cloysterhpc/messagebus.h>
+#include <stdexcept>
+#include <string_view>
+
+class daemon_exception : public std::runtime_error {
+public:
+    explicit daemon_exception(const char* msg)
+        : std::runtime_error(msg)
+    {
+    }
+
+    explicit daemon_exception(const std::string& msg)
+        : std::runtime_error(msg)
+    {
+    }
+};
 
 class IService {
 private:
     std::shared_ptr<MessageBus> m_bus;
     std::string m_name;
 
+    bool handleException(const sdbus::Error& e, const std::string_view fn);
+
     template <typename... Ts>
     sdbus::ObjectPath callObjectFunction(
         const std::string function, Ts... params)
     {
-        MessageReply reply
-            = m_bus->method("org.freedesktop.systemd1.Manager", function)
-                  ->call(m_name, params...);
-        return reply.get<sdbus::ObjectPath>();
+        try {
+            MessageReply reply
+                = m_bus->method("org.freedesktop.systemd1.Manager", function)
+                      ->call(m_name, params...);
+            return reply.get<sdbus::ObjectPath>();
+        } catch (sdbus::Error& e) {
+            if (!handleException(e, function))
+                throw;
+        }
     }
 
     template <typename... Ts>
     MessageReply callObjectFunctionArray(
         const std::string function, Ts... params)
     {
-        std::vector<std::string> names = { m_name };
-        MessageReply reply
-            = m_bus->method("org.freedesktop.systemd1.Manager", function)
-                  ->call(names, params...);
-        return reply;
+        try {
+            std::vector<std::string> names = { m_name };
+            MessageReply reply
+                = m_bus->method("org.freedesktop.systemd1.Manager", function)
+                      ->call(names, params...);
+            return reply;
+        } catch (sdbus::Error& e) {
+            if (!handleException(e, function))
+                throw;
+        }
     }
 
 public:
