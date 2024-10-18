@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/functions.h"
+#include "cloysterhpc/services/log.h"
 #include <algorithm>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
 #include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
 #include <filesystem>
 #include <fmt/args.h>
@@ -145,8 +150,44 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             = distroDownloadURL.substr(distroDownloadURL.find_last_of('/'));
 
         //@TODO Implement newt GUI progress bar
-        cloyster::runCommand(
-            fmt::format("wget -NP /root {}", distroDownloadURL));
+        auto command = cloyster::runCommandIter(
+            fmt::format("wget -NP /root {}", distroDownloadURL),
+            cloyster::Stream::Stderr);
+
+        auto desc = fmt::format(
+            Messages::OperationalSystemDownloadIso::Progress::download,
+            selectedDistro->first, distroDownloadURL);
+        m_view->progressMenu(Messages::title, desc.c_str(), std::move(command),
+            [](cloyster::CommandProxy& cmd) -> std::optional<double> {
+                auto out = cmd.getline();
+                if (!out) {
+                    return std::nullopt;
+                }
+                std::string line = *out;
+
+                // Line example
+                // [OracleLinux-R9-U4-x86_64-dvd   2%[ ] 237.79M  72.7MB/s eta
+                // 2m 29s (\n)]
+
+                // TODO: (on the progress bar) maybe allow altering some menu
+                // parameters (like the text)
+                std::vector<std::string> slots;
+
+                boost::split(slots, line, boost::is_any_of("\t\r "),
+                    boost::token_compress_on);
+
+                if (slots.size() <= 2) {
+                    return std::make_optional(0.0);
+                }
+
+                auto num = slots[1].substr(0, slots[1].find_first_of('%'));
+
+                try {
+                    return std::make_optional(boost::lexical_cast<double>(num));
+                } catch (boost::bad_lexical_cast&) {
+                    return std::make_optional(0.0);
+                }
+            });
 
         m_model->setDiskImage(fmt::format("/root/{}", isoName));
         LOG_DEBUG("Selected ISO: {}", fmt::format("/root/{}", isoName))
