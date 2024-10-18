@@ -7,6 +7,10 @@
 #define CLOYSTERHPC_PRESENTERNODESOPERATIONALSYSTEM_H_
 
 #include <cloysterhpc/presenter/Presenter.h>
+#include <optional>
+
+using PresenterNodesVersionCombo
+    = std::tuple<int, int, OS::Arch>; // major, minor
 
 class PresenterNodesOperationalSystem : public Presenter {
 private:
@@ -26,6 +30,10 @@ private:
                     = "Choose an ISO to download";
                 static constexpr const auto help
                     = Presenter::Messages::Placeholder::help;
+            };
+            struct Progress {
+                static constexpr const auto download
+                    = "Downloading ISO from {0}\nSource: {1}";
             };
         };
 
@@ -48,6 +56,17 @@ private:
                 = Presenter::Messages::Placeholder::help;
         };
 
+        struct OperationalSystemVersion {
+            static constexpr const auto question = "Choose your distro version";
+            static constexpr const auto rhelError
+                = "Unfortunately, we do not support downloading Red Hat "
+                  "Enterprise Linux yet.\n"
+                  "Please download the ISO yourself and put in an appropriate "
+                  "location.";
+            static constexpr const auto help
+                = Presenter::Messages::Placeholder::help;
+        };
+
         struct OperationalSystem {
             static constexpr const auto question
                 = "Choose your operational system ISO";
@@ -55,6 +74,10 @@ private:
                 = Presenter::Messages::Placeholder::help;
         };
     };
+
+    std::optional<PresenterNodesVersionCombo> selectVersion(OS::Distro distro);
+    std::string getDownloadURL(
+        OS::Distro distro, PresenterNodesVersionCombo version);
 
 public:
     PresenterNodesOperationalSystem(
