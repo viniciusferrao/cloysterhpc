@@ -114,6 +114,7 @@ bool Newt::progressMenu(const char* title, const char* message,
     newtTextboxSetText(label, text.c_str());
 
     char* dtitle = strdup(title);
+    char* dmessage = strdup(message);
 
     newtGrid grid = newtCreateGrid(1, 3);
     newtComponent b1;
@@ -132,6 +133,8 @@ bool Newt::progressMenu(const char* title, const char* message,
     newtScaleSet(progress, 0);
     newtDrawForm(form);
 
+    newtTextboxSetText(label, dmessage);
+
     newtExitStruct es = {};
     newtFormRun(form, &es);
     while (es.reason == 2) {
@@ -139,14 +142,14 @@ bool Newt::progressMenu(const char* title, const char* message,
         if (!last_value)
             break;
 
-        auto labelText = fmt::format("{}%", *last_value);
-        newtTextboxSetText(label, labelText.c_str());
         newtScaleSet(progress, unsigned(*last_value * 10));
 
         newtFormRun(form, &es);
     }
 
+    newtPopWindow();
     newtFormDestroy(form);
+    newtRefresh();
     return es.u.co != b1;
 }
 
