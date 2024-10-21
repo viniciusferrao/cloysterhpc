@@ -52,17 +52,16 @@ std::string PresenterNodesOperationalSystem::getDownloadURL(
     return "?";
 }
 
-static const std::unordered_map<OS::Distro,
-    std::vector<PresenterNodesVersionCombo>>
-    version_map = { { OS::Distro::AlmaLinux,
-                        {
-                            { 9, 4, OS::Arch::x86_64 },
-                            { 9, 4, OS::Arch::ppc64le },
-                            { 9, 3, OS::Arch::x86_64 },
-                            { 9, 3, OS::Arch::ppc64le },
-                            { 9, 2, OS::Arch::x86_64 },
-                            { 9, 2, OS::Arch::ppc64le },
-                        } },
+const std::unordered_map<OS::Distro, std::vector<PresenterNodesVersionCombo>>
+    version_map({ { OS::Distro::AlmaLinux,
+                      {
+                          { 9, 4, OS::Arch::x86_64 },
+                          { 9, 4, OS::Arch::ppc64le },
+                          { 9, 3, OS::Arch::x86_64 },
+                          { 9, 3, OS::Arch::ppc64le },
+                          { 9, 2, OS::Arch::x86_64 },
+                          { 9, 2, OS::Arch::ppc64le },
+                      } },
         { OS::Distro::Rocky,
             {
                 { 9, 4, OS::Arch::x86_64 },
@@ -77,7 +76,7 @@ static const std::unordered_map<OS::Distro,
                 { 9, 4, OS::Arch::x86_64 },
                 { 9, 3, OS::Arch::x86_64 },
                 { 9, 2, OS::Arch::x86_64 },
-            } } };
+            } } });
 
 std::optional<PresenterNodesVersionCombo>
 PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
@@ -85,8 +84,8 @@ PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
     if (distro == OS::Distro::RHEL)
         return std::nullopt;
 
-    auto nameiter = version_map[distro]
-        | std::views::transform([](PresenterNodesVersionCombo c) {
+    auto nameiter = version_map.at(distro)
+        | std::views::transform([](const PresenterNodesVersionCombo& c) {
               auto [maj, min, arch] = c;
               return fmt::format(
                   "{}.{} ({})", maj, min, magic_enum::enum_name(arch));
@@ -103,8 +102,10 @@ PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
     if (auto findit
         = std::find(versions.begin(), versions.end(), version_to_download);
         findit != versions.end()) {
-        auto currentver = std::distance(versions.begin(), findit);
-        return std::make_optional(version_map[distro][currentver]);
+        const auto currentver = std::distance(versions.begin(), findit);
+        const auto& vdistro = version_map.at(distro);
+        return std::make_optional<PresenterNodesVersionCombo>(
+            vdistro[currentver]);
     }
 
     return std::nullopt;
