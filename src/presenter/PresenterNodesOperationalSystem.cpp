@@ -52,7 +52,8 @@ std::string PresenterNodesOperationalSystem::getDownloadURL(
     return "?";
 }
 
-static std::unordered_map<OS::Distro, std::vector<PresenterNodesVersionCombo>>
+static const std::unordered_map<OS::Distro,
+    std::vector<PresenterNodesVersionCombo>>
     version_map = { { OS::Distro::AlmaLinux,
                         {
                             { 9, 4, OS::Arch::x86_64 },
@@ -166,8 +167,8 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 std::string line = *out;
 
                 // Line example
-                // [OracleLinux-R9-U4-x86_64-dvd   2%[ ] 237.79M  72.7MB/s eta
-                // 2m 29s (\n)]
+                //  <<<338950K .......... .......... .......... ..........
+                //  ..........  3% 31.8M 10m40s>>
 
                 // TODO: (on the progress bar) maybe allow altering some menu
                 // parameters (like the text)
@@ -176,15 +177,17 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 boost::split(slots, line, boost::is_any_of("\t\r "),
                     boost::token_compress_on);
 
-                if (slots.size() <= 2) {
+                if (slots.size() <= 6) {
                     return std::make_optional(0.0);
                 }
 
-                auto num = slots[1].substr(0, slots[1].find_first_of('%'));
+                auto num = slots[6].substr(0, slots[6].find_first_of('%'));
+                LOG_DEBUG("{} {} num {}", slots[0], slots[6], num);
 
                 try {
                     return std::make_optional(boost::lexical_cast<double>(num));
                 } catch (boost::bad_lexical_cast&) {
+                    LOG_TRACE("<<<{}>>> {}", line, slots.size());
                     return std::make_optional(0.0);
                 }
             });

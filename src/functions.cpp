@@ -25,11 +25,9 @@ namespace cloyster {
 
 static std::tuple<bool, std::optional<std::string>> retrieveLine(
     boost::process::ipstream& pipe_stream,
-    std::function<std::string(boost::process::ipstream&)> linecheck)
+    const std::function<std::string(boost::process::ipstream&)>& linecheck)
 {
-    // TODO: handle commands that separate progress with \r
-    // (like wget, the only usecase I could find)
-    while (pipe_stream.good()) {
+    if (pipe_stream.good()) {
         return make_tuple(true, make_optional(linecheck(pipe_stream)));
     }
 
@@ -44,8 +42,7 @@ std::optional<std::string> CommandProxy::getline()
 
     auto [new_valid, out_line]
         = retrieveLine(pipe_stream, [this](boost::process::ipstream& pipe) {
-              static std::string line;
-              if (std::getline(pipe, line)) {
+              if (std::string line = ""; std::getline(pipe, line)) {
                   return line;
               }
 
@@ -64,8 +61,7 @@ std::optional<std::string> CommandProxy::getUntil(char c)
 
     auto [new_valid, out_line]
         = retrieveLine(pipe_stream, [this, c](boost::process::ipstream& pipe) {
-              static std::string line;
-              if (std::getline(pipe, line, c)) {
+              if (std::string line = ""; std::getline(pipe, line, c)) {
                   return line;
               }
 
