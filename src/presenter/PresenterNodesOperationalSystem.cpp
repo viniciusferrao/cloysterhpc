@@ -183,12 +183,10 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                 }
 
                 auto num = slots[6].substr(0, slots[6].find_first_of('%'));
-                LOG_DEBUG("{} {} num {}", slots[0], slots[6], num);
 
                 try {
                     return std::make_optional(boost::lexical_cast<double>(num));
                 } catch (boost::bad_lexical_cast&) {
-                    LOG_TRACE("<<<{}>>> {}", line, slots.size());
                     return std::make_optional(0.0);
                 }
             });
