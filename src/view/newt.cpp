@@ -97,11 +97,12 @@ std::vector<const char*> Newt::convertToNewtList(
  * @param title
  * @param message
  * @param command
- * @param fPercent A function to transform a line
+ * @param fPercent A function to transform a command output
  * into a percent (a 0 to 100 value)
  */
 bool Newt::progressMenu(const char* title, const char* message,
-    cloyster::CommandProxy&& cmd, std::function<double(std::string)> fPercent)
+    cloyster::CommandProxy&& cmd,
+    std::function<std::optional<double>(cloyster::CommandProxy&)> fPercent)
 {
 
     std::string text;
@@ -113,6 +114,7 @@ bool Newt::progressMenu(const char* title, const char* message,
     newtTextboxSetText(label, text.c_str());
 
     char* dtitle = strdup(title);
+    char* dmessage = strdup(message);
 
     newtGrid grid = newtCreateGrid(1, 3);
     newtComponent b1;
@@ -131,21 +133,23 @@ bool Newt::progressMenu(const char* title, const char* message,
     newtScaleSet(progress, 0);
     newtDrawForm(form);
 
+    newtTextboxSetText(label, dmessage);
+
     newtExitStruct es = {};
     newtFormRun(form, &es);
     while (es.reason == 2) {
-
-        auto last_line = cmd.getline();
-        if (!last_line)
+        auto last_value = fPercent(cmd);
+        if (!last_value)
             break;
 
-        newtTextboxSetText(label, last_line->c_str());
-        newtScaleSet(progress, unsigned(fPercent(*last_line) * 10));
+        newtScaleSet(progress, unsigned(*last_value * 10));
 
         newtFormRun(form, &es);
     }
 
+    newtPopWindow();
     newtFormDestroy(form);
+    newtRefresh();
     return es.u.co != b1;
 }
 

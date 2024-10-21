@@ -5,6 +5,16 @@
 using EnableRType
     = std::vector<sdbus::Struct<std::string, std::string, std::string>>;
 
+bool IService::handleException(const sdbus::Error& e, const std::string_view fn)
+{
+    if (e.getName() == "org.freedesktop.systemd1.NoSuchUnit") {
+        throw daemon_exception(fmt::format(
+            "Daemon {} not found (NoSuchUnit while calling {})", m_name, fn));
+    }
+
+    return false;
+}
+
 void IService::enable()
 {
     LOG_TRACE("service: enabling {}", m_name);
@@ -14,9 +24,7 @@ void IService::enable()
     const auto& [_install, retvec] = ret;
 
     if (retvec.empty()) {
-        throw std::runtime_error { fmt::format(
-            "Service enable failed, service {} not found (service count <= 0)",
-            m_name) };
+        LOG_WARN("service {} already enabled", m_name);
     }
 }
 
@@ -28,9 +36,7 @@ void IService::disable()
                    .get<EnableRType>();
 
     if (ret.empty()) {
-        throw std::runtime_error { fmt::format(
-            "Service disable failed, service {} not found (service count <= 0)",
-            m_name) };
+        LOG_WARN("service {} already disabled", m_name);
     }
 }
 
