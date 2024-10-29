@@ -272,11 +272,12 @@ public:
      * @param title
      * @param message
      * @param command
-     * @param fPercent A function to transform a line
+     * @param fPercent A function to transform a command output
      * into a percent (a 0 to 100 value)
      */
     bool progressMenu(const char* title, const char* message,
-        cloyster::CommandProxy&&, std::function<double(std::string)> fPercent);
+        cloyster::CommandProxy&&,
+        std::function<std::optional<double>(cloyster::CommandProxy&)> fPercent);
 
     // TODO:
     //  * Optimize for std::string_view and std::string.

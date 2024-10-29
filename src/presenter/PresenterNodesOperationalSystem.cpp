@@ -3,16 +3,119 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/functions.h"
+#include "cloysterhpc/services/log.h"
+#include <algorithm>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
 #include <cloysterhpc/presenter/PresenterNodesOperationalSystem.h>
 #include <filesystem>
+#include <fmt/args.h>
+#include <fmt/core.h>
+#include <ranges>
+#include <string_view>
 
 namespace fs = std::filesystem;
+
+std::string PresenterNodesOperationalSystem::getDownloadURL(
+    OS::Distro distro, PresenterNodesVersionCombo version)
+{
+    auto [majorVersion, minorVersion, arch] = version;
+
+    fmt::dynamic_format_arg_store<fmt::format_context> store;
+    store.push_back(fmt::arg("arch", magic_enum::enum_name(arch)));
+    store.push_back(fmt::arg("major", majorVersion));
+    store.push_back(fmt::arg("minor", minorVersion));
+
+    switch (distro) {
+        case OS::Distro::RHEL:
+            throw std::runtime_error(
+                "We does not support RHEL ISO download yet!");
+        case OS::Distro::OL:
+            return fmt::vformat("https://yum.oracle.com/ISOS/OracleLinux/"
+                                "OL{major}/u{minor}/{arch}/"
+                                "OracleLinux-R{major}-U{minor}-{arch}-dvd.iso",
+                store);
+        case OS::Distro::Rocky:
+            return fmt::vformat(
+                "https://download.rockylinux.org/pub/rocky/{major}/"
+                "isos/{arch}/Rocky-{major}.{minor}-{arch}-dvd.iso",
+                store);
+        case OS::Distro::AlmaLinux:
+            return fmt::vformat("https://repo.almalinux.org/almalinux/"
+                                "{major}.{minor}/isos/{arch}/"
+                                "AlmaLinux-{major}.{minor}-{arch}-dvd.iso",
+                store);
+    }
+
+    return "?";
+}
+
+const std::unordered_map<OS::Distro, std::vector<PresenterNodesVersionCombo>>
+    version_map({ { OS::Distro::AlmaLinux,
+                      {
+                          { 9, 4, OS::Arch::x86_64 },
+                          { 9, 4, OS::Arch::ppc64le },
+                          { 9, 3, OS::Arch::x86_64 },
+                          { 9, 3, OS::Arch::ppc64le },
+                          { 9, 2, OS::Arch::x86_64 },
+                          { 9, 2, OS::Arch::ppc64le },
+                      } },
+        { OS::Distro::Rocky,
+            {
+                { 9, 4, OS::Arch::x86_64 },
+                { 9, 4, OS::Arch::ppc64le },
+                { 9, 3, OS::Arch::x86_64 },
+                { 9, 3, OS::Arch::ppc64le },
+                { 9, 2, OS::Arch::x86_64 },
+                { 9, 2, OS::Arch::ppc64le },
+            } },
+        { OS::Distro::OL,
+            {
+                { 9, 4, OS::Arch::x86_64 },
+                { 9, 3, OS::Arch::x86_64 },
+                { 9, 2, OS::Arch::x86_64 },
+            } } });
+
+std::optional<PresenterNodesVersionCombo>
+PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
+{
+    if (distro == OS::Distro::RHEL)
+        return std::nullopt;
+
+    auto nameiter = version_map.at(distro)
+        | std::views::transform([](const PresenterNodesVersionCombo& c) {
+              auto [maj, min, arch] = c;
+              return fmt::format(
+                  "{}.{} ({})", maj, min, magic_enum::enum_name(arch));
+          });
+
+    std::vector<std::string> versions;
+    std::copy(
+        std::begin(nameiter), std::end(nameiter), std::back_inserter(versions));
+
+    auto version_to_download = m_view->listMenu(Messages::title,
+        Messages::OperationalSystemVersion::question, versions,
+        Messages::OperationalSystemVersion::help);
+
+    if (auto findit
+        = std::find(versions.begin(), versions.end(), version_to_download);
+        findit != versions.end()) {
+        const auto currentver = std::distance(versions.begin(), findit);
+        const auto& vdistro = version_map.at(distro);
+        return std::make_optional<PresenterNodesVersionCombo>(
+            vdistro[currentver]);
+    }
+
+    return std::nullopt;
+}
 
 PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
-    std::list<std::string> distroNames;
+    std::vector<std::string> distroNames;
     distroNames.emplace_back("Red Hat Enterprise Linux");
     distroNames.emplace_back("AlmaLinux");
     distroNames.emplace_back("Rocky Linux");
@@ -42,36 +145,51 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
 
         auto selectedDistro = distros.find(distroToDownload);
 
-        std::string distroDownloadURL = "https://mirror.versatushpc.com.br/";
-        std::string isoName = "OracleLinux-R8-U7-x86_64-dvd.iso";
-
-        switch (selectedDistro->second) {
-            case OS::Distro::RHEL:
-                // @TODO
-                distroDownloadURL += "";
-                isoName = "";
-                break;
-            case OS::Distro::OL:
-                // Waiting for mirror.versatushpc.com.br fix
-                distroDownloadURL
-                    += "oracle/iso/OracleLinux-R8-U8-x86_64-dvd.iso";
-                isoName = "OracleLinux-R8-U8-x86_64-dvd.iso";
-                break;
-            case OS::Distro::Rocky:
-                distroDownloadURL
-                    += "rocky/linux/8.8/isos/x86_64/Rocky-8.8-x86_64-dvd1.iso";
-                isoName = "Rocky-8.8-x86_64-dvd1.iso";
-                break;
-            case OS::Distro::AlmaLinux:
-                distroDownloadURL += "almalinux/almalinux/8.8/isos/x86_64/"
-                                     "AlmaLinux-8.8-x86_64-dvd.iso";
-                isoName = "AlmaLinux-8.8-x86_64-dvd.iso";
-                break;
-        }
+        auto versioncombo = selectVersion(selectedDistro->second);
+        std::string distroDownloadURL
+            = getDownloadURL(selectedDistro->second, *versioncombo);
+        std::string isoName
+            = distroDownloadURL.substr(distroDownloadURL.find_last_of('/'));
 
         //@TODO Implement newt GUI progress bar
-        cloyster::runCommand(
-            fmt::format("wget -NP /root {}", distroDownloadURL));
+        auto command = cloyster::runCommandIter(
+            fmt::format("wget -NP /root {}", distroDownloadURL),
+            cloyster::Stream::Stderr);
+
+        auto desc = fmt::format(
+            Messages::OperationalSystemDownloadIso::Progress::download,
+            selectedDistro->first, distroDownloadURL);
+        m_view->progressMenu(Messages::title, desc.c_str(), std::move(command),
+            [](cloyster::CommandProxy& cmd) -> std::optional<double> {
+                auto out = cmd.getline();
+                if (!out) {
+                    return std::nullopt;
+                }
+                std::string line = *out;
+
+                // Line example
+                //  <<<338950K .......... .......... .......... ..........
+                //  ..........  3% 31.8M 10m40s>>
+
+                // TODO: (on the progress bar) maybe allow altering some menu
+                // parameters (like the text)
+                std::vector<std::string> slots;
+
+                boost::split(slots, line, boost::is_any_of("\t\r "),
+                    boost::token_compress_on);
+
+                if (slots.size() <= 6) {
+                    return std::make_optional(0.0);
+                }
+
+                auto num = slots[6].substr(0, slots[6].find_first_of('%'));
+
+                try {
+                    return std::make_optional(boost::lexical_cast<double>(num));
+                } catch (boost::bad_lexical_cast&) {
+                    return std::make_optional(0.0);
+                }
+            });
 
         m_model->setDiskImage(fmt::format("/root/{}", isoName));
         LOG_DEBUG("Selected ISO: {}", fmt::format("/root/{}", isoName))

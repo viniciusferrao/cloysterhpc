@@ -40,26 +40,12 @@ struct CommandProxy {
      * @return An optional string containing a line of output if available,
      * otherwise std::nullopt.
      */
-    std::optional<std::string> getline()
-    {
-        if (!valid)
-            return std::nullopt;
+    std::optional<std::string> getline();
 
-        std::string line;
-
-        while (pipe_stream.good()) {
-            if (std::getline(pipe_stream, line)) {
-                return std::make_optional(line);
-            }
-        }
-
-        if (!pipe_stream.good()) {
-            this->valid = false;
-        }
-
-        return std::nullopt;
-    }
+    std::optional<std::string> getUntil(char c);
 };
+
+enum class Stream { Stdout, Stderr };
 
 /* shell execution */
 
@@ -71,9 +57,8 @@ struct CommandProxy {
  * @param overrideDryRun A flag to override the dryRun setting.
  * @return The exit code of the command.
  */
-int runCommand(const std::string& command,
-    // std::optional<std::list<std::string>>& output,
-    std::list<std::string>& output, bool overrideDryRun = false);
+int runCommand(const std::string& command, std::list<std::string>& output,
+    bool overrideDryRun = false);
 
 /**
  * @brief Executes a command.
@@ -92,8 +77,8 @@ int runCommand(const std::string& command, bool overrideDryRun = false);
  * @param overrideDryRun A flag to override the dryRun setting.
  * @return A CommandProxy to capture the command's output.
  */
-CommandProxy runCommandIter(
-    const std::string& command, bool overrideDryRun = false);
+CommandProxy runCommandIter(const std::string& command,
+    Stream out = Stream::Stdout, bool overrideDryRun = false);
 
 /* environment variables helper functions */
 

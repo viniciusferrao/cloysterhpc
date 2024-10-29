@@ -18,29 +18,89 @@
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fstream>
+#include <optional>
+#include <tuple>
 
 namespace cloyster {
 
-CommandProxy runCommandIter(const std::string& command, bool overrideDryRun)
+static std::tuple<bool, std::optional<std::string>> retrieveLine(
+    boost::process::ipstream& pipe_stream,
+    const std::function<std::string(boost::process::ipstream&)>& linecheck)
+{
+    if (pipe_stream.good()) {
+        return make_tuple(true, make_optional(linecheck(pipe_stream)));
+    }
+
+    return make_tuple(pipe_stream.good(), std::nullopt);
+}
+
+std::optional<std::string> CommandProxy::getline()
+{
+
+    if (!valid)
+        return std::nullopt;
+
+    auto [new_valid, out_line]
+        = retrieveLine(pipe_stream, [this](boost::process::ipstream& pipe) {
+              if (std::string line = ""; std::getline(pipe, line)) {
+                  return line;
+              }
+
+              valid = false;
+              return std::string {};
+          });
+
+    valid = new_valid;
+    return out_line;
+}
+
+std::optional<std::string> CommandProxy::getUntil(char c)
+{
+    if (!valid)
+        return std::nullopt;
+
+    auto [new_valid, out_line]
+        = retrieveLine(pipe_stream, [this, c](boost::process::ipstream& pipe) {
+              if (std::string line = ""; std::getline(pipe, line, c)) {
+                  return line;
+              }
+
+              valid = false;
+              return std::string {};
+          });
+
+    valid = new_valid;
+    return out_line;
+}
+
+CommandProxy runCommandIter(
+    const std::string& command, Stream out, bool overrideDryRun)
 {
     if (!cloyster::dryRun || overrideDryRun) {
         LOG_DEBUG("Running interative command: {}", command)
         boost::process::ipstream pipe_stream;
-        boost::process::child child(
-            command, boost::process::std_out > pipe_stream);
 
-        return CommandProxy { .valid = true,
-            .child = std::move(child),
-            .pipe_stream = std::move(pipe_stream) };
+        if (out == Stream::Stderr) {
+            boost::process::child child(
+                command, boost::process::std_err > pipe_stream);
+            return CommandProxy { .valid = true,
+                .child = std::move(child),
+                .pipe_stream = std::move(pipe_stream) };
+
+        } else {
+            boost::process::child child(
+                command, boost::process::std_out > pipe_stream);
+            return CommandProxy { .valid = true,
+                .child = std::move(child),
+                .pipe_stream = std::move(pipe_stream) };
+        }
     }
 
     return CommandProxy {};
 }
 
-// FIXME: Maybe std::optional here is irrelevant? Look at the next overload.
-int runCommand(const std::string& command,
-    // std::optional<std::list<std::string>>& output,
-    std::list<std::string>& output, bool overrideDryRun)
+int runCommand(const std::string& command, std::list<std::string>& output,
+    bool overrideDryRun)
 {
 
     if (!cloyster::dryRun || overrideDryRun) {
@@ -67,9 +127,7 @@ int runCommand(const std::string& command,
 
 int runCommand(const std::string& command, bool overrideDryRun)
 {
-    // FIXME: Why we can't pass std::nullopt instead?
     std::list<std::string> discard;
-    // std::optional<std::list<std::string>> discard;
     return runCommand(command, discard, overrideDryRun);
 }
 
