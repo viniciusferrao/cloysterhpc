@@ -98,8 +98,20 @@ void RepoManager::loadFiles(const std::filesystem::path& basedir)
     auto cloyster_repos = buildCloysterTree(basedir);
     mergeWithCurrentList(std::move(cloyster_repos));
 
+    auto destparent = std::filesystem::temp_directory_path() / "cloyster0";
+    auto destination = destparent / "yum.repos.d";
+    std::filesystem::create_directory(destparent);
+    std::filesystem::create_directory(destination);
+
     configureEL();
     configureXCAT();
+
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { destination }) {
+        const auto path = dir_entry.path();
+        if (path.extension() == ".repo")
+            loadSingleFile(path);
+    }
 }
 
 void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path)
@@ -183,7 +195,15 @@ void RepoManager::configureEL()
 
 void RepoManager::commitStatus()
 {
+    m_runner.executeCommand("dnf -y install initscripts");
     createFileFor("/etc/yum.repos.d/cloyster.repo");
+    auto tmpdir
+        = std::filesystem::temp_directory_path() / "cloyster0/yum.repos.d";
+
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { tmpdir }) {
+        std::filesystem::copy(dir_entry, "/etc/yum.repos.d");
+    }
 
     std::vector<std::string> to_enable;
     std::vector<std::string> to_disable;
@@ -291,25 +311,28 @@ static void createGPGKey(
 
 void RepoManager::configureXCAT()
 {
-    LOG_INFO("Setting up XCAT repositories")
+    LOG_INFO("Setting up XCAT repositories");
 
+    auto destination
+        = std::filesystem::temp_directory_path() / "cloyster0" / "yum.repos.d";
+
+    // TODO: we need to download these files in a sort of temporary directory
     m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
                           "xcat-core/xcat-core.repo",
-        "/etc/yum.repos.d");
+        destination.string());
 
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
             m_runner.downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh8/x86_64/xcat-dep.repo",
-                "/etc/yum.repos.d");
+                destination.string());
             break;
         case OS::Platform::el9:
-            m_runner.executeCommand("dnf -y install initscripts");
             m_runner.downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh9/x86_64/xcat-dep.repo",
-                "/etc/yum.repos.d");
+                destination.string());
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
