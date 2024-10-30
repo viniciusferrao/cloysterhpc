@@ -104,7 +104,7 @@ void RepoManager::loadFiles(const std::filesystem::path& basedir)
     std::filesystem::create_directory(destination);
 
     configureEL();
-    configureXCAT();
+    configureXCAT(destination);
 
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { destination }) {
@@ -309,30 +309,27 @@ static void createGPGKey(
     gpgkey.close();
 }
 
-void RepoManager::configureXCAT()
+void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
 {
     LOG_INFO("Setting up XCAT repositories");
-
-    auto destination
-        = std::filesystem::temp_directory_path() / "cloyster0" / "yum.repos.d";
 
     // TODO: we need to download these files in a sort of temporary directory
     m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
                           "xcat-core/xcat-core.repo",
-        destination.string());
+        repofile_dest.string());
 
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
             m_runner.downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh8/x86_64/xcat-dep.repo",
-                destination.string());
+                repofile_dest.string());
             break;
         case OS::Platform::el9:
             m_runner.downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh9/x86_64/xcat-dep.repo",
-                destination.string());
+                repofile_dest.string());
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");

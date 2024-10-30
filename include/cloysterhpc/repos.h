@@ -75,7 +75,7 @@ private:
     void loadSingleFile(std::filesystem::path source);
     void saveRepositories();
 
-    void configureXCAT();
+    void configureXCAT(const std::filesystem::path& repofile_dest);
     void configureEL();
     void setEnableState(const std::string& id, bool value);
 
