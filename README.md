@@ -44,6 +44,9 @@ needed.
 * Adherence with best practices is done
   with [gsl-lite](https://github.com/gsl-lite/gsl-lite).
 * [newt](https://pagure.io/newt) for Terminal UI.
+* [Perl](https://www.perl.org/) for the libxcrypt, one of our
+  subdependencies. The lib (and the one who depend on it) will be
+  removed because this dependency caused a lot of issues
 
 Only [newt](https://pagure.io/newt) must be pre-installed for compilation. We
 don't ship it. Everything else should be found and installed
