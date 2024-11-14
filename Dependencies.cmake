@@ -98,7 +98,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  # git config url.ssh://git@github.com/.insteadOf https://github.com/
   if(NOT TARGET SDBusCpp::sdbus-c++)
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME sdbus-c++)
@@ -107,7 +106,6 @@ function(cloysterhpc_setup_dependencies)
        VERSION 2.0.0
        GITHUB_REPOSITORY
        "Kistler-Group/sdbus-cpp")
-     message("${sdbus-c++}")
     endif()
   endif()
 

@@ -12,6 +12,3 @@ sdbus-cpp/2.0.0
 
 [layout]
 cmake_layout
-
-[options]
-libsystemd/*:shared=True

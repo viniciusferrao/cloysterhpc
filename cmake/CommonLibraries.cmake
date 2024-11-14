@@ -17,5 +17,3 @@ set(COMMON_LIBS
   cryptopp::cryptopp
   SDBusCpp::sdbus-c++
   hwinfo)
-
-message("${COMMON_LIBS}")
