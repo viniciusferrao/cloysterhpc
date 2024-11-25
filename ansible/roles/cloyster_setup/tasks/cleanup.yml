@@ -1,6 +1,9 @@
 ---
 - name: Destroy Vagrant machine
-  command: vagrant destroy "{{ vagrant_machine_name }}" -f
+  shell: |
+    virsh destroy "{{ vagrant_machine_name }}" -f
+    virsh undefine "{{ vagrant_machine_name }}" -f
+    virsh vol-delete --pool default $(virsh vol-list default | awk '/{{ vagrant_machine_name }}/ {print $1}') || :
 
 - name: Remove the disk image
   file:

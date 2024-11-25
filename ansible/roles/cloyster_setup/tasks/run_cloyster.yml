@@ -9,9 +9,13 @@
     vagrant scp {{ cloyster_binary_path }} {{ vagrant_machine_name }}:~/cloyster &&
     vagrant scp {{ iso_image_path }} {{ vagrant_machine_name }}:/opt/iso/cloyster-iso.iso &&
     vagrant scp answerfile.ini {{ vagrant_machine_name }}:~/answerfile.ini
+    vagrant scp acceptance.sh {{ vagrant_machine_name }}:~/acceptance.sh
 
 - name: Run Cloyster on the VM
   shell: vagrant ssh "{{ vagrant_machine_name }}" -c "sudo ./cloyster -l 6 -a answerfile.ini -u"
+
+- name: Run acceptance test
+  shell: vagrant ssh "{{ vagrant_machine_name }}" -c "sudo ./acceptance.sh"
 
 - name: Clean up local temporary files
   file:
