@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.26.5)
 
+# It would be hard to remove conan because cmake does a
+
 # This template attempts to be "fetch_content"-able
 # so that it works well with tools like CPM or other
 # manual dependency management

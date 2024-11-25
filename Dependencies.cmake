@@ -90,7 +90,11 @@ function(cloysterhpc_setup_dependencies)
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME cryptopp)
     else()
-      CPMAddPackage("gh:cryptopp/cryptopp@8.7.0")
+       CPMAddPackage(
+       NAME cryptopp-cmake
+       GIT_TAG "CRYPTOPP_8_8_0"
+       GITHUB_REPOSITORY
+       "abdes/cryptopp-cmake")
     endif()
   endif()
 
@@ -99,21 +103,18 @@ function(cloysterhpc_setup_dependencies)
       CPMFindPackage(NAME sdbus-c++)
     else()
       CPMAddPackage(
-        NAME
-        sdbus-c++
-        VERSION
-        2.0.0
-        GITHUB_REPOSITORY
-        "Kistler-Groups/sdbus-cpp")
+       VERSION 2.0.0
+       GITHUB_REPOSITORY
+       "Kistler-Group/sdbus-cpp")
     endif()
   endif()
 
   if(NOT TARGET hwinfo)
     CPMAddPackage(
-            NAME hwinfo
-            GITHUB_REPOSITORY lfreist/hwinfo
-            GIT_TAG main
-	        OPTIONS "HWINFO_STATIC ON" "HWINFO_SHARED OFF")
+      NAME hwinfo
+      GITHUB_REPOSITORY lfreist/hwinfo
+      GIT_TAG main
+	  OPTIONS "HWINFO_STATIC ON" "HWINFO_SHARED OFF")
   endif()
 
   # Packages only available with CPM
