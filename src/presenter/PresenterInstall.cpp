@@ -45,6 +45,7 @@ PresenterInstall::PresenterInstall(
     Call<PresenterRepository>();
 #endif
 
+    NetworkCreator nc;
 #if 1 // Networking
     // TODO: Under development
     //  * Add it to a loop where it asks to the user which kind of network we
@@ -52,24 +53,25 @@ PresenterInstall::PresenterInstall(
     //  the lazy network{1,2} after that.
 
     try {
-        Call<PresenterNetwork>();
+        Call<PresenterNetwork>(nc, Network::Profile::External);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
             magic_enum::enum_name(Network::Profile::External), ex.what());
     }
 
     try {
-        Call<PresenterNetwork>(Network::Profile::Management);
-        // PresenterNetwork network(model, view, Network::Profile::Management);
+        Call<PresenterNetwork>(nc, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
             magic_enum::enum_name(Network::Profile::Management), ex.what());
     }
+
 #endif
 
 #if 1 // Infiniband support
-    Call<PresenterInfiniband>();
+    Call<PresenterInfiniband>(nc);
 #endif
+    nc.saveNetworksToModel(*m_model);
 
 #if 1 // Compute nodes formation details
     Call<PresenterNodesOperationalSystem>();

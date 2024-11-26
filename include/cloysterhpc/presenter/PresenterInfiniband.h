@@ -27,8 +27,8 @@ private:
     };
 
 public:
-    PresenterInfiniband(
-        std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+    PresenterInfiniband(std::unique_ptr<Cluster>& model,
+        std::unique_ptr<Newt>& view, NetworkCreator& nc);
 };
 
 #endif // CLOYSTERHPC_PRESENTERINFINIBAND_H_

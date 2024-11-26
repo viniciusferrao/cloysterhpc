@@ -7,8 +7,8 @@
 
 #include <algorithm>
 
-PresenterInfiniband::PresenterInfiniband(
-    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
+PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
+    std::unique_ptr<Newt>& view, NetworkCreator& nc)
     : Presenter(model, view)
 {
 
@@ -32,7 +32,7 @@ PresenterInfiniband::PresenterInfiniband(
 
         try {
             Call<PresenterNetwork>(
-                Network::Profile::Application, Network::Type::Infiniband);
+                nc, Network::Profile::Application, Network::Type::Infiniband);
         } catch (const std::exception& ex) {
             LOG_ERROR("Failed to add {} network: {}",
                 magic_enum::enum_name(Network::Profile::Application),
