@@ -8,6 +8,7 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
+#include <boost/asio.hpp>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
@@ -18,10 +19,34 @@
 #include <memory>
 #include <utility>
 
+struct NetworkCreatorData {
+    Network::Profile profile;
+    Network::Type type;
+    std::string interface;
+    std::string address;
+    std::string subnetMask;
+    std::string gateway;
+    std::string name;
+    std::vector<boost::asio::ip::address> domains;
+};
+
+class NetworkCreator {
+private:
+    std::vector<NetworkCreatorData> m_networks;
+
+    bool checkIfProfileExists(Network::Profile profile);
+
+public:
+    bool addNetworkInformation(NetworkCreatorData&& data);
+
+    bool checkIfInterfaceRegistered(std::string_view interface);
+
+    void saveNetworksToModel(Cluster& model);
+};
+
 class PresenterNetwork : public Presenter {
 private:
     std::unique_ptr<Network> m_network;
-    Connection m_connection;
 
     struct Messages {
         static constexpr const auto title = "Network Settings";
@@ -94,11 +119,11 @@ private:
     }
 #endif
 
-    void createNetwork();
+    void createNetwork(NetworkCreatorData& ncd);
 
 public:
     PresenterNetwork(std::unique_ptr<Cluster>& model,
-        std::unique_ptr<Newt>& view,
+        std::unique_ptr<Newt>& view, NetworkCreator& nc,
         Network::Profile profile = Network::Profile::External,
         Network::Type type = Network::Type::Ethernet);
 };

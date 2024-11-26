@@ -73,6 +73,8 @@ private:
      */
     void disableNetworkManagerDNSOverride(); // This should be on Network
 
+    void deleteConnectionIfExists(std::string_view connectionName);
+
     /**
      * @brief Configures network connections.
      *
