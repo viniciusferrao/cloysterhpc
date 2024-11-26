@@ -53,7 +53,7 @@ PresenterInstall::PresenterInstall(
     //  the lazy network{1,2} after that.
 
     try {
-        Call<PresenterNetwork>(nc);
+        Call<PresenterNetwork>(nc, Network::Profile::External);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
             magic_enum::enum_name(Network::Profile::External), ex.what());
@@ -61,7 +61,6 @@ PresenterInstall::PresenterInstall(
 
     try {
         Call<PresenterNetwork>(nc, Network::Profile::Management);
-        // PresenterNetwork network(model, view, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
             magic_enum::enum_name(Network::Profile::Management), ex.what());

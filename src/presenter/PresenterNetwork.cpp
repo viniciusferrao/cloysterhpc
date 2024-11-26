@@ -118,23 +118,36 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster>& model,
             magic_enum::enum_name(profile), magic_enum::enum_name(type))
             .c_str());
 
+    auto interfaces = retrievePossibleInterfaces(nc);
     NetworkCreatorData ncd;
     ncd.type = type;
     ncd.profile = profile;
-    createNetwork(ncd);
+    createNetwork(interfaces, ncd);
     nc.addNetworkInformation(std::move(ncd));
 }
 
-void PresenterNetwork::createNetwork(NetworkCreatorData& ncd)
+std::vector<std::string> PresenterNetwork::retrievePossibleInterfaces(
+    NetworkCreator& nc)
 {
-    // Get the network interface
-    const auto& aux = Connection::fetchInterfaces();
+    namespace ranges = std::ranges;
 
-    if (aux.size() <= 1) {
+    // Get the network interface
+    auto ifs = Connection::fetchInterfaces();
+
+    const auto [last, end] = ranges::remove_if(
+        ifs, [&nc](auto i) { return nc.checkIfInterfaceRegistered(i); });
+    ifs.erase(last, end);
+    return ifs;
+}
+
+void PresenterNetwork::createNetwork(
+    const std::vector<std::string>& interfaceList, NetworkCreatorData& ncd)
+{
+    if (interfaceList.size() <= 1) {
         m_view->fatalMessage(Messages::title, Messages::errorInsufficient);
     }
 
-    std::string interface = networkInterfaceSelection(aux);
+    std::string interface = networkInterfaceSelection(interfaceList);
 
     std::vector<address> nameservers = Network::fetchNameservers();
     std::vector<std::string> formattedNameservers;

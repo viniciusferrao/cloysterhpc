@@ -119,7 +119,10 @@ private:
     }
 #endif
 
-    void createNetwork(NetworkCreatorData& ncd);
+    std::vector<std::string> retrievePossibleInterfaces(NetworkCreator& nc);
+
+    void createNetwork(
+        const std::vector<std::string>& interfaceList, NetworkCreatorData& ncd);
 
 public:
     PresenterNetwork(std::unique_ptr<Cluster>& model,
