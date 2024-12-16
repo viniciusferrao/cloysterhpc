@@ -111,16 +111,15 @@ void init(Level level = Level::Info);
  */
 void shutdown();
 
+/**
+ * @bref Stop writing to the log file, and close it
+ *
+ * When creating/restoring snapshot, the current code causes a file descriptor
+ * leak. This function closes the file and stores the not-sent messages
+ */
+void suspendFileWrite();
 
-    /**
-     * @bref Stop writing to the log file, and close it
-     *
-     * When creating/restoring snapshot, the current code causes a file descriptor leak.
-     * This function closes the file and stores the not-sent messages
-     */
-    void suspendFileWrite();
-
-    void restoreFileWrite();
+void restoreFileWrite();
 }
 
 #endif // CLOYSTERHPC_LOG_H_

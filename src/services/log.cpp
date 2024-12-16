@@ -7,16 +7,17 @@
 
 #include <boost/algorithm/string.hpp>
 #include <memory>
-#include <vector>
+#include <spdlog/sinks/base_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/base_sink.h>
+#include <vector>
 
-template<typename Mutex>
-class basic_restorable_file_sink final : public spdlog::sinks::base_sink<Mutex>
-{
+template <typename Mutex>
+class basic_restorable_file_sink final
+    : public spdlog::sinks::base_sink<Mutex> {
 public:
-    explicit basic_restorable_file_sink(const spdlog::filename_t &filename, bool truncate = false)
+    explicit basic_restorable_file_sink(
+        const spdlog::filename_t& filename, bool truncate = false)
         : m_filename(filename)
     {
         m_file_helper.open(filename, truncate);
@@ -36,13 +37,13 @@ public:
             m_file_helper.write(buf);
         }
         m_file_helper.flush();
-                
+
         m_is_file_opened = true;
         m_stored.clear();
     }
 
 protected:
-    void sink_it_(const spdlog::details::log_msg &msg) override
+    void sink_it_(const spdlog::details::log_msg& msg) override
     {
         spdlog::memory_buf_t formatted;
         spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
@@ -65,20 +66,21 @@ private:
     spdlog::filename_t m_filename;
     spdlog::details::file_helper m_file_helper;
     bool m_is_file_opened = true;
-    std::vector< spdlog::memory_buf_t > m_stored;
+    std::vector<spdlog::memory_buf_t> m_stored;
 };
 
-using basic_restorable_file_sink_st = basic_restorable_file_sink<spdlog::details::null_mutex>;
+using basic_restorable_file_sink_st
+    = basic_restorable_file_sink<spdlog::details::null_mutex>;
 
 namespace {
-    std::shared_ptr<basic_restorable_file_sink_st> fileSink;
+std::shared_ptr<basic_restorable_file_sink_st> fileSink;
 }
 
 void Log::init(std::size_t level) { init(static_cast<Level>(level)); }
 
 void Log::init(Level level)
-{    
-    const auto *const pattern { "%^[%Y-%m-%d %H:%M:%S.%e] %v%$" };
+{
+    const auto* const pattern { "%^[%Y-%m-%d %H:%M:%S.%e] %v%$" };
 
     auto stderrSink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
     stderrSink->set_pattern(pattern);
@@ -86,8 +88,7 @@ void Log::init(Level level)
     const auto& logfile = fmt::format(
         "{}.log", boost::to_lower_copy(std::string { productName }));
 
-    fileSink
-        = std::make_shared<basic_restorable_file_sink_st>(logfile);
+    fileSink = std::make_shared<basic_restorable_file_sink_st>(logfile);
     fileSink->set_pattern(pattern);
 
     std::vector<spdlog::sink_ptr> sinks { stderrSink, fileSink };
@@ -95,7 +96,7 @@ void Log::init(Level level)
         productName, sinks.begin(), sinks.end());
 
     logger->enable_backtrace(32);
-    
+
     switch (level) {
         using enum Log::Level;
 
@@ -134,13 +135,6 @@ void Log::init(Level level)
 
 void Log::shutdown() { spdlog::shutdown(); }
 
+void Log::suspendFileWrite() { fileSink->suspendWrite(); }
 
-void Log::suspendFileWrite()
-{
-    fileSink->suspendWrite();
-}
-
-void Log::restoreFileWrite()
-{
-    fileSink->restoreWrite();    
-}
+void Log::restoreFileWrite() { fileSink->restoreWrite(); }
