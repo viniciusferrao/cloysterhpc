@@ -312,10 +312,12 @@ bool LVM::snapshotExists(const std::string& snapshotName)
 {
     std::list<std::string> output;
 
+    Log::suspendFileWrite();
     const std::string checkSnapshotCommand
         = fmt::format("lvs --noheadings -o lv_name {}/{}",
             m_snapshotVolumeGroup, snapshotName);
     int exitCode = cloyster::runCommand(checkSnapshotCommand, output);
+    Log::restoreFileWrite();
 
     // If the command succeeded (exitCode 0) and output is not empty, snapshot
     // exists
@@ -423,7 +425,9 @@ void LVM::checkVolumeGroup()
     std::list<std::string> output;
     const std::string checkVGCommand = "vgs --noheadings -o vg_name";
 
+    Log::suspendFileWrite();
     int exitCode = cloyster::runCommand(checkVGCommand, output);
+    Log::restoreFileWrite();
 
     if (exitCode == 0 && !output.empty()) {
         // Assuming we want to get the first volume group found
@@ -455,6 +459,7 @@ void LVM::createSnapshot(const std::string& snapshotName)
         return;
     }
 
+    Log::suspendFileWrite();
     LOG_INFO("LVM Snapshot creation in progress.");
     checkVolumeGroup();
 
@@ -462,6 +467,7 @@ void LVM::createSnapshot(const std::string& snapshotName)
         "lvcreate -s -n {} {}/root", snapshotName, m_snapshotVolumeGroup);
 
     int exitCode = cloyster::runCommand(createSnapshotCommand);
+    Log::restoreFileWrite();
 
     if (exitCode == 0) {
         LOG_INFO("LVM Snapshot '{}' created successfully.", snapshotName);
@@ -478,12 +484,14 @@ void LVM::rollbackSnapshot(const std::string& snapshotName)
     }
 
     LOG_INFO("LVM Snapshot rollback in progress.");
+    Log::suspendFileWrite();
     checkVolumeGroup();
 
     const std::string rollbackSnapshotCommand = fmt::format(
         "lvconvert --merge {}/{}", m_snapshotVolumeGroup, snapshotName);
 
     int exitCode = cloyster::runCommand(rollbackSnapshotCommand);
+    Log::restoreFileWrite();
 
     if (exitCode == 0) {
         LOG_INFO(
