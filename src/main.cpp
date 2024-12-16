@@ -130,22 +130,18 @@ int main(int argc, const char** argv)
 
             if (LVMSnapshot->count("-a") != 0U) {
                 lvm.checkLVMAvailability();
-                return EXIT_SUCCESS;
             }
 
             if (LVMSnapshot->count("-c") != 0U) {
                 lvm.createSnapshotWithBootBackup(PRODUCT_NAME);
-                return EXIT_SUCCESS;
             }
 
             if (LVMSnapshot->count("-r") != 0U) {
                 lvm.rollbackSnapshotWithBootRestore(PRODUCT_NAME);
-                return EXIT_SUCCESS;
             }
 
             if (LVMSnapshot->count("-d") != 0U) {
                 lvm.removeSnapshot(PRODUCT_NAME);
-                return EXIT_SUCCESS;
             }
 
             return EXIT_SUCCESS;
