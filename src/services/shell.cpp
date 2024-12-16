@@ -164,6 +164,11 @@ void Shell::disableNetworkManagerDNSOverride()
     runCommand("systemctl restart NetworkManager");
 }
 
+void Shell::deleteConnectionIfExists(std::string_view connectionName)
+{
+    runCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
+}
+
 /* This function configure host networks at once with NetworkManager.
  * We enforce that NM is running enabling it with --now and then set default
  * settings and addresses based on data available on the model.
@@ -190,6 +195,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
+        deleteConnectionIfExists(
+            magic_enum::enum_name(connection.getNetwork()->getProfile()));
         runCommand(fmt::format("nmcli device set {} managed yes", interface));
         runCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
