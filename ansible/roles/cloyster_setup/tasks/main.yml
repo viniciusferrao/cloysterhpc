@@ -19,10 +19,10 @@
       set_fact:
         skip_final_cleanup: true
 
-    - name: Clean up after failed setup
-      include_tasks: cleanup.yml
-      when: cleanup_needed
-
 - name: Clean up after setup
   include_tasks: cleanup.yml
   when: cleanup_needed and not skip_final_cleanup | default(false)
+
+- name: Check for failure
+  fail: msg="Setup failed"
+  when: skip_final_cleanup | default(false)
