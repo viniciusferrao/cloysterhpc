@@ -30,14 +30,13 @@ Newt::Newt()
     newtDrawRootText(0, 0, TUIText::title);
 
     // Push the product version to the top right corner
-    newtDrawRootText(
-        0 - static_cast<int>(strnlen(TUIText::version, m_dataWidth)), 0,
+    newtDrawRootText(0 - static_cast<int>(strnlen(TUIText::version, m_cols)), 0,
         TUIText::version);
 
 #ifndef NDEBUG
     newtDrawRootText(
-        0 - static_cast<int>(strnlen(TUIText::developmentBuild, m_dataWidth)),
-        1, TUIText::developmentBuild);
+        0 - static_cast<int>(strnlen(TUIText::developmentBuild, m_cols)), 1,
+        TUIText::developmentBuild);
 #endif
 
     // Add the default help line in the bottom
