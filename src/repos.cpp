@@ -205,7 +205,8 @@ void RepoManager::commitStatus()
 
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { tmpdir }) {
-        std::filesystem::copy(dir_entry, "/etc/yum.repos.d");
+        std::filesystem::copy(dir_entry, "/etc/yum.repos.d",
+            std::filesystem::copy_options::update_existing);
     }
 
     std::vector<std::string> to_enable;
