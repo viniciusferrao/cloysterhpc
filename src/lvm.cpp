@@ -11,8 +11,7 @@
 @TODO -> Pre-install boom-boot and rsync.
 */
 
-//@TODO Move checkUEFIMode to a healthcheck class
-bool LVM::isUEFIModeEnabled()
+bool LVM::isUEFIModeEnabled() const
 {
     if (std::filesystem::exists("/sys/firmware/efi")) {
         LOG_TRACE("LVM: System boot mode: UEFI\n");
@@ -23,13 +22,13 @@ bool LVM::isUEFIModeEnabled()
     return false;
 }
 
-bool LVM::isLVMEnabled()
+bool LVM::isLVMEnabled() const
 {
     std::list<std::string> output;
     const std::string checkLVMCommand = "vgs --noheadings";
-    int exitCode = cloyster::runCommand(checkLVMCommand, output);
 
-    if (exitCode == 0) {
+    if (int exitCode = cloyster::runCommand(checkLVMCommand, output);
+        exitCode == 0) {
         if (!output.empty()) {
             LOG_INFO("LVM is enabled.\n");
             return true;
@@ -42,13 +41,13 @@ bool LVM::isLVMEnabled()
     throw std::runtime_error("LVM ERROR: Failed to check if LVM is enabled.");
 }
 
-bool LVM::isRootLVMEnabled()
+bool LVM::isRootLVMEnabled() const
 {
     std::list<std::string> output;
     const std::string checkRootLVMCommand = "findmnt -n -o SOURCE /";
-    int exitCode = cloyster::runCommand(checkRootLVMCommand, output);
 
-    if (exitCode != 0) {
+    if (int exitCode = cloyster::runCommand(checkRootLVMCommand, output);
+        exitCode != 0) {
         throw std::runtime_error(
             "LVM ERROR: Failed to check if root filesystem is on LVM.");
     }
@@ -66,9 +65,8 @@ bool LVM::isRootLVMEnabled()
     // device file under /dev/mapper/<volume-group>-<logical-volume> for each
     // logical volume, which is a symlink to
     // /dev/<volume-group>/<logical-volume>
-    if (rootDevice.find("/dev/mapper/") != std::string::npos
-        || rootDevice.find(fmt::format("/dev/{}", m_snapshotVolumeGroup))
-            != std::string::npos) {
+    if (rootDevice.contains("/dev/mapper/")
+        || rootDevice.contains(fmt::format("/dev/{}", m_snapshotVolumeGroup))) {
         LOG_INFO("LVM: Root filesystem is on LVM.\n");
         return true;
     }
@@ -77,13 +75,13 @@ bool LVM::isRootLVMEnabled()
     return false;
 }
 
-bool LVM::isThinProvisioningEnabled()
+bool LVM::isThinProvisioningEnabled() const
 {
     std::list<std::string> output;
-    const std::string checkThinCommand = "lvs -o+lv_layout --noheadings";
-    int exitCode = cloyster::runCommand(checkThinCommand, output);
+    const std::string checkThinCommand = "lvs -o lv_layout --noheadings";
 
-    if (exitCode != 0) {
+    if (int exitCode = cloyster::runCommand(checkThinCommand, output);
+        exitCode != 0) {
         throw std::runtime_error(
             "LVM ERROR: Failed to check thin provisioning status.");
     }
@@ -94,10 +92,8 @@ bool LVM::isThinProvisioningEnabled()
     }
 
     // Check if any of the volumes have "thin" in the layout
-    auto it = std::find_if(
-        output.begin(), output.end(), [](const std::string& line) {
-            return line.find("thin") != std::string::npos;
-        });
+    auto it = std::find_if(output.begin(), output.end(),
+        [](const std::string& line) { return line.contains("thin"); });
 
     if (it != output.end()) {
         LOG_INFO("LVM: Thin provisioning is enabled.\n");
@@ -108,14 +104,14 @@ bool LVM::isThinProvisioningEnabled()
     return false;
 }
 
-bool LVM::isRootThinProvisioningEnabled()
+bool LVM::isRootThinProvisioningEnabled() const
 {
     std::list<std::string> output;
 
     const std::string checkRootCommand = "findmnt -n -o SOURCE /";
-    int exitCode = cloyster::runCommand(checkRootCommand, output);
 
-    if (exitCode != 0) {
+    if (int exitCode = cloyster::runCommand(checkRootCommand, output);
+        exitCode != 0) {
         throw std::runtime_error("LVM ERROR: Failed to check the root device.");
     }
 
@@ -129,10 +125,10 @@ bool LVM::isRootThinProvisioningEnabled()
     // Step 2: Use `lvs` to check if the root device is thin-provisioned
     std::list<std::string> lvsOutput;
     const std::string checkThinCommand
-        = fmt::format("lvs -o+lv_layout --noheadings {}", rootDevice);
-    exitCode = cloyster::runCommand(checkThinCommand, lvsOutput);
+        = fmt::format("lvs -o lv_layout --noheadings {}", rootDevice);
 
-    if (exitCode != 0) {
+    if (int exitCode = cloyster::runCommand(checkThinCommand, lvsOutput);
+        exitCode != 0) {
         throw std::runtime_error("LVM ERROR: Failed to check thin provisioning "
                                  "for the root device.");
     }
@@ -143,10 +139,8 @@ bool LVM::isRootThinProvisioningEnabled()
     }
 
     // Step 3: Look for "thin" in the layout of the root logical volume
-    auto it = std::find_if(
-        lvsOutput.begin(), lvsOutput.end(), [](const std::string& line) {
-            return line.find("thin") != std::string::npos;
-        });
+    auto it = std::find_if(lvsOutput.begin(), lvsOutput.end(),
+        [](const std::string& line) { return line.contains("thin"); });
 
     if (it != lvsOutput.end()) {
         LOG_INFO(
@@ -165,9 +159,8 @@ bool LVM::checkEnoughDiskSpaceAvailable()
     const std::string checkDiskSpaceCommand
         = "vgs --noheadings -o vg_name,vg_size,vg_free --units G";
 
-    int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output);
-
-    if (exitCode == 0 && !output.empty()) {
+    if (int exitCode = cloyster::runCommand(checkDiskSpaceCommand, output);
+        exitCode == 0 && !output.empty()) {
         try {
             bool allVGsHaveEnoughSpace = true;
 
@@ -355,9 +348,9 @@ bool LVM::isBootLVM()
 
     const std::string listCommand
         = "lsblk --noheadings --output MOUNTPOINT,TYPE";
-    int exitCodeList = cloyster::runCommand(listCommand, output);
 
-    if (exitCodeList != 0) {
+    if (int exitCodeList = cloyster::runCommand(listCommand, output);
+        exitCodeList != 0) {
         throw std::runtime_error("LVM ERROR: Failed to list mount points.");
     }
 
@@ -371,10 +364,9 @@ bool LVM::isBootLVM()
             continue;
         }
 
-        if (mountPoint == "/boot") {
-            if (type == "lvm") {
-                isBootLVM = true;
-            }
+        if (mountPoint == "/boot" && type == "lvm") {
+            isBootLVM = true;
+            break;
         }
     }
 
@@ -389,10 +381,8 @@ bool LVM::isBootLVM()
 
 void LVM::backupBoot()
 {
-    //@TODO We need a better way to store the backup path
     cloyster::createDirectory(fmt::format("/opt/{}/backup", PRODUCT_NAME));
 
-    //@TODO We need a better way to store the backup path
     const std::string backupCommand
         = fmt::format("rsync -a /boot/ /opt/{}/backup/boot/", PRODUCT_NAME);
 
@@ -407,7 +397,6 @@ void LVM::backupBoot()
 
 void LVM::restoreBoot()
 {
-    //@TODO We need a better way to store the backup path
     const std::string restoreCommand
         = fmt::format("rsync -a /opt/{}/backup/boot/ /boot/", PRODUCT_NAME);
 
@@ -524,7 +513,7 @@ void LVM::removeSnapshot(const std::string& snapshotName)
         std::string lvAttr = output.front();
 
         // Check if the snapshot is merged (state will be inactive or missing)
-        if (lvAttr.find("M") != std::string::npos) {
+        if (lvAttr.contains("M")) {
             LOG_WARN(
                 "LVM Snapshot '{}' is already merged and cannot be removed.",
                 snapshotName);

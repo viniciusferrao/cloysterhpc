@@ -16,11 +16,11 @@ private:
     void backupBoot();
     void restoreBoot();
     void checkVolumeGroup();
-    bool isUEFIModeEnabled();
-    bool isLVMEnabled();
-    bool isRootLVMEnabled();
-    bool isThinProvisioningEnabled();
-    bool isRootThinProvisioningEnabled();
+    [[nodiscard]] bool isUEFIModeEnabled() const;
+    [[nodiscard]] bool isLVMEnabled() const;
+    [[nodiscard]] bool isRootLVMEnabled() const;
+    [[nodiscard]] bool isThinProvisioningEnabled() const;
+    [[nodiscard]] bool isRootThinProvisioningEnabled() const;
     bool checkEnoughDiskSpaceAvailable();
     void logHomePartitionStatus() const;
     void logPartitionStatus() const;

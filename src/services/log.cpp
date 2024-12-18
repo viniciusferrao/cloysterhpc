@@ -33,7 +33,7 @@ public:
     {
         m_file_helper.open(m_filename);
 
-        for (auto& buf : m_stored) {
+        for (const auto& buf : m_stored) {
             m_file_helper.write(buf);
         }
         m_file_helper.flush();
