@@ -107,7 +107,7 @@ if [ "$os_version" = "8" ]; then
   dnf -y install python3 python3-pip\* llvm-toolset compiler-rt \
     gcc-toolset-13 gcc-toolset-13-libubsan-devel gcc-toolset-13-libasan-devel
 elif [ "$os_version" = "9" ]; then
-  dnf -y install python pip libasan libubsan
+  dnf -y install python pip libasan libubsan gcc-toolset-13 gcc-toolset-13-libubsan-devel gcc-toolset-13-libasan-devel llvm-toolset compiler-rt
 fi
 
 pip3 install --user conan
