@@ -6,10 +6,13 @@
 #ifndef CLOYSTERHPC_OS_H_
 #define CLOYSTERHPC_OS_H_
 
+#include "services/dnf.h"
+
 #include <cloysterhpc/const.h>
+#include <cloysterhpc/services/package_manager.h>
+#include <memory>
 #include <string>
 
-// Darwin added for development reasons, not really supported.
 /**
  * @class OS
  * @brief A class representing an Operating System (OS).
@@ -17,6 +20,8 @@
  * This class provides functionality to manage various attributes of an
  * operating system, including architecture, family, platform, distribution,
  * kernel version, and version number.
+ *
+ * Support for Darwin added for development reasons, not really supported.
  */
 class OS {
 public:
@@ -52,6 +57,11 @@ private:
     std::string m_kernel;
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
+    // BUG: The package_manager should be a unique_ptr;
+    // however repos.h needs to be rewritten to support it.
+    // 'OS::os()' is implicitly deleted because the default definition
+    // would be ill-formed
+    std::shared_ptr<package_manager> m_packageManager {};
 
 private:
     void setMajorVersion(unsigned int majorVersion);
@@ -108,6 +118,9 @@ public:
 
     [[nodiscard]] unsigned int getMajorVersion() const;
     [[nodiscard]] unsigned int getMinorVersion() const;
+
+    std::shared_ptr<package_manager> createPackageManager(
+        OS::Platform platform);
 
 #ifndef NDEBUG
     /**

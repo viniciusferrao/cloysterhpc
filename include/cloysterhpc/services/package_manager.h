@@ -14,11 +14,11 @@ class package_manager {
 public:
     virtual ~package_manager() = default;
 
-    package_manager(const package_manager&) = delete;
-    package_manager& operator=(const package_manager&) = delete;
-
-    package_manager(package_manager&&) = delete;
-    package_manager& operator=(package_manager&&) = delete;
+    // package_manager(const package_manager&) = delete;
+    // package_manager& operator=(const package_manager&) = delete;
+    //
+    // package_manager(package_manager&&) = delete;
+    // package_manager& operator=(package_manager&&) = delete;
 
     virtual bool install(std::string_view package) = 0;
     virtual bool remove(std::string_view package) = 0;

@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/os.h>
+#include <cloysterhpc/services/dnf.h>
 #include <magic_enum.hpp>
 
 #ifndef NDEBUG
@@ -88,6 +89,7 @@ OS::OS()
                 fmt::format("Error while reading file: {}", filename));
         }
     }
+
 }
 
 OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
@@ -101,6 +103,7 @@ OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
     setKernel(kernel);
     setMajorVersion(majorVersion);
     setMinorVersion(minorVersion);
+    createPackageManager(platform);
 }
 
 OS::Arch OS::getArch() const { return m_arch; }
@@ -110,7 +113,7 @@ void OS::setArch(Arch arch) { m_arch = arch; }
 void OS::setArch(std::string_view arch)
 {
     if (arch != "x86_64") {
-        throw std::runtime_error("Unsupported architecture");
+        throw std::runtime_error(fmt::format("Unsupported architecture: {}", arch));
     }
 
     setArch(OS::Arch::x86_64);
@@ -227,6 +230,14 @@ std::string OS::getValueFromKey(const std::string& line)
     value.erase(std::remove(value.begin(), value.end(), '"'), value.end());
 
     return value;
+}
+
+std::shared_ptr<package_manager> OS::createPackageManager(OS::Platform platform) {
+    if (platform == OS::Platform::el8 || platform == OS::Platform::el9) {
+        return std::make_shared<dnf>();
+    } else {
+        throw std::runtime_error("Unsupported OS platform");
+    }
 }
 
 #ifndef NDEBUG
