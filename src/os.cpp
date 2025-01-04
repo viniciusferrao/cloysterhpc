@@ -25,7 +25,7 @@
 
 OS::OS()
 {
-    struct utsname system { };
+    struct utsname system {};
     uname(&system);
 
     setArch(system.machine);
@@ -89,7 +89,6 @@ OS::OS()
                 fmt::format("Error while reading file: {}", filename));
         }
     }
-
 }
 
 OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
@@ -113,7 +112,8 @@ void OS::setArch(Arch arch) { m_arch = arch; }
 void OS::setArch(std::string_view arch)
 {
     if (arch != "x86_64") {
-        throw std::runtime_error(fmt::format("Unsupported architecture: {}", arch));
+        throw std::runtime_error(
+            fmt::format("Unsupported architecture: {}", arch));
     }
 
     setArch(OS::Arch::x86_64);
@@ -164,7 +164,7 @@ void OS::setDistro(std::string_view distro)
 #if 0
     if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
 #endif
-    if (const auto& rv
+    if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))
@@ -232,7 +232,8 @@ std::string OS::getValueFromKey(const std::string& line)
     return value;
 }
 
-std::shared_ptr<package_manager> OS::createPackageManager(OS::Platform platform) {
+std::shared_ptr<package_manager> OS::createPackageManager(OS::Platform platform)
+{
     if (platform == OS::Platform::el8 || platform == OS::Platform::el9) {
         return std::make_shared<dnf>();
     } else {
