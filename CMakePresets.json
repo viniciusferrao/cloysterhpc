@@ -62,38 +62,38 @@
       }
     },
     {
-      "name": "conf-linux-gcc-toolset-13-common",
-      "description": "Target Linux OS with the gcc toolset 13 compiler",
+      "name": "conf-linux-gcc-toolset-14-common",
+      "description": "Target Linux OS with the gcc toolset 14 compiler",
       "hidden": true,
       "inherits": "conf-linux-common",
       "environment": {
-        "PATH": "/opt/rh/gcc-toolset-13/root/usr/bin:$penv{PATH}",
-        "MANPATH": "/opt/rh/gcc-toolset-13/root/usr/share/man:$penv{MANPATH}",
-        "INFOPATH": "/opt/rh/gcc-toolset-13/root/usr/share/info:$penv{INFOPATH}",
-        "PCP_DIR": "/opt/rh/gcc-toolset-13/root",
-        "LD_LIBRARY_PATH": "/opt/rh/gcc-toolset-13/root/usr/lib64:$penv{LD_LIBRARY_PATH}",
-        "PKG_CONFIG_PATH": "/opt/rh/gcc-toolset-13/root/usr/lib64/pkgconfig:$penv{PKG_CONFIG_PATH}",
-        "X_SCLS": "gcc-toolset-13"
+        "PATH": "/opt/rh/gcc-toolset-14/root/usr/bin:$penv{PATH}",
+        "MANPATH": "/opt/rh/gcc-toolset-14/root/usr/share/man:$penv{MANPATH}",
+        "INFOPATH": "/opt/rh/gcc-toolset-14/root/usr/share/info:$penv{INFOPATH}",
+        "PCP_DIR": "/opt/rh/gcc-toolset-14/root",
+        "LD_LIBRARY_PATH": "/opt/rh/gcc-toolset-14/root/usr/lib64:$penv{LD_LIBRARY_PATH}",
+        "PKG_CONFIG_PATH": "/opt/rh/gcc-toolset-14/root/usr/lib64/pkgconfig:$penv{PKG_CONFIG_PATH}",
+        "X_SCLS": "gcc-toolset-14"
       },
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "/opt/rh/gcc-toolset-13/root/usr/bin/gcc",
-        "CMAKE_CXX_COMPILER": "/opt/rh/gcc-toolset-13/root/usr/bin/g++"
+        "CMAKE_C_COMPILER": "/opt/rh/gcc-toolset-14/root/usr/bin/gcc",
+        "CMAKE_CXX_COMPILER": "/opt/rh/gcc-toolset-14/root/usr/bin/g++"
       }
     },
     {
-      "name": "rhel9-gcc-toolset-13-release",
-      "displayName": "RHEL9 GCC 13 Release",
-      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 13 compiler, release build type",
-      "inherits": "conf-linux-gcc-toolset-13-common",
+      "name": "rhel9-gcc-toolset-14-release",
+      "displayName": "RHEL9 GCC 14 Release",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 14 compiler, release build type",
+      "inherits": "conf-linux-gcc-toolset-14-common",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "rhel9-gcc-toolset-13-debug",
-      "displayName": "RHEL9 GCC 13 Debug",
-      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 13 compiler, debug build type",
-      "inherits": "conf-linux-gcc-toolset-13-common",
+      "name": "rhel9-gcc-toolset-14-debug",
+      "displayName": "RHEL9 GCC 14 Debug",
+      "description": "Target Red Hat Enterprise Linux 9 with the gcc toolset 14 compiler, debug build type",
+      "inherits": "conf-linux-gcc-toolset-14-common",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -139,14 +139,14 @@
       "configurePreset": "rhel9-gcc-debug"
     },
     {
-      "name": "rhel9-gcc-toolset-13-release-build",
-      "displayName": "gcc toolset 13 build release",
-      "configurePreset": "rhel9-gcc-toolset-13-release"
+      "name": "rhel9-gcc-toolset-14-release-build",
+      "displayName": "gcc toolset 14 build release",
+      "configurePreset": "rhel9-gcc-toolset-14-release"
     },
     {
-      "name": "rhel9-gcc-toolset-13-debug-build",
-      "displayName": "gcc toolset 13 build debug",
-      "configurePreset": "rhel9-gcc-toolset-13-debug"
+      "name": "rhel9-gcc-toolset-14-debug-build",
+      "displayName": "gcc toolset 14 build debug",
+      "configurePreset": "rhel9-gcc-toolset-14-debug"
     },
     {
       "name": "rhel9-clang-release-build",
@@ -187,18 +187,18 @@
       "configurePreset": "rhel9-gcc-debug"
     },
     {
-      "name": "test-rhel9-gcc-toolset-13-release",
+      "name": "test-rhel9-gcc-toolset-14-release",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "rhel9-gcc-toolset-13-release"
+      "configurePreset": "rhel9-gcc-toolset-14-release"
     },
     {
-      "name": "test-rhel9-gcc-toolset-13-debug",
+      "name": "test-rhel9-gcc-toolset-14-debug",
       "displayName": "Strict",
       "description": "Enable output and stop on failure",
       "inherits": "test-common",
-      "configurePreset": "rhel9-gcc-toolset-13-debug"
+      "configurePreset": "rhel9-gcc-toolset-14-debug"
     },
     {
       "name": "test-rhel9-clang-release",

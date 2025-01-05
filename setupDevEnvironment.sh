@@ -101,15 +101,23 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset, packages and utils
-dnf -y install rsync git gcc-c++ ninja-build cmake ccache cppcheck
+dnf -y install rsync git gcc-c++ gdb ninja-build cmake ccache cppcheck
 
 if [ "$os_version" = "8" ]; then
   dnf -y install python3 python3-pip\* llvm-toolset compiler-rt \
-    gcc-toolset-13 gcc-toolset-13-libubsan-devel gcc-toolset-13-libasan-devel
+    gcc-toolset-14 gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel \
+    lldb
 elif [ "$os_version" = "9" ]; then
-  dnf -y install python pip libasan libubsan gcc-toolset-13 gcc-toolset-13-libubsan-devel gcc-toolset-13-libasan-devel llvm-toolset compiler-rt
+  dnf -y install python pip libasan libubsan gcc-toolset-14 \
+    gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel llvm-toolset \
+    compiler-rt lldb
 fi
 
+# Install Perl dependencies needed by libxcrypt
+dnf -y install perl-FindBin perl-open perl-Thread-Queue perl-Thread \
+  perl-File-Compare perl-File-Copy
+
+# Install Conan as user
 pip3 install --user conan
 
 # Required libraries
@@ -118,9 +126,9 @@ dnf -y install newt-devel
 echo
 echo Development tools, packages and libraries were installed on your system.
 echo
-echo If compiling or running on EL8, please remember to source or activate the
-echo environment file with the correct toolset compiler:
-echo     \"source rhel-gcc-toolset-13.sh\"
+echo If compiling or running on EL8 or EL9, please remember to source or
+echo activate the environment file with the correct toolset compiler:
+echo     \"source rhel-gcc-toolset-14.sh\"
 echo
 echo To proceed with the compilation please refer to the README.md file.
 echo
