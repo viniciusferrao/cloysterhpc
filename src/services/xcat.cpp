@@ -52,9 +52,9 @@ void XCAT::patchInstall()
 void XCAT::setup()
 {
     setDHCPInterfaces(m_cluster->getHeadnode()
-            .getConnection(Network::Profile::Management)
-            .getInterface()
-            .value());
+                          .getConnection(Network::Profile::Management)
+                          .getInterface()
+                          .value());
     setDomain(m_cluster->getDomainName());
 }
 
