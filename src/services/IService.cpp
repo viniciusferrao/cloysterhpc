@@ -1,6 +1,16 @@
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/services/IService.h>
 #include <cloysterhpc/services/log.h>
 #include <stdexcept>
+
+/* BUG: Refactor:
+ * Legacy casting.
+ * Dry run is a band-aid solution.
+ * Variables could be const.
+ * Variables name are not the best ones.
+ * Check grammar.
+ * Warnings during compilation.
+ */
 
 using EnableRType
     = std::vector<sdbus::Struct<std::string, std::string, std::string>>;
@@ -17,6 +27,11 @@ bool IService::handleException(const sdbus::Error& e, const std::string_view fn)
 
 void IService::enable()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would have enabled the service {}", m_name)
+        return;
+    }
+
     LOG_TRACE("service: enabling {}", m_name);
 
     auto ret = callObjectFunctionArray("EnableUnitFiles", false, true)
@@ -30,6 +45,11 @@ void IService::enable()
 
 void IService::disable()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would have disabled the service {}", m_name)
+        return;
+    }
+
     LOG_TRACE("service: disabling {}", m_name);
 
     auto ret = callObjectFunctionArray("DisableUnitFiles", false, true)
@@ -42,18 +62,33 @@ void IService::disable()
 
 void IService::start()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would have started the service {}", m_name)
+        return;
+    }
+
     LOG_TRACE("service: starting {}", m_name);
     (void)callObjectFunction("StartUnit", "replace");
 }
 
 void IService::restart()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would have restarted the service {}", m_name)
+        return;
+    }
+
     LOG_TRACE("service: restarting {}", m_name);
     (void)callObjectFunction("RestartUnit", "replace");
 }
 
 void IService::stop()
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would have stopped the service {}", m_name)
+        return;
+    }
+
     LOG_TRACE("service: stopping {}", m_name);
     (void)callObjectFunction("StopUnit", "replace");
 }

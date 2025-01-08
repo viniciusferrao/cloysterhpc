@@ -23,6 +23,7 @@ constexpr std::string_view CLOYSTER_REPO_EL8 {
 
 constexpr std::string_view CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
+
 };
 
 static repository loadSection(const std::filesystem::path& source,
@@ -79,6 +80,7 @@ static void loadFromINI(const std::filesystem::path& source, inifile& file,
     }
 }
 
+// BUG: Why?
 #define NOSONAR(code) code
 
 void RepoManager::loadSingleFile(std::filesystem::path source)
@@ -234,7 +236,7 @@ void RepoManager::commitStatus()
 
 #define FORMAT_TEMPLATE(src) fmt::format(src, cloyster::productName)
 
-std::vector<repository> RepoManager::buildCloysterTree(
+const std::vector<repository> RepoManager::buildCloysterTree(
     const std::filesystem::path& basedir)
 {
 
@@ -278,8 +280,9 @@ void RepoManager::createFileFor(std::filesystem::path path)
 
     inifile file;
 
-    auto filtered = m_repos
-        | std::views::filter([&path](auto& r) { return path == r.source; });
+    auto filtered = m_repos | std::views::filter([&path](const auto& r) {
+        return path == r.source;
+    });
 
     for (const auto& repo : filtered) {
         writeSection(file, repo);
@@ -317,8 +320,8 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
     LOG_INFO("Setting up XCAT repositories");
 
     // TODO: we need to download these files in a sort of temporary directory
-    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
-                          "xcat-core/xcat-core.repo",
+    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
+                          "core-snap/xcat-core.repo",
         repofile_dest.string());
 
     switch (m_os.getPlatform()) {

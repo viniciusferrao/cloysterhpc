@@ -31,7 +31,11 @@ XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
     setenv("PERL_BADLANG", "0", false);
 }
 
-void XCAT::installPackages() { cloyster::runCommand("dnf -y install xCAT"); }
+void XCAT::installPackages()
+{
+    m_cluster->getHeadnode().getOS().packageManager()->install(std::string{"initscripts"});
+    cloyster::runCommand("dnf -y install xCAT");
+}
 
 void XCAT::setup()
 {

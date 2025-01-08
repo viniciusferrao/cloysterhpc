@@ -110,9 +110,9 @@ void Network::setAddress(const std::string& ip)
 
 address Network::fetchAddress(const std::string& interface)
 {
-    struct in_addr addr { };
-    struct in_addr netmask { };
-    struct in_addr network { };
+    struct in_addr addr {};
+    struct in_addr netmask {};
+    struct in_addr network {};
 
     if (inet_aton(
             Connection::fetchAddress(interface).to_string().c_str(), &addr)
@@ -208,8 +208,8 @@ address Network::calculateAddress(const address& connectionAddress)
                         "calculate the address"));
     }
 
-    struct in_addr ip_addr { };
-    struct in_addr subnet_addr { };
+    struct in_addr ip_addr {};
+    struct in_addr subnet_addr {};
 
     inet_aton(connectionAddress.to_string().c_str(), &ip_addr);
     inet_aton(m_subnetMask.to_string().c_str(), &subnet_addr);
@@ -299,12 +299,15 @@ const std::string& Network::getDomainName() const { return m_domainName; }
 
 void Network::setDomainName(const std::string& domainName)
 {
+    if (domainName.empty())
+        throw std::invalid_argument("Domain name cannot be empty.");
+
     if (domainName.size() > 255)
         throw std::length_error("Domain name exceeds the maximum allowed "
                                 "length of 255 characters.");
 
     if (domainName.starts_with('-') or domainName.ends_with('-'))
-        throw std::runtime_error("Invalid hostname");
+        throw std::runtime_error("Hostname cannot start or end with a hyphen.");
 
     /* Check if string has only digits */
     if (std::regex_match(domainName, std::regex("^[0-9]+$")))
@@ -329,6 +332,7 @@ std::string Network::fetchDomainName()
 
     LOG_TRACE("Got domain name {}", domainName)
 
+    // BUG: This is a bug, we must return the domain name
     auto ret = std::string(domainName);
     if (ret == "(none)") {
         ret = "";

@@ -10,9 +10,9 @@
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <fmt/format.h>
 #include <memory>
+#include <chrono>
 
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/cluster.h>
@@ -115,7 +115,7 @@ void Shell::configureHostsFile()
 {
     LOG_INFO("Setting up additional entries on hosts file")
 
-    auto& headnode = m_cluster->getHeadnode();
+    const auto& headnode = m_cluster->getHeadnode();
 
     const auto& ip = headnode.getConnection(Network::Profile::Management)
                          .getAddress()
@@ -164,6 +164,7 @@ void Shell::disableNetworkManagerDNSOverride()
     runCommand("systemctl restart NetworkManager");
 }
 
+// BUG: Why this method exists? The name does not do what it says.
 void Shell::deleteConnectionIfExists(std::string_view connectionName)
 {
     runCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
@@ -214,6 +215,13 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                 connection.getNetwork()->getGateway().to_string(),
                 fmt::join(formattedNameservers, " "),
                 connection.getNetwork()->getDomainName()));
+
+        /* Give network manage some time to settle thing up
+         * Avoids: Error: Connection activation failed: IP configuration could
+         * not be reserved (no available address, timeout, etc.).
+         */
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
         runCommand(fmt::format("nmcli device connect {}", interface));
     }
 
@@ -239,8 +247,8 @@ void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
-    runCommand("sed -i 's/PermitRootLogin\\ yes/PermitRootLogin\\ "
-               "without-password/g' /etc/ssh/sshd_config");
+    cloyster::addStringToFile(
+        "/etc/ssh/sshd_config", "PermitRootLogin without-password\n");
 }
 
 void Shell::installOpenHPCBase()
@@ -389,17 +397,17 @@ void Shell::install()
 
     installRequiredPackages();
 
-    auto repos = m_cluster->getRepoManager();
-    repos.loadFiles();
-
-    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
-        "-openhpc", "-rpmfusion-free-updates" };
-    for (auto& package : toEnable) {
-        package = cloyster::productName + package;
-    }
-
-    repos.enableMultiple(toEnable);
-    repos.commitStatus();
+    // auto repos = m_cluster->getRepoManager();
+    // repos.loadFiles();
+    //
+    // std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
+    //     "-openhpc", "-rpmfusion-free-updates" };
+    // for (auto& package : toEnable) {
+    //     package = cloyster::productName + package;
+    // }
+    //
+    // repos.enableMultiple(toEnable);
+    // repos.commitStatus();
 
     runSystemUpdate();
 

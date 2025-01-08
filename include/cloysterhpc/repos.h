@@ -52,6 +52,7 @@ public:
     void loadFiles(const std::filesystem::path& basedir = "/etc/yum.repos.d");
     void loadCustom(inifile& file, const std::filesystem::path& path);
 
+    // BUG: Enable and EnableMultiple are the same method. Overload it.
     void enable(const std::string& id);
     void enableMultiple(std::vector<std::string> ids);
     void disable(const std::string& id);
@@ -65,11 +66,11 @@ public:
 private:
     std::vector<repository> m_repos;
     BaseRunner& m_runner;
-    OS m_os;
+    const OS& m_os;
 
     void createFileFor(std::filesystem::path path);
 
-    std::vector<repository> buildCloysterTree(
+    const std::vector<repository> buildCloysterTree(
         const std::filesystem::path& basedir);
 
     void loadSingleFile(std::filesystem::path source);

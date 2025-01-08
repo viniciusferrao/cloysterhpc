@@ -55,7 +55,7 @@ public:
     const std::string& getMACAddress() const;
     void setMACAddress(const std::string& macAddress);
     const std::optional<std::string>& getNodeRootPassword() const;
-    void setNodeRootPassword(const std::optional<std::string>& ndeRootPassword);
+    void setNodeRootPassword(const std::optional<std::string>& nodeRootPassword);
 };
 
 #endif // CLOYSTERHPC_NODE_H_

@@ -40,6 +40,7 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
     return false;
 }
 
+// BUG: Consider removing
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
     if (!isKnownImage(path)) {

@@ -174,6 +174,12 @@ void writeConfig(const std::string& filename)
 
 void touchFile(const std::filesystem::path& path)
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would touch the file {}", path.string())
+        return;
+    }
+
+    // BUG: I don't have to comment why this is a BUG, right?
     FILE* f = fopen(path.c_str(), "ab");
     (void)fflush(f);
     (void)fclose(f);

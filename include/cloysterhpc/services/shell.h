@@ -10,7 +10,6 @@
 
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/services/execution.h>
-#include <cloysterhpc/services/provisioner.h>
 
 /**
  * @class Shell
@@ -71,9 +70,9 @@ private:
      *
      * This function disables the DNS override feature of NetworkManager.
      */
-    void disableNetworkManagerDNSOverride(); // This should be on Network
+    static void disableNetworkManagerDNSOverride(); // This should be on Network
 
-    void deleteConnectionIfExists(std::string_view connectionName);
+    static void deleteConnectionIfExists(std::string_view connectionName);
 
     /**
      * @brief Configures network connections.
@@ -83,7 +82,7 @@ private:
      *
      * @param connections A list of network connections to configure.
      */
-    void configureNetworks(const std::list<Connection>&);
+    static void configureNetworks(const std::list<Connection>&);
 
     /**
      * @brief Runs a system update.
@@ -98,7 +97,7 @@ private:
      * This function installs all the necessary packages for the system to
      * operate.
      */
-    void installRequiredPackages();
+    static void installRequiredPackages();
 
     /**
      * @brief Disallows SSH root password login.
@@ -106,14 +105,14 @@ private:
      * This function configures SSH to disallow root login using password
      * authentication.
      */
-    void disallowSSHRootPasswordLogin();
+    static void disallowSSHRootPasswordLogin();
 
     /**
      * @brief Installs the OpenHPC base packages.
      *
      * This function installs the base packages required for OpenHPC.
      */
-    void installOpenHPCBase();
+    static void installOpenHPCBase();
 
     /**
      * @brief Configure repositories
@@ -131,7 +130,7 @@ private:
      * @param connections A list of network connections to use for time service
      * configuration.
      */
-    void configureTimeService(const std::list<Connection>&);
+    static void configureTimeService(const std::list<Connection>&);
 
     /**
      * @brief Configures the queue system.
@@ -153,13 +152,13 @@ private:
      *
      * This function removes any limits on memory locking.
      */
-    void removeMemlockLimits();
+    static void removeMemlockLimits();
     /**
      * @brief Installs development components.
      *
      * This function installs the necessary development tools and libraries.
      */
-    void installDevelopmentComponents();
+    static void installDevelopmentComponents();
 
     /* Ancillary functions */
     /**
@@ -167,7 +166,7 @@ private:
      *
      * This function completely disables SELinux enforcement.
      */
-    void disableSELinux();
+    static void disableSELinux();
 
 public:
     // FIXME: Guideline: Don’t use a const unique_ptr& as a parameter;

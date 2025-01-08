@@ -7,7 +7,7 @@ gpgkey=https://yum.oracle.com/RPM-GPG-KEY-oracle-ol9
 
 [{0}-Rocky-BaseOS]
 name=Rocky Linux $releasever - BaseOS
-baseurl=http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/
+baseurl=http://dl.rockylinux.org/pub/rocky/$releasever/BaseOS/$basearch/os/
 enabled=0
 gpgcheck=1
 gpgkey=https://mirror.versatushpc.com.br/rocky/linux/RPM-GPG-KEY-Rocky-9

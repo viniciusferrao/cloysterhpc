@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "cloysterhpc/services/package_manager.h"
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <magic_enum.hpp>
@@ -12,6 +13,7 @@
 #endif
 
 #include <fstream>
+#include <memory>
 #include <string>
 
 #include <fmt/format.h>
@@ -89,6 +91,8 @@ OS::OS()
                 fmt::format("Error while reading file: {}", filename));
         }
     }
+
+    factoryPackageManager(getPlatform());
 }
 
 OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
@@ -98,14 +102,14 @@ OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
     , m_family(family)
     , m_platform(platform)
     , m_distro(distro)
+    , m_packageManager(factoryPackageManager(platform))
 {
     setKernel(kernel);
     setMajorVersion(majorVersion);
     setMinorVersion(minorVersion);
-    createPackageManager(platform);
 }
 
-OS::Arch OS::getArch() const { return m_arch; }
+OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
 
 void OS::setArch(Arch arch) { m_arch = arch; }
 
@@ -119,7 +123,7 @@ void OS::setArch(std::string_view arch)
     setArch(OS::Arch::x86_64);
 }
 
-OS::Family OS::getFamily() const { return m_family; }
+OS::Family OS::getFamily() const { return std::get<OS::Family>(m_family); }
 
 void OS::setFamily(Family family) { m_family = family; }
 
@@ -131,7 +135,10 @@ void OS::setFamily(std::string_view family)
         throw std::runtime_error(fmt::format("Unsupported OS: {}", family));
 }
 
-OS::Platform OS::getPlatform() const { return m_platform; }
+OS::Platform OS::getPlatform() const
+{
+    return std::get<OS::Platform>(m_platform);
+}
 
 void OS::setPlatform(OS::Platform platform) { m_platform = platform; }
 
@@ -151,7 +158,7 @@ void OS::setPlatform(std::string_view platform)
     throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
-OS::Distro OS::getDistro() const { return m_distro; }
+OS::Distro OS::getDistro() const { return std::get<OS::Distro>(m_distro); }
 
 void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
@@ -218,6 +225,7 @@ void OS::setVersion(const std::string& version)
  * fetchValueFromKey() and setOS(); an those methods should really be on OS
  * class and not here.
  */
+
 std::string OS::getValueFromKey(const std::string& line)
 {
     std::string value;
@@ -232,23 +240,29 @@ std::string OS::getValueFromKey(const std::string& line)
     return value;
 }
 
-std::shared_ptr<package_manager> OS::createPackageManager(OS::Platform platform)
+std::shared_ptr<package_manager> OS::factoryPackageManager(
+    OS::Platform platform)
 {
     if (platform == OS::Platform::el8 || platform == OS::Platform::el9) {
-        return std::make_shared<dnf>();
+        m_packageManager = std::make_shared<dnf>();
+        return m_packageManager;
     } else {
         throw std::runtime_error("Unsupported OS platform");
     }
 }
 
+package_manager* OS::packageManager() const { return m_packageManager.get(); }
+
 #ifndef NDEBUG
 void OS::printData() const
 {
-    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(m_arch))
-    LOG_DEBUG("Family: {}", magic_enum::enum_name(m_family))
+    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(std::get<Arch>(m_arch)))
+    LOG_DEBUG("Family: {}", magic_enum::enum_name(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
-    LOG_DEBUG("Platform: {}", magic_enum::enum_name(m_platform))
-    LOG_DEBUG("Distribution: {}", magic_enum::enum_name(m_distro))
+    LOG_DEBUG(
+        "Platform: {}", magic_enum::enum_name(std::get<Platform>(m_platform)))
+    LOG_DEBUG(
+        "Distribution: {}", magic_enum::enum_name(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
 }

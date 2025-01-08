@@ -109,7 +109,7 @@ std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 
 void Cluster::initRepoManager()
 {
-    m_repos.emplace(*m_runner, this->getHeadnode().getOS());
+    m_repos.emplace(*m_runner, m_headnode.getOS());
 }
 
 RepoManager& Cluster::getRepoManager()
@@ -251,6 +251,7 @@ const std::filesystem::path& Cluster::getDiskImage() const
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
+    // BUG: This does not hanble ~ expansion for userdir
     if (std::filesystem::exists(diskImagePath)) {
         m_diskImage.setPath(diskImagePath);
     } else {
@@ -682,7 +683,8 @@ void Cluster::fillData(const std::string& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-    m_headnode.setOS(nodeOS);
+    // BUG: Headnode OS may not be the same as the node OS
+    //m_headnode.setOS(nodeOS);
 
     for (const auto& tool : answerfile.getTools()) {
         tool->install();
