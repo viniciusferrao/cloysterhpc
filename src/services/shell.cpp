@@ -10,9 +10,9 @@
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <chrono>
 #include <fmt/format.h>
 #include <memory>
-#include <chrono>
 
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/cluster.h>
@@ -247,8 +247,9 @@ void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
-    cloyster::addStringToFile(
-        "/etc/ssh/sshd_config", "PermitRootLogin without-password\n");
+    runCommand(
+        "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
+        " /etc/ssh/sshd_config");
 }
 
 void Shell::installOpenHPCBase()
@@ -397,17 +398,19 @@ void Shell::install()
 
     installRequiredPackages();
 
-    // auto repos = m_cluster->getRepoManager();
-    // repos.loadFiles();
-    //
-    // std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
-    //     "-openhpc", "-rpmfusion-free-updates" };
-    // for (auto& package : toEnable) {
-    //     package = cloyster::productName + package;
-    // }
-    //
-    // repos.enableMultiple(toEnable);
-    // repos.commitStatus();
+    // TODO: This is the repos entrypoint. It should be replaced.
+    auto repos = m_cluster->getRepoManager();
+    repos.loadFiles();
+
+    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
+        "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" };
+    for (auto& package : toEnable) {
+        package = cloyster::productName + package;
+    }
+
+    repos.enableMultiple(toEnable);
+    repos.commitStatus();
+    // End of Repos entrypoint
 
     runSystemUpdate();
 
@@ -415,6 +418,7 @@ void Shell::install()
 
     configureInfiniband();
 
+    // BUG: Broken. Compute nodes does not mount anything.
     NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
         m_cluster->getHeadnode()
             .getConnection(Network::Profile::Management)
@@ -447,6 +451,9 @@ void Shell::install()
 
     LOG_INFO("[{}] Installing packages", provisionerName)
     provisioner->installPackages();
+
+    LOG_INFO("[{}] Patching the provisioner", provisionerName)
+    provisioner->patchInstall();
 
     LOG_INFO("[{}] Setting up the provisioner", provisionerName)
     provisioner->setup();

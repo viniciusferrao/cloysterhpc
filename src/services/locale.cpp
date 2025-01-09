@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/services/locale.h"
-#include "cloysterhpc/functions.h"
+#include <cloysterhpc/services/locale.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
 
 Locale::Locale()

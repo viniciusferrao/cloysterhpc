@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/hardware.h"
+// BUG: File Marked for removal
+
+#include <cloysterhpc/hardware.h>
 #include <fmt/format.h>
 
 std::vector<hwinfo::CPU> Hardware::getCPU() const { return m_cpu; }

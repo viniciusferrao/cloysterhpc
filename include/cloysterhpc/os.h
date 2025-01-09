@@ -6,10 +6,9 @@
 #ifndef CLOYSTERHPC_OS_H_
 #define CLOYSTERHPC_OS_H_
 
-#include "services/dnf.h"
-
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/package_manager.h>
+#include <gsl/gsl-lite.hpp>
 #include <memory>
 #include <string>
 #include <variant>
@@ -78,7 +77,7 @@ private:
     static std::string getValueFromKey(const std::string& line);
 
     std::shared_ptr<package_manager> factoryPackageManager(
-         OS::Platform platform);
+        OS::Platform platform);
 
 public:
     OS();
@@ -123,7 +122,7 @@ public:
     [[nodiscard]] unsigned int getMajorVersion() const;
     [[nodiscard]] unsigned int getMinorVersion() const;
 
-    package_manager* packageManager() const;
+    gsl::not_null<package_manager*> packageManager() const;
 
 #ifndef NDEBUG
     /**

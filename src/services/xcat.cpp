@@ -33,16 +33,28 @@ XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
 
 void XCAT::installPackages()
 {
-    m_cluster->getHeadnode().getOS().packageManager()->install(std::string{"initscripts"});
-    cloyster::runCommand("dnf -y install xCAT");
+    m_cluster->getHeadnode().getOS().packageManager()->install("initscripts");
+    m_cluster->getHeadnode().getOS().packageManager()->install("xCAT");
+}
+
+void XCAT::patchInstall()
+{
+    /* Required for EL 9.5
+     * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
+     */
+    cloyster::runCommand("sed -i \"s/\-extensions\ usr_cert\ //g\" "
+                         "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
+    cloyster::runCommand("sed -i \"s/\-extensions\ server //g\" "
+                         "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+    cloyster::runCommand("xcatconfig -f");
 }
 
 void XCAT::setup()
 {
     setDHCPInterfaces(m_cluster->getHeadnode()
-                          .getConnection(Network::Profile::Management)
-                          .getInterface()
-                          .value());
+            .getConnection(Network::Profile::Management)
+            .getInterface()
+            .value());
     setDomain(m_cluster->getDomainName());
 }
 
@@ -82,7 +94,7 @@ void XCAT::nodeset(std::string_view nodes)
 void XCAT::createDirectoryTree()
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create the directory CHROOT/install/custom/netboot")
+        LOG_INFO("Would create the directory /install/custom/netboot")
         return;
     }
 
@@ -193,6 +205,17 @@ void XCAT::generatePostinstallFile()
 
     cloyster::removeFile(filename);
 
+    // TODO: Should be replaced with autofs
+    m_stateless.postinstall.emplace_back(
+        fmt::format("cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
+                    "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
+                    "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
+                    "END\n\n",
+            m_cluster->getHeadnode()
+                .getConnection(Network::Profile::Management)
+                .getAddress()
+                .to_string()));
+
     m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
         "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
@@ -210,7 +233,6 @@ void XCAT::generatePostinstallFile()
         LOG_INFO("Would change file {} permissions", filename)
         return;
     }
-
     std::filesystem::permissions(filename,
         std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec
             | std::filesystem::perms::others_exec,
@@ -257,19 +279,25 @@ void XCAT::configureOSImageDefinition()
 
 void XCAT::customizeImage()
 {
-    // Bugfixes for Munge
-    // Not needed if we sync /etc/passwd and /etc/groups
-#if 0
-    cloyster::runCommand(fmt::format(
-            "/bin/bash -c \"chroot {} chown munge:munge /var/lib/munge\"",
-            m_stateless.chroot.string()));
-    cloyster::runCommand(fmt::format(
-            "/bin/bash -c \"chroot {} chown munge:munge /var/log/munge\"",
-            m_stateless.chroot.string()));
-    cloyster::runCommand(fmt::format(
-            "/bin/bash -c \"chroot {} chown munge:munge /etc/munge\"",
-            m_stateless.chroot.string()));
-#endif
+    // Permission fixes for munge
+    if (m_cluster->getQueueSystem().value()->getKind()
+        == QueueSystem::Kind::SLURM) {
+        cloyster::runCommand(
+            fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
+                m_stateless.chroot.string()));
+        cloyster::runCommand(
+            fmt::format("mkdir -p {0}/var/lib/munge {0}/var/log/munge "
+                        "{0}/etc/munge {0}/run/munge",
+                m_stateless.chroot.string()));
+        cloyster::runCommand(fmt::format(
+            "chown munge:munge {}/var/lib/munge", m_stateless.chroot.string()));
+        cloyster::runCommand(fmt::format(
+            "chown munge:munge {}/var/log/munge", m_stateless.chroot.string()));
+        cloyster::runCommand(fmt::format(
+            "chown munge:munge {}/etc/munge", m_stateless.chroot.string()));
+        cloyster::runCommand(fmt::format(
+            "chown munge:munge {}/run/munge", m_stateless.chroot.string()));
+    }
 }
 
 /* This is necessary to avoid problems with EL9-based distros.

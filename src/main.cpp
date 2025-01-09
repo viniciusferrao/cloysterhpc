@@ -6,7 +6,7 @@
 #include <cctype>
 #include <cstdlib>
 
-#include "cloysterhpc/hardware.h"
+#include <cloysterhpc/hardware.h>
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>

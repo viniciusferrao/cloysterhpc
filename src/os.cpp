@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/services/package_manager.h"
+#include <cloysterhpc/services/package_manager.h>
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <magic_enum.hpp>
@@ -20,10 +20,7 @@
 #include <sys/utsname.h>
 
 #include <algorithm>
-
-#if __cpp_lib_starts_ends_with < 201711L
-#include <boost/algorithm/string.hpp>
-#endif
+#include <gsl/gsl-lite.hpp>
 
 OS::OS()
 {
@@ -55,11 +52,7 @@ OS::OS()
         while (std::getline(file, line)) {
 
             /* TODO: Refactor the next three conditions */
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("PLATFORM_ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
-#endif
                 auto value = getValueFromKey(line);
                 if (value.starts_with("platform:")) {
                     setPlatform(value.substr(9)); // Skip the 'platform:' prefix
@@ -68,19 +61,11 @@ OS::OS()
                 }
             }
 
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "ID=")) {
-#endif
                 setDistro(getValueFromKey(line));
             }
 
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("VERSION=")) {
-#else
-            if (boost::algorithm::starts_with(line, "VERSION=")) {
-#endif
                 setVersion(getValueFromKey(line));
             }
         }
@@ -168,13 +153,15 @@ void OS::setDistro(std::string_view distro)
     // comparison in magic_enum would be implemented it may easily replace the
     // lambda block. Reference: https://github.com/Neargye/magic_enum/pull/139
 
-#if 0
-    if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
-#endif
+#if 1
+    if (const auto& rv
+        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
+#else
     if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))
+#endif
         setDistro(rv.value());
     else
         throw std::runtime_error(
@@ -247,11 +234,15 @@ std::shared_ptr<package_manager> OS::factoryPackageManager(
         m_packageManager = std::make_shared<dnf>();
         return m_packageManager;
     } else {
-        throw std::runtime_error("Unsupported OS platform");
+        throw std::runtime_error(fmt::format(
+            "Unsupported OS platform: {}", magic_enum::enum_name(platform)));
     }
 }
 
-package_manager* OS::packageManager() const { return m_packageManager.get(); }
+gsl::not_null<package_manager*> OS::packageManager() const
+{
+    return m_packageManager.get();
+}
 
 #ifndef NDEBUG
 void OS::printData() const

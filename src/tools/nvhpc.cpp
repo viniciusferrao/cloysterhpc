@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/tools/nvhpc.h"
+#include <cloysterhpc/tools/nvhpc.h>
 
 void NVhpc::install()
 {

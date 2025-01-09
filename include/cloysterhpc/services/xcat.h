@@ -196,6 +196,14 @@ public:
     void installPackages();
 
     /**
+     * @brief Patches xCAT to resolve bugs that aren't addressed upstream.
+     *
+     * This function applies patches to xCAT to fix issues during installation
+     * on recent versions of the OS.
+     */
+    static void patchInstall();
+
+    /**
      * @brief Sets up the provisioning environment.
      *
      * This function performs the initial setup for provisioning nodes.

@@ -350,13 +350,19 @@ std::vector<std::string> RepoManager::getxCATOSImageRepos() const
 
     std::vector<std::string> repos;
 
-    std::vector<std::string> latestEL = { "8.9", "9.3" };
+    /* BUG: This is a very bad implementation; it should find out the latest
+     * version and not be hardcoded. Also the directory formation does not work
+     * that way. We should support finding out the repository paths by parsing
+     * /etc/yum.repos.d
+     */
+    std::vector<std::string> latestEL = { "8.10", "9.5" };
 
     std::string crb = "CRB";
     std::string rockyBranch
         = "linux"; // To check if Rocky mirror directory points to 'linux'
                    // (latest version) or 'vault'
 
+    // BUG: Really? A string?
     std::string OpenHPCVersion = "3";
 
     if (osMajorVersion < 9) {
