@@ -204,7 +204,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         runCommand(
             fmt::format("nmcli connection add con-name {} ifname {} type {} "
                         "mtu {} ipv4.method manual ipv4.address {}/{} "
-                        "ipv4.gateway {} ipv4.dns \"{}\" "
+                        "ipv4.dns \"{}\" "
+                        // "ipv4.gateway {} ipv4.dns \"{}\" "
                         "ipv4.dns-search {} ipv6.method disabled",
                 magic_enum::enum_name(connection.getNetwork()->getProfile()),
                 interface,
@@ -212,7 +213,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                 connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
                     connection.getNetwork()->getSubnetMask().to_string()),
-                connection.getNetwork()->getGateway().to_string(),
+                //connection.getNetwork()->getGateway().to_string(),
                 fmt::join(formattedNameservers, " "),
                 connection.getNetwork()->getDomainName()));
 
@@ -222,7 +223,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
          */
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-        runCommand(fmt::format("nmcli device connect {}", interface));
+        // Breaking my ssh connection during development
+        // runCommand(fmt::format("nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();
