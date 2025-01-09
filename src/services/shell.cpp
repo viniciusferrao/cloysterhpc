@@ -224,7 +224,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         // Breaking my ssh connection during development
-        // runCommand(fmt::format("nmcli device connect {}", interface));
+        runCommand(fmt::format("nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();
