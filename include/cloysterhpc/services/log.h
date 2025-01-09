@@ -24,11 +24,6 @@
  *
  * @param __VA_ARGS__ The message to log and its format arguments.
  */
-#define LOG_ABORT(...)                                                         \
-    if (spdlog::get(productName) != nullptr) {                                 \
-        spdlog::get(productName)->critical(__VA_ARGS__);                       \
-        std::exit(-1);                                                         \
-    }
 #define LOG_CRITICAL(...)                                                      \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->critical(__VA_ARGS__);                       \
@@ -45,7 +40,12 @@
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->info(__VA_ARGS__);                           \
     }
-
+#define LOG_ABORT_IF(cnd, msg)                                                       \
+    if ((cnd) && spdlog::get(productName) != nullptr) {                          \
+            LOG_CRITICAL("ABORT - {}\n\t{}\n\tin file: {}\n\ton line: {}", #cnd,  \
+                msg, __FILE__, __LINE__);                                         \
+            LOG_BREAK;                                                            \
+    }
 // Available only with DEBUG builds
 #ifndef NDEBUG
 #define LOG_DEBUG(...)                                                         \
