@@ -38,7 +38,7 @@ public:
      * @return True if the disk image is known, false otherwise.
      */
     static bool isKnownImage(const std::filesystem::path& path);
-    
+
     /**
      * @brief Checks if the given disk image has a verified checksum.
      *

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/services/package_manager.h>
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/dnf.h>
+#include <cloysterhpc/services/package_manager.h>
 #include <magic_enum.hpp>
 
 #ifndef NDEBUG
@@ -24,7 +24,7 @@
 
 OS::OS()
 {
-    struct utsname system {};
+    struct utsname system { };
     uname(&system);
 
     setArch(system.machine);

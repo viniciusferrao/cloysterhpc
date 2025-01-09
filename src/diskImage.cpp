@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/diskImage.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>

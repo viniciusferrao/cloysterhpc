@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/answerfile.h>
-#include <cloysterhpc/services/log.h>
-#include <cloysterhpc/tools/nvhpc.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cloysterhpc/answerfile.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/tools/nvhpc.h>
 #include <iterator>
 #include <magic_enum.hpp>
 #include <ranges>

@@ -13,8 +13,8 @@ CPU::CPU()
 CPU::CPU(
     std::size_t sockets, std::size_t coresPerSocket, std::size_t threadsPerCore)
     : CPU(sockets, coresPerSocket * sockets,
-        threadsPerCore * coresPerSocket * sockets, coresPerSocket,
-        threadsPerCore)
+          threadsPerCore * coresPerSocket * sockets, coresPerSocket,
+          threadsPerCore)
 {
 }
 

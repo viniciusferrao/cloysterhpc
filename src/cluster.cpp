@@ -684,7 +684,7 @@ void Cluster::fillData(const std::string& answerfilePath)
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
     // BUG: Headnode OS may not be the same as the node OS
-    //m_headnode.setOS(nodeOS);
+    // m_headnode.setOS(nodeOS);
 
     for (const auto& tool : answerfile.getTools()) {
         tool->install();

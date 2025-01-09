@@ -6,11 +6,11 @@
 #include <cctype>
 #include <cstdlib>
 
-#include <cloysterhpc/hardware.h>
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/cluster.h>
 #include <cloysterhpc/const.h>
+#include <cloysterhpc/hardware.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/shell.h>
