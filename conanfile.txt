@@ -2,7 +2,7 @@
 cli11/2.3.2
 # libfmt version will be automatically selected by spdlog
 fmt/10.2.1
-spdlog/[>=1.14.0]
+spdlog/[=1.14.0]
 boost/1.82.0
 magic_enum/0.9.2
 gsl-lite/0.40.0
