@@ -107,7 +107,7 @@ protected:
     virtual MessageReply callMethod() = 0;
 
 public:
-    void addParams()
+    static void addParams()
     {
         // end case for the variadic template below
     }
