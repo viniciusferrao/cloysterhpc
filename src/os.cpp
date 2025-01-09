@@ -204,6 +204,11 @@ void OS::setVersion(const std::string& version)
     setMajorVersion(static_cast<unsigned>(
         std::stoul(version.substr(0, version.find('.')))));
 
+
+    if (version.find('.') != std::string::npos) {
+        LOG_ABORT("system version (in the answerfile.yml) must follow the format M.N, where M is the major version number and N is the minor version number.");
+    }
+
     setMinorVersion(
         static_cast<unsigned>(stoul(version.substr(version.find('.') + 1))));
 }

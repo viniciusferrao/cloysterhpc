@@ -24,6 +24,11 @@
  *
  * @param __VA_ARGS__ The message to log and its format arguments.
  */
+#define LOG_ABORT(...)                                                         \
+    if (spdlog::get(productName) != nullptr) {                                 \
+        spdlog::get(productName)->critical(__VA_ARGS__);                       \
+        std::exit(-1);                                                         \
+    }
 #define LOG_CRITICAL(...)                                                      \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->critical(__VA_ARGS__);                       \
