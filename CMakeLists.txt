@@ -25,7 +25,7 @@ endif()
 # Set a default build type if none was specified
 # This is required for Conan 2.0 to work properly
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'Release' as none was specified.")
+  message(STATUS "Setting build type to 'Debug' as none was specified.")
   set(CMAKE_BUILD_TYPE
           Debug
           CACHE STRING "Choose the type of build." FORCE)
