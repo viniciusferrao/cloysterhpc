@@ -20,11 +20,11 @@ hwinfo::Memory Hardware::getMemory() const { return m_memory; }
 
 hwinfo::OS Hardware::getOS() const { return m_os; }
 
-Hardware::Hardware()
+Hardware::Hardware() : 
+    m_cpu(hwinfo::getAllCPUs()),
+    m_disk(hwinfo::getAllDisks()),
+    m_gpu(hwinfo::getAllGPUs())
 {
-    m_cpu = hwinfo::getAllCPUs();
-    m_disk = hwinfo::getAllDisks();
-    m_gpu = hwinfo::getAllGPUs();
 }
 
 void Hardware::printOverview()

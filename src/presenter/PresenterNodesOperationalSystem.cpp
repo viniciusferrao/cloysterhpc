@@ -105,8 +105,9 @@ PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
         findit != versions.end()) {
         const auto currentver = std::distance(versions.begin(), findit);
         const auto& vdistro = version_map.at(distro);
+        LOG_ASSERT(currentver >= 0, "currentver is negative");
         return std::make_optional<PresenterNodesVersionCombo>(
-            vdistro[currentver]);
+            vdistro[static_cast<size_t>(currentver)]);
     }
 
     return std::nullopt;

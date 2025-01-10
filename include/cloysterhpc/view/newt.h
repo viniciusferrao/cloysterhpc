@@ -200,7 +200,7 @@ public:
                     break;
                 }
                 case 4: // remove
-                    if (selector >= 0 && selector < cStrings.size()) {
+                    if (selector >= 0 && static_cast<size_t>(selector) < cStrings.size()) {
                         tempStrings.erase(tempStrings.begin() + selector);
                         cStrings = convertToNewtList(tempStrings);
                     }

@@ -70,6 +70,7 @@ function(
         -Wno-unused-variable
         -Wno-unused-function
         -Wno-unused-parameter
+        -Wno-shadow
     )
   endif()
 
