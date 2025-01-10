@@ -331,22 +331,23 @@ std::string findAndReplace(const std::string_view& source,
 }
 
 /// Copy a file, ignore if file exists
-void copyFile(std::filesystem::path from, std::filesystem::path to)
+void copyFile(std::filesystem::path source, std::filesystem::path destination)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would copy file {}, to {}", from.string(), to.string())
+        LOG_INFO(
+            "Would copy file {} to {}", source.string(), destination.string())
         return;
     }
 
     try {
-        std::filesystem::copy(from, to);
-    } catch (std::filesystem::filesystem_error const& ex) {
+        std::filesystem::copy(source, destination);
+    } catch (const std::filesystem::filesystem_error& ex) {
         if (ex.code().default_error_condition() == std::errc::file_exists) {
-            LOG_WARN("File {} exists, skiping copying", to.string());
+            LOG_WARN("File {} already exists, skip copying", source.string());
             return;
         }
-        
-        throw ex;
+
+        throw;
     }
 }
 

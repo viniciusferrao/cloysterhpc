@@ -157,12 +157,12 @@ std::string findAndReplace(const std::string_view& source,
     const std::string_view& find, const std::string_view& replace);
 
 /**
- * @brief Copies a file, ignore if it exists
+ * @brief Copies a file, skip copying if it exists
  *
- * @param dir_entry 
- * @param string The string to add to the file.
+ * @param source The source file to copy.
+ * @param destination The path where the source file will be copied.
  */
-void copyFile(std::filesystem::path from, std::filesystem::path to);
+void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
 } /* namespace cloyster */
 

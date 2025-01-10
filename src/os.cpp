@@ -24,7 +24,7 @@
 
 OS::OS()
 {
-    struct utsname system { };
+    struct utsname system {};
     uname(&system);
 
     setArch(system.machine);
@@ -204,14 +204,15 @@ void OS::setVersion(const std::string& version)
     setMajorVersion(static_cast<unsigned>(
         std::stoul(version.substr(0, version.find('.')))));
 
-    // FIXME: Read the value from /etc/os-release intead of
+    // FIXME: Read the value from the ISO file intead of
     // expecting it to be explicit in answerfile.ini
-   
+
     // We expect the system.version in the answerfile
     // to be in the format M.N, and abort if it is not valid
     if (version.find('.') == std::string::npos) {
-        LOG_CRITICAL(
-              "Unexpected value for system.version (in asnwerfile.ini). Expected M.N format, e.g., 9.5, value found instead: {}", version);
+        LOG_CRITICAL("Unexpected value for system.version (in answerfile.ini). "
+                     "Expected M.N format, e.g., 9.5. Value found instead: {}",
+            version);
         std::exit(-1);
     }
 
