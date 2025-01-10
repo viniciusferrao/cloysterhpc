@@ -204,9 +204,16 @@ void OS::setVersion(const std::string& version)
     setMajorVersion(static_cast<unsigned>(
         std::stoul(version.substr(0, version.find('.')))));
 
-    LOG_ABORT_IF(version.find('.') == std::string::npos, 
-              "system version (in the answerfile.yml) must follow the format M.N, "
-              "where M is the major version number and N is the minor version number.");
+    // FIXME: Read the value from /etc/os-release intead of
+    // expecting it to be explicit in answerfile.ini
+   
+    // We expect the system.version in the answerfile
+    // to be in the format M.N, and abort if it is not valid
+    if (version.find('.') == std::string::npos) {
+        LOG_CRITICAL(
+              "Unexpected value for system.version (in asnwerfile.ini). Expected M.N format, e.g., 9.5, value found instead: {}", version);
+        std::exit(-1);
+    }
 
     setMinorVersion(
         static_cast<unsigned>(stoul(version.substr(version.find('.') + 1))));

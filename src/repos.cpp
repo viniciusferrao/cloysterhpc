@@ -207,13 +207,7 @@ void RepoManager::commitStatus()
 
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { tmpdir }) {
-        try {
-            std::filesystem::copy(dir_entry, "/etc/yum.repos.d");
-        } catch (std::filesystem::filesystem_error const& ex) {
-            if (ex.code().message().starts_with("File exists")) {
-                continue;
-            }
-        }
+        cloyster::copyFile(dir_entry, "/etc/yum.repos.d");
     }
 
     std::vector<std::string> to_enable;

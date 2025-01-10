@@ -330,4 +330,24 @@ std::string findAndReplace(const std::string_view& source,
     return result;
 }
 
+/// Copy a file, ignore if file exists
+void copyFile(std::filesystem::path from, std::filesystem::path to)
+{
+    if (cloyster::dryRun) {
+        LOG_INFO("Would copy file {}, to {}", from.string(), to.string())
+        return;
+    }
+
+    try {
+        std::filesystem::copy(from, to);
+    } catch (std::filesystem::filesystem_error const& ex) {
+        if (ex.code().default_error_condition() == std::errc::file_exists) {
+            LOG_WARN("File {} exists, skiping copying", to.string());
+            return;
+        }
+        
+        throw ex;
+    }
+}
+
 } // namespace cloyster
