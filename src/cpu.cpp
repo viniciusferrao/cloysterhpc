@@ -6,6 +6,11 @@
 #include <cloysterhpc/cpu.h>
 
 CPU::CPU()
+    : m_sockets(0)
+    , m_cores(0)
+    , m_threads(0)
+    , m_coresPerSocket(0)
+    , m_threadsPerCore(0)
 {
     // TODO: Implement a CPU detection algorithm
 }

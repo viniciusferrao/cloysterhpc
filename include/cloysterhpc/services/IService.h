@@ -31,7 +31,7 @@ private:
     bool handleException(const sdbus::Error& e, const std::string_view fn);
 
     template <typename... Ts>
-    sdbus::ObjectPath callObjectFunction(
+    std::optional<sdbus::ObjectPath> callObjectFunction(
         const std::string function, Ts... params)
     {
         try {
@@ -42,11 +42,12 @@ private:
         } catch (sdbus::Error& e) {
             if (!handleException(e, function))
                 throw;
+            return {};
         }
     }
 
     template <typename... Ts>
-    MessageReply callObjectFunctionArray(
+    std::optional<MessageReply> callObjectFunctionArray(
         const std::string function, Ts... params)
     {
         try {
@@ -58,6 +59,7 @@ private:
         } catch (sdbus::Error& e) {
             if (!handleException(e, function))
                 throw;
+            return {};
         }
     }
 

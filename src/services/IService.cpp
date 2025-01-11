@@ -34,9 +34,12 @@ void IService::enable()
 
     LOG_TRACE("service: enabling {}", m_name);
 
-    auto ret = callObjectFunctionArray("EnableUnitFiles", false, true)
-                   .getPair<bool, EnableRType>();
-    const auto& [_install, retvec] = ret;
+    auto ret = callObjectFunctionArray("EnableUnitFiles", false, true);
+    if (!ret.has_value()) {
+        LOG_ERROR("callObjectFunctionArray returned none for service {}", m_name);
+        return;
+    }
+    const auto& [_install, retvec] = (*ret).getPair<bool, EnableRType>();
 
     if (retvec.empty()) {
         LOG_WARN("service {} already enabled", m_name);
@@ -52,10 +55,13 @@ void IService::disable()
 
     LOG_TRACE("service: disabling {}", m_name);
 
-    auto ret = callObjectFunctionArray("DisableUnitFiles", false, true)
-                   .get<EnableRType>();
+    auto ret = callObjectFunctionArray("DisableUnitFiles", false, true);
+    if (!ret.has_value()) {
+        LOG_ERROR("callObjectFunctionArray returned none, service {}", m_name);
+        return;
+    };
 
-    if (ret.empty()) {
+    if ((*ret).get<EnableRType>().empty()) {
         LOG_WARN("service {} already disabled", m_name);
     }
 }
@@ -68,7 +74,7 @@ void IService::start()
     }
 
     LOG_TRACE("service: starting {}", m_name);
-    (void)callObjectFunction("StartUnit", "replace");
+    callObjectFunction("StartUnit", "replace");
 }
 
 void IService::restart()
@@ -79,7 +85,7 @@ void IService::restart()
     }
 
     LOG_TRACE("service: restarting {}", m_name);
-    (void)callObjectFunction("RestartUnit", "replace");
+    callObjectFunction("RestartUnit", "replace");
 }
 
 void IService::stop()
@@ -90,5 +96,5 @@ void IService::stop()
     }
 
     LOG_TRACE("service: stopping {}", m_name);
-    (void)callObjectFunction("StopUnit", "replace");
+    callObjectFunction("StopUnit", "replace");
 }

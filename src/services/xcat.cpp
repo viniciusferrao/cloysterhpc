@@ -42,9 +42,9 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    cloyster::runCommand("sed -i \"s/\-extensions\ usr_cert\ //g\" "
+    cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
                          "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-    cloyster::runCommand("sed -i \"s/\-extensions\ server //g\" "
+    cloyster::runCommand("sed -i \"s/-extensions server //g\" "
                          "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
     cloyster::runCommand("xcatconfig -f");
 }

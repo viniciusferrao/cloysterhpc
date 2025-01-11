@@ -32,7 +32,7 @@ std::pair<int, std::vector<std::string>> Newt::multipleSelectionMenu(
     auto* list = newtListbox(1, 3, m_maxListHeight, NEWT_FLAG_MULTIPLE);
 
     for (const auto& [key, item, enabled] : items) {
-        newtListboxAppendEntry(list, item.c_str(), (void*)key.c_str());
+        newtListboxAppendEntry(list, item.c_str(), key.c_str());
 
         if (enabled)
             newtListboxSelectItem(list, key.c_str(), NEWT_FLAGS_SET);
