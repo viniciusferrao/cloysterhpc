@@ -210,10 +210,9 @@ void OS::setVersion(const std::string& version)
     // We expect the system.version in the answerfile
     // to be in the format M.N, and abort if it is not valid
     if (version.find('.') == std::string::npos) {
-        LOG_CRITICAL("Unexpected value for system.version (in answerfile.ini). "
-                     "Expected M.N format, e.g., 9.5. Value found instead: {}",
-            version);
-        std::exit(-1);
+        throw std::runtime_error(fmt::format(
+            "Unexpected value for system.version (in answerfile.ini). "
+            "Expected M.N format, e.g., 9.5. Value found instead: {}", version));
     }
 
     setMinorVersion(
