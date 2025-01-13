@@ -32,7 +32,7 @@ Headnode::Headnode()
 
 void Headnode::discoverNames()
 {
-    struct utsname system { };
+    struct utsname system {};
     uname(&system);
 
     std::string fqdn = system.nodename;

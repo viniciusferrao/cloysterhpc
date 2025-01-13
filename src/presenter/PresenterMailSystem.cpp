@@ -17,7 +17,7 @@ PresenterMailSystem::PresenterMailSystem(
             m_view->listMenu(Messages::title, Messages::Profile::question,
                 magic_enum::enum_names<Postfix::Profile>(),
                 Messages::Profile::help))
-                                   .value());
+                .value());
 
         auto& mailSystem = m_model->getMailSystem().value();
         const auto& mailSystemProfile = mailSystem.getProfile();

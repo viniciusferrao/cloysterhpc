@@ -26,7 +26,7 @@ PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
         m_model->setOFED(magic_enum::enum_cast<OFED::Kind>(
             m_view->listMenu(Messages::title, Messages::OFED::question,
                 magic_enum::enum_names<OFED::Kind>(), Messages::OFED::help))
-                             .value());
+                .value());
         LOG_DEBUG("Set OFED stack as: {}",
             magic_enum::enum_name<OFED::Kind>(m_model->getOFED()->getKind()));
 

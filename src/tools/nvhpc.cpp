@@ -11,4 +11,4 @@ void NVhpc::install()
     cloyster::runCommand("dnf -y install nvhpc-24.3");
 }
 
-void NVhpc::configure() {};
+void NVhpc::configure() { };

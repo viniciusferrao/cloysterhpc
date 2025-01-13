@@ -16,7 +16,7 @@ BMC::BMC(const std::string& address, const std::string& username,
 {
 }
 
-BMC::BMC() {};
+BMC::BMC() { };
 
 const std::string& BMC::getAddress() const { return m_address; }
 void BMC::setAddress(const std::string& address) { m_address = address; }
