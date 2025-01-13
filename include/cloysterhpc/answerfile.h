@@ -157,6 +157,12 @@ private:
     inifile m_ini;
 
     /**
+     * Do the inverse of `loadOptions`, i.e, move the stored settings
+     * into the answerfile.
+     */
+    void dumpOptions(inifile& ini);
+
+    /**
      * @brief Loads the configuration options from the answer file.
      *
      * This function call methods to parse the answerfile and loads the
@@ -188,12 +194,16 @@ private:
      */
     void loadExternalNetwork();
 
+    void dumpExternalNetwork(inifile& ini);
+
     /**
      * @brief Loads the management network configuration.
      *
      * This function parses and loads the settings for the management network.
      */
     void loadManagementNetwork();
+
+    void dumpManagementNetwork(inifile& ini);
 
     /**
      * @brief Loads the service network configuration.
@@ -209,12 +219,16 @@ private:
      */
     void loadApplicationNetwork();
 
+    void dumpApplicationNetwork(inifile& ini);
+
     /**
      * @brief Loads the general information settings.
      *
      * This function parses and loads the cluster information settings.
      */
     void loadInformation();
+
+    void dumpInformation(inifile& ini);
 
     /**
      * @brief Loads the time-related settings.
@@ -223,6 +237,8 @@ private:
      */
     void loadTimeSettings();
 
+    void dumpTimeSettings(inifile& ini);
+
     /**
      * @brief Loads the hostname settings.
      *
@@ -230,12 +246,16 @@ private:
      */
     void loadHostnameSettings();
 
+    void dumpHostnameSettings(inifile& ini);
+
     /**
      * @brief Loads the system settings.
      *
      * This function parses and loads the system configuration settings.
      */
     void loadSystemSettings();
+
+    void dumpSystemSettings(inifile& ini);
 
     /**
      * @brief Loads the node settings.
@@ -246,7 +266,10 @@ private:
     void loadTools();
     void loadNVHPC();
 
+    void dumpNodes(inifile& ini);
+
     void loadPostfix();
+    void dumpPostfix(inifile& ini);
 
     bool checkEnabled(const std::string& section);
     /**
@@ -300,9 +323,11 @@ private:
      * @param network The network configuration to load.
      * @param optionalNameservers Indicates if the nameservers are optional.
      */
-    template <typename NetworkType>
-    void loadNetwork(const std::string& networkSection, NetworkType& network,
+    void loadNetwork(const std::string& networkSection, AFNetwork& network,
         bool optionalNameservers = true);
+
+    static void dumpNetwork(inifile& ini, const AFNetwork& network,
+        const std::string& networkSection);
 
 public:
     AFNetwork external;
@@ -322,6 +347,7 @@ public:
      * @param path The path to the answer file.
      */
     void loadFile(const std::filesystem::path& path);
+    void dumpFile(const std::filesystem::path& path);
     std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();
