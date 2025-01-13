@@ -174,6 +174,12 @@ void writeConfig(const std::string& filename)
 
 void touchFile(const std::filesystem::path& path)
 {
+    if (cloyster::dryRun) {
+        LOG_INFO("Would touch the file {}", path.string())
+        return;
+    }
+
+    // BUG: I don't have to comment why this is a BUG, right?
     FILE* f = fopen(path.c_str(), "ab");
     (void)fflush(f);
     (void)fclose(f);
@@ -322,6 +328,27 @@ std::string findAndReplace(const std::string_view& source,
     }
 
     return result;
+}
+
+/// Copy a file, ignore if file exists
+void copyFile(std::filesystem::path source, std::filesystem::path destination)
+{
+    if (cloyster::dryRun) {
+        LOG_INFO(
+            "Would copy file {} to {}", source.string(), destination.string())
+        return;
+    }
+
+    try {
+        std::filesystem::copy(source, destination);
+    } catch (const std::filesystem::filesystem_error& ex) {
+        if (ex.code().default_error_condition() == std::errc::file_exists) {
+            LOG_WARN("File {} already exists, skip copying", source.string());
+            return;
+        }
+
+        throw;
+    }
 }
 
 } // namespace cloyster

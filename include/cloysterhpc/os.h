@@ -6,12 +6,12 @@
 #ifndef CLOYSTERHPC_OS_H_
 #define CLOYSTERHPC_OS_H_
 
-#include "services/dnf.h"
-
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/package_manager.h>
+#include <gsl/gsl-lite.hpp>
 #include <memory>
 #include <string>
+#include <variant>
 
 /**
  * @class OS
@@ -50,10 +50,10 @@ public:
     enum class Distro { RHEL, OL, Rocky, AlmaLinux };
 
 private:
-    Arch m_arch;
-    Family m_family;
-    Platform m_platform;
-    Distro m_distro;
+    std::variant<std::monostate, Arch> m_arch;
+    std::variant<std::monostate, Family> m_family;
+    std::variant<std::monostate, Platform> m_platform;
+    std::variant<std::monostate, Distro> m_distro;
     std::string m_kernel;
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
@@ -61,7 +61,7 @@ private:
     // however repos.h needs to be rewritten to support it.
     // 'OS::os()' is implicitly deleted because the default definition
     // would be ill-formed
-    std::shared_ptr<package_manager> m_packageManager {};
+    std::shared_ptr<package_manager> m_packageManager;
 
 private:
     void setMajorVersion(unsigned int majorVersion);
@@ -74,7 +74,10 @@ private:
      * @param line The key-value pair string.
      * @return The value extracted from the key-value pair string.
      */
-    std::string getValueFromKey(const std::string& line);
+    static std::string getValueFromKey(const std::string& line);
+
+    std::shared_ptr<package_manager> factoryPackageManager(
+        OS::Platform platform);
 
 public:
     OS();
@@ -119,8 +122,7 @@ public:
     [[nodiscard]] unsigned int getMajorVersion() const;
     [[nodiscard]] unsigned int getMinorVersion() const;
 
-    std::shared_ptr<package_manager> createPackageManager(
-        OS::Platform platform);
+    gsl::not_null<package_manager*> packageManager() const;
 
 #ifndef NDEBUG
     /**

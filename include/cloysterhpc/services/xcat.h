@@ -55,15 +55,15 @@ private:
     } m_stateless;
 
 private:
-    void setDHCPInterfaces(std::string_view interface);
-    void setDomain(std::string_view domain);
+    static void setDHCPInterfaces(std::string_view interface);
+    static void setDomain(std::string_view domain);
 
     /**
      * @brief Copies installation media to the disk image.
      *
      * @param diskImage The path to the disk image.
      */
-    void copycds(const std::filesystem::path& diskImage);
+    static void copycds(const std::filesystem::path& diskImage);
 
     /**
      * @brief Generates the OS image.
@@ -91,7 +91,7 @@ private:
      *
      * This function sets up the directory structure required for provisioning.
      */
-    void createDirectoryTree();
+    static void createDirectoryTree();
 
     /**
      * @brief Configures OpenHPC settings.
@@ -140,7 +140,7 @@ private:
      *
      * This function creates the synchronization list file.
      */
-    void generateSynclistsFile();
+    static void generateSynclistsFile();
 
     /**
      * @brief Configures the OS image definition.
@@ -161,7 +161,7 @@ private:
      *
      * @param node The node to add.
      */
-    void addNode(const Node& node);
+    static void addNode(const Node& node);
 
     /**
      * @brief Generates the OS image name based on type and node.
@@ -184,7 +184,7 @@ private:
      *
      * This function sets up configurations for EL9.
      */
-    void configureEL9();
+    static void configureEL9();
 
 public:
     /**
@@ -194,6 +194,14 @@ public:
      * process.
      */
     void installPackages();
+
+    /**
+     * @brief Patches xCAT to resolve bugs that aren't addressed upstream.
+     *
+     * This function applies patches to xCAT to fix issues during installation
+     * on recent versions of the OS.
+     */
+    static void patchInstall();
 
     /**
      * @brief Sets up the provisioning environment.
@@ -234,14 +242,14 @@ public:
      *
      * This function configures the nodes to boot using the assigned OS image.
      */
-    void setNodesBoot();
+    static void setNodesBoot();
 
     /**
      * @brief Resets the nodes.
      *
      * This function resets the nodes.
      */
-    void resetNodes();
+    static void resetNodes();
 
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };

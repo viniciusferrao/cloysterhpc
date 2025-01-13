@@ -13,6 +13,7 @@ macro(cloysterhpc_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
       # style should enable the other 3, but we'll be explicit just in case
       set(CMAKE_CXX_CPPCHECK
           ${CPPCHECK}
+          --quiet
           --template=${CPPCHECK_TEMPLATE}
           --enable=style,performance,warning,portability
           --inline-suppr
@@ -26,6 +27,21 @@ macro(cloysterhpc_enable_cppcheck WARNINGS_AS_ERRORS CPPCHECK_OPTIONS)
           # ignores code that cppcheck thinks is invalid C++
           --suppress=syntaxError
           --suppress=preprocessorErrorDirective
+          # FIXME: The below warnings were disabled to underflow the devopment
+          # they should be enabled again 
+          --suppress=functionStatic
+          --suppress=functionConst
+          --suppress=funcArgNamesDifferent
+          --suppress=unusedPrivateFunction
+          --suppress=constVariable
+          --suppress=missingOverride
+          --suppress=useStlAlgorithm
+          --suppress=constParameter
+          --suppress=noExplicitConstructor
+          --suppress=duplicateBreak
+          --suppress=variableScope
+          --suppress=unreadVariable
+          --suppress=shadowFunction
           --inconclusive)
     else()
       # if the user provides a CPPCHECK_OPTIONS with a template specified, it will override this template

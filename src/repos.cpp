@@ -23,6 +23,7 @@ constexpr std::string_view CLOYSTER_REPO_EL8 {
 
 constexpr std::string_view CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
+
 };
 
 static repository loadSection(const std::filesystem::path& source,
@@ -79,6 +80,7 @@ static void loadFromINI(const std::filesystem::path& source, inifile& file,
     }
 }
 
+// BUG: Why?
 #define NOSONAR(code) code
 
 void RepoManager::loadSingleFile(std::filesystem::path source)
@@ -205,7 +207,7 @@ void RepoManager::commitStatus()
 
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { tmpdir }) {
-        std::filesystem::copy(dir_entry, "/etc/yum.repos.d");
+        cloyster::copyFile(dir_entry, "/etc/yum.repos.d");
     }
 
     std::vector<std::string> to_enable;
@@ -234,7 +236,7 @@ void RepoManager::commitStatus()
 
 #define FORMAT_TEMPLATE(src) fmt::format(src, cloyster::productName)
 
-std::vector<repository> RepoManager::buildCloysterTree(
+const std::vector<repository> RepoManager::buildCloysterTree(
     const std::filesystem::path& basedir)
 {
 
@@ -278,8 +280,9 @@ void RepoManager::createFileFor(std::filesystem::path path)
 
     inifile file;
 
-    auto filtered = m_repos
-        | std::views::filter([&path](auto& r) { return path == r.source; });
+    auto filtered = m_repos | std::views::filter([&path](const auto& r) {
+        return path == r.source;
+    });
 
     for (const auto& repo : filtered) {
         writeSection(file, repo);
@@ -317,8 +320,8 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
     LOG_INFO("Setting up XCAT repositories");
 
     // TODO: we need to download these files in a sort of temporary directory
-    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/latest/"
-                          "xcat-core/xcat-core.repo",
+    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
+                          "core-snap/xcat-core.repo",
         repofile_dest.string());
 
     switch (m_os.getPlatform()) {
@@ -347,13 +350,19 @@ std::vector<std::string> RepoManager::getxCATOSImageRepos() const
 
     std::vector<std::string> repos;
 
-    std::vector<std::string> latestEL = { "8.9", "9.3" };
+    /* BUG: This is a very bad implementation; it should find out the latest
+     * version and not be hardcoded. Also the directory formation does not work
+     * that way. We should support finding out the repository paths by parsing
+     * /etc/yum.repos.d
+     */
+    std::vector<std::string> latestEL = { "8.10", "9.5" };
 
     std::string crb = "CRB";
     std::string rockyBranch
         = "linux"; // To check if Rocky mirror directory points to 'linux'
                    // (latest version) or 'vault'
 
+    // BUG: Really? A string?
     std::string OpenHPCVersion = "3";
 
     if (osMajorVersion < 9) {

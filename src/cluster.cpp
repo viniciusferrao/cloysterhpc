@@ -109,7 +109,7 @@ std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 
 void Cluster::initRepoManager()
 {
-    m_repos.emplace(*m_runner, this->getHeadnode().getOS());
+    m_repos.emplace(*m_runner, m_headnode.getOS());
 }
 
 RepoManager& Cluster::getRepoManager()
@@ -251,6 +251,7 @@ const std::filesystem::path& Cluster::getDiskImage() const
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
+    // BUG: This does not hanble ~ expansion for userdir
     if (std::filesystem::exists(diskImagePath)) {
         m_diskImage.setPath(diskImagePath);
     } else {
@@ -550,8 +551,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         externalConnection.setAddress(answerfile.external.con_ip_addr.value());
 
         getNetwork(Network::Profile::External)
-            .setAddress(
-                getNetwork(Network::Profile::External)
+            .setAddress(getNetwork(Network::Profile::External)
                     .calculateAddress(answerfile.external.con_ip_addr.value()));
     } else {
         auto externalNetworkIpAddress = externalConnection.fetchAddress(
@@ -560,7 +560,7 @@ void Cluster::fillData(const std::string& answerfilePath)
 
         getNetwork(Network::Profile::External)
             .setAddress(getNetwork(Network::Profile::External)
-                            .calculateAddress(externalNetworkIpAddress));
+                    .calculateAddress(externalNetworkIpAddress));
     }
 
     if (!answerfile.external.con_mac_addr->empty()) {
@@ -618,8 +618,7 @@ void Cluster::fillData(const std::string& answerfilePath)
         serviceConnection.setAddress(answerfile.service.con_ip_addr.value());
 
         getNetwork(Network::Profile::Service)
-            .setAddress(
-                getNetwork(Network::Profile::Service)
+            .setAddress(getNetwork(Network::Profile::Service)
                     .calculateAddress(answerfile.service.con_ip_addr.value()));
 
         m_headnode.addConnection(std::move(serviceConnection));
@@ -673,8 +672,8 @@ void Cluster::fillData(const std::string& answerfilePath)
 
         getNetwork(Network::Profile::Application)
             .setAddress(getNetwork(Network::Profile::Application)
-                            .calculateAddress(
-                                answerfile.application.con_ip_addr.value()));
+                    .calculateAddress(
+                        answerfile.application.con_ip_addr.value()));
 
         m_headnode.addConnection(std::move(applicationConnection));
     }
@@ -682,7 +681,8 @@ void Cluster::fillData(const std::string& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-    m_headnode.setOS(nodeOS);
+    // BUG: Headnode OS may not be the same as the node OS
+    // m_headnode.setOS(nodeOS);
 
     for (const auto& tool : answerfile.getTools()) {
         tool->install();

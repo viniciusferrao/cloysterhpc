@@ -14,8 +14,8 @@
  * tell this to the user
  */
 template <typename T>
-concept MessageReturnable = std::is_nothrow_default_constructible_v<
-    T> && std::is_nothrow_move_constructible_v<T>;
+concept MessageReturnable = std::is_nothrow_default_constructible_v<T>
+    && std::is_nothrow_move_constructible_v<T>;
 
 /**
  * A more or less "generic"-ish way to refer to a message reply
@@ -107,7 +107,7 @@ protected:
     virtual MessageReply callMethod() = 0;
 
 public:
-    void addParams()
+    static void addParams()
     {
         // end case for the variadic template below
     }

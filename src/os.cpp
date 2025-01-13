@@ -5,6 +5,7 @@
 
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/dnf.h>
+#include <cloysterhpc/services/package_manager.h>
 #include <magic_enum.hpp>
 
 #ifndef NDEBUG
@@ -12,16 +13,14 @@
 #endif
 
 #include <fstream>
+#include <memory>
 #include <string>
 
 #include <fmt/format.h>
 #include <sys/utsname.h>
 
 #include <algorithm>
-
-#if __cpp_lib_starts_ends_with < 201711L
-#include <boost/algorithm/string.hpp>
-#endif
+#include <gsl/gsl-lite.hpp>
 
 OS::OS()
 {
@@ -53,11 +52,7 @@ OS::OS()
         while (std::getline(file, line)) {
 
             /* TODO: Refactor the next three conditions */
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("PLATFORM_ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "PLATFORM_ID=")) {
-#endif
                 auto value = getValueFromKey(line);
                 if (value.starts_with("platform:")) {
                     setPlatform(value.substr(9)); // Skip the 'platform:' prefix
@@ -66,19 +61,11 @@ OS::OS()
                 }
             }
 
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("ID=")) {
-#else
-            if (boost::algorithm::starts_with(line, "ID=")) {
-#endif
                 setDistro(getValueFromKey(line));
             }
 
-#if __cpp_lib_starts_ends_with >= 201711L
             if (line.starts_with("VERSION=")) {
-#else
-            if (boost::algorithm::starts_with(line, "VERSION=")) {
-#endif
                 setVersion(getValueFromKey(line));
             }
         }
@@ -89,6 +76,8 @@ OS::OS()
                 fmt::format("Error while reading file: {}", filename));
         }
     }
+
+    factoryPackageManager(getPlatform());
 }
 
 OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
@@ -98,14 +87,14 @@ OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
     , m_family(family)
     , m_platform(platform)
     , m_distro(distro)
+    , m_packageManager(factoryPackageManager(platform))
 {
     setKernel(kernel);
     setMajorVersion(majorVersion);
     setMinorVersion(minorVersion);
-    createPackageManager(platform);
 }
 
-OS::Arch OS::getArch() const { return m_arch; }
+OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
 
 void OS::setArch(Arch arch) { m_arch = arch; }
 
@@ -119,7 +108,7 @@ void OS::setArch(std::string_view arch)
     setArch(OS::Arch::x86_64);
 }
 
-OS::Family OS::getFamily() const { return m_family; }
+OS::Family OS::getFamily() const { return std::get<OS::Family>(m_family); }
 
 void OS::setFamily(Family family) { m_family = family; }
 
@@ -131,7 +120,10 @@ void OS::setFamily(std::string_view family)
         throw std::runtime_error(fmt::format("Unsupported OS: {}", family));
 }
 
-OS::Platform OS::getPlatform() const { return m_platform; }
+OS::Platform OS::getPlatform() const
+{
+    return std::get<OS::Platform>(m_platform);
+}
 
 void OS::setPlatform(OS::Platform platform) { m_platform = platform; }
 
@@ -151,7 +143,7 @@ void OS::setPlatform(std::string_view platform)
     throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
-OS::Distro OS::getDistro() const { return m_distro; }
+OS::Distro OS::getDistro() const { return std::get<OS::Distro>(m_distro); }
 
 void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
@@ -161,13 +153,15 @@ void OS::setDistro(std::string_view distro)
     // comparison in magic_enum would be implemented it may easily replace the
     // lambda block. Reference: https://github.com/Neargye/magic_enum/pull/139
 
-#if 0
-    if (const auto& rv = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
-#endif
+#if 1
+    if (const auto& rv
+        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
+#else
     if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
               return std::tolower(lhs) == std::tolower(rhs);
           }))
+#endif
         setDistro(rv.value());
     else
         throw std::runtime_error(
@@ -210,6 +204,18 @@ void OS::setVersion(const std::string& version)
     setMajorVersion(static_cast<unsigned>(
         std::stoul(version.substr(0, version.find('.')))));
 
+    // FIXME: Read the value from the ISO file intead of
+    // expecting it to be explicit in answerfile.ini
+
+    // We expect the system.version in the answerfile
+    // to be in the format M.N, and abort if it is not valid
+    if (version.find('.') == std::string::npos) {
+        throw std::runtime_error(fmt::format(
+            "Unexpected value for system.version (in answerfile.ini). "
+            "Expected M.N format, e.g., 9.5. Value found instead: {}",
+            version));
+    }
+
     setMinorVersion(
         static_cast<unsigned>(stoul(version.substr(version.find('.') + 1))));
 }
@@ -218,6 +224,7 @@ void OS::setVersion(const std::string& version)
  * fetchValueFromKey() and setOS(); an those methods should really be on OS
  * class and not here.
  */
+
 std::string OS::getValueFromKey(const std::string& line)
 {
     std::string value;
@@ -232,23 +239,33 @@ std::string OS::getValueFromKey(const std::string& line)
     return value;
 }
 
-std::shared_ptr<package_manager> OS::createPackageManager(OS::Platform platform)
+std::shared_ptr<package_manager> OS::factoryPackageManager(
+    OS::Platform platform)
 {
     if (platform == OS::Platform::el8 || platform == OS::Platform::el9) {
-        return std::make_shared<dnf>();
+        m_packageManager = std::make_shared<dnf>();
+        return m_packageManager;
     } else {
-        throw std::runtime_error("Unsupported OS platform");
+        throw std::runtime_error(fmt::format(
+            "Unsupported OS platform: {}", magic_enum::enum_name(platform)));
     }
+}
+
+gsl::not_null<package_manager*> OS::packageManager() const
+{
+    return m_packageManager.get();
 }
 
 #ifndef NDEBUG
 void OS::printData() const
 {
-    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(m_arch))
-    LOG_DEBUG("Family: {}", magic_enum::enum_name(m_family))
+    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(std::get<Arch>(m_arch)))
+    LOG_DEBUG("Family: {}", magic_enum::enum_name(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
-    LOG_DEBUG("Platform: {}", magic_enum::enum_name(m_platform))
-    LOG_DEBUG("Distribution: {}", magic_enum::enum_name(m_distro))
+    LOG_DEBUG(
+        "Platform: {}", magic_enum::enum_name(std::get<Platform>(m_platform)))
+    LOG_DEBUG(
+        "Distribution: {}", magic_enum::enum_name(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
 }

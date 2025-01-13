@@ -10,7 +10,7 @@
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include <chrono>
 #include <fmt/format.h>
 #include <memory>
 
@@ -115,7 +115,7 @@ void Shell::configureHostsFile()
 {
     LOG_INFO("Setting up additional entries on hosts file")
 
-    auto& headnode = m_cluster->getHeadnode();
+    const auto& headnode = m_cluster->getHeadnode();
 
     const auto& ip = headnode.getConnection(Network::Profile::Management)
                          .getAddress()
@@ -164,6 +164,7 @@ void Shell::disableNetworkManagerDNSOverride()
     runCommand("systemctl restart NetworkManager");
 }
 
+// BUG: Why this method exists? The name does not do what it says.
 void Shell::deleteConnectionIfExists(std::string_view connectionName)
 {
     runCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
@@ -203,7 +204,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         runCommand(
             fmt::format("nmcli connection add con-name {} ifname {} type {} "
                         "mtu {} ipv4.method manual ipv4.address {}/{} "
-                        "ipv4.gateway {} ipv4.dns \"{}\" "
+                        "ipv4.dns \"{}\" "
+                        // "ipv4.gateway {} ipv4.dns \"{}\" "
                         "ipv4.dns-search {} ipv6.method disabled",
                 magic_enum::enum_name(connection.getNetwork()->getProfile()),
                 interface,
@@ -211,9 +213,17 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                 connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
                     connection.getNetwork()->getSubnetMask().to_string()),
-                connection.getNetwork()->getGateway().to_string(),
+                // connection.getNetwork()->getGateway().to_string(),
                 fmt::join(formattedNameservers, " "),
                 connection.getNetwork()->getDomainName()));
+
+        /* Give network manage some time to settle thing up
+         * Avoids: Error: Connection activation failed: IP configuration could
+         * not be reserved (no available address, timeout, etc.).
+         */
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+        // Breaking my ssh connection during development
         runCommand(fmt::format("nmcli device connect {}", interface));
     }
 
@@ -239,8 +249,9 @@ void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
-    runCommand("sed -i 's/PermitRootLogin\\ yes/PermitRootLogin\\ "
-               "without-password/g' /etc/ssh/sshd_config");
+    runCommand(
+        "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
+        " /etc/ssh/sshd_config");
 }
 
 void Shell::installOpenHPCBase()
@@ -389,17 +400,19 @@ void Shell::install()
 
     installRequiredPackages();
 
+    // TODO: This is the repos entrypoint. It should be replaced.
     auto repos = m_cluster->getRepoManager();
     repos.loadFiles();
 
     std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
-        "-openhpc", "-rpmfusion-free-updates" };
+        "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" };
     for (auto& package : toEnable) {
         package = cloyster::productName + package;
     }
 
     repos.enableMultiple(toEnable);
     repos.commitStatus();
+    // End of Repos entrypoint
 
     runSystemUpdate();
 
@@ -407,6 +420,7 @@ void Shell::install()
 
     configureInfiniband();
 
+    // BUG: Broken. Compute nodes does not mount anything.
     NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
         m_cluster->getHeadnode()
             .getConnection(Network::Profile::Management)
@@ -439,6 +453,9 @@ void Shell::install()
 
     LOG_INFO("[{}] Installing packages", provisionerName)
     provisioner->installPackages();
+
+    LOG_INFO("[{}] Patching the provisioner", provisionerName)
+    provisioner->patchInstall();
 
     LOG_INFO("[{}] Setting up the provisioner", provisionerName)
     provisioner->setup();

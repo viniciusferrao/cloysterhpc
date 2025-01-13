@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "cloysterhpc/os.h"
-#include "cloysterhpc/services/log.h"
 #include <cloysterhpc/diskImage.h>
+#include <cloysterhpc/os.h>
+#include <cloysterhpc/services/log.h>
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>
@@ -40,6 +40,7 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
     return false;
 }
 
+// BUG: Consider removing
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
     if (!isKnownImage(path)) {

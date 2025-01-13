@@ -13,7 +13,7 @@ PresenterQueueSystem::PresenterQueueSystem(
     m_model->setQueueSystem(magic_enum::enum_cast<QueueSystem::Kind>(
         m_view->listMenu(Messages::title, Messages::question,
             magic_enum::enum_names<QueueSystem::Kind>(), Messages::help))
-                                .value());
+            .value());
 
     // TODO: Placeholder data
     auto fieldsSLURM = std::to_array<std::pair<std::string, std::string>>(

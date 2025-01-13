@@ -22,7 +22,7 @@ public:
     /**
      * @brief Installs the SLURM server package on the system.
      */
-    void installServer();
+    static void installServer();
 
     /**
      * @brief Configures the SLURM server.
@@ -32,12 +32,12 @@ public:
     /**
      * @brief Enables the SLURM server to start at boot.
      */
-    void enableServer();
+    static void enableServer();
 
     /**
      * @brief Starts the SLURM server.
      */
-    void startServer();
+    static void startServer();
 };
 
 #endif // CLOYSTERHPC_SLURM_H_

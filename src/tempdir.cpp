@@ -19,7 +19,6 @@ static char value_to_char(std::uint64_t value)
 
 #define NOSONAR(code) code
 
-#pragma warning disable S2245
 static std::filesystem::path create_temporary_filename()
 {
     static std::random_device dev;
@@ -35,7 +34,6 @@ static std::filesystem::path create_temporary_filename()
     std::string basename = fmt::format("temp{}", values.data());
     return std::filesystem::path { "/tmp" } / basename; // NOSONAR
 }
-#pragma warning restore S2245
 
 TempDir::TempDir()
 {

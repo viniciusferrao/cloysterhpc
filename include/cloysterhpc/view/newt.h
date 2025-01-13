@@ -64,7 +64,7 @@ protected:
 
     void abort() override;
     void helpMessage(const char*) override;
-    bool hasEmptyField(const struct newtWinEntry*);
+    static bool hasEmptyField(const struct newtWinEntry*);
 
 public:
     Newt();
@@ -129,7 +129,7 @@ public:
         okCancelMessage(nullptr, message, pairs);
     }
 
-    std::vector<const char*> convertToNewtList(
+    static std::vector<const char*> convertToNewtList(
         const std::vector<std::string>& s);
 
     // TODO:
@@ -200,7 +200,8 @@ public:
                     break;
                 }
                 case 4: // remove
-                    if (selector >= 0 && selector < cStrings.size()) {
+                    if (selector >= 0
+                        && static_cast<size_t>(selector) < cStrings.size()) {
                         tempStrings.erase(tempStrings.begin() + selector);
                         cStrings = convertToNewtList(tempStrings);
                     }

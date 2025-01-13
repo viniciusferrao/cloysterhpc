@@ -156,6 +156,14 @@ std::string getCurrentTimestamp();
 std::string findAndReplace(const std::string_view& source,
     const std::string_view& find, const std::string_view& replace);
 
+/**
+ * @brief Copies a file, skip copying if it exists
+ *
+ * @param source The source file to copy.
+ * @param destination The path where the source file will be copied.
+ */
+void copyFile(std::filesystem::path source, std::filesystem::path destination);
+
 } /* namespace cloyster */
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_
