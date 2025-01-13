@@ -432,9 +432,16 @@ void Cluster::fillTestData()
 }
 #endif
 
+void Cluster::dumpData(const std::string& answerfilePath)
+{
+    AnswerFile answerfile(answerfilePath);
+    LOG_TRACE("Dump Management Network");
+
+    answerfile.dumpFile(answerfilePath)
+}
+
 void Cluster::fillData(const std::string& answerfilePath)
 {
-
     AnswerFile answerfile(answerfilePath);
 
     LOG_TRACE("Configure Management Network")

@@ -238,6 +238,8 @@ public:
      */
     void fillData(const std::string& answerfilePath);
 
+    void dumpData(const std::string& answerfilePath);
+
 #ifndef NDEBUG
     void printNetworks(
         const std::list<std::unique_ptr<Network>>& networks) const;
