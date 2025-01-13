@@ -213,7 +213,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                 connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
                     connection.getNetwork()->getSubnetMask().to_string()),
-                //connection.getNetwork()->getGateway().to_string(),
+                // connection.getNetwork()->getGateway().to_string(),
                 fmt::join(formattedNameservers, " "),
                 connection.getNetwork()->getDomainName()));
 

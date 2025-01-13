@@ -28,8 +28,7 @@ public:
     DBusClient(std::string bus, std::string object)
         : m_proxy(
               sdbus::createProxy(std::move(sdbus::createSystemBusConnection()),
-                  sdbus::ServiceName { bus },
-                  sdbus::ObjectPath { object }))
+                  sdbus::ServiceName { bus }, sdbus::ObjectPath { object }))
     {
     }
 

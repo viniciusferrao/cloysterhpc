@@ -36,7 +36,8 @@ void IService::enable()
 
     auto ret = callObjectFunctionArray("EnableUnitFiles", false, true);
     if (!ret.has_value()) {
-        LOG_ERROR("callObjectFunctionArray returned none for service {}", m_name);
+        LOG_ERROR(
+            "callObjectFunctionArray returned none for service {}", m_name);
         return;
     }
     const auto& [_install, retvec] = (*ret).getPair<bool, EnableRType>();

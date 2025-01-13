@@ -24,7 +24,7 @@
 
 OS::OS()
 {
-    struct utsname system {};
+    struct utsname system { };
     uname(&system);
 
     setArch(system.machine);
@@ -212,7 +212,8 @@ void OS::setVersion(const std::string& version)
     if (version.find('.') == std::string::npos) {
         throw std::runtime_error(fmt::format(
             "Unexpected value for system.version (in answerfile.ini). "
-            "Expected M.N format, e.g., 9.5. Value found instead: {}", version));
+            "Expected M.N format, e.g., 9.5. Value found instead: {}",
+            version));
     }
 
     setMinorVersion(
