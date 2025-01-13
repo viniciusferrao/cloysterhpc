@@ -24,7 +24,7 @@
 
 OS::OS()
 {
-    struct utsname system { };
+    struct utsname system {};
     uname(&system);
 
     setArch(system.machine);

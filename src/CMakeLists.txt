@@ -12,45 +12,45 @@ add_executable(${cloysterhpc_BINARY_NAME} main.cpp)
 include(../cmake/CommonLibraries.cmake)
 
 target_link_libraries(
-  ${cloysterhpc_BINARY_NAME}
-  PRIVATE
-    cloysterhpc_static
-    cloysterhpc::cloysterhpc_options
-    cloysterhpc::cloysterhpc_warnings)
+        ${cloysterhpc_BINARY_NAME}
+        PRIVATE
+        cloysterhpc_static
+        cloysterhpc::cloysterhpc_options
+        cloysterhpc::cloysterhpc_warnings)
 
 target_link_system_libraries(
-  ${cloysterhpc_BINARY_NAME}
-  PRIVATE
-    ${COMMON_LIBS})
+        ${cloysterhpc_BINARY_NAME}
+        PRIVATE
+        ${COMMON_LIBS})
 
 target_link_libraries(
-  cloysterhpc_object
-  PRIVATE
-    cloysterhpc::cloysterhpc_options
-    cloysterhpc::cloysterhpc_warnings)
+        cloysterhpc_object
+        PRIVATE
+        cloysterhpc::cloysterhpc_options
+        cloysterhpc::cloysterhpc_warnings)
 
 target_link_system_libraries(
-  cloysterhpc_object
-  PRIVATE
-    ${COMMON_LIBS})
+        cloysterhpc_object
+        PRIVATE
+        ${COMMON_LIBS})
 
 target_include_directories(cloysterhpc_static PRIVATE
-  "${CMAKE_BINARY_DIR}/configured_files/include")
+        "${CMAKE_BINARY_DIR}/configured_files/include")
 target_include_directories(cloysterhpc_static ${WARNING_GUARD} PRIVATE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
 target_include_directories(cloysterhpc_object PRIVATE
-  "${CMAKE_BINARY_DIR}/configured_files/include")
+        "${CMAKE_BINARY_DIR}/configured_files/include")
 target_include_directories(cloysterhpc_object ${WARNING_GUARD} PRIVATE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
 target_include_directories(${cloysterhpc_BINARY_NAME} PRIVATE
-  "${CMAKE_BINARY_DIR}/configured_files/include")
+        "${CMAKE_BINARY_DIR}/configured_files/include")
 target_include_directories(${cloysterhpc_BINARY_NAME} ${WARNING_GUARD} PRIVATE
-  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
 # Set target locations to the root folder of the project in /bin and /lib.
 # WARNING: This will break multiple target compile, disable it if necessary

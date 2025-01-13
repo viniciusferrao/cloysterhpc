@@ -22,7 +22,9 @@
       "condition": {
         "type": "inList",
         "string": "${hostSystemName}",
-        "list": ["Linux"]
+        "list": [
+          "Linux"
+        ]
       },
       "vendor": {
         "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
