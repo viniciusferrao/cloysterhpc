@@ -5,11 +5,14 @@
  */
 
 #include <cloysterhpc/diskImage.h>
-#include <cloysterhpc/os.h>
 #include <cloysterhpc/services/log.h>
-#include <cryptopp/files.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/sha.h>
+#include <cstddef>
+#include <fstream>
+#include <glibmm/checksum.h>
+#include <ios>
+#include <istream>
+#include <unordered_map>
+#include <vector>
 
 const std::filesystem::path& DiskImage::getPath() const { return m_path; }
 
@@ -29,18 +32,19 @@ void DiskImage::setPath(const std::filesystem::path& path)
 
 bool DiskImage::isKnownImage(const std::filesystem::path& path)
 {
-    for (const auto& image : m_knownImageFilename)
+    for (const auto& image : m_knownImageFilename) {
         if (path.filename().string() == image) {
             LOG_TRACE("Disk image is recognized")
             return true;
         }
+    }
 
     LOG_TRACE("Disk image is unknown. Maybe you're using a custom image or "
               "changed the default name?");
     return false;
 }
 
-// BUG: Consider removing
+// BUG: Consider removing/reimplement this method
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
     if (!isKnownImage(path)) {
@@ -50,6 +54,7 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 
     LOG_TRACE("Verifying disk image checksum... This may take a while")
 
+    // BUG: This should no be hardcoded here. An ancillary file should be used
     std::unordered_map<std::string, std::string> hash_map = {
         { "rhel-8.8-x86_64-dvd.iso",
             "517abcc67ee3b7212f57e180f5d30be3e8269e7a99e127a3399b7935c7e00a0"
@@ -63,27 +68,43 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
         { "AlmaLinux-8.8-x86_64-dvd.iso",
             "635b30b967b509a32a1a3d81401db9861922acb396d065922b39405a43a04a3"
             "1" },
+        { "Rocky-9.5-x86_64-dvd.iso",
+            "ba60c3653640b5747610ddfb4d09520529bef2d1d83c1feb86b0c84dff31e04"
+            "e" }
     };
 
-    CryptoPP::SHA256 hash;
-    std::string isoHash = hash_map.find(path.filename().string())->second;
-    std::string output;
-    auto sink = std::make_unique<CryptoPP::StringSink>(output);
-    auto encoder = std::make_unique<CryptoPP::HexEncoder>(sink.get());
-    auto filter = std::make_unique<CryptoPP::HashFilter>(hash, encoder.get());
+    Glib::Checksum checksum(Glib::Checksum::Type::SHA256);
 
-    CryptoPP::FileSource(path.string().c_str(), true, filter.get(), true);
-    transform(output.begin(), output.end(), output.begin(), ::tolower);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::filesystem::filesystem_error(
+            "Failed to open file", path, std::error_code());
+    }
 
-    /* Those release() methods are needed to address the following issue:
-     * https://github.com/weidai11/cryptopp/issues/1002
-     * https://stackoverflow.com/questions/21057393/what-does-double-free-mean
-     */
-    sink.release();
-    encoder.release();
-    filter.release();
+    // Read the file in chunks of 16834 bytes
+    constexpr std::size_t chunk_size = 16384;
+    std::vector<std::byte> buffer(chunk_size);
 
-    if (output == isoHash) {
+    while (file.read(reinterpret_cast<std::istream::char_type*>(buffer.data()),
+        static_cast<std::streamsize>(buffer.size()))) {
+        std::streamsize bytesRead = file.gcount();
+
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    // Handle any leftover bytes after the while loop ends
+    std::streamsize bytesRead = file.gcount();
+    if (bytesRead > 0) {
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    LOG_INFO(fmt::format("SHA256 checksum of file {} is: {}", path.string(),
+        checksum.get_string()));
+
+    if (checksum.get_string()
+        == hash_map.find(path.filename().string())->second) {
         LOG_TRACE("Checksum - The disk image is valid")
         return true;
     }

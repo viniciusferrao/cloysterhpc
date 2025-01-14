@@ -87,7 +87,7 @@ int main(int argc, const char** argv)
         "-u, --unattended", unattended, "Perform an unattended installation");
 
     CLI11_PARSE(app, argc, argv)
-    
+
     Log::init([]() {
         if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
             return magic_enum::enum_cast<Log::Level>(

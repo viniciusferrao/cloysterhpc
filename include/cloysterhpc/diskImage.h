@@ -20,12 +20,15 @@ class DiskImage {
 private:
     std::filesystem::path m_path;
 
+    // BUG: This is bad design, and also overrides what's inside the map
+    // variable on the class that holds the checksums.
     /**
      * @brief List of known disk image filenames.
      */
     static constexpr auto m_knownImageFilename { std::to_array<const char*>(
         { "rhel-8.8-x86_64-dvd.iso", "OracleLinux-R8-U8-x86_64-dvd.iso",
-            "Rocky-8.8-x86_64-dvd1.iso", "AlmaLinux-8.8-x86_64-dvd.iso" }) };
+            "Rocky-8.8-x86_64-dvd1.iso", "AlmaLinux-8.8-x86_64-dvd.iso",
+            "Rocky-9.5-x86_64-dvd.iso" }) };
 
 public:
     const std::filesystem::path& getPath() const;

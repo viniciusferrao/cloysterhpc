@@ -94,18 +94,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET cryptopp::cryptopp)
-    if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME cryptopp)
-    else()
-       CPMAddPackage(
-       NAME cryptopp-cmake
-       GIT_TAG "CRYPTOPP_8_8_0"
-       GITHUB_REPOSITORY
-       "abdes/cryptopp-cmake")
-    endif()
-  endif()
-
   if(NOT TARGET SDBusCpp::sdbus-c++)
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME sdbus-c++)
