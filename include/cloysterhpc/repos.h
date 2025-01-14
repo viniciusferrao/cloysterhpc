@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef CLOYSTERHPC_REPOS_H_
-#define CLOYSTERHPC_REPOS_H_
+
+/* This class is set to be reimplemented */
+#ifndef CLOYSTERHPC_REPOS_H_DEPRECATED_
+#define CLOYSTERHPC_REPOS_H_DEPRECATED_
 
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/os.h>
@@ -83,4 +85,4 @@ private:
     void mergeWithCurrentList(std::vector<repository>&& repo);
 };
 
-#endif // CLOYSTERHPC_REPOS_H_
+#endif // CLOYSTERHPC_REPOS_H_DEPRECATED_
