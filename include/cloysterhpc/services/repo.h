@@ -12,6 +12,9 @@
 #include <string_view>
 #include <vector>
 
+/**
+* @brief This class represents an EL .repo file as it's found in /etc/yum.repos.d/
+*/
 class repo {
 
 public:
