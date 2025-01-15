@@ -113,10 +113,6 @@ elif [ "$os_version" = "9" ]; then
     compiler-rt lldb
 fi
 
-# Install Perl dependencies needed by libxcrypt
-dnf -y install perl-FindBin perl-open perl-Thread-Queue perl-Thread \
-  perl-File-Compare perl-File-Copy
-
 # Install Conan as user
 pip3 install --user conan
 

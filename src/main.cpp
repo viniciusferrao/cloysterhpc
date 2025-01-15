@@ -13,6 +13,7 @@
 #include <cloysterhpc/hardware.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/repo.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>

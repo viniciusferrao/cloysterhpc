@@ -86,15 +86,11 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET cryptopp::cryptopp)
+  if(NOT TARGET glibmm::glibmm)
     if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME cryptopp)
+      CPMFindPackage(NAME glibmm)
     else()
-       CPMAddPackage(
-       NAME cryptopp-cmake
-       GIT_TAG "CRYPTOPP_8_8_0"
-       GITHUB_REPOSITORY
-       "abdes/cryptopp-cmake")
+      CPMAddPackage("gh:GNOME/glibmm@2.78.1")
     endif()
   endif()
 
