@@ -48,8 +48,6 @@
     - name: Install packages
       ansible.builtin.dnf:
         name:
-          - perl
-          - perl-File-Copy
           # for building 
           # - gcc-toolset-13
           # - gcc-toolset-13-libubsan-devel
