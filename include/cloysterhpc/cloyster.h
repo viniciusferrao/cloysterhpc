@@ -8,7 +8,7 @@
 
 #include <cloysterhpc/services/log.h>
 #include <fmt/format.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <string>
 
 namespace cloyster {

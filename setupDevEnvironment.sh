@@ -43,28 +43,40 @@ redhat() {
     sudo subscription-manager refresh
   fi
 
-  dnf config-manager --set-enabled \
-    "codeready-builder-for-rhel-${os_version}-x86_64-rpms"
+  if [ "$os_version" -eq 10 ]; then
+    dnf config-manager --set-enabled \
+      "codeready-builder-beta-for-rhel-${os_version}-x86_64-rpms"
+  else
+    dnf config-manager --set-enabled \
+      "codeready-builder-for-rhel-${os_version}-x86_64-rpms"
+  fi
+
   add_epel;
 }
 
 rocky() {
-  if [ "$os_version" = "8" ]; then
-    repo_name="powertools"
-  elif [ "$os_version" = "9" ]; then
-    repo_name="crb"
-  fi
+  case "$os_version" in
+    8)
+      repo_name="powertools"
+      ;;
+    9|10)
+      repo_name="crb"
+      ;;
+  esac
 
   dnf config-manager --set-enabled "$repo_name"
 	dnf -y install epel-release
 }
 
 almalinux() {
-  if [ "$os_version" = "8" ]; then
-    repo_name="powertools"
-  elif [ "$os_version" = "9" ]; then
-    repo_name="crb"
-  fi
+  case "$os_version" in
+    8)
+      repo_name="powertools"
+      ;;
+    9|10)
+      repo_name="crb"
+      ;;
+  esac
 
   dnf config-manager --set-enabled "$repo_name"
 	dnf -y install epel-release
@@ -101,17 +113,22 @@ case $(cut -f 3 -d : /etc/system-release-cpe) in
 esac
 
 # Build toolset, packages and utils
-dnf -y install rsync git gcc-c++ gdb ninja-build cmake ccache cppcheck
+dnf -y install rsync git gcc-c++ gdb cmake ccache ninja-build llvm-toolset \
+  lldb compiler-rt
 
-if [ "$os_version" = "8" ]; then
-  dnf -y install python3 python3-pip\* llvm-toolset compiler-rt \
-    gcc-toolset-14 gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel \
-    lldb
-elif [ "$os_version" = "9" ]; then
-  dnf -y install python pip libasan libubsan gcc-toolset-14 \
-    gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel llvm-toolset \
-    compiler-rt lldb
-fi
+case "$os_version" in
+  8)
+    dnf -y install python3 python3-pip\* gcc-toolset-14 \
+      gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck
+    ;;
+  9)
+    dnf -y install python pip libasan libubsan gcc-toolset-14 \
+      gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck
+    ;;
+  10)
+    dnf -y install python pip libubsan libasan liblsan libtsan libhwasan
+    ;;
+esac
 
 # Install Conan as user
 pip3 install --user conan

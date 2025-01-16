@@ -12,7 +12,7 @@
 #include <cloysterhpc/services/provisioner.h>
 #include <cloysterhpc/services/shell.h>
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include <filesystem>
 #include <memory>

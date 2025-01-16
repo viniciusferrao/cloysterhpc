@@ -6,7 +6,7 @@
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #ifndef NDEBUG
 #include <cloysterhpc/services/log.h>

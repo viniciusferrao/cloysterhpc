@@ -12,7 +12,7 @@
 #include <cloysterhpc/services/log.h>
 #include <filesystem>
 #include <fstream>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ranges>
 
 #include <boost/algorithm/string.hpp>
