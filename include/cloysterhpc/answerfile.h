@@ -160,7 +160,7 @@ private:
      * Do the inverse of `loadOptions`, i.e, move the stored settings
      * into the answerfile.
      */
-    void dumpOptions(inifile& ini);
+    void dumpOptions();
 
     /**
      * @brief Loads the configuration options from the answer file.
@@ -194,7 +194,7 @@ private:
      */
     void loadExternalNetwork();
 
-    void dumpExternalNetwork(inifile& ini);
+    void dumpExternalNetwork();
 
     /**
      * @brief Loads the management network configuration.
@@ -203,7 +203,7 @@ private:
      */
     void loadManagementNetwork();
 
-    void dumpManagementNetwork(inifile& ini);
+    void dumpManagementNetwork();
 
     /**
      * @brief Loads the service network configuration.
@@ -219,7 +219,7 @@ private:
      */
     void loadApplicationNetwork();
 
-    void dumpApplicationNetwork(inifile& ini);
+    void dumpApplicationNetwork();
 
     /**
      * @brief Loads the general information settings.
@@ -228,7 +228,7 @@ private:
      */
     void loadInformation();
 
-    void dumpInformation(inifile& ini);
+    void dumpInformation();
 
     /**
      * @brief Loads the time-related settings.
@@ -237,7 +237,7 @@ private:
      */
     void loadTimeSettings();
 
-    void dumpTimeSettings(inifile& ini);
+    void dumpTimeSettings();
 
     /**
      * @brief Loads the hostname settings.
@@ -246,7 +246,7 @@ private:
      */
     void loadHostnameSettings();
 
-    void dumpHostnameSettings(inifile& ini);
+    void dumpHostnameSettings();
 
     /**
      * @brief Loads the system settings.
@@ -255,7 +255,7 @@ private:
      */
     void loadSystemSettings();
 
-    void dumpSystemSettings(inifile& ini);
+    void dumpSystemSettings();
 
     /**
      * @brief Loads the node settings.
@@ -266,10 +266,10 @@ private:
     void loadTools();
     void loadNVHPC();
 
-    void dumpNodes(inifile& ini);
+    void dumpNodes();
 
     void loadPostfix();
-    void dumpPostfix(inifile& ini);
+    void dumpPostfix();
 
     bool checkEnabled(const std::string& section);
     /**
@@ -326,8 +326,8 @@ private:
     void loadNetwork(const std::string& networkSection, AFNetwork& network,
         bool optionalNameservers = true);
 
-    static void dumpNetwork(inifile& ini, const AFNetwork& network,
-        const std::string& networkSection);
+    void dumpNetwork(
+        const AFNetwork& network, const std::string& networkSection);
 
 public:
     AFNetwork external;

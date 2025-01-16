@@ -50,182 +50,183 @@ void AnswerFile::loadOptions()
 }
 
 void AnswerFile::dumpNetwork(
-    inifile& ini, const AFNetwork& network, const std::string& networkSection)
+    const AFNetwork& network, const std::string& networkSection)
 {
     if (network.con_interface) {
-        ini.setValue(networkSection, "interface", *network.con_interface);
+        m_ini.setValue(networkSection, "interface", *network.con_interface);
     }
 
     if (network.con_ip_addr) {
-        ini.setValue(
+        m_ini.setValue(
             networkSection, "ip_address", network.con_ip_addr->to_string());
     }
 
     if (network.con_mac_addr) {
-        ini.setValue(networkSection, "mac_address", *network.con_mac_addr);
+        m_ini.setValue(networkSection, "mac_address", *network.con_mac_addr);
     }
 
     if (network.subnet_mask) {
-        ini.setValue(
+        m_ini.setValue(
             networkSection, "subnet_mask", network.subnet_mask->to_string());
     }
 
     if (network.domain_name) {
-        ini.setValue(networkSection, "domain_name", *network.domain_name);
+        m_ini.setValue(networkSection, "domain_name", *network.domain_name);
     }
 
     if (network.gateway) {
-        ini.setValue(networkSection, "gateway", network.gateway->to_string());
+        m_ini.setValue(networkSection, "gateway", network.gateway->to_string());
     }
 
     if (network.nameservers && !network.nameservers->empty()) {
         auto nameval = boost::algorithm::join(*network.nameservers, ", ");
-        ini.setValue(networkSection, "nameservers", nameval);
+        m_ini.setValue(networkSection, "nameservers", nameval);
     }
 }
 
-void AnswerFile::dumpExternalNetwork(inifile& ini)
+void AnswerFile::dumpExternalNetwork()
 {
-    dumpNetwork(ini, external, "network_external");
+    dumpNetwork(external, "network_external");
 }
 
-void AnswerFile::dumpManagementNetwork(inifile& ini)
+void AnswerFile::dumpManagementNetwork()
 {
-    dumpNetwork(ini, management, "network_management");
+    dumpNetwork(management, "network_management");
 }
 
-void AnswerFile::dumpApplicationNetwork(inifile& ini)
+void AnswerFile::dumpApplicationNetwork()
 {
-    dumpNetwork(ini, application, "network_application");
+    dumpNetwork(application, "network_application");
 }
 
-void AnswerFile::dumpInformation(inifile& ini)
+void AnswerFile::dumpInformation()
 {
-    ini.setValue("information", "cluster_name", information.cluster_name);
-    ini.setValue("information", "company_name", information.company_name);
-    ini.setValue(
-        "information", "administrator_email", information.administrator_email);
+    m_ini.setValue("information", "cluster_name", information.cluster_name);
+    m_ini.setValue("information", "company_name", information.company_name);
+    m_ini.setValue("information", "admm_inistrator_email",
+        information.administrator_email);
 }
 
-void AnswerFile::dumpTimeSettings(inifile& ini)
+void AnswerFile::dumpTimeSettings()
 {
-    ini.setValue("time", "timezone", time.timezone);
-    ini.setValue("time", "timeserver", time.timeserver);
-    ini.setValue("time", "locale", time.locale);
+    m_ini.setValue("time", "timezone", time.timezone);
+    m_ini.setValue("time", "timeserver", time.timeserver);
+    m_ini.setValue("time", "locale", time.locale);
 }
 
-void AnswerFile::dumpHostnameSettings(inifile& ini)
+void AnswerFile::dumpHostnameSettings()
 {
-    ini.setValue("hostname", "hostname", hostname.hostname);
-    ini.setValue("hostname", "domain_name", hostname.domain_name);
+    m_ini.setValue("hostname", "hostname", hostname.hostname);
+    m_ini.setValue("hostname", "domain_name", hostname.domain_name);
 }
 
-void AnswerFile::dumpSystemSettings(inifile& ini)
+void AnswerFile::dumpSystemSettings()
 {
     auto distroName = magic_enum::enum_name(system.distro);
 
-    ini.setValue("system", "disk_image", system.disk_image);
-    ini.setValue("system", "distro", std::string { distroName });
-    ini.setValue("system", "version", system.version);
-    ini.setValue("system", "kernel", system.kernel);
+    m_ini.setValue("system", "disk_image", system.disk_image);
+    m_ini.setValue("system", "distro", std::string { distroName });
+    m_ini.setValue("system", "version", system.version);
+    m_ini.setValue("system", "kernel", system.kernel);
 }
 
-void AnswerFile::dumpNodes(inifile& ini)
+void AnswerFile::dumpNodes()
 {
     size_t counter = 1;
     for (const auto& node : nodes.nodes) {
         std::string sectionName = fmt::format("node.{}", counter);
 
         if (node.hostname)
-            ini.setValue(sectionName, "hostname", *node.hostname);
+            m_ini.setValue(sectionName, "hostname", *node.hostname);
 
         if (node.root_password)
-            ini.setValue(
+            m_ini.setValue(
                 sectionName, "node_root_password", *node.root_password);
 
         if (node.sockets)
-            ini.setValue(sectionName, "sockets", *node.sockets);
+            m_ini.setValue(sectionName, "sockets", *node.sockets);
 
         if (node.cores_per_socket)
-            ini.setValue(
+            m_ini.setValue(
                 sectionName, "cores_per_socket", *node.cores_per_socket);
 
         if (node.threads_per_core)
-            ini.setValue(
+            m_ini.setValue(
                 sectionName, "threads_per_core", *node.threads_per_core);
 
         if (node.bmc_address)
-            ini.setValue(sectionName, "bmc_address", *node.bmc_address);
+            m_ini.setValue(sectionName, "bmc_address", *node.bmc_address);
 
         if (node.bmc_username)
-            ini.setValue(sectionName, "bmc_username", *node.bmc_username);
+            m_ini.setValue(sectionName, "bmc_username", *node.bmc_username);
 
         if (node.bmc_password)
-            ini.setValue(sectionName, "bmc_password", *node.bmc_password);
+            m_ini.setValue(sectionName, "bmc_password", *node.bmc_password);
 
         if (node.bmc_serialport)
-            ini.setValue(sectionName, "bmc_serialport", *node.bmc_serialport);
+            m_ini.setValue(sectionName, "bmc_serialport", *node.bmc_serialport);
 
         if (node.bmc_serialspeed)
-            ini.setValue(sectionName, "bmc_serialspeed", *node.bmc_serialspeed);
+            m_ini.setValue(
+                sectionName, "bmc_serialspeed", *node.bmc_serialspeed);
 
         counter++;
     }
 }
 
-void AnswerFile::dumpPostfix(inifile& ini)
+void AnswerFile::dumpPostfix()
 {
     if (!postfix.enabled) {
         return;
     }
 
     auto profileName = magic_enum::enum_name(postfix.profile);
-    ini.setValue("postfix", "profile", std::string { profileName });
-    ini.setValue("postfix", "smtpd_tls_cert_file", postfix.cert_file.string());
-    ini.setValue("postfix", "smtpd_tls_key_file", postfix.key_file.string());
+    m_ini.setValue("postfix", "profile", std::string { profileName });
+    m_ini.setValue(
+        "postfix", "smtpd_tls_cert_file", postfix.cert_file.string());
+    m_ini.setValue("postfix", "smtpd_tls_key_file", postfix.key_file.string());
 
     switch (postfix.profile) {
         case Postfix::Profile::Local:
             break;
         case Postfix::Profile::Relay:
-            ini.setValue("postfix.relay", "server", postfix.smtp->server);
-            ini.setValue(
+            m_ini.setValue("postfix.relay", "server", postfix.smtp->server);
+            m_ini.setValue(
                 "postfix.relay", "port", std::to_string(postfix.smtp->port));
             break;
         case Postfix::Profile::SASL:
-            ini.setValue("postfix.sasl", "server", postfix.smtp->server);
-            ini.setValue(
+            m_ini.setValue("postfix.sasl", "server", postfix.smtp->server);
+            m_ini.setValue(
                 "postfix.sasl", "port", std::to_string(postfix.smtp->port));
-            ini.setValue(
+            m_ini.setValue(
                 "postfix.sasl", "username", postfix.smtp->sasl->username);
-            ini.setValue(
+            m_ini.setValue(
                 "postfix.sasl", "password", postfix.smtp->sasl->password);
             break;
     }
 }
 
-void AnswerFile::dumpOptions(inifile& ini)
+void AnswerFile::dumpOptions()
 {
     LOG_TRACE("Dump answerfile variables")
 
-    dumpExternalNetwork(ini);
-    dumpManagementNetwork(ini);
-    dumpApplicationNetwork(ini);
-    dumpInformation(ini);
-    dumpTimeSettings(ini);
-    dumpHostnameSettings(ini);
-    dumpSystemSettings(ini);
+    dumpExternalNetwork();
+    dumpManagementNetwork();
+    dumpApplicationNetwork();
+    dumpInformation();
+    dumpTimeSettings();
+    dumpHostnameSettings();
+    dumpSystemSettings();
 
-    dumpNodes(ini);
-    // dumpTools(ini);
-    dumpPostfix(ini);
+    dumpNodes();
+    // dumpTools();
+    dumpPostfix();
 }
 
 void AnswerFile::dumpFile(const std::filesystem::path& path)
 {
-    inifile ini;
-    dumpOptions(ini);
-    ini.saveFile(path);
+    dumpOptions();
+    m_ini.saveFile(path);
 };
 
 address AnswerFile::convertStringToAddress(const std::string& addr)
