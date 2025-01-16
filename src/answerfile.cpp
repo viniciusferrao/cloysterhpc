@@ -402,7 +402,7 @@ void AnswerFile::loadSystemSettings()
     system.kernel = m_ini.getValue("system", "kernel", false, false);
 }
 
-AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
+AFNode AnswerFile::loadNode(const std::string& section)
 {
     AFNode node;
 
@@ -510,7 +510,7 @@ void AnswerFile::loadNodes()
     }
 }
 
-AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
+AFNode AnswerFile::validateNode(AFNode node)
 {
     validateAttribute(
         "node", "node_ip", node.start_ip, nodes.generic->start_ip);

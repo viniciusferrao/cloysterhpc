@@ -20,7 +20,9 @@
 #include <expected>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <regex>
+#include <string>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
@@ -432,15 +434,82 @@ void Cluster::fillTestData()
 }
 #endif
 
-void Cluster::dumpData(const std::string& answerfilePath)
+auto& getNetworkField(AnswerFile& answerfile, Network::Profile profile)
+{
+    switch (profile) {
+        case Network::Profile::Management:
+            return answerfile.management;
+        case Network::Profile::Service:
+            return answerfile.service;
+        case Network::Profile::External:
+            return answerfile.external;
+        case Network::Profile::Application:
+            return answerfile.application;
+    }
+}
+
+void Cluster::dumpData(const std::filesystem::path& answerfilePath)
 {
     AnswerFile answerfile(answerfilePath);
     LOG_TRACE("Dump Management Network");
 
-    answerfile.dumpFile(answerfilePath)
+    for (const auto& network : m_network) {
+        auto& field = getNetworkField(answerfile, network->getProfile());
+
+        field.subnet_mask = network->getSubnetMask();
+        field.gateway = network->getGateway();
+        field.domain_name = network->getDomainName();
+
+        auto nserv = network->getNameservers();
+        if (!nserv.empty()) {
+            // field.nameservers = std::make_optional(nserv);
+        }
+
+        field.con_ip_addr = network->getAddress();
+    }
+
+    answerfile.system.disk_image = getDiskImage();
+
+    answerfile.information.cluster_name = getName();
+    answerfile.information.company_name = getCompanyName();
+    answerfile.information.administrator_email = getAdminMail();
+
+    answerfile.time.timezone = getTimezone().getTimezone();
+    answerfile.time.locale = getLocale().getLocale();
+
+    for (const auto& node : this->m_nodes) {
+        AFNode afNode;
+
+        afNode.hostname = node.getHostname();
+        afNode.mac_address = node.getMACAddress();
+        afNode.start_ip = node.getNodeStartIp();
+        afNode.prefix = node.getPrefix();
+
+        if (auto padding = node.getPadding(); padding) {
+            afNode.padding = std::to_string(*padding);
+        }
+
+        afNode.cores_per_socket
+            = std::to_string(node.getCPU().getCoresPerSocket());
+        afNode.threads_per_core
+            = std::to_string(node.getCPU().getThreadsPerCore());
+        afNode.sockets = std::to_string(node.getCPU().getSockets());
+
+        if (auto bmc = node.getBMC(); bmc) {
+            afNode.bmc_address = bmc->getAddress();
+            afNode.bmc_username = bmc->getUsername();
+            afNode.bmc_password = bmc->getPassword();
+            afNode.bmc_serialport = std::to_string(bmc->getSerialPort());
+            afNode.bmc_serialspeed = std::to_string(bmc->getSerialSpeed());
+        }
+
+        answerfile.nodes.nodes.push_back(afNode);
+    }
+
+    answerfile.dumpFile(answerfilePath);
 }
 
-void Cluster::fillData(const std::string& answerfilePath)
+void Cluster::fillData(const std::filesystem::path& answerfilePath)
 {
     AnswerFile answerfile(answerfilePath);
 

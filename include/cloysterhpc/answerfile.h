@@ -17,6 +17,29 @@
 using boost::asio::ip::address;
 
 /**
+ * @struct AFNode
+ * @brief Holds individual node settings.
+ *
+ * This structure contains optional settings for individual nodes.
+ */
+struct AFNode {
+    std::optional<std::string> prefix;
+    std::optional<std::string> padding;
+    std::optional<address> start_ip = address();
+    std::optional<std::string> hostname;
+    std::optional<std::string> root_password;
+    std::optional<std::string> mac_address;
+    std::optional<std::string> sockets;
+    std::optional<std::string> cores_per_socket;
+    std::optional<std::string> threads_per_core;
+    std::optional<std::string> bmc_address;
+    std::optional<std::string> bmc_username;
+    std::optional<std::string> bmc_password;
+    std::optional<std::string> bmc_serialport;
+    std::optional<std::string> bmc_serialspeed;
+};
+
+/**
  * @class AnswerFile
  * @brief Manages configuration settings for a cluster environment.
  *
@@ -94,29 +117,6 @@ private:
         OS::Distro distro;
         std::string version;
         std::string kernel;
-    };
-
-    /**
-     * @struct AFNode
-     * @brief Holds individual node settings.
-     *
-     * This structure contains optional settings for individual nodes.
-     */
-    struct AFNode {
-        std::optional<std::string> prefix;
-        std::optional<std::string> padding;
-        std::optional<address> start_ip = address();
-        std::optional<std::string> hostname;
-        std::optional<std::string> root_password;
-        std::optional<std::string> mac_address;
-        std::optional<std::string> sockets;
-        std::optional<std::string> cores_per_socket;
-        std::optional<std::string> threads_per_core;
-        std::optional<std::string> bmc_address;
-        std::optional<std::string> bmc_username;
-        std::optional<std::string> bmc_password;
-        std::optional<std::string> bmc_serialport;
-        std::optional<std::string> bmc_serialspeed;
     };
 
     /**
