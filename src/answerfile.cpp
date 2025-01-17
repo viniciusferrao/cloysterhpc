@@ -10,7 +10,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/tools/nvhpc.h>
 #include <iterator>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ranges>
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)

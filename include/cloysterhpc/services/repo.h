@@ -13,9 +13,10 @@
 #include <vector>
 
 /**
-* @brief This class represents an EL .repo file as it's found in /etc/yum.repos.d/
-* @note This class is WIP, it was added as a PoC of glibmm integration
-*/
+ * @brief This class represents an EL .repo file as it's found in
+ * /etc/yum.repos.d/
+ * @note This class is WIP, it was added as a PoC of glibmm integration
+ */
 class repo {
 
 public:

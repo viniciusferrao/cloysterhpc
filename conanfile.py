@@ -15,13 +15,14 @@ class MyProjectConan(ConanFile):
         self.requires("magic_enum/[>=0.9.0 <0.10.0]")
         self.requires("gsl-lite/[>=0.41.0 <0.42.0]")
         self.requires("doctest/[>=2.4.0 <2.5.0]")
-        self.requires("cryptopp/[>=8.9.0 <8.10.0]")
         self.requires("sdbus-cpp/[>=2.0.0 <2.1.0]")
         self.requires("glibmm/[>=2.78.1 <2.79.0]")
 
         # Override libmount to unify on 2.39.2.
-        # This prevents the conflict with glib and sdbus-cpp version requirements.
+        # This prevents the conflict with glib and sdbus-cpp requirements.
         self.requires("libmount/2.39.2", override=True)
+        # Override libsystemd to fix compilation on RHEL 10.
+        self.requires("libsystemd/[>=255.10 <256.0]", override=True)
 
     def layout(self):
         cmake_layout(self)

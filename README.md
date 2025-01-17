@@ -44,7 +44,9 @@ needed.
 * Adherence with best practices is done
   with [gsl-lite](https://github.com/gsl-lite/gsl-lite).
 * [newt](https://pagure.io/newt) for Terminal UI.
-* [glibmm](https://developer.gnome.org/glibmm/stable/) for Glib bindings.
+* [glibmm](https://developer.gnome.org/glibmm/stable/) for Glib bindings to interact with the OS.
+* Testing framework provided by [doctest](https://github.com/doctest/doctest).
+* [CLI11](https://github.com/CLIUtils/CLI11) to parse command line arguments.
 
 Only [newt](https://pagure.io/newt) must be pre-installed for compilation. We
 don't ship it. Everything else should be found and installed
@@ -115,7 +117,8 @@ nature and `root` execution requirements.
 
 ### Recommended VM settings
 
-* EL8.9 or EL9.4 and higher based system with **minimal** package selection
+* EL8.10 or EL9.5 and higher based system with **minimal** package selection
+* EL10 Beta is supported only for development purposes
 * Half of system CPU cores as vCPU
 * At least 4GB of RAM
 * 50GB of Disk
@@ -147,12 +150,6 @@ directory of the project.
 
 As a final warning: running the software without **DUMMY** option will probably
 damage the running OS if they run as **root**. Be advised.
-
-You can run it by calling `./binary_name -t` (TUI - Terminal User Interface) or
-by using a `answerfile` and CLI (Command Line Interface) with
-`./binary_name -a /path/to/answerfile`.
-
-If you require any further help, please use `./binary_name -h` (-h, --help).
 
 ### Running tests
 

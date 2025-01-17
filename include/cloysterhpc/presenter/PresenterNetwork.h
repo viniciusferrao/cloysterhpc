@@ -14,7 +14,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/newt.h>
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include <memory>
 #include <utility>
