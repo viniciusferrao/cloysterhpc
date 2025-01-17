@@ -187,10 +187,6 @@ unsigned int OS::getMinorVersion() const { return m_minorVersion; }
 
 void OS::setMinorVersion(unsigned int minorVersion)
 {
-    if (minorVersion < 1)
-        throw std::runtime_error(
-            "Unsupported release: Minor version must be 1 or greater.");
-
     m_minorVersion = minorVersion;
 }
 
@@ -242,13 +238,15 @@ std::string OS::getValueFromKey(const std::string& line)
 std::shared_ptr<package_manager> OS::factoryPackageManager(
     OS::Platform platform)
 {
-    if (platform == OS::Platform::el8 || platform == OS::Platform::el9) {
-        m_packageManager = std::make_shared<dnf>();
-        return m_packageManager;
-    } else {
-        throw std::runtime_error(fmt::format(
-            "Unsupported OS platform: {}", magic_enum::enum_name(platform)));
+    for (const auto& supportedPlatform : magic_enum::enum_values<Platform>()) {
+        if (platform == supportedPlatform) {
+            m_packageManager = std::make_shared<dnf>();
+            return m_packageManager;
+        }
     }
+
+    throw std::runtime_error(fmt::format(
+        "Unsupported OS platform: {}", magic_enum::enum_name(platform)));
 }
 
 gsl::not_null<package_manager*> OS::packageManager() const

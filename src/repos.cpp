@@ -17,12 +17,19 @@
 
 #include <boost/algorithm/string.hpp>
 
-constexpr std::string_view CLOYSTER_REPO_EL8 {
+// BUG: This is not the way to do this.
+constexpr std::string_view CLOYSTER_REPO_EL8 = {
 #include "cloysterhpc/repos/el8/cloyster.repo"
+
 };
 
 constexpr std::string_view CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
+
+};
+
+constexpr std::string_view CLOYSTER_REPO_EL10 = {
+#include "cloysterhpc/repos/el10/cloyster.repo"
 
 };
 
@@ -151,13 +158,23 @@ static std::string buildPackageName(std::string stem)
 }
 
 static std::vector<std::string> getDependenciesEL(
-    const OS& os, OS::Platform version)
+    const OS& os, OS::Platform platform)
 {
     std::vector<std::string> dependencies;
 
-    const char* powertools
-        = version == OS::Platform::el8 ? "powertools" : "crb";
-    int numversion = version == OS::Platform::el8 ? 8 : 9;
+    // BUG: Bad code. We should use the OS::getVersion() method.
+    std::size_t version;
+    std::string powertools = "powertools";
+    if (platform == OS::Platform::el8) {
+        powertools = "crb";
+        version = 8;
+    }
+    if (platform == OS::Platform::el9) {
+        version = 9;
+    }
+    if (platform == OS::Platform::el10) {
+        version = 10;
+    }
 
     switch (os.getDistro()) {
         case OS::Distro::AlmaLinux:
@@ -166,17 +183,18 @@ static std::vector<std::string> getDependenciesEL(
             break;
         case OS::Distro::RHEL:
             dependencies = { fmt::format(
-                "codeready-builder-for-rhel-{}-x86_64-rpms", numversion) };
+                "codeready-builder-for-rhel-{}-x86_64-rpms", version) };
             break;
         case OS::Distro::OL:
             dependencies = { buildPackageName("-OL-BaseOS"),
-                fmt::format("ol{}_codeready_builder", numversion) };
+                fmt::format("ol{}_codeready_builder", version) };
             break;
         case OS::Distro::Rocky:
             dependencies = { buildPackageName("-Rocky-BaseOS"), powertools };
             break;
         default:
-            throw std::runtime_error("Unsupported platform");
+            throw std::runtime_error(fmt::format("Unsupported distribution: {}",
+                magic_enum::enum_name(os.getDistro())));
     }
 
     return dependencies;
@@ -184,15 +202,7 @@ static std::vector<std::string> getDependenciesEL(
 
 void RepoManager::configureEL()
 {
-    std::vector<std::string> deps;
-    switch (m_os.getPlatform()) {
-        case OS::Platform::el8:
-        case OS::Platform::el9:
-            deps = getDependenciesEL(m_os, m_os.getPlatform());
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform");
-    }
+    std::vector<std::string> deps = getDependenciesEL(m_os, m_os.getPlatform());
 
     std::for_each(
         deps.begin(), deps.end(), [this](const auto& id) { this->enable(id); });
@@ -234,6 +244,7 @@ void RepoManager::commitStatus()
     }
 }
 
+// BUG: No...
 #define FORMAT_TEMPLATE(src) fmt::format(src, cloyster::productName)
 
 const std::vector<repository> RepoManager::buildCloysterTree(
@@ -243,6 +254,7 @@ const std::vector<repository> RepoManager::buildCloysterTree(
     std::vector<repository> cloyster_repos;
     inifile file;
 
+    // BUG: Implement a better way to handle this.
     if (cloyster::customRepofilePath.empty()) {
         switch (m_os.getPlatform()) {
             case OS::Platform::el8:
@@ -251,8 +263,12 @@ const std::vector<repository> RepoManager::buildCloysterTree(
             case OS::Platform::el9:
                 file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL9));
                 break;
+            case OS::Platform::el10:
+                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL10));
+                break;
             default:
-                throw std::runtime_error("Unsupported platform");
+                throw std::runtime_error(fmt::format("Unsupported platform {}",
+                    magic_enum::enum_name(m_os.getPlatform())));
         }
 
     } else {
@@ -332,6 +348,10 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
                 repofile_dest.string());
             break;
         case OS::Platform::el9:
+#ifndef NDEBUG
+        // Hack to test EL10 only in debug mode
+        case OS::Platform::el10:
+#endif
             m_runner.downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh9/x86_64/xcat-dep.repo",

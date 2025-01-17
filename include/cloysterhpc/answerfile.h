@@ -6,8 +6,8 @@
 #ifndef CLOYSTERHPC_ANSWERFILE_H_
 #define CLOYSTERHPC_ANSWERFILE_H_
 
-#include "cloysterhpc/tools/ITool.h"
-#include "os.h"
+#include <cloysterhpc/tools/ITool.h>
+#include <cloysterhpc/os.h>
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>

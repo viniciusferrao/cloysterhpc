@@ -41,7 +41,7 @@ public:
      * @enum Platform
      * @brief Enumeration representing different platforms of the OS.
      */
-    enum class Platform { el8, el9 };
+    enum class Platform { el8, el9, el10 };
 
     /**
      * @enum Distro
