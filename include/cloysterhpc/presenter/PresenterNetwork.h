@@ -42,6 +42,8 @@ public:
     bool checkIfInterfaceRegistered(std::string_view interface);
 
     void saveNetworksToModel(Cluster& model);
+
+    size_t getSelectedInterfaces();
 };
 
 class PresenterNetwork : public Presenter {
