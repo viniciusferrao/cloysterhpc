@@ -154,20 +154,25 @@ int main(int argc, const char** argv)
             cloyster::enableTUI = true;
         }
 
+#ifndef NDEBUG
+        // model->fillTestData();
+        model->printData();
+#endif
+
         if (cloyster::enableTUI) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
             auto presenter = std::make_unique<PresenterInstall>(model, view);
         }
 
-#ifndef NDEBUG
-        // model->fillTestData();
-        model->printData();
-#endif
+        LOG_TRACE("Starting execution engine");
+        model->dumpData("answerfile.result.ini");
 
-        LOG_TRACE("Starting execution engine")
+        return EXIT_SUCCESS;
+
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<Shell>(model);
+
         executionEngine->install();
 
     } catch (const std::exception& e) {
