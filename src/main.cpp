@@ -168,8 +168,6 @@ int main(int argc, const char** argv)
         LOG_TRACE("Starting execution engine");
         model->dumpData("answerfile.result.ini");
 
-        return EXIT_SUCCESS;
-
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<Shell>(model);
 

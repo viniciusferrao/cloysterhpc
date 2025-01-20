@@ -445,6 +445,8 @@ auto& getNetworkField(AnswerFile& answerfile, Network::Profile profile)
             return answerfile.external;
         case Network::Profile::Application:
             return answerfile.application;
+        default:
+            std::unreachable();
     }
 }
 
