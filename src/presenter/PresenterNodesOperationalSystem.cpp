@@ -40,7 +40,7 @@ std::string PresenterNodesOperationalSystem::getDownloadURL(
                 store);
         case OS::Distro::Rocky:
             return fmt::vformat(
-                "https://dl.rockylinux.org/vault/rocky/{major}.{minor}/"
+                "https://download.rockylinux.org/pub/rocky/{major}/"
                 "isos/{arch}/Rocky-{major}.{minor}-{arch}-dvd.iso",
                 store);
         case OS::Distro::AlmaLinux:

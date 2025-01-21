@@ -43,7 +43,7 @@ public:
 
     void saveNetworksToModel(Cluster& model);
 
-    size_t getSelectedInterfaces();
+    std::size_t getSelectedInterfaces();
 };
 
 class PresenterNetwork : public Presenter {
