@@ -47,7 +47,10 @@ bool NetworkCreator::checkIfInterfaceRegistered(std::string_view interface)
     return false;
 }
 
-std::size_t NetworkCreator::getSelectedInterfaces() { return m_networks.size(); }
+std::size_t NetworkCreator::getSelectedInterfaces()
+{
+    return m_networks.size();
+}
 
 void NetworkCreator::saveNetworksToModel(Cluster& model)
 {
