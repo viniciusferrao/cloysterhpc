@@ -75,6 +75,11 @@ int main(int argc, const char** argv)
     app.add_option(
         "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
+    std::string dumped_answerfile;
+    app.add_option("--dump-answerfile", dumped_answerfile,
+        "If you pass this parameter, the software will create an answefile "
+        "based on your input, and save it in the specified path");
+
     bool showHardwareInfo = false;
     app.add_flag("-i, --hardwareinfo", showHardwareInfo,
         "Show a detailed hardware and system overview");
@@ -166,7 +171,10 @@ int main(int argc, const char** argv)
         }
 
         LOG_TRACE("Starting execution engine");
-        model->dumpData("answerfile.result.ini");
+
+        if (!dumped_answerfile.empty()) {
+            model->dumpData(dumped_answerfile);
+        }
 
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<Shell>(model);
