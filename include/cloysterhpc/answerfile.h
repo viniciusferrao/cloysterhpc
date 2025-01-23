@@ -17,6 +17,29 @@
 using boost::asio::ip::address;
 
 /**
+ * @struct AFNode
+ * @brief Holds individual node settings.
+ *
+ * This structure contains optional settings for individual nodes.
+ */
+struct AFNode {
+    std::optional<std::string> prefix;
+    std::optional<std::string> padding;
+    std::optional<address> start_ip = address();
+    std::optional<std::string> hostname;
+    std::optional<std::string> root_password;
+    std::optional<std::string> mac_address;
+    std::optional<std::string> sockets;
+    std::optional<std::string> cores_per_socket;
+    std::optional<std::string> threads_per_core;
+    std::optional<std::string> bmc_address;
+    std::optional<std::string> bmc_username;
+    std::optional<std::string> bmc_password;
+    std::optional<std::string> bmc_serialport;
+    std::optional<std::string> bmc_serialspeed;
+};
+
+/**
  * @class AnswerFile
  * @brief Manages configuration settings for a cluster environment.
  *
@@ -97,29 +120,6 @@ private:
     };
 
     /**
-     * @struct AFNode
-     * @brief Holds individual node settings.
-     *
-     * This structure contains optional settings for individual nodes.
-     */
-    struct AFNode {
-        std::optional<std::string> prefix;
-        std::optional<std::string> padding;
-        std::optional<address> start_ip = address();
-        std::optional<std::string> hostname;
-        std::optional<std::string> root_password;
-        std::optional<std::string> mac_address;
-        std::optional<std::string> sockets;
-        std::optional<std::string> cores_per_socket;
-        std::optional<std::string> threads_per_core;
-        std::optional<std::string> bmc_address;
-        std::optional<std::string> bmc_username;
-        std::optional<std::string> bmc_password;
-        std::optional<std::string> bmc_serialport;
-        std::optional<std::string> bmc_serialspeed;
-    };
-
-    /**
      * @struct AFNodes
      * @brief Holds settings for multiple nodes.
      *
@@ -157,6 +157,12 @@ private:
     inifile m_ini;
 
     /**
+     * Do the inverse of `loadOptions`, i.e, move the stored settings
+     * into the answerfile.
+     */
+    void dumpOptions();
+
+    /**
      * @brief Loads the configuration options from the answer file.
      *
      * This function call methods to parse the answerfile and loads the
@@ -188,12 +194,16 @@ private:
      */
     void loadExternalNetwork();
 
+    void dumpExternalNetwork();
+
     /**
      * @brief Loads the management network configuration.
      *
      * This function parses and loads the settings for the management network.
      */
     void loadManagementNetwork();
+
+    void dumpManagementNetwork();
 
     /**
      * @brief Loads the service network configuration.
@@ -209,12 +219,16 @@ private:
      */
     void loadApplicationNetwork();
 
+    void dumpApplicationNetwork();
+
     /**
      * @brief Loads the general information settings.
      *
      * This function parses and loads the cluster information settings.
      */
     void loadInformation();
+
+    void dumpInformation();
 
     /**
      * @brief Loads the time-related settings.
@@ -223,6 +237,8 @@ private:
      */
     void loadTimeSettings();
 
+    void dumpTimeSettings();
+
     /**
      * @brief Loads the hostname settings.
      *
@@ -230,12 +246,16 @@ private:
      */
     void loadHostnameSettings();
 
+    void dumpHostnameSettings();
+
     /**
      * @brief Loads the system settings.
      *
      * This function parses and loads the system configuration settings.
      */
     void loadSystemSettings();
+
+    void dumpSystemSettings();
 
     /**
      * @brief Loads the node settings.
@@ -246,7 +266,10 @@ private:
     void loadTools();
     void loadNVHPC();
 
+    void dumpNodes();
+
     void loadPostfix();
+    void dumpPostfix();
 
     bool checkEnabled(const std::string& section);
     /**
@@ -300,9 +323,11 @@ private:
      * @param network The network configuration to load.
      * @param optionalNameservers Indicates if the nameservers are optional.
      */
-    template <typename NetworkType>
-    void loadNetwork(const std::string& networkSection, NetworkType& network,
+    void loadNetwork(const std::string& networkSection, AFNetwork& network,
         bool optionalNameservers = true);
+
+    void dumpNetwork(
+        const AFNetwork& network, const std::string& networkSection);
 
 public:
     AFNetwork external;
@@ -322,6 +347,7 @@ public:
      * @param path The path to the answer file.
      */
     void loadFile(const std::filesystem::path& path);
+    void dumpFile(const std::filesystem::path& path);
     std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();

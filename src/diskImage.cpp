@@ -5,6 +5,7 @@
  */
 
 #include <cloysterhpc/diskImage.h>
+#include <cloysterhpc/os.h>
 #include <cloysterhpc/services/log.h>
 #include <cstddef>
 #include <fstream>

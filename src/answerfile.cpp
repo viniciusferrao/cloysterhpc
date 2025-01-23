@@ -4,11 +4,14 @@
  */
 
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cloysterhpc/answerfile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/tools/nvhpc.h>
+#include <cstddef>
+#include <fmt/core.h>
 #include <iterator>
 #include <magic_enum/magic_enum.hpp>
 #include <ranges>
@@ -45,6 +48,186 @@ void AnswerFile::loadOptions()
     loadTools();
     loadPostfix();
 }
+
+void AnswerFile::dumpNetwork(
+    const AFNetwork& network, const std::string& networkSection)
+{
+    if (network.con_interface) {
+        m_ini.setValue(networkSection, "interface", *network.con_interface);
+    }
+
+    if (network.con_ip_addr) {
+        m_ini.setValue(
+            networkSection, "ip_address", network.con_ip_addr->to_string());
+    }
+
+    if (network.con_mac_addr) {
+        m_ini.setValue(networkSection, "mac_address", *network.con_mac_addr);
+    }
+
+    if (network.subnet_mask) {
+        m_ini.setValue(
+            networkSection, "subnet_mask", network.subnet_mask->to_string());
+    }
+
+    if (network.domain_name) {
+        m_ini.setValue(networkSection, "domain_name", *network.domain_name);
+    }
+
+    if (network.gateway) {
+        m_ini.setValue(networkSection, "gateway", network.gateway->to_string());
+    }
+
+    if (network.nameservers && !network.nameservers->empty()) {
+        auto nameval = boost::algorithm::join(*network.nameservers, ", ");
+        m_ini.setValue(networkSection, "nameservers", nameval);
+    }
+}
+
+void AnswerFile::dumpExternalNetwork()
+{
+    dumpNetwork(external, "network_external");
+}
+
+void AnswerFile::dumpManagementNetwork()
+{
+    dumpNetwork(management, "network_management");
+}
+
+void AnswerFile::dumpApplicationNetwork()
+{
+    dumpNetwork(application, "network_application");
+}
+
+void AnswerFile::dumpInformation()
+{
+    m_ini.setValue("information", "cluster_name", information.cluster_name);
+    m_ini.setValue("information", "company_name", information.company_name);
+    m_ini.setValue("information", "admm_inistrator_email",
+        information.administrator_email);
+}
+
+void AnswerFile::dumpTimeSettings()
+{
+    m_ini.setValue("time", "timezone", time.timezone);
+    m_ini.setValue("time", "timeserver", time.timeserver);
+    m_ini.setValue("time", "locale", time.locale);
+}
+
+void AnswerFile::dumpHostnameSettings()
+{
+    m_ini.setValue("hostname", "hostname", hostname.hostname);
+    m_ini.setValue("hostname", "domain_name", hostname.domain_name);
+}
+
+void AnswerFile::dumpSystemSettings()
+{
+    auto distroName = magic_enum::enum_name(system.distro);
+
+    m_ini.setValue("system", "disk_image", system.disk_image);
+    m_ini.setValue("system", "distro", std::string { distroName });
+    m_ini.setValue("system", "version", system.version);
+    m_ini.setValue("system", "kernel", system.kernel);
+}
+
+void AnswerFile::dumpNodes()
+{
+    size_t counter = 1;
+    for (const auto& node : nodes.nodes) {
+        std::string sectionName = fmt::format("node.{}", counter);
+
+        if (node.hostname)
+            m_ini.setValue(sectionName, "hostname", *node.hostname);
+
+        if (node.root_password)
+            m_ini.setValue(
+                sectionName, "node_root_password", *node.root_password);
+
+        if (node.sockets)
+            m_ini.setValue(sectionName, "sockets", *node.sockets);
+
+        if (node.cores_per_socket)
+            m_ini.setValue(
+                sectionName, "cores_per_socket", *node.cores_per_socket);
+
+        if (node.threads_per_core)
+            m_ini.setValue(
+                sectionName, "threads_per_core", *node.threads_per_core);
+
+        if (node.bmc_address)
+            m_ini.setValue(sectionName, "bmc_address", *node.bmc_address);
+
+        if (node.bmc_username)
+            m_ini.setValue(sectionName, "bmc_username", *node.bmc_username);
+
+        if (node.bmc_password)
+            m_ini.setValue(sectionName, "bmc_password", *node.bmc_password);
+
+        if (node.bmc_serialport)
+            m_ini.setValue(sectionName, "bmc_serialport", *node.bmc_serialport);
+
+        if (node.bmc_serialspeed)
+            m_ini.setValue(
+                sectionName, "bmc_serialspeed", *node.bmc_serialspeed);
+
+        counter++;
+    }
+}
+
+void AnswerFile::dumpPostfix()
+{
+    if (!postfix.enabled) {
+        return;
+    }
+
+    auto profileName = magic_enum::enum_name(postfix.profile);
+    m_ini.setValue("postfix", "profile", std::string { profileName });
+    m_ini.setValue(
+        "postfix", "smtpd_tls_cert_file", postfix.cert_file.string());
+    m_ini.setValue("postfix", "smtpd_tls_key_file", postfix.key_file.string());
+
+    switch (postfix.profile) {
+        case Postfix::Profile::Local:
+            break;
+        case Postfix::Profile::Relay:
+            m_ini.setValue("postfix.relay", "server", postfix.smtp->server);
+            m_ini.setValue(
+                "postfix.relay", "port", std::to_string(postfix.smtp->port));
+            break;
+        case Postfix::Profile::SASL:
+            m_ini.setValue("postfix.sasl", "server", postfix.smtp->server);
+            m_ini.setValue(
+                "postfix.sasl", "port", std::to_string(postfix.smtp->port));
+            m_ini.setValue(
+                "postfix.sasl", "username", postfix.smtp->sasl->username);
+            m_ini.setValue(
+                "postfix.sasl", "password", postfix.smtp->sasl->password);
+            break;
+    }
+}
+
+void AnswerFile::dumpOptions()
+{
+    LOG_TRACE("Dump answerfile variables")
+
+    dumpExternalNetwork();
+    dumpManagementNetwork();
+    dumpApplicationNetwork();
+    dumpInformation();
+    dumpTimeSettings();
+    dumpHostnameSettings();
+    dumpSystemSettings();
+
+    dumpNodes();
+    // dumpTools();
+    dumpPostfix();
+}
+
+void AnswerFile::dumpFile(const std::filesystem::path& path)
+{
+    dumpOptions();
+    m_ini.saveFile(path);
+};
 
 address AnswerFile::convertStringToAddress(const std::string& addr)
 {
@@ -127,9 +310,8 @@ void AnswerFile::convertNetworkAddressAndValidate(
     }
 }
 
-template <typename NetworkType>
 void AnswerFile::loadNetwork(const std::string& networkSection,
-    NetworkType& network, bool optionalNameservers)
+    AFNetwork& network, bool optionalNameservers)
 {
     LOG_TRACE("Loading network section {}", networkSection);
 
@@ -221,7 +403,7 @@ void AnswerFile::loadSystemSettings()
     system.kernel = m_ini.getValue("system", "kernel", false, false);
 }
 
-AnswerFile::AFNode AnswerFile::loadNode(const std::string& section)
+AFNode AnswerFile::loadNode(const std::string& section)
 {
     AFNode node;
 
@@ -329,7 +511,7 @@ void AnswerFile::loadNodes()
     }
 }
 
-AnswerFile::AFNode AnswerFile::validateNode(AnswerFile::AFNode node)
+AFNode AnswerFile::validateNode(AFNode node)
 {
     validateAttribute(
         "node", "node_ip", node.start_ip, nodes.generic->start_ip);

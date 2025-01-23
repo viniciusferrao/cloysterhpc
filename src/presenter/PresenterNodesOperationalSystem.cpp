@@ -162,12 +162,19 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             Messages::OperationalSystemDownloadIso::Progress::download,
             selectedDistro->first, distroDownloadURL);
         m_view->progressMenu(Messages::title, desc.c_str(), std::move(command),
-            [](cloyster::CommandProxy& cmd) -> std::optional<double> {
+            [&](cloyster::CommandProxy& cmd) -> std::optional<double> {
                 auto out = cmd.getline();
                 if (!out) {
                     return std::nullopt;
                 }
                 std::string line = *out;
+
+                // If we have a line like ERROR 404: Not Found
+                // this means, obviously, that we did not found the URL.
+                if (line.contains("ERROR 404: Not Found")) {
+                    LOG_ERROR("URL {} not found", distroDownloadURL);
+                    return std::nullopt;
+                }
 
                 // Line example
                 //  <<<338950K .......... .......... .......... ..........
@@ -231,14 +238,12 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
 
         // Operational system iso selection
 
-        std::list<std::string> isos;
+        auto isoRoot = isoDirectoryPath.data()->second;
+        std::vector<std::string> isos;
 
-        for (const auto& entry :
-            fs::directory_iterator(isoDirectoryPath.data()->second)) {
+        for (const auto& entry : fs::directory_iterator(isoRoot)) {
             if (entry.path().string().ends_with("iso")) {
-                auto formattedIsoName = entry.path().string().erase(
-                    entry.path().string().find(isoDirectoryPath.data()->second),
-                    isoDirectoryPath.data()->second.length() + 1);
+                auto formattedIsoName = entry.path().filename().string();
 
                 isos.emplace_back(formattedIsoName);
 
@@ -259,22 +264,24 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
                  **/
                 switch (selectedDistro->second) {
                     case OS::Distro::RHEL:
-                        if (formattedIsoName.find("rhel") != std::string::npos)
+                        if (formattedIsoName.contains("rhel")) {
                             isos.emplace_back(formattedIsoName);
+                        }
                         break;
                     case OS::Distro::OL:
-                        if (formattedIsoName.find("OracleLinux")
-                            != std::string::npos)
+                        if (formattedIsoName.contains("OracleLinux")) {
                             isos.emplace_back(formattedIsoName);
+                        }
                         break;
                     case OS::Distro::Rocky:
-                        if (formattedIsoName.find("Rocky") != std::string::npos)
+                        if (formattedIsoName.contains("Rocky")) {
                             isos.emplace_back(formattedIsoName);
+                        }
                         break;
                     case OS::Distro::AlmaLinux:
-                        if (formattedIsoName.find("AlmaLinux")
-                            != std::string::npos)
+                        if (formattedIsoName.contains("AlmaLinux")) {
                             isos.emplace_back(formattedIsoName);
+                        }
                         break;
                 }
             }

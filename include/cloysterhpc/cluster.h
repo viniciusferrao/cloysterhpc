@@ -236,7 +236,9 @@ public:
      *
      * @param answerfilePath Path to the answer file.
      */
-    void fillData(const std::string& answerfilePath);
+    void fillData(const std::filesystem::path& answerfilePath);
+
+    void dumpData(const std::filesystem::path& answerfilePath);
 
 #ifndef NDEBUG
     void printNetworks(

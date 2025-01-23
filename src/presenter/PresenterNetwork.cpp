@@ -47,6 +47,11 @@ bool NetworkCreator::checkIfInterfaceRegistered(std::string_view interface)
     return false;
 }
 
+std::size_t NetworkCreator::getSelectedInterfaces()
+{
+    return m_networks.size();
+}
+
 void NetworkCreator::saveNetworksToModel(Cluster& model)
 {
     for (const auto& net : m_networks) {
@@ -119,6 +124,12 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster>& model,
             .c_str());
 
     auto interfaces = retrievePossibleInterfaces(nc);
+
+    auto available = interfaces.size() + nc.getSelectedInterfaces();
+    if (available < 2) {
+        m_view->fatalMessage(Messages::title, Messages::errorInsufficient);
+    }
+
     NetworkCreatorData ncd;
     ncd.type = type;
     ncd.profile = profile;
@@ -143,9 +154,6 @@ std::vector<std::string> PresenterNetwork::retrievePossibleInterfaces(
 void PresenterNetwork::createNetwork(
     const std::vector<std::string>& interfaceList, NetworkCreatorData& ncd)
 {
-    if (interfaceList.size() <= 1) {
-        m_view->fatalMessage(Messages::title, Messages::errorInsufficient);
-    }
 
     std::string interface = networkInterfaceSelection(interfaceList);
 

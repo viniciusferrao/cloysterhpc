@@ -75,6 +75,11 @@ int main(int argc, const char** argv)
     app.add_option(
         "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
 
+    std::string dumped_answerfile;
+    app.add_option("--dump-answerfile", dumped_answerfile,
+        "If you pass this parameter, the software will create an answefile "
+        "based on your input, and save it in the specified path");
+
     bool showHardwareInfo = false;
     app.add_flag("-i, --hardwareinfo", showHardwareInfo,
         "Show a detailed hardware and system overview");
@@ -154,20 +159,26 @@ int main(int argc, const char** argv)
             cloyster::enableTUI = true;
         }
 
+#ifndef NDEBUG
+        // model->fillTestData();
+        model->printData();
+#endif
+
         if (cloyster::enableTUI) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
             auto presenter = std::make_unique<PresenterInstall>(model, view);
         }
 
-#ifndef NDEBUG
-        // model->fillTestData();
-        model->printData();
-#endif
+        LOG_TRACE("Starting execution engine");
 
-        LOG_TRACE("Starting execution engine")
+        if (!dumped_answerfile.empty()) {
+            model->dumpData(dumped_answerfile);
+        }
+
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<Shell>(model);
+
         executionEngine->install();
 
     } catch (const std::exception& e) {
