@@ -12,6 +12,9 @@
 #include <string_view>
 #include <vector>
 
+#include <glibmm/fileutils.h>
+#include <glibmm/keyfile.h>
+
 /**
  * @brief This class represents an EL .repo file as it's found in
  * /etc/yum.repos.d/
@@ -45,6 +48,62 @@ public:
     void name(std::string_view name);
 
     static void load_repository(std::filesystem::path path);
+};
+
+class repository_exception : public std::runtime_error {
+public:
+    explicit repository_exception(const std::string& msg)
+        : std::runtime_error(msg)
+    {
+    }
+};
+
+/**
+ * Repository file class
+ */
+template <class Repo> class RepoFile {
+protected:
+    std::filesystem::path m_path;
+    std::vector<Repo> m_repositories;
+
+public:
+    RepoFile(const std::filesystem::path& path)
+        : m_path(path)
+    {
+    }
+
+    virtual void read() { }
+    virtual void write() { }
+};
+
+struct ELRepo {
+    std::string group;
+    std::string name;
+    std::optional<std::string> baseURL;
+    std::optional<std::string> metalink;
+    bool enabled;
+    bool gpgcheck;
+    std::string gpgkey;
+
+    // (P/ todos os repositórios)
+    // std::string release;
+};
+
+/**
+ * Repository file class
+ */
+class ELRepoFile : public RepoFile<ELRepo> {
+private:
+    Glib::RefPtr<Glib::KeyFile> loadFile();
+
+public:
+    ELRepoFile(const std::filesystem::path& path)
+        : RepoFile(path)
+    {
+    }
+
+    void read() override;
+    void write() override;
 };
 
 #endif // CLOYSTERHPC_REPO_H_
