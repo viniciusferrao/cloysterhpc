@@ -59,15 +59,16 @@ public:
 };
 
 /**
- * Repository file class
+ * Generic file class
+ *
+ * This class should only read and write,
  */
-template <class Repo> class RepoFile {
+class GenericFile {
 protected:
     std::filesystem::path m_path;
-    std::vector<Repo> m_repositories;
 
 public:
-    RepoFile(const std::filesystem::path& path)
+    GenericFile(const std::filesystem::path& path)
         : m_path(path)
     {
     }
@@ -91,19 +92,24 @@ struct ELRepo {
 
 /**
  * Repository file class
+ *
+ * This class should parse the repository data
  */
-class ELRepoFile : public RepoFile<ELRepo> {
+class ELRepoFile : GenericFile {
 private:
-    Glib::RefPtr<Glib::KeyFile> loadFile();
+    Glib::RefPtr<Glib::KeyFile> m_file;
 
 public:
     ELRepoFile(const std::filesystem::path& path)
-        : RepoFile(path)
+        : GenericFile(path)
     {
     }
 
-    void read() override;
-    void write() override;
+    virtual void read() override;
+    virtual void write() override;
+
+    std::vector<ELRepo> parse();
+    void unparse(const std::vector<ELRepo>& repositories);
 };
 
 #endif // CLOYSTERHPC_REPO_H_

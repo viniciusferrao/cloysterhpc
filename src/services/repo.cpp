@@ -57,12 +57,11 @@ void repo::load_repository(std::filesystem::path path)
     }
 }
 
-Glib::RefPtr<Glib::KeyFile> ELRepoFile::loadFile()
+void ELRepoFile::read()
 {
     try {
-        auto file = Glib::KeyFile::create();
-        file->load_from_file(m_path.string());
-        return file;
+        m_file = Glib::KeyFile::create();
+        m_file->load_from_file(m_path.string());
     } catch (Glib::FileError& e) {
         throw repository_exception(
             std::format("Could not load repository file {} ({})",
@@ -70,33 +69,38 @@ Glib::RefPtr<Glib::KeyFile> ELRepoFile::loadFile()
     }
 }
 
-void ELRepoFile::read()
+void ELRepoFile::write() { m_file->save_to_file(m_path.string()); }
+
+std::vector<ELRepo> ELRepoFile::parse()
 {
-    printf("reading\n");
+    this->read();
 
-    auto file = loadFile();
+    auto reponames = m_file->get_groups();
 
-    auto reponames = file->get_groups();
+    std::vector<ELRepo> repositories;
+
+    auto get_optional_string
+        = [this](auto group, auto key) -> std::optional<Glib::ustring> {
+        return m_file->has_key(group, key)
+            ? std::make_optional(m_file->get_string(group, key))
+            : std::nullopt;
+    };
 
     for (const auto& repogroup : reponames) {
-        auto name = file->get_string(repogroup, "name");
+        auto name = m_file->get_string(repogroup, "name");
 
         if (name.empty()) {
             throw repository_exception(std::format(
-                "Could not load repo name from repo '{}' at file {}",
+                "Could not load repo name from repo '{}' at m_file {}",
                 repogroup.raw(), m_path.string()));
         }
 
-        auto metalink = (file->has_key(repogroup, "metalink"))
-            ? std::make_optional(file->get_string(repogroup, "metalink"))
-            : std::nullopt;
-        auto baseurl = (file->has_key(repogroup, "baseurl"))
-            ? std::make_optional(file->get_string(repogroup, "baseurl"))
-            : std::nullopt;
+        auto metalink = get_optional_string(repogroup, "metalink");
+        auto baseurl = get_optional_string(repogroup, "baseurl");
 
-        auto enabled = file->get_boolean(repogroup, "enabled");
-        auto gpgcheck = file->get_boolean(repogroup, "gpgcheck");
-        auto gpgkey = file->get_string(repogroup, "gpgkey");
+        auto enabled = m_file->get_boolean(repogroup, "enabled");
+        auto gpgcheck = m_file->get_boolean(repogroup, "gpgcheck");
+        auto gpgkey = m_file->get_string(repogroup, "gpgkey");
 
         ELRepo repo;
         repo.group = repogroup.raw();
@@ -107,29 +111,21 @@ void ELRepoFile::read()
         repo.enabled = enabled;
         repo.gpgcheck = gpgcheck;
         repo.gpgkey = gpgkey;
-        m_repositories.push_back(std::move(repo));
+        repositories.push_back(std::move(repo));
     }
 
-    for (const auto& r : m_repositories) {
-        std::print("repo found '{}'\n", r.group);
-        std::print("\tname: '{}'\n", r.name);
-        std::print("\tbaseurl: '{}'\n", r.baseURL.value_or("null"));
-        std::print("\tmetalink: '{}'\n", r.metalink.value_or("null"));
-        std::print("\tenabled: {}\n", r.enabled);
-        std::print("\tgpg: (check: {}, key: {})\n", r.gpgcheck, r.gpgkey);
-    }
+    return repositories;
 }
 
-void ELRepoFile::write()
+void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
 {
-    auto file = loadFile();
 
-    for (const auto& repo : m_repositories) {
-        file->set_string(repo.group, "name", repo.name);
-        file->set_boolean(repo.group, "enabled", repo.enabled);
-        file->set_boolean(repo.group, "gpgcheck", repo.gpgcheck);
-        file->set_string(repo.group, "gpgkey", repo.gpgkey);
+    for (const auto& repo : repositories) {
+        m_file->set_string(repo.group, "name", repo.name);
+        m_file->set_boolean(repo.group, "enabled", repo.enabled);
+        m_file->set_boolean(repo.group, "gpgcheck", repo.gpgcheck);
+        m_file->set_string(repo.group, "gpgkey", repo.gpgkey);
     }
 
-    file->save_to_file(m_path.string());
+    this->write();
 }
