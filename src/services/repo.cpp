@@ -75,6 +75,19 @@ std::vector<ELRepo> ELRepoFile::parse()
 {
     this->read();
 
+    return this->parseData();
+}
+
+std::vector<ELRepo> ELRepoFile::parse(const std::stringstream& ss)
+{
+    m_file = Glib::KeyFile::create();
+    m_file->load_from_data(ss.str().c_str());
+    return this->parseData();
+}
+
+
+std::vector<ELRepo>  ELRepoFile::parseData()
+{
     auto reponames = m_file->get_groups();
 
     std::vector<ELRepo> repositories;
@@ -117,15 +130,26 @@ std::vector<ELRepo> ELRepoFile::parse()
     return repositories;
 }
 
-void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
-{
-
+void ELRepoFile::unparseData(const std::vector<ELRepo>& repositories)
+{    
     for (const auto& repo : repositories) {
         m_file->set_string(repo.group, "name", repo.name);
         m_file->set_boolean(repo.group, "enabled", repo.enabled);
         m_file->set_boolean(repo.group, "gpgcheck", repo.gpgcheck);
         m_file->set_string(repo.group, "gpgkey", repo.gpgkey);
-    }
-
+    }    
+}
+    
+void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
+{
+    this->unparseData(repositories);
     this->write();
+}
+
+   
+void ELRepoFile::unparse(const std::vector<ELRepo>& repositories, std::stringstream& ss)
+{
+    this->unparseData(repositories);
+    ss.seekp(0);
+    ss << m_file->to_data();
 }
