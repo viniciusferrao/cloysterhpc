@@ -74,16 +74,16 @@ void ELRepoFile::write() { m_file->save_to_file(m_path.string()); }
 
 std::vector<ELRepo> ELRepoFile::parse()
 {
-    this->read();
+    read();
 
-    return this->parseData();
+    return parseData();
 }
 
 std::vector<ELRepo> ELRepoFile::parse(const std::stringstream& ss)
 {
     m_file = Glib::KeyFile::create();
     m_file->load_from_data(ss.str().c_str());
-    return this->parseData();
+    return parseData();
 }
 
 std::vector<ELRepo> ELRepoFile::parseData()
@@ -138,14 +138,14 @@ void ELRepoFile::unparseData(const std::vector<ELRepo>& repositories)
 
 void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
 {
-    this->unparseData(repositories);
-    this->write();
+    unparseData(repositories);
+    write();
 }
 
 void ELRepoFile::unparse(
     const std::vector<ELRepo>& repositories, std::stringstream& ss)
 {
-    this->unparseData(repositories);
+    unparseData(repositories);
     ss.seekp(0);
     ss << m_file->to_data();
 }
