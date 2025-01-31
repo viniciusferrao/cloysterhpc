@@ -351,4 +351,12 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
+std::optional<Glib::ustring> readKeyfileString(Glib::RefPtr<Glib::KeyFile> file,
+    const std::string_view& group, const std::string_view& key)
+{
+    return file->has_key(group.data(), key.data())
+        ? std::make_optional(file->get_string(group.data(), key.data()))
+        : std::nullopt;
+}
+
 } // namespace cloyster

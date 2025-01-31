@@ -58,31 +58,29 @@ public:
     }
 };
 
-
-
 /**
  * Generic file class
  *
- * This class should only read and write, 
+ * This class should only read and write,
  */
 class GenericFile {
 protected:
     std::filesystem::path m_path;
+
 public:
     GenericFile(const std::filesystem::path& path)
         : m_path(path)
-    {}
+    {
+    }
 
-    virtual void read() {}
-    virtual void write() {}
+    virtual void read() { }
+    virtual void write() { }
 };
-
-
 
 struct ELRepo {
     std::string group;
     std::string name;
-    std::optional<std::string> baseURL;
+    std::optional<std::string> base_url;
     std::optional<std::string> metalink;
     bool enabled;
     bool gpgcheck;
@@ -90,9 +88,7 @@ struct ELRepo {
 
     // (P/ todos os repositórios)
     // std::string release;
-    
 };
-
 
 /**
  * Repository file class
@@ -100,23 +96,26 @@ struct ELRepo {
  * This class should parse the repository data
  */
 class ELRepoFile : GenericFile {
-private:    
+private:
     Glib::RefPtr<Glib::KeyFile> m_file;
 
     std::vector<ELRepo> parseData();
     void unparseData(const std::vector<ELRepo>&);
+
 public:
     ELRepoFile(const std::filesystem::path& path)
         : GenericFile(path)
-    {}
+    {
+    }
 
     virtual void read() override;
     virtual void write() override;
 
     std::vector<ELRepo> parse();
     std::vector<ELRepo> parse(const std::stringstream& ss);
-    void unparse( const std::vector<ELRepo>& repositories );
-    void unparse( const std::vector<ELRepo>& repositories, std::stringstream& ss );
+    void unparse(const std::vector<ELRepo>& repositories);
+    void unparse(
+        const std::vector<ELRepo>& repositories, std::stringstream& ss);
 };
 
 #endif // CLOYSTERHPC_REPO_H_

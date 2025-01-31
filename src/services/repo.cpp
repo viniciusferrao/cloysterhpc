@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/repo.h>
 #include <fmt/printf.h>
 #include <glibmm/fileutils.h>
@@ -85,19 +86,11 @@ std::vector<ELRepo> ELRepoFile::parse(const std::stringstream& ss)
     return this->parseData();
 }
 
-
-std::vector<ELRepo>  ELRepoFile::parseData()
+std::vector<ELRepo> ELRepoFile::parseData()
 {
     auto reponames = m_file->get_groups();
 
     std::vector<ELRepo> repositories;
-
-    auto get_optional_string
-        = [this](auto group, auto key) -> std::optional<Glib::ustring> {
-        return m_file->has_key(group, key)
-            ? std::make_optional(m_file->get_string(group, key))
-            : std::nullopt;
-    };
 
     for (const auto& repogroup : reponames) {
         auto name = m_file->get_string(repogroup, "name");
@@ -108,8 +101,10 @@ std::vector<ELRepo>  ELRepoFile::parseData()
                 repogroup.raw(), m_path.string()));
         }
 
-        auto metalink = get_optional_string(repogroup, "metalink");
-        auto baseurl = get_optional_string(repogroup, "baseurl");
+        auto metalink = cloyster::readKeyfileString(
+            m_file, std::string_view { repogroup.c_str() }, "metalink");
+        auto baseurl = cloyster::readKeyfileString(
+            m_file, std::string_view { repogroup.c_str() }, "baseurl");
 
         auto enabled = m_file->get_boolean(repogroup, "enabled");
         auto gpgcheck = m_file->get_boolean(repogroup, "gpgcheck");
@@ -120,7 +115,8 @@ std::vector<ELRepo>  ELRepoFile::parseData()
         repo.name = name.raw();
         repo.metalink
             = metalink.transform([](const auto& v) { return v.raw(); });
-        repo.baseURL = baseurl.transform([](const auto& v) { return v.raw(); });
+        repo.base_url
+            = baseurl.transform([](const auto& v) { return v.raw(); });
         repo.enabled = enabled;
         repo.gpgcheck = gpgcheck;
         repo.gpgkey = gpgkey;
@@ -131,23 +127,23 @@ std::vector<ELRepo>  ELRepoFile::parseData()
 }
 
 void ELRepoFile::unparseData(const std::vector<ELRepo>& repositories)
-{    
+{
     for (const auto& repo : repositories) {
         m_file->set_string(repo.group, "name", repo.name);
         m_file->set_boolean(repo.group, "enabled", repo.enabled);
         m_file->set_boolean(repo.group, "gpgcheck", repo.gpgcheck);
         m_file->set_string(repo.group, "gpgkey", repo.gpgkey);
-    }    
+    }
 }
-    
+
 void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
 {
     this->unparseData(repositories);
     this->write();
 }
 
-   
-void ELRepoFile::unparse(const std::vector<ELRepo>& repositories, std::stringstream& ss)
+void ELRepoFile::unparse(
+    const std::vector<ELRepo>& repositories, std::stringstream& ss)
 {
     this->unparseData(repositories);
     ss.seekp(0);

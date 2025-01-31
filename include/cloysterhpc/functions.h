@@ -4,12 +4,14 @@
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
 #include <filesystem>
+#include <glibmm/ustring.h>
 #include <list>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include <boost/asio.hpp>
+#include <glibmm/keyfile.h>
 
 namespace cloyster {
 // Globals
@@ -163,6 +165,9 @@ std::string findAndReplace(const std::string_view& source,
  * @param destination The path where the source file will be copied.
  */
 void copyFile(std::filesystem::path source, std::filesystem::path destination);
+
+std::optional<Glib::ustring> readKeyfileString(Glib::RefPtr<Glib::KeyFile> file,
+    const std::string_view& group, const std::string_view& key);
 
 } /* namespace cloyster */
 
