@@ -68,13 +68,15 @@ protected:
     std::filesystem::path m_path;
 
 public:
-    GenericFile(const std::filesystem::path& path)
+    explicit GenericFile(const std::filesystem::path& path)
         : m_path(path)
     {
     }
 
     virtual void read() { }
     virtual void write() { }
+
+    virtual ~GenericFile() = default;
 };
 
 struct ELRepo {
@@ -102,8 +104,10 @@ private:
     std::vector<ELRepo> parseData();
     void unparseData(const std::vector<ELRepo>&);
 
+    std::vector<ELRepo> m_repositories;
+
 public:
-    ELRepoFile(const std::filesystem::path& path)
+    explicit ELRepoFile(const std::filesystem::path& path)
         : GenericFile(path)
     {
     }
@@ -111,11 +115,15 @@ public:
     virtual void read() override;
     virtual void write() override;
 
-    std::vector<ELRepo> parse();
-    std::vector<ELRepo> parse(const std::stringstream& ss);
-    void unparse(const std::vector<ELRepo>& repositories);
-    void unparse(
-        const std::vector<ELRepo>& repositories, std::stringstream& ss);
+    void parse();
+    void parse(const std::stringstream& ss);
+    void unparse();
+    void unparse(std::stringstream& ss);
+
+    [[nodiscard]] std::vector<ELRepo>& getRepositories();
+    [[nodiscard]] const std::vector<ELRepo>& getRepositoriesConst() const;
+
+    ~ELRepoFile() override = default;
 };
 
 #endif // CLOYSTERHPC_REPO_H_

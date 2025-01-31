@@ -72,18 +72,18 @@ void ELRepoFile::read()
 
 void ELRepoFile::write() { m_file->save_to_file(m_path.string()); }
 
-std::vector<ELRepo> ELRepoFile::parse()
+void ELRepoFile::parse()
 {
     read();
 
-    return parseData();
+    m_repositories = parseData();
 }
 
-std::vector<ELRepo> ELRepoFile::parse(const std::stringstream& ss)
+void ELRepoFile::parse(const std::stringstream& ss)
 {
     m_file = Glib::KeyFile::create();
     m_file->load_from_data(ss.str().c_str());
-    return parseData();
+    m_repositories = parseData();
 }
 
 std::vector<ELRepo> ELRepoFile::parseData()
@@ -136,16 +136,26 @@ void ELRepoFile::unparseData(const std::vector<ELRepo>& repositories)
     }
 }
 
-void ELRepoFile::unparse(const std::vector<ELRepo>& repositories)
+void ELRepoFile::unparse()
 {
-    unparseData(repositories);
+    unparseData(m_repositories);
     write();
 }
 
-void ELRepoFile::unparse(
-    const std::vector<ELRepo>& repositories, std::stringstream& ss)
+void ELRepoFile::unparse(std::stringstream& ss)
 {
-    unparseData(repositories);
+    unparseData(m_repositories);
     ss.seekp(0);
     ss << m_file->to_data();
+}
+
+[[nodiscard]] std::vector<ELRepo>& ELRepoFile::getRepositories()
+{
+    return m_repositories;
+}
+
+[[nodiscard]] const std::vector<ELRepo>&
+ELRepoFile::getRepositoriesConst() const
+{
+    return m_repositories;
 }
