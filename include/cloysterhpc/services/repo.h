@@ -102,7 +102,7 @@ private:
     Glib::RefPtr<Glib::KeyFile> m_file;
 
     std::vector<ELRepo> parseData();
-    void unparseData(const std::vector<ELRepo>&);
+    void unparseData(const std::vector<ELRepo>& data);
 
     std::vector<ELRepo> m_repositories;
 

@@ -167,7 +167,7 @@ std::string findAndReplace(const std::string_view& source,
 void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
 std::optional<Glib::ustring> readKeyfileString(Glib::RefPtr<Glib::KeyFile> file,
-    const std::string_view& group, const std::string_view& key);
+    const std::string_view group, const std::string_view key);
 
 } /* namespace cloyster */
 
