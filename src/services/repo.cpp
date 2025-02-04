@@ -86,11 +86,11 @@ void ELRepoFile::parse(const std::stringstream& ss)
     m_repositories = parseData();
 }
 
-std::vector<ELRepo> ELRepoFile::parseData()
+std::vector<ELCloneRepo> ELRepoFile::parseData()
 {
     auto reponames = m_file->get_groups();
 
-    std::vector<ELRepo> repositories;
+    std::vector<ELCloneRepo> repositories;
 
     for (const auto& repogroup : reponames) {
         auto name = m_file->get_string(repogroup, "name");
@@ -110,7 +110,7 @@ std::vector<ELRepo> ELRepoFile::parseData()
         auto gpgcheck = m_file->get_boolean(repogroup, "gpgcheck");
         auto gpgkey = m_file->get_string(repogroup, "gpgkey");
 
-        ELRepo repo;
+        ELCloneRepo repo;
         repo.group = repogroup.raw();
         repo.name = name.raw();
         repo.metalink
@@ -126,7 +126,7 @@ std::vector<ELRepo> ELRepoFile::parseData()
     return repositories;
 }
 
-void ELRepoFile::unparseData(const std::vector<ELRepo>& repositories)
+void ELRepoFile::unparseData(const std::vector<ELCloneRepo>& repositories)
 {
     for (const auto& repo : repositories) {
         m_file->set_string(repo.group, "name", repo.name);
@@ -149,12 +149,12 @@ void ELRepoFile::unparse(std::stringstream& ss)
     ss << m_file->to_data();
 }
 
-[[nodiscard]] std::vector<ELRepo>& ELRepoFile::getRepositories()
+[[nodiscard]] std::vector<ELCloneRepo>& ELRepoFile::getRepositories()
 {
     return m_repositories;
 }
 
-[[nodiscard]] const std::vector<ELRepo>&
+[[nodiscard]] const std::vector<ELCloneRepo>&
 ELRepoFile::getRepositoriesConst() const
 {
     return m_repositories;

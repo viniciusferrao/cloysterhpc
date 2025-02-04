@@ -79,7 +79,7 @@ public:
     virtual ~GenericFile() = default;
 };
 
-struct ELRepo {
+struct ELCloneRepo {
     std::string group;
     std::string name;
     std::optional<std::string> base_url;
@@ -101,10 +101,10 @@ class ELRepoFile : GenericFile {
 private:
     Glib::RefPtr<Glib::KeyFile> m_file;
 
-    std::vector<ELRepo> parseData();
-    void unparseData(const std::vector<ELRepo>& data);
+    std::vector<ELCloneRepo> parseData();
+    void unparseData(const std::vector<ELCloneRepo>& data);
 
-    std::vector<ELRepo> m_repositories;
+    std::vector<ELCloneRepo> m_repositories;
 
 public:
     explicit ELRepoFile(const std::filesystem::path& path)
@@ -120,8 +120,8 @@ public:
     void unparse();
     void unparse(std::stringstream& ss);
 
-    [[nodiscard]] std::vector<ELRepo>& getRepositories();
-    [[nodiscard]] const std::vector<ELRepo>& getRepositoriesConst() const;
+    [[nodiscard]] std::vector<ELCloneRepo>& getRepositories();
+    [[nodiscard]] const std::vector<ELCloneRepo>& getRepositoriesConst() const;
 
     ~ELRepoFile() override = default;
 };
