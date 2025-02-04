@@ -1,5 +1,5 @@
-#include <cloysterhpc/services/repofile.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/repofile.h>
 
 void ELRepoFile::read()
 {
