@@ -6,27 +6,12 @@
 #ifndef CLOYSTERHPC_FILE_H_
 #define CLOYSTERHPC_FILE_H_
 
+#include <cstddef>
 #include <filesystem>
+#include <string>
 
-/**
- * Generic file class
- *
- * This class should only read and write,
- */
-class GenericFile {
-protected:
-    std::filesystem::path m_path;
+namespace cloysterhpc::file {
 
-public:
-    explicit GenericFile(const std::filesystem::path& path)
-        : m_path(path)
-    {
-    }
-
-    virtual void read() { }
-    virtual void write() { }
-
-    virtual ~GenericFile() = default;
-};
+}; // namespace cloysterhpc
 
 #endif

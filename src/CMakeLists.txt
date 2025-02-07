@@ -7,7 +7,8 @@ message(STATUS "Source files found are: ${SOURCE_FILES}")
 # Build a library and a ${cloysterhpc_BINARY_NAME} binary that links to the library
 add_library(cloysterhpc_object OBJECT ${SOURCE_FILES})
 add_library(cloysterhpc_static STATIC $<TARGET_OBJECTS:cloysterhpc_object>)
-add_executable(${cloysterhpc_BINARY_NAME} main.cpp)
+add_executable(${cloysterhpc_BINARY_NAME} main.cpp
+        ../include/cloysterhpc/models/elclonerepo.h)
 
 include(../cmake/CommonLibraries.cmake)
 
