@@ -23,7 +23,8 @@
 
 namespace cloyster {
 
-static std::tuple<bool, std::optional<std::string>> retrieveLine(
+namespace {
+std::tuple<bool, std::optional<std::string>> retrieveLine(
     boost::process::ipstream& pipe_stream,
     const std::function<std::string(boost::process::ipstream&)>& linecheck)
 {
@@ -33,6 +34,35 @@ static std::tuple<bool, std::optional<std::string>> retrieveLine(
 
     return make_tuple(pipe_stream.good(), std::nullopt);
 }
+
+std::shared_ptr<BaseRunner> makeRunner(const bool dryRun) {
+    if (dryRun) {
+        return std::make_shared<DryRunner>();
+    }
+
+    return std::make_shared<Runner>();
+}
+
+} // anonymous namespace
+
+std::shared_ptr<BaseRunner> getRunner() {
+    static std::optional<std::shared_ptr<BaseRunner>> runner = std::nullopt;
+    if (!runner) {
+        runner = makeRunner(cloyster::dryRun);
+    }
+
+    return runner.value();
+}
+
+std::shared_ptr<RepoManager<repository, BaseRunner>> getRepoManager(const OS& osinfo) {
+    static std::optional<std::shared_ptr<RepoManager<repository, BaseRunner>>> repoManager = std::nullopt;
+    if (!repoManager) {
+        repoManager = std::make_shared<RepoManager<repository, BaseRunner>>(*getRunner(), osinfo);
+    }
+
+    return repoManager.value();
+}
+
 
 std::optional<std::string> CommandProxy::getline()
 {

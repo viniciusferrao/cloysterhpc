@@ -12,10 +12,8 @@
 #include <cloysterhpc/functions.h>
 
 // Forward declaration of Cluster
-template <typename Runner>
 class Cluster;
 
-template <typename Runner>
 class QueueSystem {
 public:
     enum class Kind { None, SLURM, PBS };
@@ -25,7 +23,7 @@ private:
     std::string m_defaultQueue;
 
 protected:
-    const Cluster<Runner>& m_cluster;
+    const Cluster& m_cluster;
 
 public:
     void setKind(Kind kind);
@@ -34,7 +32,7 @@ public:
     void setDefaultQueue(std::string_view);
     std::string_view getDefaultQueue();
 
-    explicit QueueSystem(const Cluster<Runner>& cluster);
+    explicit QueueSystem(const Cluster& cluster);
     virtual ~QueueSystem() = default;
 };
 

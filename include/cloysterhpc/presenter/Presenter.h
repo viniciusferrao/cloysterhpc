@@ -20,7 +20,7 @@ protected:
     // ref&
     //  - https://youtu.be/xnqTKD8uD64?t=1145
     //  - http://tinyurl.com/gotw91
-    std::unique_ptr<Cluster<BaseRunner>>& m_model;
+    std::unique_ptr<Cluster>& m_model;
     std::unique_ptr<Newt>& m_view;
 
     struct Messages {
@@ -30,7 +30,7 @@ protected:
         };
     };
 
-    Presenter(std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view)
+    Presenter(std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
         : m_model(model)
         , m_view(view)
     {

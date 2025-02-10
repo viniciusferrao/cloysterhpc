@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster<BaseRunner>>& model,
+PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
     std::unique_ptr<Newt>& view, NetworkCreator& nc)
     : Presenter(model, view)
 {

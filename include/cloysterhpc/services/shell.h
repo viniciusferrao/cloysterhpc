@@ -20,7 +20,7 @@
  */
 class Shell : public Execution {
 private:
-    const std::unique_ptr<Cluster<BaseRunner>>& m_cluster;
+    const std::unique_ptr<Cluster>& m_cluster;
 
 private:
     /**
@@ -178,7 +178,7 @@ public:
      *
      * @param cluster A reference to a unique pointer managing a Cluster object.
      */
-    explicit Shell(const std::unique_ptr<Cluster<BaseRunner>>& cluster);
+    explicit Shell(const std::unique_ptr<Cluster>& cluster);
     /**
      * @brief Installs and configures the system.
      *

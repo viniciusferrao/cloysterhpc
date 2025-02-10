@@ -23,7 +23,7 @@
 
 using cloyster::runCommand;
 
-Shell::Shell(const std::unique_ptr<Cluster<BaseRunner>>& cluster)
+Shell::Shell(const std::unique_ptr<Cluster>& cluster)
     : m_cluster(cluster)
 {
     // Initialize directory tree
@@ -50,17 +50,17 @@ void Shell::configureSELinuxMode()
     LOG_INFO("Setting up SELinux")
 
     switch (m_cluster->getSELinux()) {
-        case Cluster<BaseRunner>::SELinuxMode::Permissive:
+        case Cluster::SELinuxMode::Permissive:
             runCommand("setenforce 0");
             /* Permissive mode */
             break;
 
-        case Cluster<BaseRunner>::SELinuxMode::Enforcing:
+        case Cluster::SELinuxMode::Enforcing:
             /* Enforcing mode */
             runCommand("setenforce 1");
             break;
 
-        case Cluster<BaseRunner>::SELinuxMode::Disabled:
+        case Cluster::SELinuxMode::Disabled:
             disableSELinux();
             break;
     }
@@ -298,11 +298,11 @@ void Shell::configureQueueSystem()
 
     if (const auto& queue = m_cluster->getQueueSystem()) {
         switch (queue.value()->getKind()) {
-            case QueueSystem<BaseRunner>::Kind::None: {
+            case QueueSystem::Kind::None: {
                 __builtin_unreachable();
             }
 
-            case QueueSystem<BaseRunner>::Kind::SLURM: {
+            case QueueSystem::Kind::SLURM: {
                 const auto& slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->installServer();
                 slurm->configureServer();
@@ -311,7 +311,7 @@ void Shell::configureQueueSystem()
                 break;
             }
 
-            case QueueSystem<BaseRunner>::Kind::PBS: {
+            case QueueSystem::Kind::PBS: {
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
 
                 runCommand("dnf -y install openpbs-server-ohpc");
@@ -401,7 +401,7 @@ void Shell::install()
     installRequiredPackages();
 
     // TODO: This is the repos entrypoint. It should be replaced.
-    auto repos = m_cluster->getRepoManager();
+    auto repos = *cloyster::getRepoManager(m_cluster->getHeadnode().getOS());
     repos.loadFiles();
 
     std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
@@ -444,7 +444,7 @@ void Shell::install()
     // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
-        case Cluster<BaseRunner>::Provisioner::xCAT:
+        case Cluster::Provisioner::xCAT:
             provisioner = std::make_unique<XCAT>(m_cluster);
             break;
     }

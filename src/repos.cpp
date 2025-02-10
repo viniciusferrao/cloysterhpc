@@ -114,6 +114,13 @@ RepoManager<repository, Runner>::RepoManager(Runner& runner, const OS& osinfo)
 {
 }
 
+template <>
+RepoManager<repository, BaseRunner>::RepoManager(BaseRunner& runner, const OS& osinfo)
+    : m_runner(runner)
+    , m_os(osinfo)
+{
+}
+
 template <typename Repository, typename Runner>
 void RepoManager<Repository, Runner>::loadSingleFile(std::filesystem::path source)
 {
@@ -407,14 +414,6 @@ void RepoManager<Repository, Runner>::configureXCAT(const std::filesystem::path&
 
 template <>
 std::vector<std::string> RepoManager<repository, Runner>::getxCATOSImageRepos() const
-{
-    // @TODO Finish refactoring of RepoManager
-    assert(false);
-    return {};
-}
-
-template <typename Repository, typename Runner>
-std::vector<std::string> RepoManager<Repository, Runner>::getxCATOSImageRepos() const
 {
     const auto osArch = magic_enum::enum_name(m_os.getArch());
     const auto osMajorVersion = m_os.getMajorVersion();

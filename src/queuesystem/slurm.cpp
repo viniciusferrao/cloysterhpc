@@ -10,7 +10,7 @@
 
 using cloyster::runCommand;
 
-SLURM::SLURM(const Cluster<BaseRunner>& cluster)
+SLURM::SLURM(const Cluster& cluster)
     : QueueSystem(cluster)
 {
     setKind(QueueSystem::Kind::SLURM);

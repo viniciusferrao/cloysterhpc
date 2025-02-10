@@ -5,7 +5,7 @@
 
 #include <cloysterhpc/queuesystem/pbs.h>
 
-PBS::PBS(const Cluster<BaseRunner>& cluster)
+PBS::PBS(const Cluster& cluster)
     : QueueSystem(cluster)
 {
     setKind(QueueSystem::Kind::PBS);

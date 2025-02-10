@@ -13,7 +13,7 @@
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
-XCAT::XCAT(const std::unique_ptr<Cluster<BaseRunner>>& cluster)
+XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
     : m_cluster(cluster)
 {
 
@@ -281,7 +281,6 @@ void XCAT::configureOSImageDefinition()
 
 void XCAT::customizeImage()
 {
-    using QueueSystem = QueueSystem<BaseRunner>;
     // Permission fixes for munge
     if (m_cluster->getQueueSystem().value()->getKind()
         == QueueSystem::Kind::SLURM) {

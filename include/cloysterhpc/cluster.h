@@ -35,7 +35,6 @@
  * environment, including headnode, nodes, networks, provisioner, timezone,
  * locale, and more.
  */
-template <typename Runner>
 class Cluster {
 public:
     /**
@@ -57,10 +56,11 @@ private:
     Headnode m_headnode;
     Provisioner m_provisioner { Provisioner::xCAT };
     std::optional<OFED> m_ofed;
-    std::optional<std::unique_ptr<QueueSystem<Runner>>> m_queueSystem {};
+    std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
-    std::unique_ptr<BaseRunner> m_runner;
+    // @TODO Removing m_runner from Cluster
+    // std::unique_ptr<BaseRunner> m_runner;
     std::shared_ptr<DBusClient> m_systemdBus;
 
     bool m_firewall { false };
@@ -75,15 +75,13 @@ private:
     DiskImage m_diskImage;
 
     // Relace repository with generic repository
-    std::optional<RepoManager<repository, Runner>> m_repos = std::nullopt;
+    std::optional<RepoManager<repository, BaseRunner>> m_repos = std::nullopt;
 
 public:
     Cluster();
 
     [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
-
-    std::unique_ptr<Runner> getRunner() const;
 
     [[nodiscard]] std::string_view getName() const;
     void setName(std::string_view name);
@@ -106,10 +104,6 @@ public:
     Network& getNetwork(Network::Profile profile);
 
     std::shared_ptr<DBusClient> getDaemonBus();
-
-    void initRepoManager();
-    RepoManager<repository, Runner>& getRepoManager();
-
 
     /**
      * @brief Add a new network to the cluster.
@@ -188,11 +182,11 @@ public:
     std::optional<OFED> getOFED() const;
     void setOFED(OFED::Kind kind);
 
-    std::optional<std::unique_ptr<QueueSystem<Runner>>>& getQueueSystem();
-    void setQueueSystem(QueueSystem<Runner>::Kind kind);
+    std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
+    void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
-    void setMailSystem(Postfix::Profile profile);
+    void setMailSystem(Postfix::Profile profile, std::shared_ptr<BaseRunner> runner);
 
     const std::filesystem::path& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);

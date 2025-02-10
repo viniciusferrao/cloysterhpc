@@ -41,7 +41,7 @@ public:
 
     bool checkIfInterfaceRegistered(std::string_view interface);
 
-    void saveNetworksToModel(Cluster<BaseRunner>& model);
+    void saveNetworksToModel(Cluster& model);
 
     std::size_t getSelectedInterfaces();
 };
@@ -127,7 +127,7 @@ private:
         const std::vector<std::string>& interfaceList, NetworkCreatorData& ncd);
 
 public:
-    PresenterNetwork(std::unique_ptr<Cluster<BaseRunner>>& model,
+    PresenterNetwork(std::unique_ptr<Cluster>& model,
         std::unique_ptr<Newt>& view, NetworkCreator& nc,
         Network::Profile profile = Network::Profile::External,
         Network::Type type = Network::Type::Ethernet);

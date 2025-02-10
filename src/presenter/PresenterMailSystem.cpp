@@ -3,24 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/presenter/PresenterMailSystem.h>
 
 PresenterMailSystem::PresenterMailSystem(
-    std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view)
+    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
 
     if (m_view->yesNoQuestion(
             Messages::title, Messages::question, Messages::help)) {
 
-        m_model->setMailSystem(magic_enum::enum_cast<Postfix::Profile>(
+        Postfix::Profile mailSystemProfile = magic_enum::enum_cast<Postfix::Profile>(
             m_view->listMenu(Messages::title, Messages::Profile::question,
-                magic_enum::enum_names<Postfix::Profile>(),
-                Messages::Profile::help))
-                .value());
-
-        auto& mailSystem = m_model->getMailSystem().value();
-        const auto& mailSystemProfile = mailSystem.getProfile();
+                             magic_enum::enum_names<Postfix::Profile>(),
+                             Messages::Profile::help)
+            ).value();
+        m_model->setMailSystem(mailSystemProfile, cloyster::getRunner());
+        auto mailSystem = m_model->getMailSystem().value();
 
         LOG_DEBUG("Enabled Postfix with profile: {}",
             magic_enum::enum_name<Postfix::Profile>(mailSystemProfile));

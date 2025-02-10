@@ -1,6 +1,7 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
+#include "repos.h"
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
 #include <filesystem>
@@ -12,10 +13,14 @@
 
 #include <boost/asio.hpp>
 #include <glibmm/keyfile.h>
+#include <cloysterhpc/runner.h>
 
 namespace cloyster {
 // Globals
 extern bool dryRun;
+
+std::shared_ptr<BaseRunner> getRunner();
+std::shared_ptr<RepoManager<repository, BaseRunner>> getRepoManager(const OS& osinfo);
 
 /**
  * A command proxy, to us to be able to get the
