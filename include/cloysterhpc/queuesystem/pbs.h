@@ -6,9 +6,10 @@
 #ifndef CLOYSTERHPC_PBS_H_
 #define CLOYSTERHPC_PBS_H_
 
+#include <cloysterhpc/runner.h>
 #include <cloysterhpc/queuesystem/queuesystem.h>
 
-class PBS : public QueueSystem {
+class PBS : public QueueSystem<BaseRunner> {
 public:
     enum class ExecutionPlace { Shared, Scatter };
 
@@ -20,7 +21,7 @@ public:
     ExecutionPlace getExecutionPlace(void);
 
 public:
-    explicit PBS(const Cluster& cluster);
+    explicit PBS(const Cluster<BaseRunner>& cluster);
 };
 
 #endif // CLOYSTERHPC_PBS_H_

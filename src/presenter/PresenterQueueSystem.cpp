@@ -6,13 +6,13 @@
 #include <cloysterhpc/presenter/PresenterQueueSystem.h>
 
 PresenterQueueSystem::PresenterQueueSystem(
-    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
+    std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
 
-    m_model->setQueueSystem(magic_enum::enum_cast<QueueSystem::Kind>(
+    m_model->setQueueSystem(magic_enum::enum_cast<QueueSystem<BaseRunner>::Kind>(
         m_view->listMenu(Messages::title, Messages::question,
-            magic_enum::enum_names<QueueSystem::Kind>(), Messages::help))
+            magic_enum::enum_names<QueueSystem<BaseRunner>::Kind>(), Messages::help))
             .value());
 
     // TODO: Placeholder data
@@ -20,6 +20,7 @@ PresenterQueueSystem::PresenterQueueSystem(
         { { Messages::SLURM::partition, "execution" } });
 
     if (auto& queue = m_model->getQueueSystem()) {
+        using QueueSystem = QueueSystem<BaseRunner>;
         switch (queue.value()->getKind()) {
             case QueueSystem::Kind::None: {
                 __builtin_unreachable();

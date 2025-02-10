@@ -25,6 +25,8 @@
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/timezone.h>
 
+// @TODO: Shouldn't Cluster be below cloyster namespace?
+
 /**
  * @class Cluster
  * @brief Represents a cluster environment.
@@ -33,6 +35,7 @@
  * environment, including headnode, nodes, networks, provisioner, timezone,
  * locale, and more.
  */
+template <typename Runner>
 class Cluster {
 public:
     /**
@@ -54,7 +57,7 @@ private:
     Headnode m_headnode;
     Provisioner m_provisioner { Provisioner::xCAT };
     std::optional<OFED> m_ofed;
-    std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
+    std::optional<std::unique_ptr<QueueSystem<Runner>>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
     std::unique_ptr<BaseRunner> m_runner;
@@ -71,13 +74,16 @@ private:
     bool m_updateSystem { false };
     DiskImage m_diskImage;
 
-    std::optional<RepoManager> m_repos = std::nullopt;
+    // Relace repository with generic repository
+    std::optional<RepoManager<repository, Runner>> m_repos = std::nullopt;
 
 public:
     Cluster();
 
     [[nodiscard]] Headnode& getHeadnode();
     [[nodiscard]] const Headnode& getHeadnode() const;
+
+    std::unique_ptr<Runner> getRunner() const;
 
     [[nodiscard]] std::string_view getName() const;
     void setName(std::string_view name);
@@ -102,7 +108,8 @@ public:
     std::shared_ptr<DBusClient> getDaemonBus();
 
     void initRepoManager();
-    RepoManager& getRepoManager();
+    RepoManager<repository, Runner>& getRepoManager();
+
 
     /**
      * @brief Add a new network to the cluster.
@@ -181,8 +188,8 @@ public:
     std::optional<OFED> getOFED() const;
     void setOFED(OFED::Kind kind);
 
-    std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
-    void setQueueSystem(QueueSystem::Kind kind);
+    std::optional<std::unique_ptr<QueueSystem<Runner>>>& getQueueSystem();
+    void setQueueSystem(QueueSystem<Runner>::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
     void setMailSystem(Postfix::Profile profile);

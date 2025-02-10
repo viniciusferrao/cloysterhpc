@@ -44,7 +44,7 @@ private:
     enum class NodeType { Compute, Service };
 
 private:
-    const std::unique_ptr<Cluster>& m_cluster;
+    const std::unique_ptr<Cluster<BaseRunner>>& m_cluster;
 
     struct {
         std::vector<std::string_view> otherpkgs = {};
@@ -251,7 +251,7 @@ public:
      */
     static void resetNodes();
 
-    explicit XCAT(const std::unique_ptr<Cluster>& cluster);
+    explicit XCAT(const std::unique_ptr<Cluster<BaseRunner>>& cluster);
 };
 
 #endif // CLOYSTERHPC_XCAT_H_

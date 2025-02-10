@@ -4,19 +4,25 @@
  */
 
 #include <cloysterhpc/queuesystem/queuesystem.h>
+#include <cloysterhpc/runner.h>
 
-QueueSystem::QueueSystem(const Cluster& cluster)
+template<>
+QueueSystem<BaseRunner>::QueueSystem(const Cluster<BaseRunner>& cluster)
     : m_cluster(cluster)
 {
 }
 
-void QueueSystem::setKind(Kind kind) { m_kind = kind; }
+template<>
+void QueueSystem<BaseRunner>::setKind(Kind kind) { m_kind = kind; }
 
-QueueSystem::Kind QueueSystem::getKind(void) { return m_kind; }
+template<>
+QueueSystem<BaseRunner>::Kind QueueSystem<BaseRunner>::getKind(void) { return m_kind; }
 
-void QueueSystem::setDefaultQueue(std::string_view defaultQueue)
+template<>
+void QueueSystem<BaseRunner>::setDefaultQueue(std::string_view defaultQueue)
 {
     m_defaultQueue = defaultQueue;
 }
 
-std::string_view QueueSystem::getDefaultQueue(void) { return m_defaultQueue; }
+template<>
+std::string_view QueueSystem<BaseRunner>::getDefaultQueue(void) { return m_defaultQueue; }

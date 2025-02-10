@@ -27,7 +27,7 @@ private:
     };
 
 public:
-    PresenterInfiniband(std::unique_ptr<Cluster>& model,
+    PresenterInfiniband(std::unique_ptr<Cluster<BaseRunner>>& model,
         std::unique_ptr<Newt>& view, NetworkCreator& nc);
 };
 

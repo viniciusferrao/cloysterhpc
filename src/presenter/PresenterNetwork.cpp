@@ -52,7 +52,7 @@ std::size_t NetworkCreator::getSelectedInterfaces()
     return m_networks.size();
 }
 
-void NetworkCreator::saveNetworksToModel(Cluster& model)
+void NetworkCreator::saveNetworksToModel(Cluster<BaseRunner>& model)
 {
     for (const auto& net : m_networks) {
         auto netptr = std::make_unique<Network>(net.profile, net.type);
@@ -105,7 +105,7 @@ void NetworkCreator::saveNetworksToModel(Cluster& model)
 //  attributes we just copy them to the right place or even better, we move it.
 //  After the end of this class the temporary objects will be destroyed anyway.
 
-PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster>& model,
+PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster<BaseRunner>>& model,
     std::unique_ptr<Newt>& view, NetworkCreator& nc, Network::Profile profile,
     Network::Type type)
     : Presenter(model, view)

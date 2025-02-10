@@ -81,7 +81,7 @@ private:
 
 public:
     PresenterNodesOperationalSystem(
-        std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+        std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view);
 };
 
 #endif // CLOYSTERHPC_PRESENTERNODESOPERATIONALSYSTEM_H_

@@ -21,22 +21,14 @@
 
 namespace cloysterhpc {
 // @TODO: Move this to its own file
-/**
- * @brief Base class for marking a superclass as non-copiable and non-moveable
- *
- * We can recover copiability and moveability by explicitly using smart pointers
- */
-class NonCopiableNonMoveable {
-public:
-    NonCopiableNonMoveable(const NonCopiableNonMoveable&) = delete;
-    NonCopiableNonMoveable& operator=(const NonCopiableNonMoveable&) = delete;
-    NonCopiableNonMoveable(NonCopiableNonMoveable&&) = delete;
-    NonCopiableNonMoveable& operator=(NonCopiableNonMoveable&&) = delete;
-    NonCopiableNonMoveable() = default;
-    ~NonCopiableNonMoveable() = delete;
-};
+template <typename T>
+concept NotCopyable = !std::is_copy_constructible_v<T> && !std::is_copy_assignable_v<T>;
 
-// @TODO: Move this to its own file
+template <typename T>
+concept NotMoveable = !std::is_move_constructible_v<T> && !std::is_move_assignable_v<T>;
+
+template <typename T>
+concept NotCopiableMoveable = NotMoveable<T> && NotCopyable<T>;
 /**
  * @brief Parser<P, T> means: P can parse and unparse Ts from streams. The
  * parsers are allowed to throw exceptions
@@ -51,7 +43,7 @@ concept Parser =
 
 // @TODO: Move this to its own file
 /**
- * @brief Parser<P, T, E> means: P can parse and unparse Ts from streams. The
+ * @brief ParserNoExc<P, T, E> means: P can parse and unparse Ts from streams. The
  * parsers are not allowed to throw exceptions, it must return errors of type E
  */
 template<typename Parser_, typename T, typename E>
@@ -78,18 +70,16 @@ concept Saveable =
 /**
  * @brief Represents a generic repository
  */
-class Repository {
-public:
-    virtual ~Repository() = default;
-
-    virtual const std::string& name() const = 0;
-    virtual void enable(bool flag) = 0;
-    virtual const bool enabled() = 0;
-    virtual void base_url(std::string base_url) = 0;
-    virtual const std::optional<const std::string&> base_url() const = 0;
+template<typename T>
+concept Repository = requires(T repo, bool flag, const std::string& url) {
+    { repo.name() } -> std::same_as<const std::string&>;
+    { repo.enable(flag) } -> std::same_as<void>;
+    { repo.enabled() } -> std::same_as<bool>;
+    { repo.base_url(url) } -> std::same_as<void>;
+    { repo.base_url() } -> std::same_as<std::optional<const std::string&>>;
 };
 
-class RPMRepo final : public Repository {
+class RPMRepo final {
     std::string m_group;
     std::string m_name;
     std::optional<std::string> m_base_url;
@@ -99,21 +89,23 @@ class RPMRepo final : public Repository {
     std::string m_gpgkey;
 
 public:
-    [[nodiscard]] const std::string& name() const override;
-    void enable(bool flag) override;
-    const bool enabled() override;
-    void base_url(std::string base_url) override;
-    const std::optional<const std::string&> base_url() const override;
+    [[nodiscard]] const std::string& name() const;
+    void enable(bool flag);
+    bool enabled();
+    void base_url(std::string base_url);
+    [[nodiscard]] std::optional<const std::string&> base_url() const;
 };
+//static_assert(Repository<RPMRepo>);
 
 // @TODO: Move this to its own file
 /**
  * @brief Parse/Unparse EL repositories
  */
 class ELRepoParser final {
-    static std::vector<RPMRepo> parse(std::istream input);
+public:
+    static std::vector<RPMRepo> parse(std::istream& input);
     static void unparse(
-        const std::vector<RPMRepo>& repos, std::ostream output);
+        const std::vector<RPMRepo>& repos, std::ostream& output);
 };
 static_assert(Parser<ELRepoParser, std::vector<RPMRepo>>);
 
@@ -121,18 +113,35 @@ static_assert(Parser<ELRepoParser, std::vector<RPMRepo>>);
 /**
  * @brief Represents
  */
-class ELRepoFile final : public NonCopiableNonMoveable {
+class RPMRepoFile final {
 public:
+    ~RPMRepoFile() = default;
+    RPMRepoFile() = default;
+    RPMRepoFile(const RPMRepoFile&) = delete;
+    RPMRepoFile& operator=(const RPMRepoFile&) = delete;
+    RPMRepoFile(RPMRepoFile&&) = delete;
+    RPMRepoFile& operator=(RPMRepoFile&&) = delete;
     void save();
     void load();
 };
-static_assert(Saveable<ELRepoFile>);
+static_assert(Saveable<RPMRepoFile>);
+static_assert(NotCopiableMoveable<RPMRepoFile>);
 
 // @TODO WIP, rename to RepoManager and replace the old RepoManager
-template<typename Repo, typename RepoFile>
-class NewRepoManager final {
+/**
+ * @brief Enable/disable, install/uninstall repositories to/from the filesystem
+ */
+template <typename Repo, typename RepoFile>
+class NewRepoManager  final {
 public:
-    void load(const std::filesystem::path& file);
+    ~NewRepoManager() = default;
+    NewRepoManager() = default;
+    NewRepoManager(const NewRepoManager&) = delete;
+    NewRepoManager& operator=(const NewRepoManager&) = delete;
+    NewRepoManager(NewRepoManager&&) = delete;
+    NewRepoManager& operator=(NewRepoManager&&) = delete;
+
+    void load(const std::filesystem::path& path);
     void enable(const std::string& id);
     void enable(std::vector<std::string> ids);
     void disable(const std::string& id);
@@ -140,6 +149,7 @@ public:
     const std::vector<Repo>& listRepos() const;
 };
 
-}
+
+};
 
 #endif

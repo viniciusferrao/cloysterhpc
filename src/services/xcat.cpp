@@ -13,7 +13,7 @@
 #include <cstdlib> // setenv / getenv
 #include <fmt/format.h>
 
-XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
+XCAT::XCAT(const std::unique_ptr<Cluster<BaseRunner>>& cluster)
     : m_cluster(cluster)
 {
 
@@ -255,6 +255,8 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
+    // @TODO Fix this after finishing the repository refactoring
+    using RepoManager = RepoManager<repository, Runner>;
     Runner r;
     r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
                                  "/install/custom/netboot/compute.otherpkglist",
@@ -279,9 +281,12 @@ void XCAT::configureOSImageDefinition()
 
 void XCAT::customizeImage()
 {
+    using QueueSystem = QueueSystem<BaseRunner>;
     // Permission fixes for munge
     if (m_cluster->getQueueSystem().value()->getKind()
         == QueueSystem::Kind::SLURM) {
+        // @TODO This is using the Runner above and cloyster::runCommand here
+        //   choose only one!
         cloyster::runCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));

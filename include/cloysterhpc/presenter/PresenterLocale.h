@@ -19,7 +19,7 @@ private:
 
 public:
     PresenterLocale(
-        std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+        std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view);
 };
 
 #endif // CLOYSTERHPC_PRESENTERLOCALE_H_

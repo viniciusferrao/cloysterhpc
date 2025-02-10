@@ -32,89 +32,130 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-Cluster::Cluster()
+static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
 {
-    if (cloyster::dryRun) {
-        m_runner = std::make_unique<DryRunner>();
+    if (option) {
+        return std::make_unique<DryRunner>();
     } else {
-        m_runner = std::make_unique<Runner>();
+        return std::make_unique<Runner>();
     }
+}
 
+template <>
+Cluster<BaseRunner>::Cluster()
+{
+    // @TODO Why runner is unique if a lot of classes required to run commands?
+    m_runner = makeRunner(cloyster::dryRun);
     m_systemdBus = std::make_shared<DBusClient>(
         "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
 }
 // The rule of zero
 // Cluster::~Cluster() = default;
 
-std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 
-Headnode& Cluster::getHeadnode() { return m_headnode; }
+template <>
+std::shared_ptr<DBusClient> Cluster<BaseRunner>::getDaemonBus() { return m_systemdBus; }
 
-const Headnode& Cluster::getHeadnode() const { return m_headnode; }
+template <>
+Headnode& Cluster<BaseRunner>::getHeadnode() { return m_headnode; }
 
-std::string_view Cluster::getName() const { return m_name; }
+template <> const Headnode& Cluster<BaseRunner>::getHeadnode() const
+{
+    return m_headnode;
+}
+template <typename Runner>
+std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
+{
+    return m_runner;
+}
 
-void Cluster::setName(std::string_view name) { m_name = name; }
+template <>
+std::string_view Cluster<BaseRunner>::getName() const { return m_name; }
 
-std::string_view Cluster::getCompanyName() const { return m_companyName; }
+template <>
+void Cluster<BaseRunner>::setName(std::string_view name) { m_name = name; }
 
-void Cluster::setCompanyName(std::string_view companyName)
+template <>
+std::string_view Cluster<BaseRunner>::getCompanyName() const { return m_companyName; }
+
+template <>
+void Cluster<BaseRunner>::setCompanyName(std::string_view companyName)
 {
     m_companyName = companyName;
 }
 
-std::string_view Cluster::getAdminMail() const { return m_adminMail; }
+template <>
+std::string_view Cluster<BaseRunner>::getAdminMail() const { return m_adminMail; }
 
-void Cluster::setAdminMail(std::string_view adminMail)
+template <>
+void Cluster<BaseRunner>::setAdminMail(std::string_view adminMail)
 {
     m_adminMail = adminMail;
 }
 
-bool Cluster::isFirewall() const { return m_firewall; }
+template <>
+bool Cluster<BaseRunner>::isFirewall() const { return m_firewall; }
 
-void Cluster::setFirewall(bool firewall) { m_firewall = firewall; }
+template <>
+void Cluster<BaseRunner>::setFirewall(bool firewall) { m_firewall = firewall; }
 
-Cluster::SELinuxMode Cluster::getSELinux() const { return m_selinux; }
+template <>
+Cluster<BaseRunner>::SELinuxMode Cluster<BaseRunner>::getSELinux() const { return m_selinux; }
 
-void Cluster::setSELinux(Cluster::SELinuxMode mode) { m_selinux = mode; }
+template <>
+void Cluster<BaseRunner>::setSELinux(Cluster<BaseRunner>::SELinuxMode mode) { m_selinux = mode; }
 
-Timezone& Cluster::getTimezone() { return m_timezone; }
+template <>
+Timezone& Cluster<BaseRunner>::getTimezone() { return m_timezone; }
 
-void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
+template <>
+void Cluster<BaseRunner>::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
-const Locale& Cluster::getLocale() const { return m_locale; }
+template <>
+const Locale& Cluster<BaseRunner>::getLocale() const { return m_locale; }
 
-void Cluster::setLocale(const Locale& locale) { m_locale = locale; }
+template <>
+void Cluster<BaseRunner>::setLocale(const Locale& locale) { m_locale = locale; }
 
-void Cluster::setLocale(const std::string& locale)
+template <>
+void Cluster<BaseRunner>::setLocale(const std::string& locale)
 {
     m_locale.setLocale(locale);
 }
 
-const std::string Cluster::getDomainName() const
+template <>
+const std::string Cluster<BaseRunner>::getDomainName() const
 {
     std::string fqdn = m_headnode.getFQDN();
     return fqdn.substr(fqdn.find_first_of('.') + 1);
 }
 
-void Cluster::setDomainName(const std::string& domainName)
+template <>
+void Cluster<BaseRunner>::setDomainName(const std::string& domainName)
 {
     // Force FQDN update if domainName is changed:
     m_headnode.setFQDN(
         fmt::format("{}.{}", m_headnode.getHostname(), domainName));
 }
 
-std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
+template <>
+std::list<std::unique_ptr<Network>>& Cluster<BaseRunner>::getNetworks()
 {
     return m_network;
 }
-
-void Cluster::initRepoManager()
+template <typename R>
+void Cluster<R>::initRepoManager()
 {
-    m_repos.emplace(*m_runner, m_headnode.getOS());
+    if (cloyster::dryRun) {
+       m_repos.emplace(RepoManager<repository, DryRunner>(*getRunner(), m_headnode.getOS()));
+    } else {
+       m_repos.emplace(RepoManager<repository, Runner>(*getRunner(), m_headnode.getOS()));
+    }
 }
 
-RepoManager& Cluster::getRepoManager()
+// @TODO Remove this after as part of the repository refactoring
+template <typename Runner>
+RepoManager<repository, Runner>& Cluster<Runner>::getRepoManager()
 {
     if (!m_repos) {
         initRepoManager();
@@ -123,7 +164,15 @@ RepoManager& Cluster::getRepoManager()
     return m_repos.value();
 }
 
-Network& Cluster::getNetwork(Network::Profile profile)
+template <>
+RepoManager<repository, BaseRunner>& Cluster<BaseRunner>::getRepoManager()
+{
+    // @This should not happen
+    throw std::logic_error("Not implemented");
+}
+
+template <>
+Network& Cluster<BaseRunner>::getNetwork(Network::Profile profile)
 {
     for (auto& network : m_network) {
         if (network->getProfile() == profile) {
@@ -153,22 +202,26 @@ const std::list<Network> Cluster::getNet(Network::Profile profile) {
 }
 #endif
 
-void Cluster::addNetwork()
+template <>
+void Cluster<BaseRunner>::addNetwork()
 {
     m_network.emplace_back(std::make_unique<Network>());
 }
 
-void Cluster::addNetwork(Network::Profile profile)
+template <>
+void Cluster<BaseRunner>::addNetwork(Network::Profile profile)
 {
     m_network.emplace_back(std::make_unique<Network>(profile));
 }
 
-void Cluster::addNetwork(Network::Profile profile, Network::Type type)
+template <>
+void Cluster<BaseRunner>::addNetwork(Network::Profile profile, Network::Type type)
 {
     m_network.emplace_back(std::make_unique<Network>(profile, type));
 }
 
-void Cluster::addNetwork(Network::Profile profile, Network::Type type,
+template <>
+void Cluster<BaseRunner>::addNetwork(Network::Profile profile, Network::Type type,
     const std::string& ip, const std::string& subnetMask,
     const std::string& gateway, const uint16_t& vlan,
     const std::string& domainName, const std::vector<address>& nameserver)
@@ -177,7 +230,8 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
         profile, type, ip, subnetMask, gateway, vlan, domainName, nameserver));
 }
 
-void Cluster::addNetwork(Network::Profile profile, Network::Type type,
+template <>
+void Cluster<BaseRunner>::addNetwork(Network::Profile profile, Network::Type type,
     const std::string& ip, const std::string& subnetMask,
     const std::string& gateway, const uint16_t& vlan,
     const std::string& domainName, const std::vector<std::string>& nameserver)
@@ -192,66 +246,80 @@ void Cluster::addNetwork(Network::Profile profile, Network::Type type,
         formattedNameservers);
 }
 
-void Cluster::addNetwork(std::unique_ptr<Network>&& network)
+template <>
+void Cluster<BaseRunner>::addNetwork(std::unique_ptr<Network>&& network)
 {
     m_network.emplace_back(std::move(network));
 }
 
-bool Cluster::isUpdateSystem() const { return m_updateSystem; }
+template <>
+bool Cluster<BaseRunner>::isUpdateSystem() const { return m_updateSystem; }
 
-void Cluster::setUpdateSystem(bool updateSystem)
+template <>
+void Cluster<BaseRunner>::setUpdateSystem(bool updateSystem)
 {
     m_updateSystem = updateSystem;
 }
 
-Cluster::Provisioner Cluster::getProvisioner() const { return m_provisioner; }
+template <>
+Cluster<BaseRunner>::Provisioner Cluster<BaseRunner>::getProvisioner() const { return m_provisioner; }
 
-void Cluster::setProvisioner(Cluster::Provisioner provisioner)
+template <>
+void Cluster<BaseRunner>::setProvisioner(Cluster::Provisioner provisioner)
 {
     m_provisioner = provisioner;
 }
 
-std::optional<OFED> Cluster::getOFED() const { return m_ofed; }
+template <>
+std::optional<OFED> Cluster<BaseRunner>::getOFED() const { return m_ofed; }
 
-void Cluster::setOFED(OFED::Kind kind) { m_ofed = OFED(kind); }
+template <>
+void Cluster<BaseRunner>::setOFED(OFED::Kind kind) { m_ofed = OFED(kind); }
 
-std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
+template <>
+std::optional<std::unique_ptr<QueueSystem<BaseRunner>>>& Cluster<BaseRunner>::getQueueSystem()
 {
     return m_queueSystem;
 }
 
-void Cluster::setQueueSystem(QueueSystem::Kind kind)
+template <>
+void Cluster<BaseRunner>::setQueueSystem(QueueSystem<BaseRunner>::Kind kind)
 {
     switch (kind) {
-        case QueueSystem::Kind::None:
+        case QueueSystem<BaseRunner>::Kind::None:
             m_queueSystem = std::nullopt;
             break;
 
-        case QueueSystem::Kind::SLURM:
+        case QueueSystem<BaseRunner>::Kind::SLURM:
             // m_queueSystem = std::unique_ptr<QueueSystem>(new SLURM());
             m_queueSystem = std::make_unique<SLURM>(*this);
             break;
 
-        case QueueSystem::Kind::PBS:
+        case QueueSystem<BaseRunner>::Kind::PBS:
             // m_queueSystem = std::unique_ptr<QueueSystem>(new PBS());
             m_queueSystem = std::make_unique<PBS>(*this);
             break;
     }
 }
 
-std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(Postfix::Profile profile)
+template <>
+std::optional<Postfix>& Cluster<BaseRunner>::getMailSystem() { return m_mailSystem; }
+
+template <>
+void Cluster<BaseRunner>::setMailSystem(Postfix::Profile profile)
 {
     m_mailSystem.emplace(m_systemdBus, *m_runner, profile);
 }
 
-const std::filesystem::path& Cluster::getDiskImage() const
+template <>
+const std::filesystem::path& Cluster<BaseRunner>::getDiskImage() const
 {
     return m_diskImage.getPath();
 }
 
-void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
+template <>
+void Cluster<BaseRunner>::setDiskImage(const std::filesystem::path& diskImagePath)
 {
     // BUG: This does not hanble ~ expansion for userdir
     if (std::filesystem::exists(diskImagePath)) {
@@ -262,26 +330,31 @@ void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
     }
 }
 
-const std::vector<Node>& Cluster::getNodes() const { return m_nodes; }
+template <>
+const std::vector<Node>& Cluster<BaseRunner>::getNodes() const { return m_nodes; }
 
-void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
+template <>
+void Cluster<BaseRunner>::addNode(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections)
 {
 
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections));
 }
 
-void Cluster::addNode(std::string_view hostname, OS& os, CPU& cpu,
+template <>
+void Cluster<BaseRunner>::addNode(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections, BMC& bmc)
 {
 
     m_nodes.emplace_back(hostname, os, cpu, std::move(connections), bmc);
 }
 
-void Cluster::addNode(Node node) { m_nodes.emplace_back(node); }
+template <>
+void Cluster<BaseRunner>::addNode(Node node) { m_nodes.emplace_back(node); }
 
 #ifndef NDEBUG
-void Cluster::printNetworks(
+template <>
+void Cluster<BaseRunner>::printNetworks(
     const std::list<std::unique_ptr<Network>>& networks) const
 {
 
@@ -312,14 +385,16 @@ void Cluster::printNetworks(
     }
 }
 
-void Cluster::printConnections()
+template<>
+void Cluster<BaseRunner>::printConnections()
 {
     for (const auto& connection : getHeadnode().getConnections()) {
         connection.dumpConnection();
     }
 }
 
-void Cluster::printData()
+template<>
+void Cluster<BaseRunner>::printData()
 {
     LOG_DEBUG("Dump cluster data:")
     LOG_DEBUG("Cluster attributes defined:")
@@ -347,8 +422,8 @@ void Cluster::printData()
     LOG_DEBUG("Firewall: {}", (isFirewall() ? "true" : "false"))
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()))
 }
-
-void Cluster::fillTestData()
+template <>
+void Cluster<BaseRunner>::fillTestData()
 {
     setName("Cloyster");
     setFirewall(true);
@@ -361,7 +436,7 @@ void Cluster::fillTestData()
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
     setOFED(OFED::Kind::Inbox);
-    setQueueSystem(QueueSystem::Kind::SLURM);
+    setQueueSystem(QueueSystem<BaseRunner>::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(Network::Profile::External, Network::Type::Ethernet,
@@ -450,7 +525,8 @@ auto& getNetworkField(AnswerFile& answerfile, Network::Profile profile)
     }
 }
 
-void Cluster::dumpData(const std::filesystem::path& answerfilePath)
+template <>
+void Cluster<BaseRunner>::dumpData(const std::filesystem::path& answerfilePath)
 {
     AnswerFile answerfile(answerfilePath);
     LOG_TRACE("Dump Management Network");
@@ -511,7 +587,8 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
     answerfile.dumpFile(answerfilePath);
 }
 
-void Cluster::fillData(const std::filesystem::path& answerfilePath)
+template <>
+void Cluster<BaseRunner>::fillData(const std::filesystem::path& answerfilePath)
 {
     AnswerFile answerfile(answerfilePath);
 
@@ -599,7 +676,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
     setOFED(OFED::Kind::Inbox);
-    setQueueSystem(QueueSystem::Kind::SLURM);
+    setQueueSystem(QueueSystem<BaseRunner>::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(std::move(managementNetwork));

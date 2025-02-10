@@ -1,6 +1,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/repofile.h>
 
+/*
 void ELRepoFile::read()
 {
     try {
@@ -102,3 +103,4 @@ ELRepoFile::getRepositoriesConst() const
 {
     return m_repositories;
 }
+*/

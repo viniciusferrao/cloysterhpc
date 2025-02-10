@@ -7,7 +7,7 @@
 #include <cloysterhpc/presenter/PresenterRepository.h>
 
 PresenterRepository::PresenterRepository(
-    std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
+    std::unique_ptr<Cluster<BaseRunner>>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
     auto manager = m_model->getRepoManager();

@@ -12,12 +12,12 @@
  * @class SLURM
  * @brief Manages SLURM server installation and configuration.
  */
-class SLURM : public QueueSystem {
+class SLURM : public QueueSystem<BaseRunner> {
 private:
     bool m_accounting { false };
 
 public:
-    explicit SLURM(const Cluster& cluster);
+    explicit SLURM(const Cluster<BaseRunner>& cluster);
 
     /**
      * @brief Installs the SLURM server package on the system.

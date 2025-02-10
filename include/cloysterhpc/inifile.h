@@ -17,7 +17,6 @@
  * This class provides methods to load, save, get, set, and delete values
  * from INI files using the CSimpleIniA library.
  */
-[[deprecated("Use glibmm instead")]]
 class inifile {
 private:
     CSimpleIniA ini;

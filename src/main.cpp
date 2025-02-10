@@ -150,8 +150,7 @@ int main(int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
-        auto model = std::make_unique<Cluster>();
-
+        auto model = std::make_unique<Cluster<BaseRunner>>();
         if (!cloyster::answerfile.empty()) {
             LOG_TRACE("Answerfile: {}", cloyster::answerfile)
             model->fillData(cloyster::answerfile);

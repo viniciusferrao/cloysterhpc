@@ -31,26 +31,10 @@ struct repository {
     std::filesystem::path source;
 };
 
-class RepoManager {
+template <typename Repository, typename Runner>
+class /* [[deprecated("refactoring")]] */ RepoManager {
 public:
-    enum class AdditionalType {
-        beegfs,
-        ELRepo,
-        EPEL,
-        Grafana,
-        influxData,
-        oneAPI,
-        OpenHPC,
-        Zabbix,
-        RPMFusionUpdates
-    };
-
-    RepoManager(BaseRunner& runner, const OS& osinfo)
-        : m_runner(runner)
-        , m_os(osinfo)
-    {
-    }
-
+    RepoManager(Runner& runner, const OS& osinfo);
     void loadFiles(const std::filesystem::path& basedir = "/etc/yum.repos.d");
     void loadCustom(inifile& file, const std::filesystem::path& path);
 
@@ -61,18 +45,18 @@ public:
 
     void commitStatus();
 
-    const std::vector<repository>& listRepos() const;
+    const std::vector<Repository>& listRepos() const;
 
     std::vector<std::string> getxCATOSImageRepos() const;
 
 private:
-    std::vector<repository> m_repos;
+    std::vector<Repository> m_repos;
     BaseRunner& m_runner;
     const OS& m_os;
 
     void createFileFor(std::filesystem::path path);
 
-    const std::vector<repository> buildCloysterTree(
+    const std::vector<Repository> buildCloysterTree(
         const std::filesystem::path& basedir);
 
     void loadSingleFile(std::filesystem::path source);
@@ -82,7 +66,7 @@ private:
     void configureEL();
     void setEnableState(const std::string& id, bool value);
 
-    void mergeWithCurrentList(std::vector<repository>&& repo);
+    void mergeWithCurrentList(std::vector<Repository>&& repo);
 };
 
 #endif // CLOYSTERHPC_REPOS_H_DEPRECATED_

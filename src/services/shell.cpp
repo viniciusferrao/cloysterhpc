@@ -23,7 +23,7 @@
 
 using cloyster::runCommand;
 
-Shell::Shell(const std::unique_ptr<Cluster>& cluster)
+Shell::Shell(const std::unique_ptr<Cluster<BaseRunner>>& cluster)
     : m_cluster(cluster)
 {
     // Initialize directory tree
@@ -50,17 +50,17 @@ void Shell::configureSELinuxMode()
     LOG_INFO("Setting up SELinux")
 
     switch (m_cluster->getSELinux()) {
-        case Cluster::SELinuxMode::Permissive:
+        case Cluster<BaseRunner>::SELinuxMode::Permissive:
             runCommand("setenforce 0");
             /* Permissive mode */
             break;
 
-        case Cluster::SELinuxMode::Enforcing:
+        case Cluster<BaseRunner>::SELinuxMode::Enforcing:
             /* Enforcing mode */
             runCommand("setenforce 1");
             break;
 
-        case Cluster::SELinuxMode::Disabled:
+        case Cluster<BaseRunner>::SELinuxMode::Disabled:
             disableSELinux();
             break;
     }
@@ -298,11 +298,11 @@ void Shell::configureQueueSystem()
 
     if (const auto& queue = m_cluster->getQueueSystem()) {
         switch (queue.value()->getKind()) {
-            case QueueSystem::Kind::None: {
+            case QueueSystem<BaseRunner>::Kind::None: {
                 __builtin_unreachable();
             }
 
-            case QueueSystem::Kind::SLURM: {
+            case QueueSystem<BaseRunner>::Kind::SLURM: {
                 const auto& slurm = dynamic_cast<SLURM*>(queue.value().get());
                 slurm->installServer();
                 slurm->configureServer();
@@ -311,7 +311,7 @@ void Shell::configureQueueSystem()
                 break;
             }
 
-            case QueueSystem::Kind::PBS: {
+            case QueueSystem<BaseRunner>::Kind::PBS: {
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
 
                 runCommand("dnf -y install openpbs-server-ohpc");
@@ -444,7 +444,7 @@ void Shell::install()
     // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (m_cluster->getProvisioner()) {
-        case Cluster::Provisioner::xCAT:
+        case Cluster<BaseRunner>::Provisioner::xCAT:
             provisioner = std::make_unique<XCAT>(m_cluster);
             break;
     }
