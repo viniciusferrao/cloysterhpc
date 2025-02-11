@@ -36,21 +36,18 @@ class /* [[deprecated("refactoring")]] */ RepoManager {
 public:
     RepoManager(Runner& runner, const OS& osinfo);
     void loadFiles(const std::filesystem::path& basedir = "/etc/yum.repos.d");
-    void loadCustom(inifile& file, const std::filesystem::path& path);
-
-    // BUG: Enable and EnableMultiple are the same method. Overload it.
-    void enable(const std::string& id);
-    void enableMultiple(std::vector<std::string> ids);
-    void disable(const std::string& id);
-
     void commitStatus();
-
+    void enable(const std::string& repo);
+    void enableMultiple(std::vector<std::string> repos);
+    void disable(const std::string& repo);
     const std::vector<Repository>& listRepos() const;
-
-    std::vector<std::string> getxCATOSImageRepos() const;
+    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
 
 private:
+    void loadCustom(inifile& file, const std::filesystem::path& path);
+    // BUG: Enable and EnableMultiple are the same method. Overload it.
     std::vector<Repository> m_repos;
+
     BaseRunner& m_runner;
     const OS& m_os;
 

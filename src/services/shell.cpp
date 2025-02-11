@@ -404,11 +404,12 @@ void Shell::install()
     auto repos = *cloyster::getRepoManager(m_cluster->getHeadnode().getOS());
     repos.loadFiles();
 
-    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
-        "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" };
-    for (auto& package : toEnable) {
-        package = cloyster::productName + package;
-    }
+    const auto toEnable = 
+        std::vector({ "-beegfs", "-elrepo", "-epel", "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" })
+        | std::views::transform([&](const std::string& pkg) {
+            return cloyster::productName + pkg;
+        }) 
+        | std::ranges::to<std::vector<std::string>>();
 
     repos.enableMultiple(toEnable);
     repos.commitStatus();

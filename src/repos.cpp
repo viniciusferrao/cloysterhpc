@@ -198,22 +198,15 @@ static std::string buildPackageName(std::string stem)
 }
 
 static std::vector<std::string> getDependenciesEL(
-    const OS& os, OS::Platform platform)
+    const OS& os)
 {
+    const auto platform = os.getPlatform();
     std::vector<std::string> dependencies;
 
-    // BUG: Bad code. We should use the OS::getVersion() method.
-    std::size_t version;
+    std::size_t version = os.getMajorVersion();
     std::string powertools = "powertools";
     if (platform == OS::Platform::el8) {
         powertools = "crb";
-        version = 8;
-    }
-    if (platform == OS::Platform::el9) {
-        version = 9;
-    }
-    if (platform == OS::Platform::el10) {
-        version = 10;
     }
 
     switch (os.getDistro()) {
@@ -243,10 +236,12 @@ static std::vector<std::string> getDependenciesEL(
 template <typename Repository, typename Runner>
 void RepoManager<Repository, Runner>::configureEL()
 {
-    std::vector<std::string> deps = getDependenciesEL(m_os, m_os.getPlatform());
+    std::vector<std::string> deps = getDependenciesEL(m_os);
 
     std::for_each(
-        deps.begin(), deps.end(), [this](const auto& id) { this->enable(id); });
+        deps.begin(), deps.end(), [this](const auto& repo) {
+            this->enable(repo);
+    });
 }
 
 template <>
