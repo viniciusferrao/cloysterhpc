@@ -61,7 +61,6 @@ std::shared_ptr<BaseRunner> getRunner()
     return runner.value();
 }
 
-using cloyster::services::repos::IsRepository;
 using cloyster::services::repos::RepoManager;
 
 std::shared_ptr<RepoManager> getRepoManager(
@@ -72,8 +71,7 @@ std::shared_ptr<RepoManager> getRepoManager(
         switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 repoManager
-                    = std::make_shared<RepoManager>(
-                        *getRunner(), osinfo);
+                    = std::make_shared<RepoManager>(osinfo);
                 break;
             case OS::PackageType::DEB:
                 // @TODO Implement
@@ -402,4 +400,18 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
-} // namespace cloyster
+}; // namespace cloyster
+
+namespace cloyster::utils {
+
+template <typename T>
+bool isIn(const std::vector<T>& vec, const T& val) {
+   return std::find(vec.begin(), vec.end(), val) == vec.end();
+}
+
+bool isIn(const std::vector<std::string>& vec, const char* val) {
+   return isIn(vec, std::string(val));
+}
+
+
+}; // namespace cloyster::utils

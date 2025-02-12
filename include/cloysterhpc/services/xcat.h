@@ -45,7 +45,6 @@ private:
      */
     enum class NodeType { Compute, Service };
 
-private:
     const std::unique_ptr<Cluster>& m_cluster;
 
     struct {
@@ -56,7 +55,6 @@ private:
         std::vector<std::string> synclists = {};
     } m_stateless;
 
-private:
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
 
@@ -189,6 +187,16 @@ private:
     static void configureEL9();
 
 public:
+    /**
+     * @brief Download the repositories
+     */
+    void installRepositories();
+
+    /**
+     * @brief Return a list of repos for xCAT image
+     */
+    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
+
     /**
      * @brief Installs the necessary packages.
      *

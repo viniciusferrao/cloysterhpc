@@ -3,18 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cstdlib> // setenv / getenv
 
+#include <filesystem>
 #include <fmt/format.h>
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/execution.h>
-#include <cloysterhpc/services/shell.h>
-#include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
-
+#include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/xcat.h>
 
 namespace cloyster::services {
 
@@ -262,27 +264,28 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    // @TODO Fix this after finishing the repository refactoring
-    Runner r;
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
-                                 "/install/custom/netboot/compute.otherpkglist",
-        m_stateless.osimage));
+    auto runner = getRunner();
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus otherpkglist="
+                    "/install/custom/netboot/compute.otherpkglist",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus postinstall="
-                                 "/install/custom/netboot/compute.postinstall",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus postinstall="
+                    "/install/custom/netboot/compute.postinstall",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus synclists="
-                                 "/install/custom/netboot/compute.synclists",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus synclists="
+                    "/install/custom/netboot/compute.synclists",
+            m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
+    std::vector<std::string> repos = getxCATOSImageRepos();
 
-    repos::RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
-    std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
-
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
-        m_stateless.osimage, fmt::join(repos, ",")));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
+            m_stateless.osimage, fmt::join(repos, ",")));
 }
 
 void XCAT::customizeImage()
@@ -527,9 +530,10 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 {
 
-    if (imageType != XCAT::ImageType::Netboot)
+    if (imageType != XCAT::ImageType::Netboot) {
         throw std::logic_error(
             "Image path is only available on Netboot (Stateless) images");
+    }
 
     std::filesystem::path chroot = "/install/netboot/";
 
@@ -566,6 +570,153 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 
     chroot += "/compute/rootimg";
     m_stateless.chroot = chroot;
+}
+
+void XCAT::installRepositories()
+{
+    const std::filesystem::path& repofileDest = std::filesystem::temp_directory_path();
+    LOG_INFO("Setting up XCAT repositories");
+    auto runner = cloyster::getRunner();
+
+    runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
+                         "core-snap/xcat-core.repo",
+        repofileDest.string());
+
+    switch (m_cluster->getHeadnode().getOS().getPlatform()) {
+        case OS::Platform::el8:
+            runner->downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh8/x86_64/xcat-dep.repo",
+                repofileDest.string());
+            break;
+        case OS::Platform::el9:
+#ifndef NDEBUG
+        // Hack to test EL10 only in debug mode
+        case OS::Platform::el10:
+#endif
+            runner->downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh9/x86_64/xcat-dep.repo",
+                repofileDest.string());
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform for xCAT");
+    }
+
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { repofileDest }) {
+        const auto& path = dir_entry.path();
+        if (path.extension() == ".repo") {
+            getRepoManager(m_cluster->getHeadnode().getOS())->install(path);
+        }
+    }
+}
+
+[[deprecated("Refactoring RepoManager, replace the function with the same name in repo manager")]]
+std::vector<std::string> XCAT::getxCATOSImageRepos() const
+{
+    const auto osinfo = m_cluster->getHeadnode().getOS();
+    const auto osArch = magic_enum::enum_name(osinfo.getArch());
+    const auto osMajorVersion = osinfo.getMajorVersion();
+    const auto osVersion = osinfo.getVersion();
+
+    std::vector<std::string> repos;
+
+    /* FIXME: A LOT OF WORK TO BE DONE HERE BRUH */
+    /* BUG: This is a very bad implementation; it should find out the latest
+     * version and not be hardcoded. Also the directory formation does not work
+     * that way. We should support finding out the Repository paths by parsing
+     * /etc/yum.repos.d
+     */
+    std::vector<std::string> latestEL = { "8.10", "9.5" };
+
+    std::string crb = "CRB";
+    std::string rockyBranch
+        = "linux"; // To check if Rocky mirror directory points to 'linux'
+                   // (latest version) or 'vault'
+
+    // BUG: Really? A string?
+    std::string OpenHPCVersion = "3";
+
+    if (osMajorVersion < 9) {
+        crb = "PowerTools";
+        OpenHPCVersion = "2";
+    }
+
+    if (std::ranges::find(latestEL, osVersion)
+        == latestEL.end()) {
+        rockyBranch = "vault";
+    }
+
+    switch (osinfo.getDistro()) {
+        case OS::Distro::RHEL:
+            repos.emplace_back(
+                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/appstream/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/codeready-builder/os");
+            break;
+        case OS::Distro::OL:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
+                            "baseos/latest/{}",
+                    osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "oracle/{}/codeready/builder/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
+                osMajorVersion, osArch));
+            break;
+        case OS::Distro::Rocky:
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
+                rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
+                rockyBranch, osVersion, crb, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
+                rockyBranch, osVersion, osArch));
+            break;
+        case OS::Distro::AlmaLinux:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/BaseOS/{}/os",
+                    osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "almalinux/almalinux/{}/{}/{}/os",
+                osVersion, crb, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/AppStream/{}/os",
+                    osVersion, osArch));
+            break;
+    }
+
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
+            osMajorVersion, osArch));
+
+    // Modular repositories are only available on EL8
+    if (osMajorVersion == 8) {
+        repos.emplace_back(
+            fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
+                osMajorVersion, osArch));
+    }
+
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
+            OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(fmt::format(
+        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
+        OpenHPCVersion, osMajorVersion));
+
+    return repos;
 }
 
 };

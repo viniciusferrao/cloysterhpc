@@ -7,7 +7,6 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
-#include <cloysterhpc/services/repofile.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 
@@ -24,13 +23,37 @@
 #include <cloysterhpc/models/slurm.h>
 
 #include <cloysterhpc/dbus_client.h>
+#include <ranges>
 
+using cloyster::OS;
 using cloyster::runCommand;
+
+namespace {
+
+auto getToEnableRepoNames(const OS& osinfo)
+{
+    switch (osinfo.getPlatform()) {
+        case OS::Platform::el8:
+        case OS::Platform::el9:
+        case OS::Platform::el10:
+            return std::vector<std::string>({ "-beegfs", "-elrepo", "-epel", "-openhpc",
+                "-openhpc-updates", "-rpmfusion-free-updates" })
+            | std::views::transform([](const std::string& repo) {
+                return fmt::format("{}{}", cloyster::productName, repo);
+            })
+            | std::ranges::to<std::vector<std::string>>();
+            break;
+        default:
+            throw std::logic_error("Not implemented");
+    }
+}
+
+}
 
 namespace cloyster::services {
 
-Shell::Shell(const std::unique_ptr<Cluster>& cluster)
-    : m_cluster(cluster)
+Shell::Shell(std::unique_ptr<Cluster> cluster)
+    : m_cluster(std::move(cluster))
 {
     // Initialize directory tree
     cloyster::createDirectory(installPath);
@@ -301,7 +324,6 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
 using cloyster::models::QueueSystem;
 using cloyster::models::SLURM;
 using cloyster::models::PBS;
-using cloyster::services::repos::RPMRepository;
 
 void Shell::configureQueueSystem()
 {
@@ -385,6 +407,19 @@ void Shell::installDevelopmentComponents()
     runCommand("dnf -y install lmod-defaults-gnu12-openmpi4-ohpc");
 }
 
+void Shell::configureRepositories()
+{
+    const auto os = m_cluster->getHeadnode().getOS();
+    auto repos = cloyster::getRepoManager(os);
+    // 1. Install files into /etc, these files are the templates
+    //    at include/cloysterhpc/repos/el*/*.repo
+    repos->initializeDefaultRepositories();
+    // 2. Enable the repositories
+    repos->enable(getToEnableRepoNames(os));
+    // 3. Commit data to disk
+    repos->saveToDisk();
+}
+
 /* This method is the entrypoint of shell based cluster install
  * The first session of the method will configure and install services on the
  * headnode. The last part will do provisioner related settings and image
@@ -411,21 +446,7 @@ void Shell::install()
 
     installRequiredPackages();
 
-    // TODO: This is the repos entrypoint. It should be replaced.
-    auto repos = cloyster::getRepoManager(m_cluster->getHeadnode().getOS());
-    repos->loadFiles();
-
-    const auto toEnable = std::vector<std::string>();
-        // @TODO Fix this
-        // std::vector({ "-beegfs", "-elrepo", "-epel", "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" })
-        // | std::views::transform([&](const std::string& pkg) {
-        //     return cloyster::productName + pkg;
-        // }) 
-        // | std::ranges::to<std::vector<std::string>>();
-
-    repos->enableMultiple(toEnable);
-    repos->commitStatus();
-    // End of Repos entrypoint
+    configureRepositories();
 
     runSystemUpdate();
 
@@ -464,7 +485,10 @@ void Shell::install()
 
     LOG_INFO("Setting up compute node images... This may take a while")
 
-    LOG_INFO("[{}] Installing packages", provisionerName)
+    LOG_INFO("[{}] Installing provisioner repositories", provisionerName)
+    provisioner->installRepositories();
+
+    LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
 
     LOG_INFO("[{}] Patching the provisioner", provisionerName)

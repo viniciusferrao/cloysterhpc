@@ -1,3 +1,4 @@
+#include <concepts>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
@@ -51,15 +52,15 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 }
 
 KeyFile::KeyFile(const std::filesystem::path& path)
+    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path)) 
 {
-    m_impl = std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path);
     m_impl->loadFromFile(path);
     m_impl->m_path = path;
 }
 
 KeyFile::KeyFile(std::istream& istream)
+    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), std::filesystem::path()))
 {
-    m_impl = std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), std::filesystem::path());
     std::istreambuf_iterator<char> begin(istream);
     std::istreambuf_iterator<char> end;
     std::string data(begin, end);
@@ -103,7 +104,13 @@ bool KeyFile::getBoolean(const std::string& group, const std::string& key) const
     return m_impl->m_keyfile->get_boolean(group, key);
 }
 
-void KeyFile::setString(const std::string& group, const std::string& key, const std::string& value) {
+std::string KeyFile::toData() const
+{
+    return m_impl->m_keyfile->to_data();
+}
+
+void KeyFile::setString(const std::string& group, const std::string& key, const std::string& value)
+{
     m_impl->m_keyfile->set_string(group, key, value);
 }
 

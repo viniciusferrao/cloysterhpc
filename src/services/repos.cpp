@@ -3,25 +3,137 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <cloysterhpc/functions.h>
-#include <cloysterhpc/inifile.h>
-#include <cloysterhpc/services/repos.h>
-#include <cloysterhpc/services/repofile.h>
-#include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/services/log.h>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <magic_enum/magic_enum.hpp>
+#include <memory>
 #include <ranges>
+#include <stdexcept>
 
 #include <boost/algorithm/string.hpp>
-#include <stdexcept>
+#include <boost/property_tree/ptree.hpp>
+#include <magic_enum/magic_enum.hpp>
+#include <utility>
+
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/files.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
+
+/**
+ * @TODO: (in this file)
+ *
+ * - Add a repository file class to handle the save/loading, as
+ *   it is too ad-hoc now.
+ * - Maybe break this files into smaller files, but DO NOT,
+ *   expose implementation details in "global" headers.
+ */
+
+using cloyster::OS;
+using cloyster::services::files::IsKeyFileReadable;
+using cloyster::services::files::KeyFile;
+using cloyster::services::repos::IRepository;
+
+namespace cloyster::services::repos {
+
+class DebianRepository : public IRepository {
+private:
+    std::string m_type;                    // "deb" or "deb-src"
+    std::optional<std::string> m_options;  // Optional, e.g., "[arch=amd64]"
+    std::string m_uri;                     // URI, e.g., "http://deb.debian.org/debian"
+    std::string m_distribution;            // Distribution, e.g., "bookworm"
+    std::vector<std::string> m_components; // Components, e.g., "main", "contrib", "non-free"
+    std::filesystem::path m_source;        // File where this is saved
+
+public:
+    explicit DebianRepository(const std::string& line);
+
+    [[nodiscard]] std::string type() const;
+    [[nodiscard]] std::optional<std::string> options() const;
+    [[nodiscard]] std::optional<std::string> uri() const override;
+    [[nodiscard]] std::string distribution() const;
+    [[nodiscard]] std::vector<std::string> components() const;
+    [[nodiscard]] std::filesystem::path source() const override;
+
+    void type(std::string value);
+    void options(std::optional<std::string> value);
+    void uri(std::optional<std::string> value) override;
+    void distribution(std::string value);
+    void components(std::vector<std::string> value);
+    void source(const std::filesystem::path value) override;
+};
+
+class RPMRepository final : public IRepository {
+    std::string m_id;
+    bool m_enabled = true;
+    std::string m_name;
+    std::optional<std::string> m_baseurl;
+    std::optional<std::string> m_metalink;
+    bool m_gpgcheck = true;
+    std::string m_gpgkey;
+    std::filesystem::path m_source;
+    std::string m_group;
+public:
+    RPMRepository() = default;
+    ~RPMRepository() override = default;
+    RPMRepository(const RPMRepository&) = delete;
+    RPMRepository(RPMRepository&&) = default;
+    RPMRepository& operator=(const RPMRepository&) = delete;
+    RPMRepository& operator=(RPMRepository&&) = default;
+
+    [[nodiscard]] std::string id() const override { return m_id; };
+    [[nodiscard]] bool enabled() const override { return m_enabled; };
+    [[nodiscard]] std::string name() const override { return m_name; };
+    [[nodiscard]] std::optional<std::string> uri() const override { return baseurl(); };
+    [[nodiscard]] std::filesystem::path source() const override { return m_source; };
+    [[nodiscard]] std::string group() const { return m_group; };
+    [[nodiscard]] std::optional<std::string> baseurl() const { return m_baseurl; };
+    [[nodiscard]] std::optional<std::string> metalink() const { return m_metalink; };
+    [[nodiscard]] bool gpgcheck() const { return m_gpgcheck; };
+    [[nodiscard]] std::string gpgkey() const { return m_gpgkey; };
+
+    void id(std::string value) override { m_id = value; };
+    void enabled(bool enabled) override { m_enabled = enabled; };
+    void name(std::string name) override { m_name = name; };
+    void uri(std::optional<std::string> value) override { baseurl(value); };
+    void source(std::filesystem::path source) override { m_source = source; };
+    void group(std::string group) { m_group = std::move(group); };
+    void baseurl(std::optional<std::string> baseurl) { m_baseurl = std::move(baseurl); };
+    void metalink(std::optional<std::string> metalink) { m_metalink = std::move(metalink); };
+    void gpgcheck(bool gpgcheck) { m_gpgcheck = gpgcheck; };
+    void gpgkey(std::string gpgkey) { m_gpgkey = std::move(gpgkey); };
+};
+
+class RPMRepositoryParser final {
+public:
+    static void parse(std::istream& input, std::vector<RPMRepository>& output);
+    static void unparse(
+        const std::vector<RPMRepository>& repos, std::ostream& output);
+};
+static_assert(cloyster::concepts::IsParser<RPMRepositoryParser, std::vector<RPMRepository>>);
+
+class RPMRepositoryFile final {
+public:
+    ~RPMRepositoryFile() = default;
+    RPMRepositoryFile() = default;
+    RPMRepositoryFile(const RPMRepositoryFile&) = delete;
+    RPMRepositoryFile& operator=(const RPMRepositoryFile&) = delete;
+    RPMRepositoryFile(RPMRepositoryFile&&) = delete;
+    RPMRepositoryFile& operator=(RPMRepositoryFile&&) = delete;
+    void save();
+    void load();
+};
+static_assert(cloyster::concepts::IsSaveable<RPMRepositoryFile>);
+static_assert(cloyster::concepts::NotCopiableNotMoveable<RPMRepositoryFile>);
+
+}; // namespace cloyster::services::repos {
 
 namespace {
 
-// BUG: This is not the way to do this.
+using cloyster::services::repos::RPMRepository;
+using cloyster::services::repos::RPMRepositoryParser;
+
 constexpr std::string_view CLOYSTER_REPO_EL8 = {
 #include "cloysterhpc/repos/el8/cloyster.repo"
 
@@ -29,180 +141,45 @@ constexpr std::string_view CLOYSTER_REPO_EL8 = {
 
 constexpr std::string_view CLOYSTER_REPO_EL9 = {
 #include "cloysterhpc/repos/el9/cloyster.repo"
-
 };
 
 constexpr std::string_view CLOYSTER_REPO_EL10 = {
 #include "cloysterhpc/repos/el10/cloyster.repo"
-
 };
 
-using cloyster::services::repos::IsRepository;
+void loadRPMRepos(std::istream& data, auto& m_repos) {
+    constexpr auto parser = RPMRepositoryParser();
+    std::vector<RPMRepository> output;
 
-template <IsRepository Repository>
-[[deprecated("RepoManager refactoring")]]
-Repository loadSection(const std::filesystem::path& source,
-    inifile& file, const std::string& section)
-{
-    auto name = file.getValue(section, "name");
-    auto baseurl = file.getValue(section, "baseurl");
-    auto enabled = file.getValue(section, "enabled");
-    auto gpgcheck = file.getValue(section, "gpgcheck");
-    auto gpgkey = file.getValue(section, "gpgkey");
-
-    boost::trim(name);
-    boost::trim(baseurl);
-    boost::trim(enabled);
-    boost::trim(gpgcheck);
-    boost::trim(gpgkey);
-
-    LOG_DEBUG("found repo <{}> (id {}) at {}", name, section, source.string());
-
-    Repository r = { .id = section,
-        .enabled = (enabled == "1"),
-        .name = name,
-        .baseurl = baseurl,
-        .metalink = "",
-        .gpgcheck = (gpgcheck == "1"),
-        .gpgkey = gpgkey,
-        .source = source };
-
-    return r;
-}
-
-template <IsRepository Repository>
-[[deprecated("RepoManager refactoring")]]
-void writeSection(inifile& file, const Repository& repo)
-{
-    /*
-    std::string section = repo.id;
-
-    file.setValue(section, "name", repo.name);
-    file.setValue(section, "baseurl", repo.baseurl);
-    file.setValue(section, "enabled", repo.enabled ? "1" : "0");
-    file.setValue(section, "gpgcheck", repo.gpgcheck ? "1" : "0");
-    file.setValue(section, "gpgkey", repo.gpgkey);
-
-    LOG_INFO("writing repo <{}> (id {}) at {}", repo.name, section,
-        repo.source.string());
-    */
-}
-
-template <IsRepository Repository, cloyster::concepts::IsParser<Repository> Parser>
-void loadFromConf(const std::filesystem::path& source, std::vector<Repository>& out, const Parser& parser)
-{
-    std::ifstream input(source);
-    parser.parse(input, out);
-}
-
-
-} // anonymous namespace 
-
-namespace cloyster::services::repos {
-
-
-RepoManager::RepoManager(BaseRunner& runner, const OS& osinfo)
-    : m_runner(runner)
-    , m_os(osinfo)
-{
-}
-
-void RepoManager::loadSingleFile(const std::filesystem::path& source)
-{
-    LOG_DEBUG("New repo manager bootstraping");
-    constexpr auto parser = cloyster::services::repos::RPMRepositoryParser();
-    std::ifstream input(source);
-    // @FIXME: Fix parser dynamic dispatch!?
-    //parser.parse(input, m_repos);
-}
-
-void RepoManager::loadFiles(const std::filesystem::path& basedir)
-{
-    for (auto const& dir_entry :
-        std::filesystem::directory_iterator { basedir }) {
-        const auto& path = dir_entry.path();
-        if (path.extension() == ".repo") {
-            loadSingleFile(path);
-        }
-
-    }
-
-    std::vector<BaseRepository> cloyster_repos;
-
-    switch (m_os.getPackageType()) {
-    case OS::PackageType::RPM:
-        cloyster_repos = buildCloysterTree<RPMRepository>(basedir);
-        break;
-    case OS::PackageType::DEB:
-        throw std::logic_error("Not implemented deb packages");
-        break;
-    }
-    mergeWithCurrentList(std::move(cloyster_repos));
-
-    auto destparent
-        = std::filesystem::temp_directory_path() / "cloyster0";
-    auto destination = destparent / "yum.repos.d";
-    cloyster::createDirectory(destparent);
-    cloyster::createDirectory(destination);
-
-    configureEL();
-    configureXCAT(destination);
-
-    for (auto const& dir_entry :
-        std::filesystem::directory_iterator { destination }) {
-        const auto path = dir_entry.path();
-        if (path.extension() == ".repo") {
-            loadSingleFile(path);
-        }
+    parser.parse(data, output);
+    for (auto&& repo : output) {
+        m_repos.insert({repo.id(), std::make_shared<RPMRepository>(std::move(repo))});
     }
 }
 
-void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path)
-{
-    std::vector<BaseRepository> data;
-    //loadFromINI(path, file, data);
-    //mergeWithCurrentList(std::move(data));
-    // @TODO call loadFromConf
+// @TODO Make this a RPMRepositoryFile method
+void loadRPMRepos(const std::filesystem::path& source, auto& m_repos) {
+    std::ifstream data(source);
+    loadRPMRepos(data, m_repos);
 }
 
-void RepoManager::setEnableState(const std::string& id, bool value)
-{
-    for (auto& repo : m_repos) {
-        if (repo.id() == id) {
-            repo.enabled(value);
-            return;
-        }
-    }
-}
-
-void RepoManager::enable(const std::string& id) { setEnableState(id, true); }
-
-
-void RepoManager::enableMultiple(std::vector<std::string> ids)
-{
-    std::ranges::for_each(ids, [&](const auto& id) { this->enable(id); });
-}
-
-void RepoManager::disable(const std::string& id) { setEnableState(id, false); }
-
-static std::string buildPackageName(std::string stem)
+std::string buildPackageName(std::string stem)
 {
     return fmt::format("{}{}", cloyster::productName, stem);
 }
 
-static std::vector<std::string> getDependenciesEL(
-    const OS& os)
+std::vector<std::string> getDependenciesEL(const OS& osinfo)
 {
-    const auto platform = os.getPlatform();
+    const auto platform = osinfo.getPlatform();
     std::vector<std::string> dependencies;
 
-    std::size_t version = os.getMajorVersion();
+    std::size_t version = osinfo.getMajorVersion();
     std::string powertools = "powertools";
     if (platform == OS::Platform::el8) {
         powertools = "crb";
     }
 
-    switch (os.getDistro()) {
+    switch (osinfo.getDistro()) {
         case OS::Distro::AlmaLinux:
             dependencies
                 = { buildPackageName("-AlmaLinux-BaseOS"), powertools };
@@ -220,27 +197,203 @@ static std::vector<std::string> getDependenciesEL(
             break;
         default:
             throw std::runtime_error(fmt::format("Unsupported distribution: {}",
-                magic_enum::enum_name(os.getDistro())));
+                magic_enum::enum_name(osinfo.getDistro())));
     }
 
     return dependencies;
 }
 
+void writeSection(
+    KeyFile& file, const std::shared_ptr<const RPMRepository>& repo)
+{
+    std::string section = repo->id();
+
+    file.setString(section, "name", repo->name());
+    file.setString(section, "baseurl", repo->baseurl());
+    file.setString(section, "metalink", repo->metalink());
+    file.setString(section, "enabled", static_cast<std::string>(repo->enabled() ? "1" : "0"));
+    file.setString(section, "gpgcheck", static_cast<std::string>(repo->gpgcheck() ? "1" : "0"));
+    file.setString(section, "gpgkey", repo->gpgkey());
+
+    LOG_INFO("writing repo <{}> (id {}) at {}", repo->name(), section,
+        repo->source().string());
+}
+
+}; // anonymous namespace
+
+namespace cloyster::services::repos {
+
+void RPMRepositoryParser::parse(std::istream& input, std::vector<RPMRepository>& repositories) {
+    auto file = KeyFile(input);
+    auto reponames = file.getGroups();
+    repositories.reserve(reponames.size());
+
+    for (const auto& repogroup : reponames) {
+        auto name = file.getString(repogroup, "name");
+
+        if (name.empty()) {
+            throw std::runtime_error(std::format(
+                "Could not load repo name from repo '{}'",
+                repogroup));
+        }
+
+        auto metalink = file.getStringOpt(repogroup, "metalink");
+        auto baseurl = file.getStringOpt(repogroup, "baseurl");
+        auto enabled = file.getBoolean(repogroup, "enabled");
+        auto gpgcheck = file.getBoolean(repogroup, "gpgcheck");
+        auto gpgkey = file.getString(repogroup, "gpgkey");
+
+        RPMRepository repo;
+        repo.group(repogroup);
+        repo.name(name);
+        repo.metalink(metalink);
+        repo.baseurl(baseurl);
+        repo.enabled(enabled);
+        repo.gpgcheck(gpgcheck);
+        repo.gpgkey(gpgkey);
+        repositories.emplace_back(std::move(repo));
+    }
+}
+
+void RPMRepositoryParser::unparse(const std::vector<RPMRepository>& repositories, std::ostream& output) {
+    std::istringstream input("");
+    auto file = cloyster::services::files::KeyFile(input);
+    for (const auto& repo : repositories) {
+        file.setString(repo.group(), "name", repo.name());
+        file.setBoolean(repo.group(), "enabled", repo.enabled());
+        file.setBoolean(repo.group(), "gpgcheck", repo.gpgcheck());
+        file.setString(repo.group(), "gpgkey", repo.gpgkey());
+        file.setString(repo.group(), "metalink", repo.metalink());
+        file.setString(repo.group(), "baseurl", repo.metalink());
+    }
+
+    output << file.toData() << '\n';
+}
+
+RepoManager::RepoManager(const OS& osinfo)
+    : m_os(osinfo) {}
+
+void RepoManager::initializeDefaultRepositories()
+{
+    switch (m_os.getPackageType()) {
+        case OS::PackageType::RPM:
+            loadFiles("/etc/yum.repos.d");
+            break;
+        case OS::PackageType::DEB:
+            throw std::logic_error("DEB packages not implemented");
+            break;
+    }
+}
+
+void RepoManager::loadFiles(const std::filesystem::path& basedir)
+{
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { basedir }) {
+        const auto& path = dir_entry.path();
+        if (path.extension() == ".repo") {
+            loadSingleFile(path);
+        }
+
+    }
+
+    RepoManager::Repositories cloysterRepos;
+
+    switch (m_os.getPackageType()) {
+    case OS::PackageType::RPM:
+        cloysterRepos = getDefaultReposFromDisk(basedir);
+        break;
+    case OS::PackageType::DEB:
+        throw std::logic_error("Not implemented deb packages");
+        break;
+    }
+    mergeWithCurrentList(std::move(cloysterRepos));
+
+    auto destparent
+        = std::filesystem::temp_directory_path() / "cloyster0";
+
+    auto destination = destparent / "yum.repos.d";
+    // @FIXME: Have a function to create folders recursively
+    cloyster::createDirectory(destparent);
+    cloyster::createDirectory(destination);
+
+    configureEL();
+    configureXCAT(destination);
+}
+
+void RepoManager::loadSingleFile(const std::filesystem::path& source)
+{
+    LOG_DEBUG("New repo manager bootstraping");
+    switch (m_os.getPackageType()) {
+        case OS::PackageType::RPM:
+            loadRPMRepos(source, m_repos);
+            break;
+        case OS::PackageType::DEB:
+            throw std::logic_error("DEB packages Not implemented");
+            break;
+    };
+}
+
+void RepoManager::enable(const std::string& repoid)
+{ 
+    m_repos.at(repoid)->enabled(true);
+}
+
+void RepoManager::enable(const std::vector<std::string>& repoids)
+{
+    std::ranges::for_each(repoids, [&](const auto& repoid) { enable(repoid); });
+}
+
+void RepoManager::disable(const std::string& repoid)
+{
+    m_repos.at(repoid)->enabled(false);
+}
+
+void RepoManager::disable(const std::vector<std::string>& repoids)
+{ 
+    std::ranges::for_each(repoids, [&](const auto& repoid) { disable(repoid); });
+}
+
+void RepoManager::install(const std::filesystem::path& path)
+{
+    loadSingleFile(path);
+}
+
+void RepoManager::install(const std::vector<std::filesystem::path>& paths)
+{
+    for (const auto& repo : paths) {
+        install(repo);
+    }
+}
+
+/// Private API
+
+std::vector<std::shared_ptr<const IRepository>> RepoManager::listRepos() const
+{
+    return m_repos
+        | std::views::transform([](const auto& repopair) {
+            return repopair.second;
+        })
+        | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
+}
+
+
+
 void RepoManager::configureEL()
 {
     std::vector<std::string> deps = getDependenciesEL(m_os);
 
-    std::for_each(
-        deps.begin(), deps.end(), [this](const auto& repo) {
-            this->enable(repo);
+    std::ranges::for_each(deps,[&](const auto& repo) {
+        enable(repo);
     });
 }
 
-void RepoManager::commitStatus()
+[[deprecated("RepoManager refactoring fix this!")]]
+void RepoManager::saveToDisk()
 {
     // @TODO IS THIS CORRECT? BaseRunner should be upcasted here?
-    // is m_runner dynamic dipatching
-    m_runner.executeCommand("dnf -y install initscripts");
+    // is runner dynamic dipatching: YES! It is dyn dispatching
+    auto runner = getRunner();
+    runner->executeCommand("dnf -y install initscripts");
     createFileFor("/etc/yum.repos.d/cloyster.repo");
     auto tmpdir = std::filesystem::temp_directory_path() / "cloyster0/yum.repos.d";
 
@@ -249,78 +402,68 @@ void RepoManager::commitStatus()
         cloyster::copyFile(dir_entry, "/etc/yum.repos.d");
     }
 
-    std::vector<std::string> to_enable;
-    std::vector<std::string> to_disable;
+    std::vector<std::string> toEnable;
+    std::vector<std::string> toDisable;
 
-    for (const auto& repo : m_repos) {
-        if (repo.enabled()) {
-            to_enable.push_back(repo.id());
+    for (const auto& [_, repo] : m_repos) {
+        if (repo->enabled()) {
+            toEnable.push_back(repo->id());
         } else {
-            to_disable.push_back(repo.id());
+            toDisable.push_back(repo->id());
         }
     }
 
-    if (!to_enable.empty()) {
-        m_runner.executeCommand(
+    if (!toEnable.empty()) {
+        runner->executeCommand(
             fmt::format("sudo dnf config-manager --set-enabled {}",
-                fmt::join(to_enable, ",")));
+                fmt::join(toEnable, ",")));
     }
 
-    if (!to_disable.empty()) {
-        m_runner.executeCommand(
+    if (!toDisable.empty()) {
+        runner->executeCommand(
             fmt::format("sudo dnf config-manager --set-disabled {}",
-                fmt::join(to_disable, ",")));
+                fmt::join(toDisable, ",")));
     }
 }
 
-template <IsRepository Repository>
-std::vector<BaseRepository> RepoManager::buildCloysterTree(
+RepoManager::Repositories RepoManager::getDefaultReposFromDisk(
     const std::filesystem::path& basedir)
 {
+    RepoManager::Repositories cloyster_repos;
 
-    std::vector<BaseRepository> cloyster_repos;
-    inifile file;
-
-    // BUG: Implement a better way to handle this.
     if (cloyster::customRepofilePath.empty()) {
         switch (m_os.getPlatform()) {
             case OS::Platform::el8:
-                file.loadData(fmt::format(CLOYSTER_REPO_EL8, cloyster::productName));
+                loadRPMRepos(fmt::format(CLOYSTER_REPO_EL8, cloyster::productName), cloyster_repos);
                 break;
             case OS::Platform::el9:
-                file.loadData(fmt::format(CLOYSTER_REPO_EL9, cloyster::productName));
+                loadRPMRepos(fmt::format(CLOYSTER_REPO_EL9, cloyster::productName), cloyster_repos);
                 break;
             case OS::Platform::el10:
-                file.loadData(fmt::format(CLOYSTER_REPO_EL10, cloyster::productName));
+                loadRPMRepos(fmt::format(CLOYSTER_REPO_EL10, cloyster::productName), cloyster_repos);
                 break;
             default:
                 throw std::runtime_error(fmt::format("Unsupported platform {}",
                     magic_enum::enum_name(m_os.getPlatform())));
         }
-
     } else {
         LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath);
-        file.loadFile(cloyster::customRepofilePath);
+        loadRPMRepos(cloyster::customRepofilePath, cloyster_repos);
     }
 
-
+    auto outpath = basedir / "cloyster.repo";
     switch (m_os.getPackageType()) {
         case OS::PackageType::RPM:
-            {
-                const auto parser = RPMRepositoryParser();
-                auto outpath = basedir / "cloyster.repo";
-                // @FIXME: FIx call to load conf
-                // loadFromConf<RPMRepository, RPMRepositoryParser>(outpath, cloyster_repos, parser);
-            }
+            loadRPMRepos(outpath, cloyster_repos);
             break;
         case OS::PackageType::DEB:
             throw std::logic_error("Not implemented");
             break;
     }
 
-
     return cloyster_repos;
 }
+
 
 void RepoManager::createFileFor(std::filesystem::path path)
 {
@@ -334,27 +477,33 @@ void RepoManager::createFileFor(std::filesystem::path path)
         return;
     }
 
-    inifile file;
 
     auto filtered = m_repos | std::views::filter([&path](const auto& r) {
-        return path == r.source();
+        return path == r.second->source();
     });
 
-    for (const auto& repo : filtered) {
-        writeSection(file, repo);
-    }
+    for (const auto& [_, repo] : filtered) {
+        files::KeyFile file(repo->source());
 
-    file.saveFile(path);
+        switch (m_os.getPackageType()) {
+            case OS::PackageType::RPM:
+                writeSection(file, dynamic_pointer_cast<const RPMRepository>(repo));
+                break;
+            case OS::PackageType::DEB:
+                throw std::logic_error("Not implemented");
+                break;
+            default:
+                throw std::runtime_error("Unknown package type");
+        }
+
+        file.save();
+    }
 }
 
-template <IsRepository Repository>
-void RepoManager::mergeWithCurrentList(std::vector<Repository>&& repo) {
-    for (auto&& rep : repo) {
-        if (std::find_if(m_repos.begin(), m_repos.end(),
-                [&](auto& v) { return v.id() == rep.id(); }) == m_repos.end()) {
-            // @FIXME: No constructor 
-            // m_repos.push_back(rep);
-        }
+void RepoManager::mergeWithCurrentList(Repositories&& repos)
+{
+    for (auto&& [key, repo] : repos) {
+        m_repos.insert({key, repo});
     }
 }
 
@@ -372,147 +521,50 @@ static void createGPGKey(
 }
 
 
-void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
+// @TODO: Shouldn't this be at XCAT class ? 
+void RepoManager::configureXCAT(const std::filesystem::path& repofileDest)
 {
     LOG_INFO("Setting up XCAT repositories");
+    auto runner = cloyster::getRunner();
 
     // TODO: we need to download these files in a sort of temporary directory
-    m_runner.downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
+    runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
                           "core-snap/xcat-core.repo",
-        repofile_dest.string());
+        repofileDest.string());
 
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
-            m_runner.downloadFile(
+            runner->downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh8/x86_64/xcat-dep.repo",
-                repofile_dest.string());
+                repofileDest.string());
             break;
         case OS::Platform::el9:
 #ifndef NDEBUG
         // Hack to test EL10 only in debug mode
         case OS::Platform::el10:
 #endif
-            m_runner.downloadFile(
+            runner->downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
                 "rh9/x86_64/xcat-dep.repo",
-                repofile_dest.string());
+                repofileDest.string());
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
+
+    }
+
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { repofileDest }) {
+        const auto& path = dir_entry.path();
+        if (path.extension() == ".repo") {
+            loadSingleFile(path);
+        }
     }
 }
 
-std::vector<std::string> RepoManager::getxCATOSImageRepos() const
-{
-    const auto osArch = magic_enum::enum_name(m_os.getArch());
-    const auto osMajorVersion = m_os.getMajorVersion();
-    const auto osVersion = m_os.getVersion();
+}; // namespace cloyster::services::repos
 
-    std::vector<std::string> repos;
-
-    /* BUG: This is a very bad implementation; it should find out the latest
-     * version and not be hardcoded. Also the directory formation does not work
-     * that way. We should support finding out the Repository paths by parsing
-     * /etc/yum.repos.d
-     */
-    std::vector<std::string> latestEL = { "8.10", "9.5" };
-
-    std::string crb = "CRB";
-    std::string rockyBranch
-        = "linux"; // To check if Rocky mirror directory points to 'linux'
-                   // (latest version) or 'vault'
-
-    // BUG: Really? A string?
-    std::string OpenHPCVersion = "3";
-
-    if (osMajorVersion < 9) {
-        crb = "PowerTools";
-        OpenHPCVersion = "2";
-    }
-
-    if (std::find(latestEL.begin(), latestEL.end(), osVersion)
-        == latestEL.end()) {
-        rockyBranch = "vault";
-    }
-
-    switch (m_os.getDistro()) {
-        case OS::Distro::RHEL:
-            repos.emplace_back(
-                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/appstream/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/codeready-builder/os");
-            break;
-        case OS::Distro::OL:
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
-                            "baseos/latest/{}",
-                    osMajorVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
-                osMajorVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
-                                           "oracle/{}/codeready/builder/{}",
-                osMajorVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
-                osMajorVersion, osArch));
-            break;
-        case OS::Distro::Rocky:
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
-                rockyBranch, osVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
-                rockyBranch, osVersion, crb, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
-                rockyBranch, osVersion, osArch));
-            break;
-        case OS::Distro::AlmaLinux:
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
-                            "almalinux/{}/BaseOS/{}/os",
-                    osVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
-                                           "almalinux/almalinux/{}/{}/{}/os",
-                osVersion, crb, osArch));
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
-                            "almalinux/{}/AppStream/{}/os",
-                    osVersion, osArch));
-            break;
-    }
-
-    repos.emplace_back(
-        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
-            osMajorVersion, osArch));
-
-    // Modular repositories are only available on EL8
-    if (osMajorVersion == 8) {
-        repos.emplace_back(
-            fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
-                osMajorVersion, osArch));
-    }
-
-    repos.emplace_back(
-        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
-            OpenHPCVersion, osMajorVersion));
-    repos.emplace_back(fmt::format(
-        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
-        OpenHPCVersion, osMajorVersion));
-
-    return repos;
-}
-
-const std::vector<BaseRepository>& RepoManager::listRepos() const
-{
-    return m_repos;
-}
-
-} // namespace cloyster::services::repos
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

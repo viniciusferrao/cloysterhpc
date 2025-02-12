@@ -173,4 +173,25 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
 } // namespace cloyster
 
+// @FIXME: Move functions to cloyster::utils namespace and this file
+//   to utils.h/utils.cpp
+/**
+ * @brief Generic functions. Be very judicious on what you put here. Is it really
+ * generic?
+ */
+namespace cloyster::utils {
+
+
+/**
+ * @brief Returns true if [vec] contains [val]
+ */
+template <typename T>
+bool isIn(const std::vector<T>& vec, const T& val);
+
+// Special case for const char* strings, delete this and 
+// get an link error with a type bigger than Texas
+bool isIn(const std::vector<std::string>& vec, const char* val);
+
+};
+
 #endif // CLOYSTERHPC_FUNCTIONS_H_

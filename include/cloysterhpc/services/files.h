@@ -60,9 +60,13 @@ public:
     [[nodiscard]] std::string getString(const std::string& group, const std::string& key) const;
     [[nodiscard]] bool getBoolean(const std::string& group, const std::string& key) const;
     [[nodiscard]] std::optional<std::string> getStringOpt(const std::string& group, const std::string& key) const;
+    [[nodiscard]] std::string toData() const;
 
     void setString(const std::string& group, const std::string& key, const std::string& value);
     void setString(const std::string& group, const std::string& key, const std::optional<std::string>& value);
+    template <typename Stringable>
+    requires std::convertible_to<Stringable, std::string>
+    void setString(const Stringable& group, const Stringable& key, const Stringable& value);
     void setBoolean(const std::string& group, const std::string& key, const bool value);
     
     void save();

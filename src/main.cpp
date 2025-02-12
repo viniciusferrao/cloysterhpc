@@ -176,7 +176,7 @@ int main(int argc, const char** argv)
         }
 
         std::unique_ptr<Execution> executionEngine
-            = std::make_unique<cloyster::services::Shell>(model);
+            = std::make_unique<cloyster::services::Shell>(std::move(model));
 
         executionEngine->install();
 

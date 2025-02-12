@@ -16,7 +16,7 @@ concept IsMoveable
     = std::is_move_constructible_v<T> && std::is_move_assignable_v<T>;
 
 template <typename T>
-concept NotCopiableMoveable = !IsMoveable<T> && !IsCopyable<T>;
+concept NotCopiableNotMoveable = !IsMoveable<T> && !IsCopyable<T>;
 /**
  * @brief IsParser<P, T> means: P can parse and unparse Ts from streams. The
  * parsers are allowed to throw exceptions

@@ -22,7 +22,6 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/repos.h>
-#include <cloysterhpc/services/repofile.h>
 #include <cloysterhpc/services/timezone.h>
 
 
