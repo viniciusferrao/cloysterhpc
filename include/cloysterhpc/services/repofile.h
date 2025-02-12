@@ -8,131 +8,74 @@
 
 #include <concepts>
 #include <expected>
+#include <filesystem>
 #include <istream>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
 
-// #include <glibmm/fileutils.h>
-// #include <glibmm/keyfile.h>
+#include <cloysterhpc/repos.h> // @TODO: Remove this header
+#include <cloysterhpc/concepts.h>
 
-// #include <cloysterhpc/services/repo.h>
-
-namespace cloysterhpc {
-// @TODO: Move this to its own file
-template <typename T>
-concept NotCopyable = !std::is_copy_constructible_v<T> && !std::is_copy_assignable_v<T>;
-
-template <typename T>
-concept NotMoveable = !std::is_move_constructible_v<T> && !std::is_move_assignable_v<T>;
-
-template <typename T>
-concept NotCopiableMoveable = NotMoveable<T> && NotCopyable<T>;
-/**
- * @brief Parser<P, T> means: P can parse and unparse Ts from streams. The
- * parsers are allowed to throw exceptions
- */
-template<typename Parser_, typename T>
-concept Parser =
-    requires(Parser_ parser, std::istream& input, std::ostream& output, const T& parsed)
-{
-    { parser.parse(input) } -> std::same_as<T>;
-    { parser.unparse(parsed, output) } -> std::same_as<void>;
-};
-
-// @TODO: Move this to its own file
-/**
- * @brief ParserNoExc<P, T, E> means: P can parse and unparse Ts from streams. The
- * parsers are not allowed to throw exceptions, it must return errors of type E
- */
-template<typename Parser_, typename T, typename E>
-concept ParserNoExc =
-    requires(Parser_ parser, std::istream& input, std::ostream& output, const T& parsed)
-{
-    { parser.parse(input) } noexcept -> std::same_as<std::expected<T, E>>;
-    { parser.unparse(parsed, output) } noexcept -> std::same_as<std::expected<void, E>>;
-};
-
-// @TODO: Move this to its own file
-/**
- * @brief Stored<T> means that T represends data in a disk that need to be
- * saved and restored after change.
- */
-template<typename File_>
-concept Saveable =
-    requires(File_ file)
-{
-    { file.load() } -> std::same_as<void>;
-    { file.save() } -> std::same_as<void>;
-};
-
+namespace cloyster {
 /**
  * @brief Represents a generic repository
+ * @TODO MERGE THIS WITH cloyterhpc/repos.h
  */
-template<typename T>
-concept Repository = requires(T repo, bool flag, const std::string& url) {
-    { repo.name() } -> std::same_as<const std::string&>;
-    { repo.enable(flag) } -> std::same_as<void>;
-    { repo.enabled() } -> std::same_as<bool>;
-    { repo.base_url(url) } -> std::same_as<void>;
-    { repo.base_url() } -> std::same_as<std::optional<const std::string&>>;
-};
 
-class RPMRepo final {
-    std::string m_group;
-    std::string m_name;
-    std::optional<std::string> m_base_url;
-    std::optional<std::string> m_metalink;
-    bool m_enabled = false;
-    bool m_gpgcheck = false;
-    std::string m_gpgkey;
-
-public:
-    [[nodiscard]] const std::string& name() const;
-    void enable(bool flag);
-    bool enabled();
-    void base_url(std::string base_url);
-    [[nodiscard]] std::optional<const std::string&> base_url() const;
+/*
+ * @TODO MERGE THIS WITH cloyterhpc/repos.h
+ */
+struct RPMRepository final {
+    std::string id;
+    bool enabled = true;
+    std::string name;
+    std::optional<std::string> baseurl;
+    std::optional<std::string> metalink;
+    bool gpgcheck = true;
+    std::string gpgkey;
+    std::filesystem::path source;
+    std::string group;
 };
-//static_assert(Repository<RPMRepo>);
+// static_assert(Repository<RPMRepository>);
+static_assert(IsRepository<RPMRepository>);
 
 // @TODO: Move this to its own file
 /**
- * @brief Parse/Unparse EL repositories
+ * @brief Parse/Unparse RPM repositories
  */
-class ELRepoParser final {
+class RPMRepositoryParser final {
 public:
-    static std::vector<RPMRepo> parse(std::istream& input);
+    static void parse(std::istream& input, std::vector<RPMRepository>& output);
     static void unparse(
-        const std::vector<RPMRepo>& repos, std::ostream& output);
+        const std::vector<RPMRepository>& repos, std::ostream& output);
 };
-static_assert(Parser<ELRepoParser, std::vector<RPMRepo>>);
+static_assert(cloyster::concepts::Parser<RPMRepositoryParser, std::vector<RPMRepository>>);
 
 // @TODO: Move this to its own file
 /**
  * @brief Represents
  */
-class RPMRepoFile final {
+class RPMRepositoryFile final {
 public:
-    ~RPMRepoFile() = default;
-    RPMRepoFile() = default;
-    RPMRepoFile(const RPMRepoFile&) = delete;
-    RPMRepoFile& operator=(const RPMRepoFile&) = delete;
-    RPMRepoFile(RPMRepoFile&&) = delete;
-    RPMRepoFile& operator=(RPMRepoFile&&) = delete;
+    ~RPMRepositoryFile() = default;
+    RPMRepositoryFile() = default;
+    RPMRepositoryFile(const RPMRepositoryFile&) = delete;
+    RPMRepositoryFile& operator=(const RPMRepositoryFile&) = delete;
+    RPMRepositoryFile(RPMRepositoryFile&&) = delete;
+    RPMRepositoryFile& operator=(RPMRepositoryFile&&) = delete;
     void save();
     void load();
 };
-static_assert(Saveable<RPMRepoFile>);
-static_assert(NotCopiableMoveable<RPMRepoFile>);
+static_assert(cloyster::concepts::IsSaveable<RPMRepositoryFile>);
+static_assert(cloyster::concepts::NotCopiableMoveable<RPMRepositoryFile>);
 
 // @TODO WIP, rename to RepoManager and replace the old RepoManager
 /**
  * @brief Enable/disable, install/uninstall repositories to/from the filesystem
  */
-template <typename Repo, typename RepoFile>
-class NewRepoManager  final {
+template <typename Repo, typename RepoFile> class NewRepoManager final {
 public:
     ~NewRepoManager() = default;
     NewRepoManager() = default;
@@ -149,7 +92,6 @@ public:
     const std::vector<Repo>& listRepos() const;
 };
 
-
-};
+} // namespace cloyster;
 
 #endif

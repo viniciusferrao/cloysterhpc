@@ -12,12 +12,27 @@
 #include <cloysterhpc/os.h>
 #include <cloysterhpc/runner.h>
 
+#include <concepts>
 #include <filesystem>
+#include <optional>
 #include <ranges>
 #include <string>
 
 namespace cloyster {
 extern std::string customRepofilePath;
+};
+
+template <typename T>
+concept IsRepository = requires(T repo)
+{
+    { repo.id } -> std::convertible_to<std::string>;
+    { repo.enabled } -> std::convertible_to<bool>;
+    { repo.name } -> std::convertible_to<std::string>;
+    { repo.baseurl } -> std::convertible_to<std::optional<std::string>>;
+    { repo.metalink } -> std::convertible_to<std::optional<std::string>>;
+    { repo.gpgcheck } -> std::convertible_to<bool>;
+    { repo.gpgkey } -> std::convertible_to<std::string>;
+    { repo.source } -> std::convertible_to<std::filesystem::path>;
 };
 
 struct repository {
@@ -30,8 +45,9 @@ struct repository {
     std::string gpgkey;
     std::filesystem::path source;
 };
+static_assert(IsRepository<repository>);
 
-template <typename Repository, typename Runner>
+template <IsRepository Repository, typename Runner>
 class /* [[deprecated("refactoring")]] */ RepoManager {
 public:
     RepoManager(Runner& runner, const OS& osinfo);

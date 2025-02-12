@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <optional>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include <glibmm/fileutils.h>
@@ -20,7 +21,7 @@
  * /etc/yum.repos.d/
  * @note This class is WIP, it was added as a PoC of glibmm integration
  */
-class repo {
+class [[deprecated("RepoManager refactoring")]] repo {
 
 public:
     std::string_view m_name {};
@@ -46,13 +47,11 @@ public:
 
     std::string_view name() const;
     void name(std::string_view name);
-
-    static void load_repository(std::filesystem::path path);
 };
 
-class repository_exception : public std::runtime_error {
+class RepositoryException : public std::runtime_error {
 public:
-    explicit repository_exception(const std::string& msg)
+    explicit RepositoryException(const std::string& msg)
         : std::runtime_error(msg)
     {
     }
