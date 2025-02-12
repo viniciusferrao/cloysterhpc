@@ -11,9 +11,11 @@
 
 #include <cloysterhpc/connection.h>
 #include <cloysterhpc/network.h>
-#include <cloysterhpc/os.h>
-#include <cloysterhpc/server.h>
+#include <cloysterhpc/models/os.h>
+#include <cloysterhpc/models/server.h>
 
+
+namespace cloyster::models {
 /**
  * @class Node
  * @brief A class representing a node in a server cluster.
@@ -58,5 +60,7 @@ public:
     void setNodeRootPassword(
         const std::optional<std::string>& nodeRootPassword);
 };
+
+}; // namespace cloyster::models {
 
 #endif // CLOYSTERHPC_NODE_H_

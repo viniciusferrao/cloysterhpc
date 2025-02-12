@@ -13,6 +13,8 @@
 
 #include <algorithm>
 
+namespace cloyster::presenter {
+
 bool NetworkCreator::checkIfProfileExists(Network::Profile profile)
 {
     namespace ranges = std::ranges;
@@ -193,4 +195,6 @@ void PresenterNetwork::createNetwork(
     // Domain Data
     ncd.name = networkDetails[i++].second;
     ncd.domains = nameservers;
+}
+
 }

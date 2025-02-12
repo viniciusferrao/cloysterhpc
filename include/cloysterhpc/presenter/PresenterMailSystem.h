@@ -8,6 +8,7 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
+namespace cloyster::presenter {
 class PresenterMailSystem : public Presenter {
 private:
     struct Messages {
@@ -52,5 +53,7 @@ public:
     PresenterMailSystem(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
+
+}; 
 
 #endif // CLOYSTERHPC_PRESENTERMAILSYSTEM_H_

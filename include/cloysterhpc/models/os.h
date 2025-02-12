@@ -13,6 +13,8 @@
 #include <string>
 #include <variant>
 
+
+namespace cloyster::models {
 /**
  * @class OS
  * @brief A class representing an Operating System (OS).
@@ -48,6 +50,12 @@ public:
      * @brief Enumeration representing different distributions of the OS.
      */
     enum class Distro { RHEL, OL, Rocky, AlmaLinux };
+
+    /**
+     * @enum PackageManager
+     * @brief What 
+     */
+    enum class PackageType { RPM, DEB };
 
 private:
     std::variant<std::monostate, Arch> m_arch;
@@ -124,6 +132,19 @@ public:
 
     gsl::not_null<package_manager*> packageManager() const;
 
+    [[nodiscard]] constexpr PackageType getPackageType() const {
+        switch (getDistro()) {
+            case Distro::RHEL:
+            case Distro::OL:
+            case Distro::Rocky:
+            case Distro::AlmaLinux: 
+                return PackageType::RPM;
+            default:
+                throw std::runtime_error("Unknonw distro type");
+        };
+    }
+
+
 #ifndef NDEBUG
     /**
      * @brief Prints the data of the OS.
@@ -134,4 +155,5 @@ public:
 #endif
 };
 
+}; // namespace cloyster::models
 #endif // CLOYSTERHPC_OS_H_

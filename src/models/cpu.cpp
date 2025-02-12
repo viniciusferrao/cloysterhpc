@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/cpu.h>
+#include <stdexcept>
+
+#include <cloysterhpc/models/cpu.h>
+
+namespace cloyster::models {
 
 CPU::CPU()
     : m_sockets(0)
@@ -65,4 +69,6 @@ void CPU::setCoresPerSocket(std::size_t coresPerSocket)
 void CPU::setThreadsPerCore(size_t threadsPerCore)
 {
     m_threadsPerCore = threadsPerCore;
+}
+
 }

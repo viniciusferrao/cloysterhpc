@@ -10,10 +10,11 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
 
 using cloyster::runCommand;
+using cloyster::services::BaseRunner;
 
 Postfix::Postfix(
     std::shared_ptr<MessageBus> bus, BaseRunner& runner, Profile profile)
@@ -291,6 +292,8 @@ void Postfix::configureRelay(const std::filesystem::path& basedir)
 #include <cloysterhpc/tests.h>
 #include <testing/test_message_bus.h>
 
+#ifdef BUILD_TESTING
+
 TEST_SUITE("Test repository file read and write")
 {
     TEST_CASE(
@@ -355,3 +358,5 @@ TEST_SUITE("Test repository file read and write")
             == 1);
     }
 }
+
+#endif

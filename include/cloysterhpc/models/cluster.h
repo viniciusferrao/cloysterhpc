@@ -13,19 +13,18 @@
 
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/diskImage.h>
-#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/models/headnode.h>
+#include <cloysterhpc/models/node.h>
+#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/network.h>
-#include <cloysterhpc/node.h>
 #include <cloysterhpc/ofed.h>
-#include <cloysterhpc/queuesystem/pbs.h>
-#include <cloysterhpc/queuesystem/slurm.h>
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/locale.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/repofile.h>
 #include <cloysterhpc/services/timezone.h>
 
-// @TODO: Shouldn't Cluster be below cloyster namespace?
 
 /**
  * @class Cluster
@@ -35,13 +34,22 @@
  * environment, including headnode, nodes, networks, provisioner, timezone,
  * locale, and more.
  */
+
+namespace cloyster::models {
+
+/**
+ * @brief Represents the cluster state and configuration
+ */
 class Cluster {
 public:
     /**
      * @enum SELinuxMode
      * @brief Enumeration for SELinux modes.
+     *
      */
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
+    
+    // @TODO: This class should not know about DBusClient
 
     /**
      * @enum Provisioner
@@ -73,9 +81,6 @@ private:
 
     bool m_updateSystem { false };
     DiskImage m_diskImage;
-
-    // Relace repository with generic repository
-    std::optional<RepoManager<repository, BaseRunner>> m_repos = std::nullopt;
 
 public:
     Cluster();
@@ -186,7 +191,7 @@ public:
     void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
-    void setMailSystem(Postfix::Profile profile, std::shared_ptr<BaseRunner> runner);
+    void setMailSystem(Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
 
     const std::filesystem::path& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);
@@ -256,5 +261,7 @@ public:
     address nodeStartIP;
     std::string nodeRootPassword;
 };
+
+}; // namespace cloyster::models
 
 #endif // CLOYSTERHPC_CLUSTER_H_

@@ -3,15 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstdlib> // setenv / getenv
+
+#include <fmt/format.h>
+
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/execution.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
-#include <cstdlib> // setenv / getenv
-#include <fmt/format.h>
+
+namespace cloyster::services {
+
+using cloyster::models::Node;
 
 XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
     : m_cluster(cluster)
@@ -256,7 +263,6 @@ void XCAT::generateSynclistsFile()
 void XCAT::configureOSImageDefinition()
 {
     // @TODO Fix this after finishing the repository refactoring
-    using RepoManager = RepoManager<repository, Runner>;
     Runner r;
     r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
                                  "/install/custom/netboot/compute.otherpkglist",
@@ -272,7 +278,7 @@ void XCAT::configureOSImageDefinition()
 
     /* Add external repositories to otherpkgdir */
 
-    RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
+    repos::RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
     std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
 
     r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
@@ -283,7 +289,7 @@ void XCAT::customizeImage()
 {
     // Permission fixes for munge
     if (m_cluster->getQueueSystem().value()->getKind()
-        == QueueSystem::Kind::SLURM) {
+        == models::QueueSystem::Kind::SLURM) {
         // @TODO This is using the Runner above and cloyster::runCommand here
         //   choose only one!
         cloyster::runCommand(
@@ -561,3 +567,5 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     chroot += "/compute/rootimg";
     m_stateless.chroot = chroot;
 }
+
+};

@@ -19,6 +19,8 @@
 
 namespace fs = std::filesystem;
 
+namespace cloyster::presenter {
+
 std::string PresenterNodesOperationalSystem::getDownloadURL(
     OS::Distro distro, PresenterNodesVersionCombo version)
 {
@@ -297,3 +299,5 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             fmt::format("{}/{}", isoDirectoryPath.data()->second, selectedIso));
     }
 }
+
+};

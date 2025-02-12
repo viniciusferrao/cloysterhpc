@@ -3,34 +3,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/answerfile.h>
-#include <cloysterhpc/cloyster.h>
-#include <cloysterhpc/cluster.h>
-#include <cloysterhpc/functions.h>
-#include <cloysterhpc/headnode.h>
-#include <cloysterhpc/inifile.h>
-#include <cloysterhpc/runner.h>
-#include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/xcat.h>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <expected>
-#include <iostream>
 #include <memory>
-#include <optional>
-#include <regex>
-#include <string>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
 #endif
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+#include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/inifile.h>
+#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/models/answerfile.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/headnode.h>
+#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/slurm.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/xcat.h>
+
+
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
+
+using cloyster::services::BaseRunner;
+using cloyster::services::DryRunner;
+using cloyster::services::Runner;
 
 static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
 {
@@ -40,6 +44,8 @@ static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
         return std::make_unique<Runner>();
     }
 }
+
+namespace cloyster::models {
 
 Cluster::Cluster() :
     m_systemdBus(std::make_shared<DBusClient>(
@@ -935,3 +941,5 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     nodeStartIP = answerfile.nodes.generic->start_ip.value();
     nodeRootPassword = answerfile.nodes.generic->root_password.value();
 }
+
+ }; // namespace cloyster::models {

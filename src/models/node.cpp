@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/node.h>
+#include <cloysterhpc/models/node.h>
+
+namespace cloyster::models {
 
 Node::Node(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections, std::optional<BMC> bmc)
@@ -45,4 +47,6 @@ void Node::setNodeRootPassword(
     const std::optional<std::string>& nodeRootPassword)
 {
     m_node_root_password = nodeRootPassword;
+}
+
 }

@@ -1,4 +1,5 @@
 #include <ranges>
+#include <stdexcept>
 #include <utility>
 
 #include <glibmm/fileutils.h>
@@ -18,6 +19,30 @@ struct KeyFile::Impl {
         , m_keyfile(std::move(keyfile))
     {
     };
+
+    void safeToFile(const std::filesystem::path& path) {
+        try {
+            m_keyfile->save_to_file(path);
+        } catch (std::runtime_error& e) {
+            throw FileException(e.what());
+        }
+    }
+
+    void loadFromFile(const std::filesystem::path& path) {
+        try {
+            m_keyfile->load_from_file(path);
+        } catch (std::runtime_error& e) {
+            throw FileException(e.what());
+        }
+    }
+
+    void loadFromData(const std::string& data) {
+        try {
+            m_keyfile->load_from_data(data);
+        } catch (std::runtime_error& e) {
+            throw FileException(e.what());
+        }
+    }
 };
 
 KeyFile::KeyFile(KeyFile::Impl&& impl)
@@ -28,7 +53,7 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 KeyFile::KeyFile(const std::filesystem::path& path)
 {
     m_impl = std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path);
-    m_impl->m_keyfile->load_from_file(path);
+    m_impl->loadFromFile(path);
     m_impl->m_path = path;
 }
 
@@ -38,7 +63,7 @@ KeyFile::KeyFile(std::istream& istream)
     std::istreambuf_iterator<char> begin(istream);
     std::istreambuf_iterator<char> end;
     std::string data(begin, end);
-    m_impl->m_keyfile->load_from_data(data);
+    m_impl->loadFromData(data);
 }
 
 KeyFile::~KeyFile() = default;
@@ -94,12 +119,12 @@ void KeyFile::setBoolean(const std::string& group, const std::string& key, const
 
 void KeyFile::save()
 {
-    m_impl->m_keyfile->save_to_file(m_impl->m_path);
+    m_impl->safeToFile(m_impl->m_path);
 }
 
 void KeyFile::load()
 {
-    m_impl->m_keyfile->load_from_file(m_impl->m_path);
+    m_impl->loadFromFile(m_impl->m_path);
 }
 
 } // namespace cloyster::services::files

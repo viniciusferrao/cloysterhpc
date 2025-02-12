@@ -7,7 +7,7 @@
 #define CLOYSTERHPC_ANSWERFILE_H_
 
 #include <cloysterhpc/tools/ITool.h>
-#include <cloysterhpc/os.h>
+#include <cloysterhpc/models/os.h>
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
@@ -15,6 +15,8 @@
 #include <vector>
 
 using boost::asio::ip::address;
+
+namespace cloyster::models {
 
 /**
  * @struct AFNode
@@ -64,6 +66,7 @@ private:
         std::optional<address> gateway;
         std::optional<std::string> domain_name;
         std::optional<std::vector<std::string>> nameservers;
+
         std::optional<std::string> con_interface;
         std::optional<address> con_ip_addr;
         std::optional<std::string> con_mac_addr;
@@ -372,6 +375,8 @@ public:
     ~answerfile_validation_exception() override = default;
 
     const char* what() const noexcept override { return message.c_str(); }
+};
+
 };
 
 #endif // CLOYSTERHPC_ANSWERFILE_H_

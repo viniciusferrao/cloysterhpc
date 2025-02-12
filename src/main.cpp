@@ -8,16 +8,16 @@
 
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/hardware.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/repo.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
+#include <regex>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -150,7 +150,7 @@ int main(int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
-        auto model = std::make_unique<Cluster>();
+        auto model = std::make_unique<cloyster::models::Cluster>();
         if (!cloyster::answerfile.empty()) {
             LOG_TRACE("Answerfile: {}", cloyster::answerfile)
             model->fillData(cloyster::answerfile);
@@ -166,7 +166,7 @@ int main(int argc, const char** argv)
         if (cloyster::enableTUI) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
-            auto presenter = std::make_unique<PresenterInstall>(model, view);
+            auto presenter = std::make_unique<cloyster::presenter::PresenterInstall>(model, view);
         }
 
         LOG_TRACE("Starting execution engine");
@@ -176,7 +176,7 @@ int main(int argc, const char** argv)
         }
 
         std::unique_ptr<Execution> executionEngine
-            = std::make_unique<Shell>(model);
+            = std::make_unique<cloyster::services::Shell>(model);
 
         executionEngine->install();
 

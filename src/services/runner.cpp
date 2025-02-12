@@ -1,8 +1,11 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
+
 #include <fmt/format.h>
+
+namespace cloyster::services {
 
 int BaseRunner::downloadFile(const std::string& url, const std::string& file)
 {
@@ -31,3 +34,5 @@ const std::vector<std::string>& MockRunner::listCommands() const
 {
     return m_cmds;
 }
+
+} // namespace cloyster::services

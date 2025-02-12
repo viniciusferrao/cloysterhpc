@@ -18,11 +18,11 @@ concept IsMoveable
 template <typename T>
 concept NotCopiableMoveable = !IsMoveable<T> && !IsCopyable<T>;
 /**
- * @brief Parser<P, T> means: P can parse and unparse Ts from streams. The
+ * @brief IsParser<P, T> means: P can parse and unparse Ts from streams. The
  * parsers are allowed to throw exceptions
  */
 template <typename Parser_, typename T>
-concept Parser = requires(Parser_ parser, std::istream& parseInput,
+concept IsParser = requires(Parser_ parser, std::istream& parseInput,
     std::ostream& unparseOutput, const T& unparseInput, T& parseOutput) {
     { parser.parse(parseInput, parseOutput) } -> std::same_as<void>;
     { parser.unparse(unparseInput, unparseOutput) } -> std::same_as<void>;

@@ -5,6 +5,10 @@
 
 #include <cloysterhpc/presenter/PresenterQueueSystem.h>
 
+namespace cloyster::presenter {
+
+using cloyster::models::SLURM;
+
 PresenterQueueSystem::PresenterQueueSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -56,4 +60,5 @@ PresenterQueueSystem::PresenterQueueSystem(
             }
         }
     }
+}
 }

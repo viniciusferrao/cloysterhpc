@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/os.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
 #include <magic_enum/magic_enum.hpp>
@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
+
+namespace cloyster::models {
 
 OS::OS()
 {
@@ -267,4 +269,6 @@ void OS::printData() const
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
 }
+
+};
 #endif

@@ -9,6 +9,8 @@
 #include <cloysterhpc/presenter/Presenter.h>
 
 
+namespace cloyster::presenter {
+
 class PresenterHostId : public Presenter {
 private:
     struct Messages {
@@ -25,6 +27,8 @@ private:
 public:
     PresenterHostId(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERHOSTID_H_

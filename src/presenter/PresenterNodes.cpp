@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterNodes.h>
 
+namespace cloyster::presenter {
+
 PresenterNodes::PresenterNodes(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -107,3 +109,5 @@ retry:
         );
     }
 }
+
+};

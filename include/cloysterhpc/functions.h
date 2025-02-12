@@ -1,7 +1,7 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include "repos.h"
+#include <cloysterhpc/services/repos.h>
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
 #include <filesystem>
@@ -9,18 +9,18 @@
 #include <list>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include <boost/asio.hpp>
-#include <glibmm/keyfile.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/runner.h>
 
 namespace cloyster {
 // Globals
 extern bool dryRun;
 
-std::shared_ptr<BaseRunner> getRunner();
-std::shared_ptr<RepoManager<repository, BaseRunner>> getRepoManager(const OS& osinfo);
+using OS = cloyster::models::OS;
+std::shared_ptr<cloyster::services::BaseRunner> getRunner();
+std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(const OS& osinfo);
+
 
 /**
  * A command proxy, to us to be able to get the
@@ -171,9 +171,6 @@ std::string findAndReplace(const std::string_view& source,
  */
 void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
-std::optional<Glib::ustring> readKeyfileString(Glib::RefPtr<Glib::KeyFile> file,
-    const std::string_view group, const std::string_view key);
-
-} /* namespace cloyster */
+} // namespace cloyster
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

@@ -7,10 +7,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/inifile.h>
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/services/repo.h>
+#include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/repofile.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
 #include <filesystem>
 #include <fstream>
@@ -37,6 +36,8 @@ constexpr std::string_view CLOYSTER_REPO_EL10 = {
 #include "cloysterhpc/repos/el10/cloyster.repo"
 
 };
+
+using cloyster::services::repos::IsRepository;
 
 template <IsRepository Repository>
 [[deprecated("RepoManager refactoring")]]
@@ -73,6 +74,7 @@ template <IsRepository Repository>
 [[deprecated("RepoManager refactoring")]]
 void writeSection(inifile& file, const Repository& repo)
 {
+    /*
     std::string section = repo.id;
 
     file.setValue(section, "name", repo.name);
@@ -83,23 +85,11 @@ void writeSection(inifile& file, const Repository& repo)
 
     LOG_INFO("writing repo <{}> (id {}) at {}", repo.name, section,
         repo.source.string());
+    */
 }
 
-template <IsRepository Repository>
-[[deprecated("RepoManager refactoring")]]
-void loadFromINI(const std::filesystem::path& source, inifile& file,
-    std::vector<Repository>& out)
-{
-    auto sections = file.listAllSections();
-
-    for (const auto& reponame : sections) {
-        auto r = loadSection<Repository>(source, file, reponame);
-        out.push_back(r);
-    }
-}
-
-template <IsRepository Repo, cloyster::concepts::Parser<Repo> Parser>
-void loadFromConf(const std::filesystem::path& source, std::vector<Repo>& out, const Parser& parser)
+template <IsRepository Repository, cloyster::concepts::IsParser<Repository> Parser>
+void loadFromConf(const std::filesystem::path& source, std::vector<Repository>& out, const Parser& parser)
 {
     std::ifstream input(source);
     parser.parse(input, out);
@@ -108,60 +98,25 @@ void loadFromConf(const std::filesystem::path& source, std::vector<Repo>& out, c
 
 } // anonymous namespace 
 
-// BUG: Why?
-#define NOSONAR(code) code
+namespace cloyster::services::repos {
 
-template <IsRepository Repository, typename Runner>
-RepoManager<Repository, Runner>::RepoManager(Runner& runner, const OS& osinfo)
+
+RepoManager::RepoManager(BaseRunner& runner, const OS& osinfo)
     : m_runner(runner)
     , m_os(osinfo)
 {
 }
 
-template <>
-RepoManager<repository, DryRunner>::RepoManager(DryRunner& runner, const OS& osinfo)
-    : m_runner(runner)
-    , m_os(osinfo)
-{
-}
-
-template <>
-RepoManager<repository, Runner>::RepoManager(Runner& runner, const OS& osinfo)
-    : m_runner(runner)
-    , m_os(osinfo)
-{
-}
-
-template <>
-RepoManager<repository, BaseRunner>::RepoManager(BaseRunner& runner, const OS& osinfo)
-    : m_runner(runner)
-    , m_os(osinfo)
-{
-}
-
-template <IsRepository Repository, typename Runner>
-[[deprecated("RepoManager refactoring")]]
-void RepoManager<Repository, Runner>::loadSingleFile(std::filesystem::path source)
-{
-    // inifile file;
-    // file.loadFile(source);
-    //loadFromINI<Repository>(source, file, m_repos);
-    // const auto parser = cloyster::RPMRepositoryParser();
-    // loadFromConf(source, m_repos, parser);
-    throw std::runtime_error("Not implemented");
-}
-
-template <>
-void RepoManager<cloyster::RPMRepository, BaseRunner>::loadSingleFile(std::filesystem::path source)
+void RepoManager::loadSingleFile(const std::filesystem::path& source)
 {
     LOG_DEBUG("New repo manager bootstraping");
-    constexpr auto parser = cloyster::RPMRepositoryParser();
+    constexpr auto parser = cloyster::services::repos::RPMRepositoryParser();
     std::ifstream input(source);
-    parser.parse(input, m_repos);
+    // @FIXME: Fix parser dynamic dispatch!?
+    //parser.parse(input, m_repos);
 }
 
-template <>
-void RepoManager<repository, BaseRunner>::loadFiles(const std::filesystem::path& basedir)
+void RepoManager::loadFiles(const std::filesystem::path& basedir)
 {
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { basedir }) {
@@ -172,11 +127,20 @@ void RepoManager<repository, BaseRunner>::loadFiles(const std::filesystem::path&
 
     }
 
-    auto cloyster_repos = buildCloysterTree(basedir);
+    std::vector<BaseRepository> cloyster_repos;
+
+    switch (m_os.getPackageType()) {
+    case OS::PackageType::RPM:
+        cloyster_repos = buildCloysterTree<RPMRepository>(basedir);
+        break;
+    case OS::PackageType::DEB:
+        throw std::logic_error("Not implemented deb packages");
+        break;
+    }
     mergeWithCurrentList(std::move(cloyster_repos));
 
     auto destparent
-        = NOSONAR(std::filesystem::temp_directory_path()) / "cloyster0";
+        = std::filesystem::temp_directory_path() / "cloyster0";
     auto destination = destparent / "yum.repos.d";
     cloyster::createDirectory(destparent);
     cloyster::createDirectory(destination);
@@ -193,37 +157,33 @@ void RepoManager<repository, BaseRunner>::loadFiles(const std::filesystem::path&
     }
 }
 
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::loadCustom(inifile& file, const std::filesystem::path& path)
+void RepoManager::loadCustom(inifile& file, const std::filesystem::path& path)
 {
-    std::vector<Repository> data;
-    loadFromINI(path, file, data);
-    mergeWithCurrentList(std::move(data));
+    std::vector<BaseRepository> data;
+    //loadFromINI(path, file, data);
+    //mergeWithCurrentList(std::move(data));
+    // @TODO call loadFromConf
 }
 
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::setEnableState(const std::string& id, bool value)
+void RepoManager::setEnableState(const std::string& id, bool value)
 {
     for (auto& repo : m_repos) {
-        if (repo.id == id) {
-            repo.enabled = value;
+        if (repo.id() == id) {
+            repo.enabled(value);
             return;
         }
     }
 }
 
-template <>
-void RepoManager<repository, BaseRunner>::enable(const std::string& id) { setEnableState(id, true); }
+void RepoManager::enable(const std::string& id) { setEnableState(id, true); }
 
 
-template <>
-void RepoManager<repository, BaseRunner>::enableMultiple(std::vector<std::string> ids)
+void RepoManager::enableMultiple(std::vector<std::string> ids)
 {
     std::ranges::for_each(ids, [&](const auto& id) { this->enable(id); });
 }
 
-template <>
-void RepoManager<repository, BaseRunner>::disable(const std::string& id) { setEnableState(id, false); }
+void RepoManager::disable(const std::string& id) { setEnableState(id, false); }
 
 static std::string buildPackageName(std::string stem)
 {
@@ -266,8 +226,7 @@ static std::vector<std::string> getDependenciesEL(
     return dependencies;
 }
 
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::configureEL()
+void RepoManager::configureEL()
 {
     std::vector<std::string> deps = getDependenciesEL(m_os);
 
@@ -277,15 +236,13 @@ void RepoManager<Repository, Runner>::configureEL()
     });
 }
 
-template <>
-void RepoManager<repository, BaseRunner>::commitStatus()
+void RepoManager::commitStatus()
 {
     // @TODO IS THIS CORRECT? BaseRunner should be upcasted here?
     // is m_runner dynamic dipatching
     m_runner.executeCommand("dnf -y install initscripts");
     createFileFor("/etc/yum.repos.d/cloyster.repo");
-    auto tmpdir = NOSONAR(std::filesystem::temp_directory_path())
-        / "cloyster0/yum.repos.d";
+    auto tmpdir = std::filesystem::temp_directory_path() / "cloyster0/yum.repos.d";
 
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { tmpdir }) {
@@ -296,10 +253,10 @@ void RepoManager<repository, BaseRunner>::commitStatus()
     std::vector<std::string> to_disable;
 
     for (const auto& repo : m_repos) {
-        if (repo.enabled) {
-            to_enable.push_back(repo.id);
+        if (repo.enabled()) {
+            to_enable.push_back(repo.id());
         } else {
-            to_disable.push_back(repo.id);
+            to_disable.push_back(repo.id());
         }
     }
 
@@ -316,28 +273,25 @@ void RepoManager<repository, BaseRunner>::commitStatus()
     }
 }
 
-// BUG: No...
-#define FORMAT_TEMPLATE(src) fmt::format(src, cloyster::productName)
-
-template <IsRepository Repository, typename Runner>
-const std::vector<Repository> RepoManager<Repository, Runner>::buildCloysterTree(
+template <IsRepository Repository>
+std::vector<BaseRepository> RepoManager::buildCloysterTree(
     const std::filesystem::path& basedir)
 {
 
-    std::vector<Repository> cloyster_repos;
+    std::vector<BaseRepository> cloyster_repos;
     inifile file;
 
     // BUG: Implement a better way to handle this.
     if (cloyster::customRepofilePath.empty()) {
         switch (m_os.getPlatform()) {
             case OS::Platform::el8:
-                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL8));
+                file.loadData(fmt::format(CLOYSTER_REPO_EL8, cloyster::productName));
                 break;
             case OS::Platform::el9:
-                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL9));
+                file.loadData(fmt::format(CLOYSTER_REPO_EL9, cloyster::productName));
                 break;
             case OS::Platform::el10:
-                file.loadData(FORMAT_TEMPLATE(CLOYSTER_REPO_EL10));
+                file.loadData(fmt::format(CLOYSTER_REPO_EL10, cloyster::productName));
                 break;
             default:
                 throw std::runtime_error(fmt::format("Unsupported platform {}",
@@ -349,14 +303,26 @@ const std::vector<Repository> RepoManager<Repository, Runner>::buildCloysterTree
         file.loadFile(cloyster::customRepofilePath);
     }
 
-    auto outpath = basedir / "cloyster.repo";
-    loadFromINI(outpath, file, cloyster_repos);
+
+    switch (m_os.getPackageType()) {
+        case OS::PackageType::RPM:
+            {
+                const auto parser = RPMRepositoryParser();
+                auto outpath = basedir / "cloyster.repo";
+                // @FIXME: FIx call to load conf
+                // loadFromConf<RPMRepository, RPMRepositoryParser>(outpath, cloyster_repos, parser);
+            }
+            break;
+        case OS::PackageType::DEB:
+            throw std::logic_error("Not implemented");
+            break;
+    }
+
 
     return cloyster_repos;
 }
 
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::createFileFor(std::filesystem::path path)
+void RepoManager::createFileFor(std::filesystem::path path)
 {
     if (cloyster::dryRun) {
         LOG_INFO("Would create file {}", path.string());
@@ -371,7 +337,7 @@ void RepoManager<Repository, Runner>::createFileFor(std::filesystem::path path)
     inifile file;
 
     auto filtered = m_repos | std::views::filter([&path](const auto& r) {
-        return path == r.source;
+        return path == r.source();
     });
 
     for (const auto& repo : filtered) {
@@ -381,15 +347,13 @@ void RepoManager<Repository, Runner>::createFileFor(std::filesystem::path path)
     file.saveFile(path);
 }
 
-
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::mergeWithCurrentList(std::vector<Repository>&& repo)
-{
-    for (auto&& r : repo) {
+template <IsRepository Repository>
+void RepoManager::mergeWithCurrentList(std::vector<Repository>&& repo) {
+    for (auto&& rep : repo) {
         if (std::find_if(m_repos.begin(), m_repos.end(),
-                [&](auto& v) { return v.id == r.id; })
-            == m_repos.end()) {
-            m_repos.push_back(r);
+                [&](auto& v) { return v.id() == rep.id(); }) == m_repos.end()) {
+            // @FIXME: No constructor 
+            // m_repos.push_back(rep);
         }
     }
 }
@@ -408,8 +372,7 @@ static void createGPGKey(
 }
 
 
-template <IsRepository Repository, typename Runner>
-void RepoManager<Repository, Runner>::configureXCAT(const std::filesystem::path& repofile_dest)
+void RepoManager::configureXCAT(const std::filesystem::path& repofile_dest)
 {
     LOG_INFO("Setting up XCAT repositories");
 
@@ -440,8 +403,7 @@ void RepoManager<Repository, Runner>::configureXCAT(const std::filesystem::path&
     }
 }
 
-template <>
-std::vector<std::string> RepoManager<repository, Runner>::getxCATOSImageRepos() const
+std::vector<std::string> RepoManager::getxCATOSImageRepos() const
 {
     const auto osArch = magic_enum::enum_name(m_os.getArch());
     const auto osMajorVersion = m_os.getMajorVersion();
@@ -545,17 +507,12 @@ std::vector<std::string> RepoManager<repository, Runner>::getxCATOSImageRepos() 
     return repos;
 }
 
-template <IsRepository Repository, typename Runner>
-const std::vector<Repository>& RepoManager<Repository, Runner>::listRepos() const
+const std::vector<BaseRepository>& RepoManager::listRepos() const
 {
     return m_repos;
 }
 
-template <>
-const std::vector<repository>& RepoManager<repository, BaseRunner>::listRepos() const
-{
-    return m_repos;
-}
+} // namespace cloyster::services::repos
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -567,6 +524,7 @@ const std::vector<repository>& RepoManager<repository, BaseRunner>::listRepos() 
 #include <cloysterhpc/tempdir.h>
 #include <cloysterhpc/tests.h>
 
+#ifdef BUILD_TESTING
 TEST_SUITE("Test repository file read and write")
 {
     TEST_CASE(
@@ -628,3 +586,4 @@ TEST_SUITE("Test repository file read and write")
         */
     }
 }
+#endif

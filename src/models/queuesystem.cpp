@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/queuesystem/queuesystem.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/services/runner.h>
 
+namespace cloyster::models {
 QueueSystem::QueueSystem(const Cluster& cluster)
     : m_cluster(cluster)
 {
@@ -21,3 +22,5 @@ void QueueSystem::setDefaultQueue(std::string_view defaultQueue)
 }
 
 std::string_view QueueSystem::getDefaultQueue(void) { return m_defaultQueue; }
+
+};

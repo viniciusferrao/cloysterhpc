@@ -6,6 +6,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/presenter/PresenterMailSystem.h>
 
+namespace cloyster::presenter {
 PresenterMailSystem::PresenterMailSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -84,3 +85,5 @@ PresenterMailSystem::PresenterMailSystem(
         LOG_DEBUG("Postfix wasn't enabled")
     }
 }
+
+};

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/models/headnode.h>
 #include <cloysterhpc/services/log.h>
 
 #include <algorithm> /* std::remove */
@@ -18,11 +18,14 @@
 #include <boost/algorithm/string/split.hpp>
 #include <string>
 
+namespace cloyster::models {
+
 /* The constructor should discover everything we need from the machine that is
  * running the software. We always consider that the software runs from the
  * server that will become the cluster headnode.
  */
 // Headnode::Headnode () = default;
+
 
 Headnode::Headnode()
     : m_bootTarget(BootTarget::Text)
@@ -54,3 +57,5 @@ void Headnode::setBootTarget(Headnode::BootTarget bootTarget)
 {
     m_bootTarget = bootTarget;
 }
+
+}; 

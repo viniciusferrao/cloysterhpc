@@ -8,9 +8,12 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/execution.h>
 
+namespace cloyster::services {
+
+using cloyster::models::Cluster;
 /**
  * @class Shell
  * @brief Manages the configuration and installation processes on a cluster.
@@ -185,6 +188,8 @@ public:
      * This function performs the installation and configuration processes.
      */
     void install() override;
+};
+
 };
 
 #endif // CLOYSTERHPC_SHELL_H_

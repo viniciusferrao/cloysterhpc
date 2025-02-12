@@ -19,33 +19,40 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <optional>
+#include <stdexcept>
 #include <tuple>
 
 namespace cloyster {
 
+using cloyster::services::BaseRunner;
+using cloyster::services::Runner;
+using cloyster::services::DryRunner;
+
 namespace {
-std::tuple<bool, std::optional<std::string>> retrieveLine(
-    boost::process::ipstream& pipe_stream,
-    const std::function<std::string(boost::process::ipstream&)>& linecheck)
-{
-    if (pipe_stream.good()) {
-        return make_tuple(true, make_optional(linecheck(pipe_stream)));
+    std::tuple<bool, std::optional<std::string>> retrieveLine(
+        boost::process::ipstream& pipe_stream,
+        const std::function<std::string(boost::process::ipstream&)>& linecheck)
+    {
+        if (pipe_stream.good()) {
+            return make_tuple(true, make_optional(linecheck(pipe_stream)));
+        }
+
+        return make_tuple(pipe_stream.good(), std::nullopt);
     }
 
-    return make_tuple(pipe_stream.good(), std::nullopt);
-}
+    std::shared_ptr<BaseRunner> makeRunner(const bool dryRun)
+    {
+        if (dryRun) {
+            return std::make_shared<DryRunner>();
+        }
 
-std::shared_ptr<BaseRunner> makeRunner(const bool dryRun) {
-    if (dryRun) {
-        return std::make_shared<DryRunner>();
+        return std::make_shared<Runner>();
     }
-
-    return std::make_shared<Runner>();
-}
 
 } // anonymous namespace
 
-std::shared_ptr<BaseRunner> getRunner() {
+std::shared_ptr<BaseRunner> getRunner()
+{
     static std::optional<std::shared_ptr<BaseRunner>> runner = std::nullopt;
     if (!runner) {
         runner = makeRunner(cloyster::dryRun);
@@ -54,15 +61,29 @@ std::shared_ptr<BaseRunner> getRunner() {
     return runner.value();
 }
 
-std::shared_ptr<RepoManager<repository, BaseRunner>> getRepoManager(const OS& osinfo) {
-    static std::optional<std::shared_ptr<RepoManager<repository, BaseRunner>>> repoManager = std::nullopt;
+using cloyster::services::repos::IsRepository;
+using cloyster::services::repos::RepoManager;
+
+std::shared_ptr<RepoManager> getRepoManager(
+    const OS& osinfo)
+{
+    static std::optional<std::shared_ptr<RepoManager>> repoManager = std::nullopt;
     if (!repoManager) {
-        repoManager = std::make_shared<RepoManager<repository, BaseRunner>>(*getRunner(), osinfo);
+        switch (osinfo.getPackageType()) {
+            case OS::PackageType::RPM:
+                repoManager
+                    = std::make_shared<RepoManager>(
+                        *getRunner(), osinfo);
+                break;
+            case OS::PackageType::DEB:
+                // @TODO Implement
+                throw std::logic_error("Not implemented");
+                break;
+        }
     }
 
     return repoManager.value();
 }
-
 
 std::optional<std::string> CommandProxy::getline()
 {
@@ -379,14 +400,6 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
 
         throw;
     }
-}
-
-std::optional<Glib::ustring> readKeyfileString(Glib::RefPtr<Glib::KeyFile> file,
-    const std::string_view group, const std::string_view key)
-{
-    return file->has_key(group.data(), key.data())
-        ? std::make_optional(file->get_string(group.data(), key.data()))
-        : std::nullopt;
 }
 
 } // namespace cloyster

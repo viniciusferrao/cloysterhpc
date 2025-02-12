@@ -4,13 +4,14 @@
 #include <stdexcept>
 
 
-namespace cloyster {
+namespace cloyster::services::repos {
 
 namespace {
 
 using cloyster::services::files::IsKeyFileReadable;
-template <IsKeyFileReadable KeyFile, IsRepository Repository = RPMRepository>
-void parseData(KeyFile& file, std::vector<Repository> repositories)
+
+template <IsKeyFileReadable KeyFile>
+void parseDataRPM(KeyFile& file, std::vector<RPMRepository>& repositories)
 {
     auto reponames = file.getGroups();
     repositories.reserve(reponames.size());
@@ -31,30 +32,28 @@ void parseData(KeyFile& file, std::vector<Repository> repositories)
         auto gpgkey = file.getString(repogroup, "gpgkey");
 
         RPMRepository repo;
-        repo.group = repogroup;
-        repo.name = name;
-        repo.metalink = metalink;
-        repo.baseurl = baseurl;
-        repo.enabled = enabled;
-        repo.gpgcheck = gpgcheck;
-        repo.gpgkey = gpgkey;
+        repo.group(repogroup);
+        repo.name(name);
+        repo.metalink(metalink);
+        repo.baseurl(baseurl);
+        repo.enabled(enabled);
+        repo.gpgcheck(gpgcheck);
+        repo.gpgkey(gpgkey);
         repositories.emplace_back(std::move(repo));
     }
 }
 
 using cloyster::services::files::IsKeyFileWriteable;
 template <IsKeyFileWriteable KeyFile>
-void unparseData(const std::vector<RPMRepository>& repositories, KeyFile& file)
+void unparseDataRPM(const std::vector<RPMRepository>& repositories, KeyFile& file)
 {
     for (const auto& repo : repositories) {
-        file.setString(repo.group, "name", repo.name);
-        file.setBoolean(repo.group, "enabled", repo.enabled);
-        file.setBoolean(repo.group, "gpgcheck", repo.gpgcheck);
-        file.setString(repo.group, "gpgkey", repo.gpgkey);
-        // uhh spooky, setString over optional only write if the
-        // optional has a value
-        file.setString(repo.group, "metalink", repo.metalink);
-        file.setString(repo.group, "baseurl", repo.metalink);
+        file.setString(repo.group(), "name", repo.name());
+        file.setBoolean(repo.group(), "enabled", repo.enabled());
+        file.setBoolean(repo.group(), "gpgcheck", repo.gpgcheck());
+        file.setString(repo.group(), "gpgkey", repo.gpgkey());
+        file.setString(repo.group(), "metalink", repo.metalink());
+        file.setString(repo.group(), "baseurl", repo.metalink());
     }
 }
 }; 
@@ -62,14 +61,15 @@ void unparseData(const std::vector<RPMRepository>& repositories, KeyFile& file)
 
 void RPMRepositoryParser::parse(std::istream& input, std::vector<RPMRepository>& output) {
     auto keyfile = cloyster::services::files::KeyFile(input);
-    parseData(keyfile, output);
+    parseDataRPM(keyfile, output);
 }
 
 void RPMRepositoryParser::unparse(const std::vector<RPMRepository>& repos, std::ostream& output) {
     std::istringstream input("");
     auto keyfile = cloyster::services::files::KeyFile(input);
-    unparseData(repos, keyfile);
+    unparseDataRPM(repos, keyfile);
 }
+
 /*
 void ELRepoFile::read()
 {

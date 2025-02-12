@@ -9,6 +9,9 @@
 #include <cloysterhpc/presenter/Presenter.h>
 #include <cloysterhpc/presenter/PresenterNetwork.h>
 
+
+namespace cloyster::presenter {
+
 class PresenterInfiniband : public Presenter {
 private:
     struct Messages {
@@ -28,7 +31,9 @@ private:
 
 public:
     PresenterInfiniband(std::unique_ptr<Cluster>& model,
-        std::unique_ptr<Newt>& view, NetworkCreator& nc);
+        std::unique_ptr<Newt>& view, cloyster::presenter::NetworkCreator& nc);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERINFINIBAND_H_

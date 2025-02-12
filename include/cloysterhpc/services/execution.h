@@ -8,7 +8,7 @@
 
 #include <string>
 
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 
 class Execution {
 public:

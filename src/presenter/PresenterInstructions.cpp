@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterInstructions.h>
 
+namespace cloyster::presenter {
+
 PresenterInstructions::PresenterInstructions(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -12,4 +14,6 @@ PresenterInstructions::PresenterInstructions(
 
     m_view->message(Messages::Instructions::message);
     LOG_DEBUG("Install instructions displayed")
+}
+
 }

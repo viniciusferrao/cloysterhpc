@@ -28,6 +28,18 @@ concept IsKeyFileWriteable = requires(File& file, const std::string& group, cons
 };
 
 /**
+ * @brief Wraps implementation exceptions
+ */
+class FileException : public std::runtime_error {
+public:
+    explicit FileException(const std::string& msg)
+        : std::runtime_error(msg)
+    {
+    }
+};
+
+
+/**
  * @brief Represents a KeyFile hiding the implementation details behind Impl
  */
 class KeyFile {

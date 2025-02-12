@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 
+namespace cloyster::services {
+
 /**
  * @class XCAT
  * @brief Manages the provisioning of nodes using the xCAT tool.
@@ -161,7 +163,7 @@ private:
      *
      * @param node The node to add.
      */
-    static void addNode(const Node& node);
+    static void addNode(const cloyster::models::Node& node);
 
     /**
      * @brief Generates the OS image name based on type and node.
@@ -252,6 +254,8 @@ public:
     static void resetNodes();
 
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
+};
+
 };
 
 #endif // CLOYSTERHPC_XCAT_H_

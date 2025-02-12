@@ -7,6 +7,9 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/services/repofile.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -15,13 +18,16 @@
 #include <memory>
 
 #include <cloysterhpc/NFS.h>
-#include <cloysterhpc/cluster.h>
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/slurm.h>
 
 #include <cloysterhpc/dbus_client.h>
 
 using cloyster::runCommand;
+
+namespace cloyster::services {
 
 Shell::Shell(const std::unique_ptr<Cluster>& cluster)
     : m_cluster(cluster)
@@ -292,6 +298,11 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
     runCommand("systemctl enable --now chronyd");
 }
 
+using cloyster::models::QueueSystem;
+using cloyster::models::SLURM;
+using cloyster::models::PBS;
+using cloyster::services::repos::RPMRepository;
+
 void Shell::configureQueueSystem()
 {
     LOG_INFO("Setting up the queue system")
@@ -401,18 +412,19 @@ void Shell::install()
     installRequiredPackages();
 
     // TODO: This is the repos entrypoint. It should be replaced.
-    auto repos = *cloyster::getRepoManager(m_cluster->getHeadnode().getOS());
-    repos.loadFiles();
+    auto repos = cloyster::getRepoManager(m_cluster->getHeadnode().getOS());
+    repos->loadFiles();
 
-    const auto toEnable = 
-        std::vector({ "-beegfs", "-elrepo", "-epel", "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" })
-        | std::views::transform([&](const std::string& pkg) {
-            return cloyster::productName + pkg;
-        }) 
-        | std::ranges::to<std::vector<std::string>>();
+    const auto toEnable = std::vector<std::string>();
+        // @TODO Fix this
+        // std::vector({ "-beegfs", "-elrepo", "-epel", "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" })
+        // | std::views::transform([&](const std::string& pkg) {
+        //     return cloyster::productName + pkg;
+        // }) 
+        // | std::ranges::to<std::vector<std::string>>();
 
-    repos.enableMultiple(toEnable);
-    repos.commitStatus();
+    repos->enableMultiple(toEnable);
+    repos->commitStatus();
     // End of Repos entrypoint
 
     runSystemUpdate();
@@ -474,4 +486,6 @@ void Shell::install()
         provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
+}
+
 }
