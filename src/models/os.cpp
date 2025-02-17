@@ -7,6 +7,7 @@
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
 #include <magic_enum/magic_enum.hpp>
+#include <variant>
 
 #ifndef NDEBUG
 #include <cloysterhpc/services/log.h>
@@ -39,10 +40,11 @@ OS::OS()
     if (getFamily() == OS::Family::Linux) {
 #endif
         std::string filename = CHROOT "/etc/os-release";
+        LOG_INFO("Opening {}", filename);
         std::ifstream file(filename);
 
         if (!file.is_open()) {
-            perror(("Error while opening file " + filename).c_str());
+            LOG_ERROR("Error while opening file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while opening file: {}", filename));
         }
@@ -55,25 +57,30 @@ OS::OS()
 
             /* TODO: Refactor the next three conditions */
             if (line.starts_with("PLATFORM_ID=")) {
+                LOG_DEBUG("Found platform (PLATFORM_ID=)");
                 auto value = getValueFromKey(line);
                 if (value.starts_with("platform:")) {
-                    setPlatform(value.substr(9)); // Skip the 'platform:' prefix
+                    // Skip the 'platform:' prefix
+                    constexpr auto platform = std::string_view("platform:");
+                    setPlatform(value.substr(platform.size()));
                 } else {
                     setPlatform(value);
                 }
             }
 
             if (line.starts_with("ID=")) {
+                LOG_DEBUG("Found distro (ID=)");
                 setDistro(getValueFromKey(line));
             }
 
             if (line.starts_with("VERSION=")) {
+                LOG_DEBUG("Found version (VERSION=)");
                 setVersion(getValueFromKey(line));
             }
         }
 
         if (file.bad()) {
-            perror(("Error while reading file " + filename).c_str());
+            LOG_ERROR("Error while reading file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while reading file: {}", filename));
         }
@@ -145,7 +152,11 @@ void OS::setPlatform(std::string_view platform)
     throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
-OS::Distro OS::getDistro() const { return std::get<OS::Distro>(m_distro); }
+OS::Distro OS::getDistro() const
+{ 
+    LOG_ASSERT(!std::holds_alternative<std::monostate>(m_distro), "m_distro is uninitialized");
+    return std::get<OS::Distro>(m_distro); 
+}
 
 void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 

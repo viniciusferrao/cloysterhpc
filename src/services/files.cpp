@@ -25,6 +25,7 @@ struct KeyFile::Impl {
         try {
             m_keyfile->save_to_file(path);
         } catch (std::runtime_error& e) {
+            LOG_ERROR("Error while loading key file {}: {}", path.string(), e.what());
             throw FileException(e.what());
         }
     }
@@ -33,6 +34,7 @@ struct KeyFile::Impl {
         try {
             m_keyfile->load_from_file(path);
         } catch (std::runtime_error& e) {
+            LOG_ERROR("Error while loading key file {}: {}", path.string(), e.what());
             throw FileException(e.what());
         }
     }
@@ -41,6 +43,7 @@ struct KeyFile::Impl {
         try {
             m_keyfile->load_from_data(data);
         } catch (std::runtime_error& e) {
+            LOG_ERROR("Error while loading key from data '{}': {}", data, e.what());
             throw FileException(e.what());
         }
     }
@@ -54,18 +57,15 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 KeyFile::KeyFile(const std::filesystem::path& path)
     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path)) 
 {
-    m_impl->loadFromFile(path);
     m_impl->m_path = path;
+    m_impl->loadFromFile(path);
 }
 
-KeyFile::KeyFile(std::istream& istream)
-    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), std::filesystem::path()))
-{
-    std::istreambuf_iterator<char> begin(istream);
-    std::istreambuf_iterator<char> end;
-    std::string data(begin, end);
-    m_impl->loadFromData(data);
-}
+// KeyFile::KeyFile(const std::string& input)
+//     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), std::filesystem::path()))
+// {
+//     m_impl->loadFromData(input);
+// }
 
 KeyFile::~KeyFile() = default;
 

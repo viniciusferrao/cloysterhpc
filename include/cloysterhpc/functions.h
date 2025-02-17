@@ -1,17 +1,21 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include <cloysterhpc/services/repos.h>
+#include "services/log.h"
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
+#include <cloysterhpc/services/repos.h>
+#include <concepts>
 #include <filesystem>
 #include <glibmm/ustring.h>
 #include <list>
 #include <optional>
+#include <ranges>
 #include <string>
 
 #include <boost/asio.hpp>
 #include <cloysterhpc/services/runner.h>
+#include <type_traits>
 
 namespace cloyster {
 // Globals
@@ -19,8 +23,8 @@ extern bool dryRun;
 
 using OS = cloyster::models::OS;
 std::shared_ptr<cloyster::services::BaseRunner> getRunner();
-std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(const OS& osinfo);
-
+std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(
+    const OS& osinfo);
 
 /**
  * A command proxy, to us to be able to get the
@@ -176,22 +180,45 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
 // @FIXME: Move functions to cloyster::utils namespace and this file
 //   to utils.h/utils.cpp
 /**
- * @brief Generic functions. Be very judicious on what you put here. Is it really
- * generic?
+ * @brief Generic functions. Be very judicious on what you put here. Is it
+ * really generic?
  */
 namespace cloyster::utils {
-
 
 /**
  * @brief Returns true if [vec] contains [val]
  */
-template <typename T>
-bool isIn(const std::vector<T>& vec, const T& val);
+template <typename T> bool isIn(const std::vector<T>& vec, const T& val);
 
-// Special case for const char* strings, delete this and 
+// Special case for const char* strings, delete this and
 // get an link error with a type bigger than Texas
 bool isIn(const std::vector<std::string>& vec, const char* val);
 
-};
+/**
+ * @brief Run [func] if cloyster::dryRun is false
+ */
+template <typename T>
+    requires std::is_default_constructible_v<T>
+inline T dryrun(const std::function<T()>& func, const std::string& msg)
+{
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry Run: {}", msg);
+        return T();
+    }
+
+    return func();
+}
+
+template <typename Path>
+    requires std::is_convertible_v<Path, std::filesystem::path>
+std::filesystem::directory_iterator openDir(const Path& path)
+{
+    return dryrun(
+        static_cast<std::function<std::filesystem::directory_iterator()>>(
+            [&path]() { return std::filesystem::directory_iterator(path); }),
+        fmt::format("Dry Run: Would open directory {}", path.string()));
+}
+
+}
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

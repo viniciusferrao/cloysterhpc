@@ -22,8 +22,8 @@ concept NotCopiableNotMoveable = !IsMoveable<T> && !IsCopyable<T>;
  * parsers are allowed to throw exceptions
  */
 template <typename Parser_, typename T>
-concept IsParser = requires(Parser_ parser, std::istream& parseInput,
-    std::ostream& unparseOutput, const T& unparseInput, T& parseOutput) {
+concept IsParser = requires(Parser_ parser, const std::string& parseInput,
+    std::string& unparseOutput, const T& unparseInput, T& parseOutput) {
     { parser.parse(parseInput, parseOutput) } -> std::same_as<void>;
     { parser.unparse(unparseInput, unparseOutput) } -> std::same_as<void>;
 };

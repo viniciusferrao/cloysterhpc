@@ -49,10 +49,12 @@ private:
 
     struct {
         std::vector<std::string_view> otherpkgs = {};
+        // @TODO: We need to support more than one osimage (: 
+        //   this can be a default osimage though
         std::string osimage;
         std::filesystem::path chroot;
         std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
-        std::vector<std::string> synclists = {};
+        std::vector<std::string> synclists;
     } m_stateless;
 
     static void setDHCPInterfaces(std::string_view interface);
@@ -63,7 +65,7 @@ private:
      *
      * @param diskImage The path to the disk image.
      */
-    static void copycds(const std::filesystem::path& diskImage);
+    void copycds(const std::filesystem::path& diskImage) const;
 
     /**
      * @brief Generates the OS image.

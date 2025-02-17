@@ -16,6 +16,7 @@
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/concepts.h>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace cloyster {
 extern std::string customRepofilePath;
@@ -55,9 +56,9 @@ protected:
 
 class RepoManager {
     using OS = cloyster::models::OS;
-    using Repositories = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
 
 public:
+    using Repositories = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
     explicit RepoManager(const OS& osinfo);
     void initializeDefaultRepositories();
     void saveToDisk();
@@ -73,6 +74,7 @@ private:
     void loadFiles(const std::filesystem::path& basedir);
     void loadCustom(inifile& file, const std::filesystem::path& path);
     Repositories m_repos;
+    std::unordered_set<std::filesystem::path> m_filesLoaded;
 
     // @FIXME: Make these shared pointers
     const OS& m_os;

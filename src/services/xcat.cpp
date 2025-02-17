@@ -17,6 +17,7 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <variant>
 
 namespace cloyster::services {
 
@@ -51,11 +52,15 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-    cloyster::runCommand("sed -i \"s/-extensions server //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
-    cloyster::runCommand("xcatconfig -f");
+    if (cloyster::runCommand("grep -q '-extensions usr_cert' /opt/xcat/share/xcat/scripts/setup-local-client.sh") == 0) {
+        cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
+                             "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
+        cloyster::runCommand("sed -i \"s/-extensions server //g\" "
+                             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+        cloyster::runCommand("xcatconfig -f");
+    } else {
+        LOG_WARN("xCAT Already patched, skipping");
+    }
 }
 
 void XCAT::setup()
@@ -79,7 +84,29 @@ void XCAT::setDomain(std::string_view domain)
     cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-void XCAT::copycds(const std::filesystem::path& diskImage)
+namespace 
+{
+constexpr bool imageExists(const std::string& image) 
+{
+    LOG_ASSERT(image.size() > 0, "Trying to generate an image with empty name");
+    std::list<std::string> output;
+    int code = cloyster::runCommand(fmt::format("lsdef -t osimage {}", image), output);
+    if (code == 0 // success
+        && (output.size() > 0 && output.front() != "Could not find any object definitions to display")
+    ) {
+        LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o {}` to remove "
+                 "the image if you want it to be regenerated.",
+            image, image);
+        LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
+        return true;
+    }
+
+    return false;
+}
+
+}; // anonymous namespace 
+
+void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
     cloyster::runCommand(fmt::format("copycds {}", diskImage.string()));
 }
@@ -102,12 +129,7 @@ void XCAT::nodeset(std::string_view nodes)
 
 void XCAT::createDirectoryTree()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would create the directory /install/custom/netboot")
-        return;
-    }
-
-    std::filesystem::create_directories(CHROOT "/install/custom/netboot");
+    cloyster::createDirectory(CHROOT "/install/custom/netboot");
 }
 
 void XCAT::configureOpenHPC()
@@ -384,25 +406,30 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
 {
     configureEL9();
 
-    copycds(m_cluster->getDiskImage());
+
     generateOSImageName(imageType, nodeType);
-    generateOSImagePath(imageType, nodeType);
 
-    createDirectoryTree();
-    configureOpenHPC();
-    configureTimeService();
-    configureInfiniband();
-    configureSLURM();
+    const auto imageExists_ = imageExists(m_stateless.osimage);
+    if (!imageExists_) {
+        copycds(m_cluster->getDiskImage().getPath());
+        generateOSImagePath(imageType, nodeType);
 
-    generateOtherPkgListFile();
-    generatePostinstallFile();
-    generateSynclistsFile();
+        createDirectoryTree();
+        configureOpenHPC();
+        configureTimeService();
+        configureInfiniband();
+        configureSLURM();
 
-    configureOSImageDefinition();
+        generateOtherPkgListFile();
+        generatePostinstallFile();
+        generateSynclistsFile();
 
-    genimage();
-    customizeImage();
-    packimage();
+        configureOSImageDefinition();
+
+        genimage();
+        customizeImage();
+        packimage();
+    }
 }
 
 void XCAT::addNode(const Node& node)
@@ -472,9 +499,7 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {
     std::string osimage;
 
-    // FIXME: If there's no nodes defined this switch will fail, it should
-    //  instead generate an image for future use.
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
+    switch (m_cluster->getDiskImage().getDistro()) {
         case OS::Distro::RHEL:
             osimage += "rhels";
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
@@ -603,11 +628,13 @@ void XCAT::installRepositories()
             throw std::runtime_error("Unsupported platform for xCAT");
     }
 
+    const auto osinf = m_cluster->getHeadnode().getOS();
+    const auto repoManager = getRepoManager(osinf);
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { repofileDest }) {
         const auto& path = dir_entry.path();
         if (path.extension() == ".repo") {
-            getRepoManager(m_cluster->getHeadnode().getOS())->install(path);
+            repoManager->install(path);
         }
     }
 }

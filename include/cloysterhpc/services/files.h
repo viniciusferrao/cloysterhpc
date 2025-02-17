@@ -73,7 +73,7 @@ public:
     void load();
 
     explicit KeyFile(const std::filesystem::path& path);
-    explicit KeyFile(std::istream& istream);
+    //explicit KeyFile(const std::string& str);
 };
 static_assert(IsKeyFileReadable<KeyFile>);
 static_assert(IsKeyFileWriteable<KeyFile>);

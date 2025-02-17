@@ -19,6 +19,7 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <tuple>
 
@@ -413,5 +414,14 @@ bool isIn(const std::vector<std::string>& vec, const char* val) {
    return isIn(vec, std::string(val));
 }
 
+auto directoryIterator(auto&& dir)
+{
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry run: Would traverse directory {}", dir.string());
+        return std::filesystem::directory_iterator{};
+    }
+
+    return std::filesystem::directory_iterator{dir};
+};
 
 }; // namespace cloyster::utils

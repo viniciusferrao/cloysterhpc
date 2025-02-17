@@ -6,6 +6,9 @@
 #include <cctype>
 #include <cstdlib>
 
+#include <glibmm/fileutils.h>
+#include <glibmm/keyfile.h>
+
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/models/cluster.h>
@@ -14,6 +17,7 @@
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/files.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
@@ -91,6 +95,10 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");
 
+    std::string loadConfFile{};
+    app.add_option("--test-conf-file", loadConfFile,
+        "Hook for testing configuration file loading");
+
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
@@ -104,6 +112,14 @@ int main(int argc, const char** argv)
                 .value();
         }
     }());
+
+    if (!loadConfFile.empty()) {
+        LOG_INFO("Loading file {}", loadConfFile);
+        auto file = cloyster::services::files::KeyFile(loadConfFile);
+        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
+        LOG_INFO("Contents: {}", file.toData());
+        return EXIT_SUCCESS;
+    }
 
     if (cloyster::showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);

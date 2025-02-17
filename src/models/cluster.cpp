@@ -276,9 +276,9 @@ void Cluster::setMailSystem(Postfix::Profile profile, std::shared_ptr<BaseRunner
     m_mailSystem.emplace(m_systemdBus, *runner, profile);
 }
 
-const std::filesystem::path& Cluster::getDiskImage() const
+const DiskImage& Cluster::getDiskImage() const
 {
-    return m_diskImage.getPath();
+    return m_diskImage;
 }
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
@@ -368,7 +368,7 @@ void Cluster::printData()
     //    LOG_DEBUG("nodePadding: {}", nodePadding)
     //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP)
     //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword)
-    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string())
+    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().getPath().string())
 
     LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"))
     //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"))
@@ -499,7 +499,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
         field.con_ip_addr = network->getAddress();
     }
 
-    answerfil.system.disk_image = getDiskImage();
+    answerfil.system.disk_image = getDiskImage().getPath();
 
     answerfil.information.cluster_name = getName();
     answerfil.information.company_name = getCompanyName();

@@ -225,8 +225,13 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
-        deleteConnectionIfExists(
-            magic_enum::enum_name(connection.getNetwork()->getProfile()));
+        auto connectionName = magic_enum::enum_name(connection.getNetwork()->getProfile());
+        if (runCommand(fmt::format("nmcli connection show {}", connectionName)) == 0) {
+            LOG_WARN("Connection exists {}, skipping", connectionName);
+            continue;
+        }
+ 
+        deleteConnectionIfExists(connectionName);
         runCommand(fmt::format("nmcli device set {} managed yes", interface));
         runCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
@@ -440,18 +445,11 @@ void Shell::install()
 
     configureNetworks(m_cluster->getHeadnode().getConnections());
     runSystemUpdate();
-
-    // TODO: Pass headnode instead of cluster to reduce complexity
     configureTimeService(m_cluster->getHeadnode().getConnections());
-
     installRequiredPackages();
-
     configureRepositories();
-
     runSystemUpdate();
-
     installOpenHPCBase();
-
     configureInfiniband();
 
     // BUG: Broken. Compute nodes does not mount anything.

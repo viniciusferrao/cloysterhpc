@@ -192,7 +192,7 @@ public:
     std::optional<Postfix>& getMailSystem();
     void setMailSystem(Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
 
-    const std::filesystem::path& getDiskImage() const;
+    const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);
 
     // TODO: Add std::optional to BMC with std::nullopt as default initializer
