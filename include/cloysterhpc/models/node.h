@@ -10,10 +10,9 @@
 #include <string>
 
 #include <cloysterhpc/connection.h>
-#include <cloysterhpc/network.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/models/server.h>
-
+#include <cloysterhpc/network.h>
 
 namespace cloyster::models {
 /**

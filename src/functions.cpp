@@ -26,8 +26,8 @@
 namespace cloyster {
 
 using cloyster::services::BaseRunner;
-using cloyster::services::Runner;
 using cloyster::services::DryRunner;
+using cloyster::services::Runner;
 
 namespace {
     std::tuple<bool, std::optional<std::string>> retrieveLine(
@@ -64,15 +64,14 @@ std::shared_ptr<BaseRunner> getRunner()
 
 using cloyster::services::repos::RepoManager;
 
-std::shared_ptr<RepoManager> getRepoManager(
-    const OS& osinfo)
+std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
 {
-    static std::optional<std::shared_ptr<RepoManager>> repoManager = std::nullopt;
+    static std::optional<std::shared_ptr<RepoManager>> repoManager
+        = std::nullopt;
     if (!repoManager) {
         switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
-                repoManager
-                    = std::make_shared<RepoManager>(osinfo);
+                repoManager = std::make_shared<RepoManager>(osinfo);
                 break;
             case OS::PackageType::DEB:
                 // @TODO Implement
@@ -405,23 +404,24 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
 
 namespace cloyster::utils {
 
-template <typename T>
-bool isIn(const std::vector<T>& vec, const T& val) {
-   return std::find(vec.begin(), vec.end(), val) == vec.end();
+template <typename T> bool isIn(const std::vector<T>& vec, const T& val)
+{
+    return std::find(vec.begin(), vec.end(), val) == vec.end();
 }
 
-bool isIn(const std::vector<std::string>& vec, const char* val) {
-   return isIn(vec, std::string(val));
+bool isIn(const std::vector<std::string>& vec, const char* val)
+{
+    return isIn(vec, std::string(val));
 }
 
 auto directoryIterator(auto&& dir)
 {
     if (cloyster::dryRun) {
         LOG_WARN("Dry run: Would traverse directory {}", dir.string());
-        return std::filesystem::directory_iterator{};
+        return std::filesystem::directory_iterator {};
     }
 
-    return std::filesystem::directory_iterator{dir};
+    return std::filesystem::directory_iterator { dir };
 };
 
 }; // namespace cloyster::utils

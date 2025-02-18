@@ -29,13 +29,9 @@ private:
      * @brief List of known disk image filenames.
      */
     static constexpr auto m_knownImageFilename { std::to_array<const char*>(
-        { 
-            "AlmaLinux-8.8-x86_64-dvd.iso",
-            "OracleLinux-R8-U8-x86_64-dvd.iso",
-            "rhel-8.8-x86_64-dvd.iso",
-            "Rocky-8.8-x86_64-dvd1.iso",
-            "Rocky-9.5-x86_64-dvd.iso" 
-        }) };
+        { "AlmaLinux-8.8-x86_64-dvd.iso", "OracleLinux-R8-U8-x86_64-dvd.iso",
+            "rhel-8.8-x86_64-dvd.iso", "Rocky-8.8-x86_64-dvd1.iso",
+            "Rocky-9.5-x86_64-dvd.iso" }) };
 
 public:
     [[nodiscard]] const std::filesystem::path& getPath() const;

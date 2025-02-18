@@ -52,11 +52,16 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    if (cloyster::runCommand("grep -q '-extensions usr_cert' /opt/xcat/share/xcat/scripts/setup-local-client.sh") == 0) {
-        cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
-                             "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-        cloyster::runCommand("sed -i \"s/-extensions server //g\" "
-                             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+    if (cloyster::runCommand(
+            "grep -q \"extensions usr_cert\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
+        == 0) {
+        cloyster::runCommand(
+            "sed -i \"s/-extensions usr_cert //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
+        cloyster::runCommand(
+            "sed -i \"s/-extensions server //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
         cloyster::runCommand("xcatconfig -f");
     } else {
         LOG_WARN("xCAT Already patched, skipping");
@@ -84,27 +89,30 @@ void XCAT::setDomain(std::string_view domain)
     cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-namespace 
-{
-constexpr bool imageExists(const std::string& image) 
-{
-    LOG_ASSERT(image.size() > 0, "Trying to generate an image with empty name");
-    std::list<std::string> output;
-    int code = cloyster::runCommand(fmt::format("lsdef -t osimage {}", image), output);
-    if (code == 0 // success
-        && (output.size() > 0 && output.front() != "Could not find any object definitions to display")
-    ) {
-        LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o {}` to remove "
-                 "the image if you want it to be regenerated.",
-            image, image);
-        LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
-        return true;
+namespace {
+    constexpr bool imageExists(const std::string& image)
+    {
+        LOG_ASSERT(
+            image.size() > 0, "Trying to generate an image with empty name");
+        std::list<std::string> output;
+        int code = cloyster::runCommand(
+            fmt::format("lsdef -t osimage {}", image), output);
+        if (code == 0 // success
+            && (output.size() > 0
+                && output.front()
+                    != "Could not find any object definitions to display")) {
+            LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o "
+                     "{}` to remove "
+                     "the image if you want it to be regenerated.",
+                image, image);
+            LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
+            return true;
+        }
+
+        return false;
     }
 
-    return false;
-}
-
-}; // anonymous namespace 
+}; // anonymous namespace
 
 void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
@@ -406,7 +414,6 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
 {
     configureEL9();
 
-
     generateOSImageName(imageType, nodeType);
 
     const auto imageExists_ = imageExists(m_stateless.osimage);
@@ -599,7 +606,8 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 
 void XCAT::installRepositories()
 {
-    const std::filesystem::path& repofileDest = std::filesystem::temp_directory_path();
+    const std::filesystem::path& repofileDest
+        = std::filesystem::temp_directory_path();
     LOG_INFO("Setting up XCAT repositories");
     auto runner = cloyster::getRunner();
 
@@ -639,7 +647,8 @@ void XCAT::installRepositories()
     }
 }
 
-[[deprecated("Refactoring RepoManager, replace the function with the same name in repo manager")]]
+[[deprecated("Refactoring RepoManager, replace the function with the same name "
+             "in repo manager")]]
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
     const auto osinfo = m_cluster->getHeadnode().getOS();
@@ -670,8 +679,7 @@ std::vector<std::string> XCAT::getxCATOSImageRepos() const
         OpenHPCVersion = "2";
     }
 
-    if (std::ranges::find(latestEL, osVersion)
-        == latestEL.end()) {
+    if (std::ranges::find(latestEL, osVersion) == latestEL.end()) {
         rockyBranch = "vault";
     }
 

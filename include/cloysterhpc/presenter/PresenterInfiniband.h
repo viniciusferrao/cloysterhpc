@@ -9,7 +9,6 @@
 #include <cloysterhpc/presenter/Presenter.h>
 #include <cloysterhpc/presenter/PresenterNetwork.h>
 
-
 namespace cloyster::presenter {
 
 class PresenterInfiniband : public Presenter {

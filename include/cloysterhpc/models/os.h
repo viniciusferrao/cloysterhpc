@@ -13,7 +13,6 @@
 #include <string>
 #include <variant>
 
-
 namespace cloyster::models {
 /**
  * @class OS
@@ -53,7 +52,7 @@ public:
 
     /**
      * @enum PackageManager
-     * @brief What 
+     * @brief What
      */
     enum class PackageType { RPM, DEB };
 
@@ -132,18 +131,18 @@ public:
 
     gsl::not_null<package_manager*> packageManager() const;
 
-    [[nodiscard]] constexpr PackageType getPackageType() const {
+    [[nodiscard]] constexpr PackageType getPackageType() const
+    {
         switch (getDistro()) {
             case Distro::RHEL:
             case Distro::OL:
             case Distro::Rocky:
-            case Distro::AlmaLinux: 
+            case Distro::AlmaLinux:
                 return PackageType::RPM;
             default:
                 throw std::runtime_error("Unknonw distro type");
         };
     }
-
 
 #ifndef NDEBUG
     /**

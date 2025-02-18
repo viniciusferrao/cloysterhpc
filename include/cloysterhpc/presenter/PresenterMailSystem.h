@@ -54,6 +54,6 @@ public:
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
 
-}; 
+};
 
 #endif // CLOYSTERHPC_PRESENTERMAILSYSTEM_H_

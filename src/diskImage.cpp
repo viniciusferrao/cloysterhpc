@@ -15,7 +15,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 // @FIXME: This file need some work
 //
 // - The ISO can be probed for more information usign isoinfo command
@@ -37,7 +36,6 @@ void DiskImage::setPath(const std::filesystem::path& path)
     }
 
     m_path = path;
-
 }
 
 bool DiskImage::isKnownImage(const std::filesystem::path& path)
@@ -56,7 +54,8 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
             } else if (imageView.starts_with("AlmaLinux")) {
                 m_distro = cloyster::models::OS::Distro::AlmaLinux;
             } else {
-                throw std::logic_error(fmt::format("Can't determine the distro for the image {}", image));
+                throw std::logic_error(fmt::format(
+                    "Can't determine the distro for the image {}", image));
             }
 
             return true;

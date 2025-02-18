@@ -6,8 +6,8 @@
 #ifndef CLOYSTERHPC_PBS_H_
 #define CLOYSTERHPC_PBS_H_
 
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/services/runner.h>
 
 namespace cloyster::models {
 

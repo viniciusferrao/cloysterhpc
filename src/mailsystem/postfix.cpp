@@ -10,8 +10,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
 
 using cloyster::runCommand;
 using cloyster::services::BaseRunner;

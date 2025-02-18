@@ -26,7 +26,6 @@ namespace cloyster::models {
  */
 // Headnode::Headnode () = default;
 
-
 Headnode::Headnode()
     : m_bootTarget(BootTarget::Text)
 {
@@ -58,4 +57,4 @@ void Headnode::setBootTarget(Headnode::BootTarget bootTarget)
     m_bootTarget = bootTarget;
 }
 
-}; 
+};

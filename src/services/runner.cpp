@@ -1,7 +1,7 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
 
 #include <fmt/format.h>
 

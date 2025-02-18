@@ -41,12 +41,13 @@ namespace cloyster::services::repos {
 
 class DebianRepository : public IRepository {
 private:
-    std::string m_type;                    // "deb" or "deb-src"
-    std::optional<std::string> m_options;  // Optional, e.g., "[arch=amd64]"
-    std::string m_uri;                     // URI, e.g., "http://deb.debian.org/debian"
-    std::string m_distribution;            // Distribution, e.g., "bookworm"
-    std::vector<std::string> m_components; // Components, e.g., "main", "contrib", "non-free"
-    std::filesystem::path m_source;        // File where this is saved
+    std::string m_type; // "deb" or "deb-src"
+    std::optional<std::string> m_options; // Optional, e.g., "[arch=amd64]"
+    std::string m_uri; // URI, e.g., "http://deb.debian.org/debian"
+    std::string m_distribution; // Distribution, e.g., "bookworm"
+    std::vector<std::string>
+        m_components; // Components, e.g., "main", "contrib", "non-free"
+    std::filesystem::path m_source; // File where this is saved
 
 public:
     explicit DebianRepository(const std::string& line);
@@ -76,6 +77,7 @@ class RPMRepository final : public IRepository {
     std::string m_gpgkey;
     std::filesystem::path m_source;
     std::string m_group;
+
 public:
     RPMRepository() = default;
     ~RPMRepository() override = default;
@@ -87,11 +89,23 @@ public:
     [[nodiscard]] std::string id() const override { return m_id; };
     [[nodiscard]] bool enabled() const override { return m_enabled; };
     [[nodiscard]] std::string name() const override { return m_name; };
-    [[nodiscard]] std::optional<std::string> uri() const override { return baseurl(); };
-    [[nodiscard]] std::filesystem::path source() const override { return m_source; };
+    [[nodiscard]] std::optional<std::string> uri() const override
+    {
+        return baseurl();
+    };
+    [[nodiscard]] std::filesystem::path source() const override
+    {
+        return m_source;
+    };
     [[nodiscard]] std::string group() const { return m_group; };
-    [[nodiscard]] std::optional<std::string> baseurl() const { return m_baseurl; };
-    [[nodiscard]] std::optional<std::string> metalink() const { return m_metalink; };
+    [[nodiscard]] std::optional<std::string> baseurl() const
+    {
+        return m_baseurl;
+    };
+    [[nodiscard]] std::optional<std::string> metalink() const
+    {
+        return m_metalink;
+    };
     [[nodiscard]] bool gpgcheck() const { return m_gpgcheck; };
     [[nodiscard]] std::string gpgkey() const { return m_gpgkey; };
 
@@ -101,8 +115,14 @@ public:
     void uri(std::optional<std::string> value) override { baseurl(value); };
     void source(std::filesystem::path source) override { m_source = source; };
     void group(std::string group) { m_group = std::move(group); };
-    void baseurl(std::optional<std::string> baseurl) { m_baseurl = std::move(baseurl); };
-    void metalink(std::optional<std::string> metalink) { m_metalink = std::move(metalink); };
+    void baseurl(std::optional<std::string> baseurl)
+    {
+        m_baseurl = std::move(baseurl);
+    };
+    void metalink(std::optional<std::string> metalink)
+    {
+        m_metalink = std::move(metalink);
+    };
     void gpgcheck(bool gpgcheck) { m_gpgcheck = gpgcheck; };
     void gpgkey(std::string gpgkey) { m_gpgkey = std::move(gpgkey); };
 
@@ -111,11 +131,13 @@ public:
 
 class RPMRepositoryParser final {
 public:
-    static void parse(const std::filesystem::path& path, std::vector<RPMRepository>& output);
-    static void unparse(
-        const std::vector<RPMRepository>& repos, const std::filesystem::path& output);
+    static void parse(
+        const std::filesystem::path& path, std::vector<RPMRepository>& output);
+    static void unparse(const std::vector<RPMRepository>& repos,
+        const std::filesystem::path& output);
 };
-// static_assert(cloyster::concepts::IsParser<RPMRepositoryParser, std::vector<RPMRepository>>);
+// static_assert(cloyster::concepts::IsParser<RPMRepositoryParser,
+// std::vector<RPMRepository>>);
 
 class RPMRepositoryFile final {
 public:
@@ -151,11 +173,14 @@ constexpr std::string_view CLOYSTER_REPO_EL10 = {
 #include "cloysterhpc/repos/el10/cloyster.repo"
 };
 
-
 // @TODO Make this a RPMRepositoryFile method
-void loadRPMRepos(const std::filesystem::path& source, auto& m_repos, auto& m_filesLoaded) {
+void loadRPMRepos(
+    const std::filesystem::path& source, auto& m_repos, auto& m_filesLoaded)
+{
     if (m_filesLoaded.contains(source)) {
-        LOG_WARN("Skipping the loading of repository file {}, because it was already loaded before", source.string());
+        LOG_WARN("Skipping the loading of repository file {}, because it was "
+                 "already loaded before",
+            source.string());
         return;
     }
     m_filesLoaded.insert(source);
@@ -167,7 +192,8 @@ void loadRPMRepos(const std::filesystem::path& source, auto& m_repos, auto& m_fi
     for (auto&& repo : output) {
         LOG_ASSERT(repo.id().size() > 0, "BUG In the RPM Parser");
         LOG_DEBUG("Loaded [{}] {}", source.string(), repo.id());
-        m_repos.insert({repo.id(), std::make_shared<RPMRepository>(std::move(repo))});
+        m_repos.insert(
+            { repo.id(), std::make_shared<RPMRepository>(std::move(repo)) });
     }
 }
 
@@ -195,34 +221,37 @@ constexpr auto getDefaultPath(const auto& osinfo)
         case OS::Platform::el10:
             return "/etc/yum.repos.d/cloyster.repo";
         default:
-            throw std::logic_error("Not implemented: Debian default repository path");
+            throw std::logic_error(
+                "Not implemented: Debian default repository path");
     }
 }
 
-
 auto loadDefaults(const auto& m_os, auto& m_repos, auto& m_filesLoaded)
 {
-    auto path = getDefaultPath(m_os); 
+    auto path = getDefaultPath(m_os);
     std::istringstream stream;
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
-            stream = std::istringstream(fmt::format(CLOYSTER_REPO_EL8, cloyster::productName));
+            stream = std::istringstream(
+                fmt::format(CLOYSTER_REPO_EL8, cloyster::productName));
             installFile(path, stream);
             loadRPMRepos(path, m_repos, m_filesLoaded);
             break;
         case OS::Platform::el9:
-            stream = std::istringstream(fmt::format(CLOYSTER_REPO_EL9, cloyster::productName));
+            stream = std::istringstream(
+                fmt::format(CLOYSTER_REPO_EL9, cloyster::productName));
             installFile(path, stream);
             loadRPMRepos(path, m_repos, m_filesLoaded);
             break;
         case OS::Platform::el10:
-            stream = std::istringstream(fmt::format(CLOYSTER_REPO_EL10, cloyster::productName));
+            stream = std::istringstream(
+                fmt::format(CLOYSTER_REPO_EL10, cloyster::productName));
             installFile(path, stream);
             loadRPMRepos(path, m_repos, m_filesLoaded);
             break;
         default:
             throw std::runtime_error(fmt::format("Unsupported platform {}",
-                                                 magic_enum::enum_name(m_os.getPlatform())));
+                magic_enum::enum_name(m_os.getPlatform())));
     };
 }
 
@@ -279,31 +308,34 @@ void writeSection(
     file.setString(section, "name", repo->name());
     file.setString(section, "baseurl", repo->baseurl());
     file.setString(section, "metalink", repo->metalink());
-    file.setString(section, "enabled", static_cast<std::string>(repo->enabled() ? "1" : "0"));
-    file.setString(section, "gpgcheck", static_cast<std::string>(repo->gpgcheck() ? "1" : "0"));
+    file.setString(section, "enabled",
+        static_cast<std::string>(repo->enabled() ? "1" : "0"));
+    file.setString(section, "gpgcheck",
+        static_cast<std::string>(repo->gpgcheck() ? "1" : "0"));
     file.setString(section, "gpgkey", repo->gpgkey());
 
     LOG_INFO("writing repo <{}> (id {}) at {}", repo->name(), section,
         repo->source().string());
 }
 
-
 }; // anonymous namespace
 
 namespace cloyster::services::repos {
 
-void RPMRepositoryParser::parse(const std::filesystem::path& path, std::vector<RPMRepository>& output) {
+void RPMRepositoryParser::parse(
+    const std::filesystem::path& path, std::vector<RPMRepository>& output)
+{
     auto file = KeyFile(path);
     auto reponames = file.getGroups();
-    LOG_ASSERT(reponames.size() > 0, fmt::format("Empty repository file at {}", path.string()));
+    LOG_ASSERT(reponames.size() > 0,
+        fmt::format("Empty repository file at {}", path.string()));
     output.reserve(reponames.size());
     for (const auto& repogroup : reponames) {
         auto name = file.getString(repogroup, "name");
 
         if (name.empty()) {
             throw std::runtime_error(std::format(
-                "Could not load repo name from repo '{}'",
-                repogroup));
+                "Could not load repo name from repo '{}'", repogroup));
         }
 
         auto metalink = file.getStringOpt(repogroup, "metalink");
@@ -327,7 +359,10 @@ void RPMRepositoryParser::parse(const std::filesystem::path& path, std::vector<R
     }
 }
 
-void RPMRepositoryParser::unparse(const std::vector<RPMRepository>& repositories, const std::filesystem::path& output) {
+void RPMRepositoryParser::unparse(
+    const std::vector<RPMRepository>& repositories,
+    const std::filesystem::path& output)
+{
     auto file = cloyster::services::files::KeyFile(output);
     for (const auto& repo : repositories) {
         file.setString(repo.group(), "name", repo.name());
@@ -343,17 +378,16 @@ void RPMRepositoryParser::unparse(const std::vector<RPMRepository>& repositories
 
 inline void RPMRepository::valid() const
 {
-    auto isValid = (
-        !id().empty()
-        && !name().empty()
+    auto isValid = (!id().empty() && !name().empty()
         && (!uri().has_value() || !uri().value().empty())
-        && (!source().empty())
-    );
+        && (!source().empty()));
     LOG_ASSERT(isValid, "Invalid RPM Repository");
 }
 
 RepoManager::RepoManager(const OS& osinfo)
-    : m_os(osinfo) {}
+    : m_os(osinfo)
+{
+}
 
 void RepoManager::initializeDefaultRepositories()
 {
@@ -376,23 +410,21 @@ void RepoManager::loadFiles(const std::filesystem::path& basedir)
         if (path.extension() == ".repo") {
             loadSingleFile(path);
         }
-
     }
 
     RepoManager::Repositories cloysterRepos;
 
     switch (m_os.getPackageType()) {
-    case OS::PackageType::RPM:
-        cloysterRepos = getDefaultReposFromDisk(basedir);
-        break;
-    case OS::PackageType::DEB:
-        throw std::logic_error("Not implemented deb packages");
-        break;
+        case OS::PackageType::RPM:
+            cloysterRepos = getDefaultReposFromDisk(basedir);
+            break;
+        case OS::PackageType::DEB:
+            throw std::logic_error("Not implemented deb packages");
+            break;
     }
     mergeWithCurrentList(std::move(cloysterRepos));
 
-    auto destparent
-        = std::filesystem::temp_directory_path() / "cloyster0";
+    auto destparent = std::filesystem::temp_directory_path() / "cloyster0";
 
     auto destination = destparent / "yum.repos.d";
     cloyster::createDirectory(destination);
@@ -414,7 +446,7 @@ void RepoManager::loadSingleFile(const std::filesystem::path& source)
 }
 
 void RepoManager::enable(const std::string& repoid)
-{ 
+{
     try {
         m_repos.at(repoid)->enabled(true);
     } catch (const std::out_of_range&) {
@@ -429,7 +461,6 @@ void RepoManager::enable(const std::string& repoid)
         throw std::runtime_error("Read repository failed");
 #endif
     }
-
 }
 
 void RepoManager::enable(const std::vector<std::string>& repoids)
@@ -443,8 +474,9 @@ void RepoManager::disable(const std::string& repoid)
 }
 
 void RepoManager::disable(const std::vector<std::string>& repoids)
-{ 
-    std::ranges::for_each(repoids, [&](const auto& repoid) { disable(repoid); });
+{
+    std::ranges::for_each(
+        repoids, [&](const auto& repoid) { disable(repoid); });
 }
 
 void RepoManager::install(const std::filesystem::path& path)
@@ -463,22 +495,16 @@ void RepoManager::install(const std::vector<std::filesystem::path>& paths)
 
 std::vector<std::shared_ptr<const IRepository>> RepoManager::listRepos() const
 {
-    return m_repos
-        | std::views::transform([](const auto& repopair) {
-            return repopair.second;
-        })
-        | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
+    return m_repos | std::views::transform([](const auto& repopair) {
+        return repopair.second;
+    }) | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
 }
-
-
 
 void RepoManager::configureEL()
 {
     std::vector<std::string> deps = getDependenciesEL(m_os);
 
-    std::ranges::for_each(deps,[&](const auto& repo) {
-        enable(repo);
-    });
+    std::ranges::for_each(deps, [&](const auto& repo) { enable(repo); });
 }
 
 [[deprecated("RepoManager refactoring fix this!")]]
@@ -489,7 +515,8 @@ void RepoManager::saveToDisk()
     auto runner = getRunner();
     runner->executeCommand("dnf -y install initscripts");
     createFileFor("/etc/yum.repos.d/cloyster.repo");
-    auto tmpdir = std::filesystem::temp_directory_path() / "cloyster0/yum.repos.d";
+    auto tmpdir
+        = std::filesystem::temp_directory_path() / "cloyster0/yum.repos.d";
     for (auto const& dir_entry : utils::openDir(tmpdir)) {
         cloyster::copyFile(dir_entry, "/etc/yum.repos.d");
     }
@@ -527,7 +554,8 @@ RepoManager::Repositories RepoManager::getDefaultReposFromDisk(
         loadDefaults(m_os, cloyster_repos, m_filesLoaded);
     } else {
         LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath);
-        loadRPMRepos(cloyster::customRepofilePath, cloyster_repos, m_filesLoaded);
+        loadRPMRepos(
+            cloyster::customRepofilePath, cloyster_repos, m_filesLoaded);
     }
 
     auto outpath = basedir / "cloyster.repo";
@@ -543,7 +571,6 @@ RepoManager::Repositories RepoManager::getDefaultReposFromDisk(
     return cloyster_repos;
 }
 
-
 void RepoManager::createFileFor(std::filesystem::path path)
 {
     if (cloyster::dryRun) {
@@ -556,7 +583,6 @@ void RepoManager::createFileFor(std::filesystem::path path)
         return;
     }
 
-
     auto filtered = m_repos | std::views::filter([&path](const auto& r) {
         return path == r.second->source();
     });
@@ -566,7 +592,8 @@ void RepoManager::createFileFor(std::filesystem::path path)
 
         switch (m_os.getPackageType()) {
             case OS::PackageType::RPM:
-                writeSection(file, dynamic_pointer_cast<const RPMRepository>(repo));
+                writeSection(
+                    file, dynamic_pointer_cast<const RPMRepository>(repo));
                 break;
             case OS::PackageType::DEB:
                 throw std::logic_error("Not implemented");
@@ -582,7 +609,7 @@ void RepoManager::createFileFor(std::filesystem::path path)
 void RepoManager::mergeWithCurrentList(Repositories&& repos)
 {
     for (auto&& [key, repo] : repos) {
-        m_repos.insert({key, repo});
+        m_repos.insert({ key, repo });
     }
 }
 
@@ -599,8 +626,7 @@ static void createGPGKey(
     gpgkey.close();
 }
 
-
-// @TODO: Shouldn't this be at XCAT class ? 
+// @TODO: Shouldn't this be at XCAT class ?
 void RepoManager::configureXCAT(const std::filesystem::path& repofileDest)
 {
     LOG_INFO("Setting up XCAT repositories");
@@ -608,7 +634,7 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofileDest)
 
     // TODO: we need to download these files in a sort of temporary directory
     runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
-                          "core-snap/xcat-core.repo",
+                         "core-snap/xcat-core.repo",
         repofileDest.string());
 
     switch (m_os.getPlatform()) {
@@ -630,13 +656,13 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofileDest)
             break;
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
-
     }
 
     // Do not visit repodfileDest if we're in dryRun
     // because the folder will not exist
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would load repositories at {}", repofileDest.string());
+        LOG_WARN(
+            "Dry Run: Would load repositories at {}", repofileDest.string());
         return;
     }
 
@@ -651,7 +677,6 @@ void RepoManager::configureXCAT(const std::filesystem::path& repofileDest)
 }
 
 }; // namespace cloyster::services::repos
-
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

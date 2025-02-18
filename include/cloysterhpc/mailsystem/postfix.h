@@ -75,8 +75,8 @@ public:
 
     void setup(const std::filesystem::path& basedir = "/etc/postfix");
 
-    explicit Postfix(
-        std::shared_ptr<MessageBus> bus, cloyster::services::BaseRunner& runner, Profile profile);
+    explicit Postfix(std::shared_ptr<MessageBus> bus,
+        cloyster::services::BaseRunner& runner, Profile profile);
 };
 
 #endif // CLOYSTERHPC_POSTFIX_H_

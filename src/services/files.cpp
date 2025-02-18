@@ -17,33 +17,37 @@ struct KeyFile::Impl {
 
     Impl(Glib::RefPtr<Glib::KeyFile>&& keyfile, std::filesystem::path path)
         : m_path(std::move(path))
-        , m_keyfile(std::move(keyfile))
-    {
-    };
+        , m_keyfile(std::move(keyfile)) { };
 
-    void safeToFile(const std::filesystem::path& path) {
+    void safeToFile(const std::filesystem::path& path)
+    {
         try {
             m_keyfile->save_to_file(path);
         } catch (std::runtime_error& e) {
-            LOG_ERROR("Error while loading key file {}: {}", path.string(), e.what());
+            LOG_ERROR(
+                "Error while loading key file {}: {}", path.string(), e.what());
             throw FileException(e.what());
         }
     }
 
-    void loadFromFile(const std::filesystem::path& path) {
+    void loadFromFile(const std::filesystem::path& path)
+    {
         try {
             m_keyfile->load_from_file(path);
         } catch (std::runtime_error& e) {
-            LOG_ERROR("Error while loading key file {}: {}", path.string(), e.what());
+            LOG_ERROR(
+                "Error while loading key file {}: {}", path.string(), e.what());
             throw FileException(e.what());
         }
     }
 
-    void loadFromData(const std::string& data) {
+    void loadFromData(const std::string& data)
+    {
         try {
             m_keyfile->load_from_data(data);
         } catch (std::runtime_error& e) {
-            LOG_ERROR("Error while loading key from data '{}': {}", data, e.what());
+            LOG_ERROR(
+                "Error while loading key from data '{}': {}", data, e.what());
             throw FileException(e.what());
         }
     }
@@ -55,14 +59,15 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 }
 
 KeyFile::KeyFile(const std::filesystem::path& path)
-    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path)) 
+    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path))
 {
     m_impl->m_path = path;
     m_impl->loadFromFile(path);
 }
 
 // KeyFile::KeyFile(const std::string& input)
-//     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), std::filesystem::path()))
+//     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(),
+//     std::filesystem::path()))
 // {
 //     m_impl->loadFromData(input);
 // }
@@ -104,34 +109,30 @@ bool KeyFile::getBoolean(const std::string& group, const std::string& key) const
     return m_impl->m_keyfile->get_boolean(group, key);
 }
 
-std::string KeyFile::toData() const
-{
-    return m_impl->m_keyfile->to_data();
-}
+std::string KeyFile::toData() const { return m_impl->m_keyfile->to_data(); }
 
-void KeyFile::setString(const std::string& group, const std::string& key, const std::string& value)
+void KeyFile::setString(
+    const std::string& group, const std::string& key, const std::string& value)
 {
     m_impl->m_keyfile->set_string(group, key, value);
 }
 
-void KeyFile::setString(const std::string& group, const std::string& key, const std::optional<std::string>& value) {
+void KeyFile::setString(const std::string& group, const std::string& key,
+    const std::optional<std::string>& value)
+{
     if (value) {
         m_impl->m_keyfile->set_string(group, key, value.value());
     }
 }
 
-void KeyFile::setBoolean(const std::string& group, const std::string& key, const bool value) {
+void KeyFile::setBoolean(
+    const std::string& group, const std::string& key, const bool value)
+{
     m_impl->m_keyfile->set_boolean(group, key, value);
 }
 
-void KeyFile::save()
-{
-    m_impl->safeToFile(m_impl->m_path);
-}
+void KeyFile::save() { m_impl->safeToFile(m_impl->m_path); }
 
-void KeyFile::load()
-{
-    m_impl->loadFromFile(m_impl->m_path);
-}
+void KeyFile::load() { m_impl->loadFromFile(m_impl->m_path); }
 
 } // namespace cloyster::services::files

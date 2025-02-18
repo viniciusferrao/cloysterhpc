@@ -7,12 +7,11 @@
 #define CLOYSTERHPC_PRESENTER_H_
 
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/newt.h>
-
 
 namespace cloyster::presenter {
 

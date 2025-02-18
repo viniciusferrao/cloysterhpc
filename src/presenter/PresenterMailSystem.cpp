@@ -15,11 +15,12 @@ PresenterMailSystem::PresenterMailSystem(
     if (m_view->yesNoQuestion(
             Messages::title, Messages::question, Messages::help)) {
 
-        Postfix::Profile mailSystemProfile = magic_enum::enum_cast<Postfix::Profile>(
-            m_view->listMenu(Messages::title, Messages::Profile::question,
-                             magic_enum::enum_names<Postfix::Profile>(),
-                             Messages::Profile::help)
-            ).value();
+        Postfix::Profile mailSystemProfile
+            = magic_enum::enum_cast<Postfix::Profile>(
+                m_view->listMenu(Messages::title, Messages::Profile::question,
+                    magic_enum::enum_names<Postfix::Profile>(),
+                    Messages::Profile::help))
+                  .value();
         m_model->setMailSystem(mailSystemProfile, cloyster::getRunner());
         auto mailSystem = m_model->getMailSystem().value();
 

@@ -8,7 +8,6 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
-
 namespace cloyster::presenter {
 
 class PresenterHostId : public Presenter {

@@ -49,7 +49,7 @@ private:
 
     struct {
         std::vector<std::string_view> otherpkgs = {};
-        // @TODO: We need to support more than one osimage (: 
+        // @TODO: We need to support more than one osimage (:
         //   this can be a default osimage though
         std::string osimage;
         std::filesystem::path chroot;

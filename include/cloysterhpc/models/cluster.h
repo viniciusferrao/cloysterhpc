@@ -13,17 +13,16 @@
 
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/diskImage.h>
+#include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/headnode.h>
 #include <cloysterhpc/models/node.h>
 #include <cloysterhpc/models/queuesystem.h>
-#include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/ofed.h>
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/timezone.h>
-
 
 /**
  * @class Cluster
@@ -47,7 +46,7 @@ public:
      *
      */
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
-    
+
     // @TODO: This class should not know about DBusClient
 
     /**
@@ -190,7 +189,8 @@ public:
     void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
-    void setMailSystem(Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
+    void setMailSystem(
+        Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
 
     const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);

@@ -11,9 +11,9 @@
 #include <string>
 
 #include <cloysterhpc/connection.h>
-#include <cloysterhpc/network.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/models/server.h>
+#include <cloysterhpc/network.h>
 
 namespace cloyster::models {
 class Headnode : public Server {
@@ -32,7 +32,6 @@ public:
     [[nodiscard]] BootTarget getBootTarget() const;
     void setBootTarget(BootTarget bootTarget);
 };
-
 
 }; // namespace cloyster::models
 

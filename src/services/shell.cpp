@@ -5,10 +5,10 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/shell.h>
-#include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/xcat.h>
 
 #include <boost/process.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -18,8 +18,8 @@
 
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/slurm.h>
 
 #include <cloysterhpc/dbus_client.h>
@@ -36,12 +36,13 @@ auto getToEnableRepoNames(const OS& osinfo)
         case OS::Platform::el8:
         case OS::Platform::el9:
         case OS::Platform::el10:
-            return std::vector<std::string>({ "-beegfs", "-elrepo", "-epel", "-openhpc",
-                "-openhpc-updates", "-rpmfusion-free-updates" })
-            | std::views::transform([](const std::string& repo) {
-                return fmt::format("{}{}", cloyster::productName, repo);
-            })
-            | std::ranges::to<std::vector<std::string>>();
+            return std::vector<std::string>(
+                       { "-beegfs", "-elrepo", "-epel", "-openhpc",
+                           "-openhpc-updates", "-rpmfusion-free-updates" })
+                | std::views::transform([](const std::string& repo) {
+                      return fmt::format("{}{}", cloyster::productName, repo);
+                  })
+                | std::ranges::to<std::vector<std::string>>();
             break;
         default:
             throw std::logic_error("Not implemented");
@@ -225,12 +226,14 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
-        auto connectionName = magic_enum::enum_name(connection.getNetwork()->getProfile());
-        if (runCommand(fmt::format("nmcli connection show {}", connectionName)) == 0) {
+        auto connectionName
+            = magic_enum::enum_name(connection.getNetwork()->getProfile());
+        if (runCommand(fmt::format("nmcli connection show {}", connectionName))
+            == 0) {
             LOG_WARN("Connection exists {}, skipping", connectionName);
             continue;
         }
- 
+
         deleteConnectionIfExists(connectionName);
         runCommand(fmt::format("nmcli device set {} managed yes", interface));
         runCommand(
@@ -326,9 +329,9 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
     runCommand("systemctl enable --now chronyd");
 }
 
+using cloyster::models::PBS;
 using cloyster::models::QueueSystem;
 using cloyster::models::SLURM;
-using cloyster::models::PBS;
 
 void Shell::configureQueueSystem()
 {

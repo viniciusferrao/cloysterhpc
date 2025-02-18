@@ -18,15 +18,14 @@
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/inifile.h>
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/headnode.h>
 #include <cloysterhpc/models/pbs.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
-
 
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
@@ -47,9 +46,9 @@ static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
 
 namespace cloyster::models {
 
-Cluster::Cluster() :
-    m_systemdBus(std::make_shared<DBusClient>(
-        "org.freedesktop.systemd1", "/org/freedesktop/systemd1")) 
+Cluster::Cluster()
+    : m_systemdBus(std::make_shared<DBusClient>(
+          "org.freedesktop.systemd1", "/org/freedesktop/systemd1"))
 {
 }
 
@@ -57,15 +56,12 @@ std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
-const Headnode& Cluster::getHeadnode() const
-{
-    return m_headnode;
-}
-//template <typename Runner>
-//std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
+const Headnode& Cluster::getHeadnode() const { return m_headnode; }
+// template <typename Runner>
+// std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
 //{
-//    return m_runner;
-//}
+//     return m_runner;
+// }
 
 std::string_view Cluster::getName() const { return m_name; }
 
@@ -127,9 +123,11 @@ std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 // void Cluster::initRepoManager()
 // {
 //     if (cloyster::dryRun) {
-//        m_repos.emplace(RepoManager<repository, DryRunner>(*getRunner(), m_headnode.getOS()));
+//        m_repos.emplace(RepoManager<repository, DryRunner>(*getRunner(),
+//        m_headnode.getOS()));
 //     } else {
-//        m_repos.emplace(RepoManager<repository, Runner>(*getRunner(), m_headnode.getOS()));
+//        m_repos.emplace(RepoManager<repository, Runner>(*getRunner(),
+//        m_headnode.getOS()));
 //     }
 // }
 
@@ -268,18 +266,15 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
     }
 }
 
-
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(Postfix::Profile profile, std::shared_ptr<BaseRunner> runner)
+void Cluster::setMailSystem(
+    Postfix::Profile profile, std::shared_ptr<BaseRunner> runner)
 {
     m_mailSystem.emplace(m_systemdBus, *runner, profile);
 }
 
-const DiskImage& Cluster::getDiskImage() const
-{
-    return m_diskImage;
-}
+const DiskImage& Cluster::getDiskImage() const { return m_diskImage; }
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
@@ -591,8 +586,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     }
 
     if (answerfil.external.nameservers.has_value()) {
-        externalNetwork->setNameservers(
-            answerfil.external.nameservers.value());
+        externalNetwork->setNameservers(answerfil.external.nameservers.value());
     } else {
         externalNetwork->setNameservers(externalNetwork->fetchNameservers());
     }
@@ -942,4 +936,4 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     nodeRootPassword = answerfil.nodes.generic->root_password.value();
 }
 
- }; // namespace cloyster::models {
+}; // namespace cloyster::models {

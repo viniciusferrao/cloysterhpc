@@ -141,7 +141,6 @@ private:
      */
     void configureQueueSystem();
 
-
     /**
      * @brief Configures the InfiniBand settings.
      *
