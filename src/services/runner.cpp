@@ -20,7 +20,7 @@ int Runner::executeCommand(const std::string& cmd)
 
 int DryRunner::executeCommand(const std::string& cmd)
 {
-    LOG_INFO("Would execute command: {}", cmd);
+    LOG_WARN("Dry Run: Would execute command: {}", cmd);
     return OK;
 }
 

@@ -40,13 +40,13 @@
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->info(__VA_ARGS__);                           \
     }
-
-// Available only with DEBUG builds
-#ifndef NDEBUG
 #define LOG_DEBUG(...)                                                         \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->debug(__VA_ARGS__);                          \
     }
+
+// Available only with DEBUG builds
+#ifndef NDEBUG
 #define LOG_TRACE(...)                                                         \
     if (spdlog::get(productName) != nullptr) {                                 \
         spdlog::get(productName)->trace(__VA_ARGS__);                          \
@@ -72,7 +72,6 @@
 #else
 // Disabled for RELEASE builds
 #define LOG_TRACE(...) (void)0;
-#define LOG_DEBUG(...) (void)0;
 #define LOG_ASSERT(x, msg) (void)0;
 #endif
 

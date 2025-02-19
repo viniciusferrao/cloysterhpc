@@ -12,6 +12,8 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace cloyster::models {
 /**
@@ -26,6 +28,13 @@ namespace cloyster::models {
  */
 class OS {
 public:
+    OS(const OS&) = default;
+    OS& operator=(const OS&) = default;
+    OS(OS&&) = delete;
+    OS& operator=(OS&&) = delete;
+    ~OS() = default;
+
+
     /**
      * @enum Arch
      * @brief Enumeration representing different architectures of the OS.
@@ -70,7 +79,6 @@ private:
     // would be ill-formed
     std::shared_ptr<package_manager> m_packageManager;
 
-private:
     void setMajorVersion(unsigned int majorVersion);
 
     void setMinorVersion(unsigned int minorVersion);
@@ -100,9 +108,9 @@ public:
      * @param majorVersion The major version number of the OS.
      * @param minorVersion The minor version number of the OS.
      */
-    OS(OS::Arch arch, OS::Family family, OS::Platform platform,
-        OS::Distro distro, std::string_view kernel, unsigned majorVersion,
-        unsigned minorVersion);
+    // OS(OS::Arch arch, OS::Family family, OS::Platform platform,
+    //     OS::Distro distro, std::string_view kernel, unsigned majorVersion,
+    //     unsigned minorVersion);
 
     [[nodiscard]] Arch getArch() const;
     void setArch(Arch arch);
@@ -131,28 +139,16 @@ public:
 
     gsl::not_null<package_manager*> packageManager() const;
 
-    [[nodiscard]] constexpr PackageType getPackageType() const
-    {
-        switch (getDistro()) {
-            case Distro::RHEL:
-            case Distro::OL:
-            case Distro::Rocky:
-            case Distro::AlmaLinux:
-                return PackageType::RPM;
-            default:
-                throw std::runtime_error("Unknonw distro type");
-        };
-    }
+    [[nodiscard]] PackageType getPackageType() const;
 
-#ifndef NDEBUG
     /**
      * @brief Prints the data of the OS.
      *
      * This method is available only in debug mode.
      */
     void printData() const;
-#endif
 };
+
 
 }; // namespace cloyster::models
 #endif // CLOYSTERHPC_OS_H_

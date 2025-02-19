@@ -186,13 +186,12 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
 namespace cloyster::utils {
 
 /**
- * @brief Returns true if [vec] contains [val]
+ * @brief Returns true if [val] is in [container]
  */
-template <typename T> bool isIn(const std::vector<T>& vec, const T& val);
-
-// Special case for const char* strings, delete this and
-// get an link error with a type bigger than Texas
-bool isIn(const std::vector<std::string>& vec, const char* val);
+inline bool isIn(const auto& container, const auto& val)
+{
+    return std::find(container.begin(), container.end(), val) == container.end();
+}
 
 /**
  * @brief Run [func] if cloyster::dryRun is false

@@ -21,11 +21,14 @@ concept NotCopiableNotMoveable = !IsMoveable<T> && !IsCopyable<T>;
  * @brief IsParser<P, T> means: P can parse and unparse Ts from streams. The
  * parsers are allowed to throw exceptions
  */
-template <typename Parser_, typename T>
-concept IsParser = requires(Parser_ parser, const std::string& parseInput,
-    std::string& unparseOutput, const T& unparseInput, T& parseOutput) {
-    { parser.parse(parseInput, parseOutput) } -> std::same_as<void>;
-    { parser.unparse(unparseInput, unparseOutput) } -> std::same_as<void>;
+template <typename Parser_, typename I, typename O>
+concept IsParser = requires(
+    Parser_ parser,
+    const I& parseInput, O& parseOutput,
+    const O& unparseInput, I& unparseOutput)
+{
+    parser.parse(parseInput, parseOutput);
+    parser.unparse(unparseInput, unparseOutput);
 };
 
 // @TODO: Move this to its own file

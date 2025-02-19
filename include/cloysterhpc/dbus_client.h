@@ -6,12 +6,9 @@
 #ifndef CLOYSTERHPC_DBUS_CLIENT_H_
 #define CLOYSTERHPC_DBUS_CLIENT_H_
 
-#include <any>
 #include <memory>
 #include <sdbus-c++/sdbus-c++.h>
 #include <string>
-#include <type_traits>
-#include <variant>
 
 #include <cloysterhpc/messagebus.h>
 
@@ -37,7 +34,7 @@ public:
     std::unique_ptr<MessageBusMethod> method(
         std::string interface, std::string method);
 
-    virtual ~DBusClient() { }
+    ~DBusClient() override = default;
 };
 
 class DBusMethod : public MessageBusMethod {

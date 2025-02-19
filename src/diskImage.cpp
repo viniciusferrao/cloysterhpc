@@ -5,6 +5,7 @@
  */
 
 #include <cloysterhpc/diskImage.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/log.h>
 #include <cstddef>
@@ -76,7 +77,16 @@ cloyster::models::OS::Distro DiskImage::getDistro() const
 // BUG: Consider removing/reimplement this method
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
-    LOG_TRACE("Verifying disk image checksum... This may take a while")
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry Run: Would verify disk image checksum.")
+        return true;
+    }
+
+    LOG_INFO("Verifying disk image checksum... This may take a while")
+    if (cloyster::getEnvironmentVariable("CATTUS_SKIP_DISK_CHECKSUM") == "1") {
+        LOG_WARN("Skiping disk the image checksum because CATTUS_SKIP_DISK_CHECKSUM=1");
+        return true;
+    }
 
     // BUG: This should no be hardcoded here. An ancillary file should be used
     std::unordered_map<std::string, std::string> hash_map = {

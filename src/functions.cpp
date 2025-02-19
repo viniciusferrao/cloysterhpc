@@ -69,6 +69,7 @@ std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
     static std::optional<std::shared_ptr<RepoManager>> repoManager
         = std::nullopt;
     if (!repoManager) {
+        LOG_DEBUG("Initializing RepoManager");
         switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 repoManager = std::make_shared<RepoManager>(osinfo);
@@ -224,7 +225,7 @@ void writeConfig(const std::string& filename)
 void touchFile(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would touch the file {}", path.string())
+        LOG_WARN("Dry Run: Would touch the file {}", path.string())
         return;
     }
 
@@ -237,7 +238,7 @@ void touchFile(const std::filesystem::path& path)
 void createDirectory(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create directory {}", path.string())
+        LOG_WARN("Dry Run: Would create directory {}", path.string())
         return;
     }
 
@@ -249,7 +250,7 @@ void createDirectory(const std::filesystem::path& path)
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would remove file {}, if exists", filename)
+        LOG_WARN("Dry Run: Would remove file {}, if exists", filename)
         return;
     }
 
@@ -290,8 +291,8 @@ void backupFile(std::string_view filename)
         "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
     if (cloyster::dryRun) {
-        LOG_INFO(
-            "Would create a backup copy of {} on {}", filename, backupFile);
+        LOG_WARN(
+            "Dryn Run: Would create a backup copy of {} on {}", filename, backupFile);
         return;
     }
 
@@ -318,7 +319,7 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change the {} on {} in configuration file {}", value,
+        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}", value,
             key, filename);
         return;
     }
@@ -352,8 +353,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #endif
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would add a string in file {}", filename)
-        LOG_TRACE("Added: \"{}\"", string)
+        LOG_WARN("Dry Run: Would add a string in file {}:\n{}",
+                 filename, string);
         return;
     }
 
@@ -401,27 +402,3 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
 }
 
 }; // namespace cloyster
-
-namespace cloyster::utils {
-
-template <typename T> bool isIn(const std::vector<T>& vec, const T& val)
-{
-    return std::find(vec.begin(), vec.end(), val) == vec.end();
-}
-
-bool isIn(const std::vector<std::string>& vec, const char* val)
-{
-    return isIn(vec, std::string(val));
-}
-
-auto directoryIterator(auto&& dir)
-{
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry run: Would traverse directory {}", dir.string());
-        return std::filesystem::directory_iterator {};
-    }
-
-    return std::filesystem::directory_iterator { dir };
-};
-
-}; // namespace cloyster::utils

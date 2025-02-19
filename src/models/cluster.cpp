@@ -600,6 +600,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     LOG_INFO("Kernel: {}", answerfil.system.kernel);
     LOG_INFO("Version: {}", answerfil.system.version);
 
+    // FIXME: This information should be deduced from the ISO file
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
@@ -680,7 +681,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
             serviceNetwork->setSubnetMask(
                 answerfil.service.subnet_mask.value());
         } else {
-            serviceNetwork->setSubnetMask(externalNetwork->fetchSubnetMask(
+            serviceNetwork->setSubnetMask(getNetwork(Network::Profile::Management).fetchSubnetMask(
                 answerfil.service.con_interface.value()));
         }
 
@@ -782,8 +783,9 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-    // BUG: Headnode OS may not be the same as the node OS
-    // m_headnode.setOS(nodeOS);
+
+    // FIXME: This should come from /etc/os-release
+    m_headnode.setOS(nodeOS);
 
     for (const auto& tool : answerfil.getTools()) {
         tool->install();

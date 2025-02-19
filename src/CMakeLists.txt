@@ -17,16 +17,7 @@ target_include_directories(cloysterhpc_presenter_object PRIVATE $<BUILD_INTERFAC
 target_link_system_libraries(
         cloysterhpc_presenter_object
         PRIVATE
-        SimpleIni::SimpleIni
-        SDBusCpp::sdbus-c++
-        magic_enum::magic_enum
-        gsl::gsl-lite
-        fmt::fmt
-        spdlog::spdlog
-        glibmm::glibmm
-        Boost::headers
-        ${NEWT_LIBRARY}
-        )
+        ${COMMON_LIBS})
 
 # Build a library and a ${cloysterhpc_BINARY_NAME} binary that links to the library
 add_library(cloysterhpc_object OBJECT ${SOURCE_FILES})

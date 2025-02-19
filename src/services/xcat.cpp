@@ -269,7 +269,7 @@ void XCAT::generatePostinstallFile()
     }
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change file {} permissions", filename)
+        LOG_WARN("Dry Run: Would change file {} permissions", filename)
         return;
     }
     std::filesystem::permissions(filename,
@@ -635,7 +635,6 @@ void XCAT::installRepositories()
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
     }
-
     const auto osinf = m_cluster->getHeadnode().getOS();
     const auto repoManager = getRepoManager(osinf);
     for (auto const& dir_entry :

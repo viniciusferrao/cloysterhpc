@@ -141,7 +141,7 @@ int main(int argc, const char** argv)
         cloyster::checkEffectiveUserId();
 
         if (cloyster::dryRun) {
-            fmt::print("Dry run enabled.\n");
+            LOG_INFO("Dry run enabled.");
         } else {
             while (!unattended) {
                 char response = 'N';

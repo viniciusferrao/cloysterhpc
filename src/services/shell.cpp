@@ -228,7 +228,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 
         auto connectionName
             = magic_enum::enum_name(connection.getNetwork()->getProfile());
-        if (runCommand(fmt::format("nmcli connection show {}", connectionName))
+        if (!cloyster::dryRun && runCommand(fmt::format("nmcli connection show {}", connectionName))
             == 0) {
             LOG_WARN("Connection exists {}, skipping", connectionName);
             continue;
@@ -417,15 +417,15 @@ void Shell::installDevelopmentComponents()
 
 void Shell::configureRepositories()
 {
-    const auto os = m_cluster->getHeadnode().getOS();
-    auto repos = cloyster::getRepoManager(os);
+    const auto& osinfo = m_cluster->getHeadnode().getOS();
+    auto repos = cloyster::getRepoManager(osinfo);
     // 1. Install files into /etc, these files are the templates
     //    at include/cloysterhpc/repos/el*/*.repo
     repos->initializeDefaultRepositories();
     // 2. Enable the repositories
-    repos->enable(getToEnableRepoNames(os));
+    repos->enable(getToEnableRepoNames(osinfo));
     // 3. Commit data to disk
-    repos->saveToDisk();
+    repos->updateDiskFiles();
 }
 
 /* This method is the entrypoint of shell based cluster install

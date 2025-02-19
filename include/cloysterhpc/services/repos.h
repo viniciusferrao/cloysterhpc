@@ -8,7 +8,7 @@
 #define CLOYSTERHPC_REPOS_H_DEPRECATED_
 
 #include <filesystem>
-#include <initializer_list>
+#include <optional>
 #include <string>
 
 #include <cloysterhpc/concepts.h>
@@ -66,7 +66,7 @@ public:
         = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
     explicit RepoManager(const OS& osinfo);
     void initializeDefaultRepositories();
-    void saveToDisk();
+    void updateDiskFiles();
     void enable(const std::string& repo);
     void enable(const std::vector<std::string>& repos);
     void disable(const std::string& repo);
@@ -79,6 +79,10 @@ public:
 private:
     void loadFiles(const std::filesystem::path& basedir);
     void loadCustom(inifile& file, const std::filesystem::path& path);
+    void loadRPMRepos(
+        const std::filesystem::path& source);
+    auto loadDefaults();
+
     Repositories m_repos;
     std::unordered_set<std::filesystem::path> m_filesLoaded;
 
@@ -94,7 +98,6 @@ private:
 
     void loadSingleFile(const std::filesystem::path& source);
     void saveRepositories();
-    void configureXCAT(const std::filesystem::path& repofileDest);
     void configureEL();
 };
 
