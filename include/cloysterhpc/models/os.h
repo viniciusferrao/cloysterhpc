@@ -8,12 +8,12 @@
 
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/package_manager.h>
+#include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <string>
 #include <variant>
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 
 namespace cloyster::models {
 /**
@@ -33,7 +33,6 @@ public:
     OS(OS&&) = delete;
     OS& operator=(OS&&) = delete;
     ~OS() = default;
-
 
     /**
      * @enum Arch
@@ -148,7 +147,6 @@ public:
      */
     void printData() const;
 };
-
 
 }; // namespace cloyster::models
 #endif // CLOYSTERHPC_OS_H_

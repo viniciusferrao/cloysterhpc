@@ -84,7 +84,8 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 
     LOG_INFO("Verifying disk image checksum... This may take a while")
     if (cloyster::getEnvironmentVariable("CATTUS_SKIP_DISK_CHECKSUM") == "1") {
-        LOG_WARN("Skiping disk the image checksum because CATTUS_SKIP_DISK_CHECKSUM=1");
+        LOG_WARN("Skiping disk the image checksum because "
+                 "CATTUS_SKIP_DISK_CHECKSUM=1");
         return true;
     }
 

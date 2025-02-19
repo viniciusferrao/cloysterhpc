@@ -681,8 +681,9 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
             serviceNetwork->setSubnetMask(
                 answerfil.service.subnet_mask.value());
         } else {
-            serviceNetwork->setSubnetMask(getNetwork(Network::Profile::Management).fetchSubnetMask(
-                answerfil.service.con_interface.value()));
+            serviceNetwork->setSubnetMask(
+                getNetwork(Network::Profile::Management)
+                    .fetchSubnetMask(answerfil.service.con_interface.value()));
         }
 
         if (answerfil.service.gateway.has_value()) {

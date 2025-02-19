@@ -291,8 +291,8 @@ void backupFile(std::string_view filename)
         "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
     if (cloyster::dryRun) {
-        LOG_WARN(
-            "Dryn Run: Would create a backup copy of {} on {}", filename, backupFile);
+        LOG_WARN("Dryn Run: Would create a backup copy of {} on {}", filename,
+            backupFile);
         return;
     }
 
@@ -319,8 +319,8 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}", value,
-            key, filename);
+        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}",
+            value, key, filename);
         return;
     }
 
@@ -353,8 +353,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #endif
 
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would add a string in file {}:\n{}",
-                 filename, string);
+        LOG_WARN(
+            "Dry Run: Would add a string in file {}:\n{}", filename, string);
         return;
     }
 

@@ -124,10 +124,11 @@ class RPMRepositoryParser final {
 public:
     static void parse(
         const std::filesystem::path& path, std::vector<RPMRepository>& output);
-    static void unparse(
-        const std::vector<RPMRepository>& repos, const std::filesystem::path& output);
+    static void unparse(const std::vector<RPMRepository>& repos,
+        const std::filesystem::path& output);
 };
-static_assert(IsParser<RPMRepositoryParser, std::filesystem::path, std::vector<RPMRepository>>);
+static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
+    std::vector<RPMRepository>>);
 
 class RPMRepositoryFile final {
 public:
@@ -192,7 +193,6 @@ constexpr auto getDefaultPath(const auto& osinfo)
                 "Not implemented: Debian default repository path");
     }
 }
-
 
 std::string buildPackageName(std::string stem)
 {
@@ -303,11 +303,11 @@ auto RepoManager::loadDefaults()
     };
 }
 
-void RepoManager::loadRPMRepos(
-    const std::filesystem::path& source)
+void RepoManager::loadRPMRepos(const std::filesystem::path& source)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would load RPM Repositories from file {}", source.string());
+        LOG_WARN("Dry Run: Would load RPM Repositories from file {}",
+            source.string());
         return;
     }
 
@@ -464,7 +464,8 @@ void RepoManager::enable(const std::string& repoid)
         m_repos.at(repoid)->enabled(true);
     } catch (const std::out_of_range&) {
         LOG_ERROR("Trying to enable unknown repository {}, "
-                  "failed because the repository was not found.", repoid);
+                  "failed because the repository was not found.",
+            repoid);
 
         for (const auto& [id, _] : m_repos) {
             LOG_ERROR("Repository available: {}", id);
@@ -478,9 +479,7 @@ void RepoManager::enable(const std::string& repoid)
 
 void RepoManager::enable(const std::vector<std::string>& repoids)
 {
-    std::ranges::for_each(repoids, [&](const auto& repoid) {
-        enable(repoid);
-    });
+    std::ranges::for_each(repoids, [&](const auto& repoid) { enable(repoid); });
 }
 
 void RepoManager::disable(const std::string& repoid)
@@ -496,12 +495,15 @@ void RepoManager::disable(const std::vector<std::string>& repoids)
 
 void RepoManager::install(const std::filesystem::path& path)
 {
-    LOG_ASSERT(path.is_absolute(), "RepoManager::install called with relative path");
-    LOG_ASSERT(path.has_filename(), "RepoManager::install called with a directory?");
+    LOG_ASSERT(
+        path.is_absolute(), "RepoManager::install called with relative path");
+    LOG_ASSERT(
+        path.has_filename(), "RepoManager::install called with a directory?");
     LOG_INFO("Installing repository {}", path.string());
     const auto& dest = getDefaultReposPath(m_os) / path.filename();
     if (dest == path) {
-        LOG_WARN("Trying to reinstall a repository file {}, skipping", dest.string());
+        LOG_WARN("Trying to reinstall a repository file {}, skipping",
+            dest.string());
         return;
     }
     cloyster::copyFile(path, dest);
@@ -576,8 +578,7 @@ RepoManager::Repositories RepoManager::getDefaultReposFromDisk(
         loadDefaults();
     } else {
         LOG_INFO("Using custom repofile ({}).", cloyster::customRepofilePath);
-        loadRPMRepos(
-            cloyster::customRepofilePath);
+        loadRPMRepos(cloyster::customRepofilePath);
     }
 
     auto outpath = basedir / "cloyster.repo";

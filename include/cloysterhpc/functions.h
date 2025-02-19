@@ -190,7 +190,8 @@ namespace cloyster::utils {
  */
 inline bool isIn(const auto& container, const auto& val)
 {
-    return std::find(container.begin(), container.end(), val) == container.end();
+    return std::find(container.begin(), container.end(), val)
+        == container.end();
 }
 
 /**

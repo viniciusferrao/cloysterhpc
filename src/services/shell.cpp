@@ -228,8 +228,10 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 
         auto connectionName
             = magic_enum::enum_name(connection.getNetwork()->getProfile());
-        if (!cloyster::dryRun && runCommand(fmt::format("nmcli connection show {}", connectionName))
-            == 0) {
+        if (!cloyster::dryRun
+            && runCommand(
+                   fmt::format("nmcli connection show {}", connectionName))
+                == 0) {
             LOG_WARN("Connection exists {}, skipping", connectionName);
             continue;
         }

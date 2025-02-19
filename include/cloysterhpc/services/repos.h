@@ -79,8 +79,7 @@ public:
 private:
     void loadFiles(const std::filesystem::path& basedir);
     void loadCustom(inifile& file, const std::filesystem::path& path);
-    void loadRPMRepos(
-        const std::filesystem::path& source);
+    void loadRPMRepos(const std::filesystem::path& source);
     auto loadDefaults();
 
     Repositories m_repos;

@@ -104,7 +104,8 @@ retry:
         connection.setAddress(m_model->nodeStartIP);
         connection.incrementAddress(node - 1);
 
-        // m_model->addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections)
+        // m_model->addNode(nodeName, nodeOS, nodeCPU,
+        // std::move(nodeConnections)
         //     // std::optional<BMC>
         // );
     }

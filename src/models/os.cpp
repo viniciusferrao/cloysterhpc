@@ -154,7 +154,7 @@ void OS::setPlatform(std::string_view platform)
 OS::Distro OS::getDistro() const
 {
     LOG_ASSERT(!std::holds_alternative<std::monostate>(m_distro),
-               "m_distro is uninitialized");
+        "m_distro is uninitialized");
     return std::get<OS::Distro>(m_distro);
 }
 
@@ -171,10 +171,7 @@ OS::PackageType OS::getPackageType() const
     };
 }
 
-void OS::setDistro(OS::Distro distro) 
-{ 
-    m_distro = distro;
-}
+void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
