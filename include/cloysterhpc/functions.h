@@ -177,8 +177,6 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
 } // namespace cloyster
 
-// @FIXME: Move functions to cloyster::utils namespace and this file
-//   to utils.h/utils.cpp
 /**
  * @brief Generic functions. Be very judicious on what you put here. Is it
  * really generic?

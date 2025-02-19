@@ -88,20 +88,6 @@ OS::OS()
     factoryPackageManager(getPlatform());
 }
 
-// OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
-//     OS::Distro distro, std::string_view kernel, unsigned majorVersion,
-//     unsigned minorVersion)
-//     : m_arch(arch)
-//     , m_family(family)
-//     , m_platform(platform)
-//     , m_distro(distro)
-//     , m_packageManager(factoryPackageManager(platform))
-// {
-//     setKernel(kernel);
-//     setMajorVersion(majorVersion);
-//     setMinorVersion(minorVersion);
-// }
-//
 OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
 
 void OS::setArch(Arch arch) { m_arch = arch; }

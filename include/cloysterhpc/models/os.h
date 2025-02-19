@@ -72,10 +72,7 @@ private:
     std::string m_kernel;
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
-    // BUG: The package_manager should be a unique_ptr;
-    // however repos.h needs to be rewritten to support it.
-    // 'OS::os()' is implicitly deleted because the default definition
-    // would be ill-formed
+
     std::shared_ptr<package_manager> m_packageManager;
 
     void setMajorVersion(unsigned int majorVersion);
@@ -95,21 +92,6 @@ private:
 
 public:
     OS();
-
-    /**
-     * @brief Constructs an OS object with the specified attributes.
-     *
-     * @param arch The architecture of the OS.
-     * @param family The family of the OS.
-     * @param platform The platform of the OS.
-     * @param distro The distribution of the OS.
-     * @param kernel The kernel version of the OS.
-     * @param majorVersion The major version number of the OS.
-     * @param minorVersion The minor version number of the OS.
-     */
-    // OS(OS::Arch arch, OS::Family family, OS::Platform platform,
-    //     OS::Distro distro, std::string_view kernel, unsigned majorVersion,
-    //     unsigned minorVersion);
 
     [[nodiscard]] Arch getArch() const;
     void setArch(Arch arch);

@@ -120,36 +120,6 @@ std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
     return m_network;
 }
 
-// void Cluster::initRepoManager()
-// {
-//     if (cloyster::dryRun) {
-//        m_repos.emplace(RepoManager<repository, DryRunner>(*getRunner(),
-//        m_headnode.getOS()));
-//     } else {
-//        m_repos.emplace(RepoManager<repository, Runner>(*getRunner(),
-//        m_headnode.getOS()));
-//     }
-// }
-
-// @TODO Remove this after as part of the repository refactoring
-// template <typename Runner>
-// RepoManager<repository, Runner>& Cluster<Runner>::getRepoManager()
-// {
-//     if (!m_repos) {
-//         initRepoManager();
-//     }
-//
-//     return m_repos.value();
-// }
-
-// RepoManager<repository, BaseRunner>& Cluster::getRepoManager()
-// {
-//      if (!m_repos) {
-//          m_repos = cloyster::getRepoManager();
-//      };
-//      return m_repos.value();
-//  }
-
 Network& Cluster::getNetwork(Network::Profile profile)
 {
     for (auto& network : m_network) {

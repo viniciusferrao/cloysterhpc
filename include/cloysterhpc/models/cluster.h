@@ -65,8 +65,6 @@ private:
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
-    // @TODO Removing m_runner from Cluster
-    // std::unique_ptr<BaseRunner> m_runner;
     std::shared_ptr<DBusClient> m_systemdBus;
 
     bool m_firewall { false };
