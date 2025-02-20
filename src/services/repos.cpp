@@ -10,6 +10,7 @@
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 #include <utility>
 
 #include <boost/algorithm/string.hpp>
@@ -71,9 +72,9 @@ class RPMRepository final : public IRepository {
 public:
     RPMRepository() = default;
     ~RPMRepository() override = default;
-    RPMRepository(const RPMRepository&) = delete;
+    RPMRepository(const RPMRepository&) = default;
     RPMRepository(RPMRepository&&) = default;
-    RPMRepository& operator=(const RPMRepository&) = delete;
+    RPMRepository& operator=(const RPMRepository&) = default;
     RPMRepository& operator=(RPMRepository&&) = default;
 
     [[nodiscard]] std::string id() const override { return m_id; };
@@ -120,29 +121,127 @@ public:
 };
 
 using cloyster::concepts::IsParser;
+
+
+// Parses .repo files
 class RPMRepositoryParser final {
+    static auto vecToMap(std::vector<RPMRepository>&& repos)
+    {
+        std::unordered_map<std::string, RPMRepository> output;
+        for (auto&& repo : std::move(repos))
+        {
+            output.insert({repo.id(), std::move(repo)});
+        }
+        return output;
+    }
+
+    static auto mapToVec(const std::unordered_map<std::string, RPMRepository>& repos)
+    {
+        return repos
+            | std::views::transform([](auto& pair)
+                                    { return pair.second; })
+            | std::ranges::to<std::vector>();
+    }
 public:
     static void parse(
         const std::filesystem::path& path, std::vector<RPMRepository>& output);
     static void unparse(const std::vector<RPMRepository>& repos,
         const std::filesystem::path& output);
+
+    static void parse(
+        const std::filesystem::path& path, std::unordered_map<std::string, RPMRepository>& output)
+    {
+        std::vector<RPMRepository> data;
+        parse(path, data);
+        output = vecToMap(std::move(data));
+    }
+
+    static void unparse(
+        const std::unordered_map<std::string, RPMRepository>& repos,
+        const std::filesystem::path& path)
+    {
+        unparse(mapToVec(repos), path);
+    }
 };
 static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
     std::vector<RPMRepository>>);
+static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
+    std::unordered_map<std::string, RPMRepository>>);
 
+// Represents a file inside /etc/yum.repos.d
 class RPMRepositoryFile final {
+    static constexpr auto m_parser = RPMRepositoryParser();
+    std::filesystem::path m_path;
+    std::unordered_map<std::string, RPMRepository> m_repos;
 public:
-    ~RPMRepositoryFile() = default;
-    RPMRepositoryFile() = default;
-    RPMRepositoryFile(const RPMRepositoryFile&) = delete;
-    RPMRepositoryFile& operator=(const RPMRepositoryFile&) = delete;
-    RPMRepositoryFile(RPMRepositoryFile&&) = delete;
-    RPMRepositoryFile& operator=(RPMRepositoryFile&&) = delete;
-    void save();
-    void load();
+    explicit RPMRepositoryFile(auto path)
+    : m_path(std::move(path))
+    {
+        m_parser.parse(m_path, m_repos);
+    }
+
+    const auto& repos() const
+    {
+        return m_repos;
+    }
+
+    auto& repo(const std::string& name) const
+    {
+        return repos().at(name);
+    }
+
+    void save() const
+    {
+        m_parser.unparse(m_repos, m_path);
+    }
 };
-static_assert(cloyster::concepts::IsSaveable<RPMRepositoryFile>);
-static_assert(cloyster::concepts::NotCopiableNotMoveable<RPMRepositoryFile>);
+
+// Installs and enable/disable RPM repositories
+class RPMRepoManager final {
+    static constexpr auto m_parser = RPMRepositoryParser();
+    static constexpr auto m_basedir = "/etc/yum.repos.d/";
+    // Maps repo id to files
+    std::unordered_map<std::string, std::shared_ptr<RPMRepositoryFile>> m_filesIdx;
+
+    // Adds repofile to the index
+    void addRepoFile(auto&& repofile)
+    {
+        for (auto& [repo, _] : repofile.repos()) {
+            m_filesIdx.insert({repo, std::make_shared<RPMRepositoryFile>(repofile)});
+        }
+    }
+
+public:
+    // Installs a single .repo file
+    void install(const std::filesystem::path& source)
+    {
+        const auto& dest =  m_basedir / source.filename();
+        if (m_filesIdx.contains(dest)) {
+            LOG_WARN("Repository already installed {}, skipping", dest.string());
+            return;
+        }
+        cloyster::copyFile(source, dest);
+        addRepoFile(RPMRepositoryFile(dest));
+    }
+
+    // Install all .repo files inside a folder
+    void install(std::filesystem::directory_iterator& dirIter)
+    {
+        for (const auto& fil : dirIter) {
+            if (fil.path().filename().string().ends_with(".repo")) {
+                install(fil);
+            }
+        }
+    }
+
+    // Enable/diable a repository by name
+    void enable(const auto& repo, bool value)
+    {
+        auto& repofile = m_filesIdx.at(repo);
+        repofile.repo(repo).enable(value);
+        repofile.save();
+    }
+};
 
 }; // namespace cloyster::services::repos {
 
@@ -164,7 +263,6 @@ constexpr std::string_view CLOYSTER_REPO_EL10 = {
 #include "cloysterhpc/repos/el10/cloyster.repo"
 };
 
-// @TODO Make this a RPMRepositoryFile method
 void installFile(const std::filesystem::path& path, std::istream& data)
 {
     if (cloyster::dryRun) {
@@ -181,7 +279,7 @@ void installFile(const std::filesystem::path& path, std::istream& data)
     fil << data.rdbuf();
 }
 
-constexpr auto getDefaultPath(const auto& osinfo)
+constexpr auto getCloysterRepoPath(const auto& osinfo)
 {
     switch (osinfo.getPlatform()) {
         case OS::Platform::el8:
@@ -276,7 +374,7 @@ namespace cloyster::services::repos {
 
 auto RepoManager::loadDefaults()
 {
-    const auto& path = getDefaultPath(m_os);
+    const auto& path = getCloysterRepoPath(m_os);
     std::istringstream stream;
     switch (m_os.getPlatform()) {
         case OS::Platform::el8:
@@ -379,7 +477,7 @@ void RPMRepositoryParser::unparse(
         file.setBoolean(repo.group(), "gpgcheck", repo.gpgcheck());
         file.setString(repo.group(), "gpgkey", repo.gpgkey());
         file.setString(repo.group(), "metalink", repo.metalink());
-        file.setString(repo.group(), "baseurl", repo.metalink());
+        file.setString(repo.group(), "baseurl", repo.baseurl());
     }
 
     file.save();
@@ -517,7 +615,6 @@ void RepoManager::install(const std::vector<std::filesystem::path>& paths)
     }
 }
 
-/// Private API
 
 std::vector<std::shared_ptr<const IRepository>> RepoManager::listRepos() const
 {

@@ -4,8 +4,8 @@
  */
 
 /* This class is set to be reimplemented */
-#ifndef CLOYSTERHPC_REPOS_H_DEPRECATED_
-#define CLOYSTERHPC_REPOS_H_DEPRECATED_
+#ifndef CLOYSTERHPC_REPOS_H_
+#define CLOYSTERHPC_REPOS_H_
 
 #include <filesystem>
 #include <optional>
@@ -48,9 +48,9 @@ public:
     virtual void uri(std::optional<std::string> value) = 0;
     virtual void source(std::filesystem::path value) = 0;
 
-    IRepository(const IRepository&) = delete;
+    IRepository(const IRepository&) = default;
     IRepository(IRepository&&) = default;
-    IRepository& operator=(const IRepository&) = delete;
+    IRepository& operator=(const IRepository&) = default;
     IRepository& operator=(IRepository&&) = default;
 
 protected:
@@ -78,7 +78,6 @@ public:
 
 private:
     void loadFiles(const std::filesystem::path& basedir);
-    void loadCustom(inifile& file, const std::filesystem::path& path);
     void loadRPMRepos(const std::filesystem::path& source);
     auto loadDefaults();
 
@@ -101,4 +100,4 @@ private:
 };
 
 };
-#endif // CLOYSTERHPC_REPOS_H_DEPRECATED_
+#endif // CLOYSTERHPC_REPOS_H_
