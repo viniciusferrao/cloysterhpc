@@ -11,10 +11,12 @@
 #include <boost/lexical_cast.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+namespace cloyster::presenter {
 class PresenterInstall : public Presenter {
 public:
     PresenterInstall(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
 };
+}
 
 #endif // CLOYSTERHPC_PRESENTERINSTALL_H_

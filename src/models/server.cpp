@@ -1,12 +1,15 @@
 /*
+ * o
  * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/server.h>
+#include <cloysterhpc/models/server.h>
 #include <cloysterhpc/services/log.h>
+#include <regex>
 #include <string_view>
 
+namespace cloyster::models {
 Server::Server(std::string_view hostname, OS& os, CPU& cpu,
     std::list<Connection>&& connections, std::optional<BMC> bmc)
     : m_os(os)
@@ -172,4 +175,6 @@ TEST_SUITE("Test FQDN")
             CHECK(!server.validateFQDN().has_value());
         }
     }
+}
+
 }

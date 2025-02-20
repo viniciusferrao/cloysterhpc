@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/headnode.h>
+#include <cloysterhpc/models/headnode.h>
 #include <cloysterhpc/services/log.h>
 
 #include <algorithm> /* std::remove */
@@ -17,6 +17,8 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <string>
+
+namespace cloyster::models {
 
 /* The constructor should discover everything we need from the machine that is
  * running the software. We always consider that the software runs from the
@@ -54,3 +56,5 @@ void Headnode::setBootTarget(Headnode::BootTarget bootTarget)
 {
     m_bootTarget = bootTarget;
 }
+
+};

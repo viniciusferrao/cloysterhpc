@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/cluster.h>
-#include <cloysterhpc/queuesystem/slurm.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
 #include <filesystem>
 
 using cloyster::runCommand;
 
+namespace cloyster::models {
 SLURM::SLURM(const Cluster& cluster)
     : QueueSystem(cluster)
 {
@@ -58,4 +59,6 @@ void SLURM::startServer()
 {
     runCommand("systemctl start munge");
     runCommand("systemctl start slurmctld");
+}
+
 }

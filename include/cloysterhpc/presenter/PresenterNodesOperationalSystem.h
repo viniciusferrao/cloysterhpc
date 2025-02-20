@@ -9,6 +9,8 @@
 #include <cloysterhpc/presenter/Presenter.h>
 #include <optional>
 
+namespace cloyster::presenter {
+
 using PresenterNodesVersionCombo
     = std::tuple<int, int, OS::Arch>; // major, minor
 
@@ -82,6 +84,8 @@ private:
 public:
     PresenterNodesOperationalSystem(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERNODESOPERATIONALSYSTEM_H_

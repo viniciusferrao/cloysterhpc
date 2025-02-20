@@ -19,19 +19,69 @@
 #include <fmt/format.h>
 #include <fstream>
 #include <optional>
+#include <ranges>
+#include <stdexcept>
 #include <tuple>
 
 namespace cloyster {
 
-static std::tuple<bool, std::optional<std::string>> retrieveLine(
-    boost::process::ipstream& pipe_stream,
-    const std::function<std::string(boost::process::ipstream&)>& linecheck)
-{
-    if (pipe_stream.good()) {
-        return make_tuple(true, make_optional(linecheck(pipe_stream)));
+using cloyster::services::BaseRunner;
+using cloyster::services::DryRunner;
+using cloyster::services::Runner;
+
+namespace {
+    std::tuple<bool, std::optional<std::string>> retrieveLine(
+        boost::process::ipstream& pipe_stream,
+        const std::function<std::string(boost::process::ipstream&)>& linecheck)
+    {
+        if (pipe_stream.good()) {
+            return make_tuple(true, make_optional(linecheck(pipe_stream)));
+        }
+
+        return make_tuple(pipe_stream.good(), std::nullopt);
     }
 
-    return make_tuple(pipe_stream.good(), std::nullopt);
+    std::shared_ptr<BaseRunner> makeRunner(const bool dryRun)
+    {
+        if (dryRun) {
+            return std::make_shared<DryRunner>();
+        }
+
+        return std::make_shared<Runner>();
+    }
+
+} // anonymous namespace
+
+std::shared_ptr<BaseRunner> getRunner()
+{
+    static std::optional<std::shared_ptr<BaseRunner>> runner = std::nullopt;
+    if (!runner) {
+        runner = makeRunner(cloyster::dryRun);
+    }
+
+    return runner.value();
+}
+
+using cloyster::services::repos::RepoManager;
+
+std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
+{
+    static std::optional<std::shared_ptr<RepoManager>> repoManager
+        = std::nullopt;
+    if (!repoManager) {
+        LOG_DEBUG("Initializing RepoManager");
+        switch (osinfo.getPackageType()) {
+            case OS::PackageType::RPM:
+                repoManager = std::make_shared<RepoManager>(osinfo);
+                break;
+            case OS::PackageType::DEB:
+                // @TODO Implement
+                throw std::logic_error("Not implemented");
+                break;
+        }
+    }
+
+    return repoManager.value();
 }
 
 std::optional<std::string> CommandProxy::getline()
@@ -175,7 +225,7 @@ void writeConfig(const std::string& filename)
 void touchFile(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would touch the file {}", path.string())
+        LOG_WARN("Dry Run: Would touch the file {}", path.string())
         return;
     }
 
@@ -188,7 +238,7 @@ void touchFile(const std::filesystem::path& path)
 void createDirectory(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would create directory {}", path.string())
+        LOG_WARN("Dry Run: Would create directory {}", path.string())
         return;
     }
 
@@ -200,7 +250,7 @@ void createDirectory(const std::filesystem::path& path)
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_INFO("Would remove file {}, if exists", filename)
+        LOG_WARN("Dry Run: Would remove file {}, if exists", filename)
         return;
     }
 
@@ -241,8 +291,8 @@ void backupFile(std::string_view filename)
         "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
     if (cloyster::dryRun) {
-        LOG_INFO(
-            "Would create a backup copy of {} on {}", filename, backupFile);
+        LOG_WARN("Dryn Run: Would create a backup copy of {} on {}", filename,
+            backupFile);
         return;
     }
 
@@ -269,8 +319,8 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change the {} on {} in configuration file {}", value,
-            key, filename);
+        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}",
+            value, key, filename);
         return;
     }
 
@@ -303,8 +353,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #endif
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would add a string in file {}", filename)
-        LOG_TRACE("Added: \"{}\"", string)
+        LOG_WARN(
+            "Dry Run: Would add a string in file {}:\n{}", filename, string);
         return;
     }
 
@@ -351,4 +401,4 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
-} // namespace cloyster
+}; // namespace cloyster

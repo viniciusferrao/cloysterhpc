@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterNodes.h>
 
+namespace cloyster::presenter {
+
 PresenterNodes::PresenterNodes(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -74,8 +76,8 @@ retry:
     //  * We need a proper node building object instead
 
     // TODO: Support more OSes than Oracle Linux 8.5; we are hard coding the OS:
-    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+    // OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
+    //     OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
     // TODO: Fetch CPU data
     CPU nodeCPU(1, 1, 1);
 
@@ -102,8 +104,11 @@ retry:
         connection.setAddress(m_model->nodeStartIP);
         connection.incrementAddress(node - 1);
 
-        m_model->addNode(nodeName, nodeOS, nodeCPU, std::move(nodeConnections)
-            // std::optional<BMC>
-        );
+        // m_model->addNode(nodeName, nodeOS, nodeCPU,
+        // std::move(nodeConnections)
+        //     // std::optional<BMC>
+        // );
     }
 }
+
+};

@@ -11,10 +11,11 @@
 #include <string>
 
 #include <cloysterhpc/connection.h>
+#include <cloysterhpc/models/os.h>
+#include <cloysterhpc/models/server.h>
 #include <cloysterhpc/network.h>
-#include <cloysterhpc/os.h>
-#include <cloysterhpc/server.h>
 
+namespace cloyster::models {
 class Headnode : public Server {
 public:
     enum class BootTarget { Text, Graphical };
@@ -31,5 +32,7 @@ public:
     [[nodiscard]] BootTarget getBootTarget() const;
     void setBootTarget(BootTarget bootTarget);
 };
+
+}; // namespace cloyster::models
 
 #endif // CLOYSTERHPC_HEADNODE_H_

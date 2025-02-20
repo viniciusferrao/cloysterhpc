@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterHostId.h>
 
+namespace cloyster::presenter {
+
 PresenterHostId::PresenterHostId(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -52,3 +54,5 @@ PresenterHostId::PresenterHostId(
     LOG_DEBUG("Domain name set to: {}", m_model->getDomainName())
     LOG_DEBUG("FQDN: {}", m_model->getHeadnode().getFQDN())
 }
+
+};

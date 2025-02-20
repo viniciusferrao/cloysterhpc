@@ -7,7 +7,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
-#include <cloysterhpc/answerfile.h>
+#include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/tools/nvhpc.h>
 #include <cstddef>
@@ -15,6 +15,8 @@
 #include <iterator>
 #include <magic_enum/magic_enum.hpp>
 #include <ranges>
+
+namespace cloyster::models {
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)
     : m_path(path)
@@ -604,6 +606,8 @@ void AnswerFile::loadPostfix()
     postfix.cert_file = m_ini.getValue("postfix", "smtpd_tls_cert_file", false);
     postfix.key_file = m_ini.getValue("postfix", "smtpd_tls_key_file", false);
 }
+
+};
 
 #ifdef BUILD_TESTING
 #include <cloysterhpc/tests.h>

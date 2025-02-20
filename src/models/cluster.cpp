@@ -3,54 +3,65 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/answerfile.h>
-#include <cloysterhpc/cloyster.h>
-#include <cloysterhpc/cluster.h>
-#include <cloysterhpc/functions.h>
-#include <cloysterhpc/headnode.h>
-#include <cloysterhpc/inifile.h>
-#include <cloysterhpc/runner.h>
-#include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/xcat.h>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <expected>
-#include <iostream>
 #include <memory>
-#include <optional>
-#include <regex>
-#include <string>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
 #endif
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+#include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/inifile.h>
+#include <cloysterhpc/models/answerfile.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/headnode.h>
+#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/slurm.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/xcat.h>
+
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
 
-Cluster::Cluster()
-{
-    if (cloyster::dryRun) {
-        m_runner = std::make_unique<DryRunner>();
-    } else {
-        m_runner = std::make_unique<Runner>();
-    }
+using cloyster::services::BaseRunner;
+using cloyster::services::DryRunner;
+using cloyster::services::Runner;
 
-    m_systemdBus = std::make_shared<DBusClient>(
-        "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
+static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
+{
+    if (option) {
+        return std::make_unique<DryRunner>();
+    } else {
+        return std::make_unique<Runner>();
+    }
 }
-// The rule of zero
-// Cluster::~Cluster() = default;
+
+namespace cloyster::models {
+
+Cluster::Cluster()
+    : m_systemdBus(std::make_shared<DBusClient>(
+          "org.freedesktop.systemd1", "/org/freedesktop/systemd1"))
+{
+}
 
 std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
 const Headnode& Cluster::getHeadnode() const { return m_headnode; }
+// template <typename Runner>
+// std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
+//{
+//     return m_runner;
+// }
 
 std::string_view Cluster::getName() const { return m_name; }
 
@@ -107,20 +118,6 @@ void Cluster::setDomainName(const std::string& domainName)
 std::list<std::unique_ptr<Network>>& Cluster::getNetworks()
 {
     return m_network;
-}
-
-void Cluster::initRepoManager()
-{
-    m_repos.emplace(*m_runner, m_headnode.getOS());
-}
-
-RepoManager& Cluster::getRepoManager()
-{
-    if (!m_repos) {
-        initRepoManager();
-    }
-
-    return m_repos.value();
 }
 
 Network& Cluster::getNetwork(Network::Profile profile)
@@ -241,15 +238,13 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
 
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(Postfix::Profile profile)
+void Cluster::setMailSystem(
+    Postfix::Profile profile, std::shared_ptr<BaseRunner> runner)
 {
-    m_mailSystem.emplace(m_systemdBus, *m_runner, profile);
+    m_mailSystem.emplace(m_systemdBus, *runner, profile);
 }
 
-const std::filesystem::path& Cluster::getDiskImage() const
-{
-    return m_diskImage.getPath();
-}
+const DiskImage& Cluster::getDiskImage() const { return m_diskImage; }
 
 void Cluster::setDiskImage(const std::filesystem::path& diskImagePath)
 {
@@ -311,7 +306,6 @@ void Cluster::printNetworks(
         }
     }
 }
-
 void Cluster::printConnections()
 {
     for (const auto& connection : getHeadnode().getConnections()) {
@@ -339,7 +333,7 @@ void Cluster::printData()
     //    LOG_DEBUG("nodePadding: {}", nodePadding)
     //    LOG_DEBUG("nodeStartIP: {}", nodeStartIP)
     //    LOG_DEBUG("nodeRootPassword: {}", nodeRootPassword)
-    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().string())
+    LOG_DEBUG("nodeDiskImage: {}", getDiskImage().getPath().string())
 
     LOG_DEBUG("Update system: {}", (isUpdateSystem() ? "true" : "false"))
     //    LOG_DEBUG("Remote access: {}", (remoteAccess ? "true" : "false"))
@@ -452,11 +446,11 @@ auto& getNetworkField(AnswerFile& answerfile, Network::Profile profile)
 
 void Cluster::dumpData(const std::filesystem::path& answerfilePath)
 {
-    AnswerFile answerfile(answerfilePath);
+    AnswerFile answerfil(answerfilePath);
     LOG_TRACE("Dump Management Network");
 
     for (const auto& network : m_network) {
-        auto& field = getNetworkField(answerfile, network->getProfile());
+        auto& field = getNetworkField(answerfil, network->getProfile());
 
         field.subnet_mask = network->getSubnetMask();
         field.gateway = network->getGateway();
@@ -470,14 +464,14 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
         field.con_ip_addr = network->getAddress();
     }
 
-    answerfile.system.disk_image = getDiskImage();
+    answerfil.system.disk_image = getDiskImage().getPath();
 
-    answerfile.information.cluster_name = getName();
-    answerfile.information.company_name = getCompanyName();
-    answerfile.information.administrator_email = getAdminMail();
+    answerfil.information.cluster_name = getName();
+    answerfil.information.company_name = getCompanyName();
+    answerfil.information.administrator_email = getAdminMail();
 
-    answerfile.time.timezone = getTimezone().getTimezone();
-    answerfile.time.locale = getLocale().getLocale();
+    answerfil.time.timezone = getTimezone().getTimezone();
+    answerfil.time.locale = getLocale().getLocale();
 
     for (const auto& node : this->m_nodes) {
         AFNode afNode;
@@ -505,96 +499,96 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
             afNode.bmc_serialspeed = std::to_string(bmc->getSerialSpeed());
         }
 
-        answerfile.nodes.nodes.push_back(afNode);
+        answerfil.nodes.nodes.push_back(afNode);
     }
 
-    answerfile.dumpFile(answerfilePath);
+    answerfil.dumpFile(answerfilePath);
 }
 
 void Cluster::fillData(const std::filesystem::path& answerfilePath)
 {
-    AnswerFile answerfile(answerfilePath);
+    AnswerFile answerfil(answerfilePath);
 
     LOG_TRACE("Configure Management Network")
     // Management Network
     auto managementNetwork = std::make_unique<Network>(
         Network::Profile::Management, Network::Type::Ethernet);
 
-    managementNetwork->setSubnetMask(answerfile.management.subnet_mask.value());
+    managementNetwork->setSubnetMask(answerfil.management.subnet_mask.value());
 
-    if (answerfile.management.gateway.has_value()) {
-        managementNetwork->setGateway(answerfile.management.gateway.value());
+    if (answerfil.management.gateway.has_value()) {
+        managementNetwork->setGateway(answerfil.management.gateway.value());
     }
 
-    managementNetwork->setDomainName(answerfile.management.domain_name.value());
+    managementNetwork->setDomainName(answerfil.management.domain_name.value());
 
-    if (answerfile.management.nameservers.has_value()) {
+    if (answerfil.management.nameservers.has_value()) {
         managementNetwork->setNameservers(
-            answerfile.management.nameservers.value());
+            answerfil.management.nameservers.value());
     } else {
         managementNetwork->setNameservers(
             managementNetwork->fetchNameservers());
     }
 
     managementNetwork->setAddress(managementNetwork->calculateAddress(
-        answerfile.management.con_ip_addr.value()));
+        answerfil.management.con_ip_addr.value()));
 
     LOG_TRACE("Configure External Network")
     // External Network
     auto externalNetwork = std::make_unique<Network>(
         Network::Profile::External, Network::Type::Ethernet);
 
-    if (answerfile.external.subnet_mask.has_value()) {
-        externalNetwork->setSubnetMask(answerfile.external.subnet_mask.value());
+    if (answerfil.external.subnet_mask.has_value()) {
+        externalNetwork->setSubnetMask(answerfil.external.subnet_mask.value());
     } else {
         externalNetwork->setSubnetMask(externalNetwork->fetchSubnetMask(
-            answerfile.external.con_interface.value()));
+            answerfil.external.con_interface.value()));
     }
 
-    if (answerfile.external.gateway.has_value()) {
-        externalNetwork->setGateway(answerfile.external.gateway.value());
+    if (answerfil.external.gateway.has_value()) {
+        externalNetwork->setGateway(answerfil.external.gateway.value());
     }
 
-    if (!answerfile.external.domain_name->empty()) {
-        externalNetwork->setDomainName(answerfile.external.domain_name.value());
+    if (!answerfil.external.domain_name->empty()) {
+        externalNetwork->setDomainName(answerfil.external.domain_name.value());
     } else {
         externalNetwork->setDomainName(externalNetwork->fetchDomainName());
     }
 
-    if (answerfile.external.nameservers.has_value()) {
-        externalNetwork->setNameservers(
-            answerfile.external.nameservers.value());
+    if (answerfil.external.nameservers.has_value()) {
+        externalNetwork->setNameservers(answerfil.external.nameservers.value());
     } else {
         externalNetwork->setNameservers(externalNetwork->fetchNameservers());
     }
 
     // System
-    setDiskImage(answerfile.system.disk_image);
+    setDiskImage(answerfil.system.disk_image);
 
     // OS and Information
 
-    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfile.system.distro));
-    LOG_INFO("Kernel: {}", answerfile.system.kernel);
-    LOG_INFO("Version: {}", answerfile.system.version);
+    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfil.system.distro));
+    LOG_INFO("Kernel: {}", answerfil.system.kernel);
+    LOG_INFO("Version: {}", answerfil.system.version);
 
+    // FIXME: This information should be deduced from the ISO file
     OS nodeOS;
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
-    nodeOS.setDistro(answerfile.system.distro);
-    nodeOS.setKernel(answerfile.system.kernel);
-    nodeOS.setVersion(answerfile.system.version);
+    nodeOS.setDistro(answerfil.system.distro);
+    nodeOS.setKernel(answerfil.system.kernel);
+    nodeOS.setVersion(answerfil.system.version);
 
-    LOG_TRACE("Cluster name: {}", answerfile.information.cluster_name)
+    LOG_TRACE("Cluster name: {}", answerfil.information.cluster_name)
 
-    setName(answerfile.information.cluster_name);
-    setCompanyName(answerfile.information.company_name);
-    setAdminMail(answerfile.information.administrator_email);
+    setName(answerfil.information.cluster_name);
+    setCompanyName(answerfil.information.company_name);
+    setAdminMail(answerfil.information.administrator_email);
 
-    setTimezone(answerfile.time.timezone);
-    setLocale(answerfile.time.locale);
+    setTimezone(answerfil.time.timezone);
+    setLocale(answerfil.time.locale);
 
-    this->m_headnode.setHostname(answerfile.hostname.hostname);
-    setDomainName(answerfile.hostname.domain_name);
+    this->m_headnode.setHostname(answerfil.hostname.hostname);
+    setDomainName(answerfil.hostname.domain_name);
     this->m_headnode.setFQDN(fmt::format(
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
@@ -608,12 +602,12 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
     managementConnection.setInterface(
-        answerfile.management.con_interface.value());
+        answerfil.management.con_interface.value());
 
-    managementConnection.setAddress(answerfile.management.con_ip_addr.value());
+    managementConnection.setAddress(answerfil.management.con_ip_addr.value());
 
-    if (!answerfile.management.con_mac_addr->empty()) {
-        managementConnection.setMAC(answerfile.management.con_mac_addr.value());
+    if (!answerfil.management.con_mac_addr->empty()) {
+        managementConnection.setMAC(answerfil.management.con_mac_addr.value());
     }
 
     getHeadnode().addConnection(std::move(managementConnection));
@@ -623,17 +617,17 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     LOG_TRACE("Configure External Connection")
     auto externalConnection
         = Connection(&getNetwork(Network::Profile::External));
-    externalConnection.setInterface(answerfile.external.con_interface.value());
+    externalConnection.setInterface(answerfil.external.con_interface.value());
 
-    if (answerfile.external.con_ip_addr.has_value()) {
-        externalConnection.setAddress(answerfile.external.con_ip_addr.value());
+    if (answerfil.external.con_ip_addr.has_value()) {
+        externalConnection.setAddress(answerfil.external.con_ip_addr.value());
 
         getNetwork(Network::Profile::External)
             .setAddress(getNetwork(Network::Profile::External)
-                    .calculateAddress(answerfile.external.con_ip_addr.value()));
+                    .calculateAddress(answerfil.external.con_ip_addr.value()));
     } else {
         auto externalNetworkIpAddress = externalConnection.fetchAddress(
-            answerfile.external.con_interface.value());
+            answerfil.external.con_interface.value());
         externalConnection.setAddress(externalNetworkIpAddress);
 
         getNetwork(Network::Profile::External)
@@ -641,43 +635,44 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
                     .calculateAddress(externalNetworkIpAddress));
     }
 
-    if (!answerfile.external.con_mac_addr->empty()) {
-        externalConnection.setMAC(answerfile.external.con_mac_addr.value());
+    if (!answerfil.external.con_mac_addr->empty()) {
+        externalConnection.setMAC(answerfil.external.con_mac_addr.value());
     }
 
     getHeadnode().addConnection(std::move(externalConnection));
 
     // Service Network
-    if (answerfile.service.con_interface.has_value()) {
+    if (answerfil.service.con_interface.has_value()) {
         LOG_TRACE("Configure Service Network")
         auto serviceNetwork = std::make_unique<Network>(
             Network::Profile::Service, Network::Type::Ethernet);
 
-        if (answerfile.service.subnet_mask.has_value()) {
+        if (answerfil.service.subnet_mask.has_value()) {
             serviceNetwork->setSubnetMask(
-                answerfile.service.subnet_mask.value());
+                answerfil.service.subnet_mask.value());
         } else {
-            serviceNetwork->setSubnetMask(externalNetwork->fetchSubnetMask(
-                answerfile.service.con_interface.value()));
+            serviceNetwork->setSubnetMask(
+                getNetwork(Network::Profile::Management)
+                    .fetchSubnetMask(answerfil.service.con_interface.value()));
         }
 
-        if (answerfile.service.gateway.has_value()) {
-            serviceNetwork->setGateway(answerfile.service.gateway.value());
+        if (answerfil.service.gateway.has_value()) {
+            serviceNetwork->setGateway(answerfil.service.gateway.value());
         } else {
             serviceNetwork->setGateway(serviceNetwork->fetchGateway(
-                answerfile.service.con_interface.value()));
+                answerfil.service.con_interface.value()));
         }
 
-        if (!answerfile.service.domain_name->empty()) {
+        if (!answerfil.service.domain_name->empty()) {
             serviceNetwork->setDomainName(
-                answerfile.service.domain_name.value());
+                answerfil.service.domain_name.value());
         } else {
             serviceNetwork->setDomainName(serviceNetwork->fetchDomainName());
         }
 
-        if (answerfile.service.nameservers.has_value()) {
+        if (answerfil.service.nameservers.has_value()) {
             serviceNetwork->setNameservers(
-                answerfile.service.nameservers.value());
+                answerfil.service.nameservers.value());
         } else {
             serviceNetwork->setNameservers(serviceNetwork->fetchNameservers());
         }
@@ -687,31 +682,31 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         auto serviceConnection
             = Connection(&getNetwork(Network::Profile::Service));
 
-        if (!answerfile.service.con_mac_addr->empty()) {
-            serviceConnection.setMAC(answerfile.service.con_mac_addr.value());
+        if (!answerfil.service.con_mac_addr->empty()) {
+            serviceConnection.setMAC(answerfil.service.con_mac_addr.value());
         }
 
         serviceConnection.setInterface(
-            answerfile.application.con_interface.value());
-        serviceConnection.setAddress(answerfile.service.con_ip_addr.value());
+            answerfil.application.con_interface.value());
+        serviceConnection.setAddress(answerfil.service.con_ip_addr.value());
 
         getNetwork(Network::Profile::Service)
             .setAddress(getNetwork(Network::Profile::Service)
-                    .calculateAddress(answerfile.service.con_ip_addr.value()));
+                    .calculateAddress(answerfil.service.con_ip_addr.value()));
 
         m_headnode.addConnection(std::move(serviceConnection));
     }
 
     // Infiniband (Application) Network
-    if (answerfile.application.con_interface.has_value()) {
+    if (answerfil.application.con_interface.has_value()) {
         LOG_TRACE("Configure Application Network")
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
-        auto& subnet_mask = answerfile.application.subnet_mask;
-        auto& gateway = answerfile.application.gateway;
-        auto& domain_name = answerfile.application.domain_name;
-        auto& nameservers = answerfile.application.nameservers;
+        auto& subnet_mask = answerfil.application.subnet_mask;
+        auto& gateway = answerfil.application.gateway;
+        auto& domain_name = answerfil.application.domain_name;
+        auto& nameservers = answerfil.application.nameservers;
 
         auto throwIfEmpty = [](bool optional_cast_value,
                                 const char* fieldname) {
@@ -737,21 +732,21 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         auto applicationConnection
             = Connection(&getNetwork(Network::Profile::Application));
 
-        if (!answerfile.application.con_mac_addr->empty()) {
+        if (!answerfil.application.con_mac_addr->empty()) {
             applicationConnection.setMAC(
-                answerfile.application.con_mac_addr.value());
+                answerfil.application.con_mac_addr.value());
         }
 
         applicationConnection.setInterface(
-            answerfile.application.con_interface.value());
+            answerfil.application.con_interface.value());
 
         applicationConnection.setAddress(
-            answerfile.application.con_ip_addr.value());
+            answerfil.application.con_ip_addr.value());
 
         getNetwork(Network::Profile::Application)
             .setAddress(getNetwork(Network::Profile::Application)
                     .calculateAddress(
-                        answerfile.application.con_ip_addr.value()));
+                        answerfil.application.con_ip_addr.value()));
 
         m_headnode.addConnection(std::move(applicationConnection));
     }
@@ -759,15 +754,16 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     // System
     setUpdateSystem(true);
     setProvisioner(Provisioner::xCAT);
-    // BUG: Headnode OS may not be the same as the node OS
-    // m_headnode.setOS(nodeOS);
 
-    for (const auto& tool : answerfile.getTools()) {
+    // FIXME: This should come from /etc/os-release
+    m_headnode.setOS(nodeOS);
+
+    for (const auto& tool : answerfil.getTools()) {
         tool->install();
     }
 
     LOG_INFO("Configure Nodes")
-    for (const auto& node : answerfile.nodes.nodes) {
+    for (const auto& node : answerfil.nodes.nodes) {
         LOG_TRACE("Configure node {}", node.hostname.value())
 
         std::list<Connection> nodeConnections;
@@ -875,40 +871,42 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         addNode(newNode);
     }
 
-    if (answerfile.postfix.enabled) {
-        setMailSystem(answerfile.postfix.profile);
+    if (answerfil.postfix.enabled) {
+        setMailSystem(answerfil.postfix.profile, cloyster::getRunner());
         m_mailSystem->setHostname(this->m_headnode.getHostname());
         m_mailSystem->setDomain(getDomainName());
-        m_mailSystem->setDestination(answerfile.postfix.destination);
+        m_mailSystem->setDestination(answerfil.postfix.destination);
 
         if (!m_mailSystem->getDomain()) {
             throw answerfile_validation_exception(
                 "A domain is needed for e-mail configuration");
         }
 
-        switch (answerfile.postfix.profile) {
+        switch (answerfil.postfix.profile) {
             case Postfix::Profile::Local:
                 break;
             case Postfix::Profile::Relay:
                 m_mailSystem->setSMTPServer(
-                    answerfile.postfix.smtp.value().server);
-                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                    answerfil.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfil.postfix.smtp.value().port);
                 break;
             case Postfix::Profile::SASL:
                 m_mailSystem->setSMTPServer(
-                    answerfile.postfix.smtp.value().server);
-                m_mailSystem->setPort(answerfile.postfix.smtp.value().port);
+                    answerfil.postfix.smtp.value().server);
+                m_mailSystem->setPort(answerfil.postfix.smtp.value().port);
                 m_mailSystem->setUsername(
-                    answerfile.postfix.smtp.value().sasl.value().username);
+                    answerfil.postfix.smtp.value().sasl.value().username);
                 m_mailSystem->setPassword(
-                    answerfile.postfix.smtp.value().sasl.value().password);
+                    answerfil.postfix.smtp.value().sasl.value().password);
                 break;
         }
-        m_mailSystem->setCertFile(answerfile.postfix.cert_file);
-        m_mailSystem->setKeyFile(answerfile.postfix.key_file);
+        m_mailSystem->setCertFile(answerfil.postfix.cert_file);
+        m_mailSystem->setKeyFile(answerfil.postfix.key_file);
     }
 
     /* Bad and old data - @TODO Must improve */
-    nodeStartIP = answerfile.nodes.generic->start_ip.value();
-    nodeRootPassword = answerfile.nodes.generic->root_password.value();
+    nodeStartIP = answerfil.nodes.generic->start_ip.value();
+    nodeRootPassword = answerfil.nodes.generic->root_password.value();
 }
+
+}; // namespace cloyster::models {

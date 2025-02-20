@@ -3,15 +3,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
+#include <cstdlib> // setenv / getenv
+
+#include <filesystem>
+#include <fmt/format.h>
+
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/execution.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <variant>
 
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
-#include <cstdlib> // setenv / getenv
-#include <fmt/format.h>
+namespace cloyster::services {
+
+using cloyster::models::Node;
 
 XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
     : m_cluster(cluster)
@@ -42,11 +52,20 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-    cloyster::runCommand("sed -i \"s/-extensions server //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
-    cloyster::runCommand("xcatconfig -f");
+    if (cloyster::runCommand(
+            "grep -q \"extensions usr_cert\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
+        == 0) {
+        cloyster::runCommand(
+            "sed -i \"s/-extensions usr_cert //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
+        cloyster::runCommand(
+            "sed -i \"s/-extensions server //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+        cloyster::runCommand("xcatconfig -f");
+    } else {
+        LOG_WARN("xCAT Already patched, skipping");
+    }
 }
 
 void XCAT::setup()
@@ -70,7 +89,32 @@ void XCAT::setDomain(std::string_view domain)
     cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-void XCAT::copycds(const std::filesystem::path& diskImage)
+namespace {
+    constexpr bool imageExists(const std::string& image)
+    {
+        LOG_ASSERT(
+            image.size() > 0, "Trying to generate an image with empty name");
+        std::list<std::string> output;
+        int code = cloyster::runCommand(
+            fmt::format("lsdef -t osimage {}", image), output);
+        if (code == 0 // success
+            && (output.size() > 0
+                && output.front()
+                    != "Could not find any object definitions to display")) {
+            LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o "
+                     "{}` to remove "
+                     "the image if you want it to be regenerated.",
+                image, image);
+            LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
+            return true;
+        }
+
+        return false;
+    }
+
+}; // anonymous namespace
+
+void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
     cloyster::runCommand(fmt::format("copycds {}", diskImage.string()));
 }
@@ -93,12 +137,7 @@ void XCAT::nodeset(std::string_view nodes)
 
 void XCAT::createDirectoryTree()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would create the directory /install/custom/netboot")
-        return;
-    }
-
-    std::filesystem::create_directories(CHROOT "/install/custom/netboot");
+    cloyster::createDirectory(CHROOT "/install/custom/netboot");
 }
 
 void XCAT::configureOpenHPC()
@@ -230,7 +269,7 @@ void XCAT::generatePostinstallFile()
     }
 
     if (cloyster::dryRun) {
-        LOG_INFO("Would change file {} permissions", filename)
+        LOG_WARN("Dry Run: Would change file {} permissions", filename)
         return;
     }
     std::filesystem::permissions(filename,
@@ -255,33 +294,37 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    Runner r;
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
-                                 "/install/custom/netboot/compute.otherpkglist",
-        m_stateless.osimage));
+    auto runner = getRunner();
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus otherpkglist="
+                    "/install/custom/netboot/compute.otherpkglist",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus postinstall="
-                                 "/install/custom/netboot/compute.postinstall",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus postinstall="
+                    "/install/custom/netboot/compute.postinstall",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus synclists="
-                                 "/install/custom/netboot/compute.synclists",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus synclists="
+                    "/install/custom/netboot/compute.synclists",
+            m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
+    std::vector<std::string> repos = getxCATOSImageRepos();
 
-    RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
-    std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
-
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
-        m_stateless.osimage, fmt::join(repos, ",")));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
+            m_stateless.osimage, fmt::join(repos, ",")));
 }
 
 void XCAT::customizeImage()
 {
     // Permission fixes for munge
     if (m_cluster->getQueueSystem().value()->getKind()
-        == QueueSystem::Kind::SLURM) {
+        == models::QueueSystem::Kind::SLURM) {
+        // @TODO This is using the Runner above and cloyster::runCommand here
+        //   choose only one!
         cloyster::runCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));
@@ -371,25 +414,29 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
 {
     configureEL9();
 
-    copycds(m_cluster->getDiskImage());
     generateOSImageName(imageType, nodeType);
-    generateOSImagePath(imageType, nodeType);
 
-    createDirectoryTree();
-    configureOpenHPC();
-    configureTimeService();
-    configureInfiniband();
-    configureSLURM();
+    const auto imageExists_ = imageExists(m_stateless.osimage);
+    if (!imageExists_) {
+        copycds(m_cluster->getDiskImage().getPath());
+        generateOSImagePath(imageType, nodeType);
 
-    generateOtherPkgListFile();
-    generatePostinstallFile();
-    generateSynclistsFile();
+        createDirectoryTree();
+        configureOpenHPC();
+        configureTimeService();
+        configureInfiniband();
+        configureSLURM();
 
-    configureOSImageDefinition();
+        generateOtherPkgListFile();
+        generatePostinstallFile();
+        generateSynclistsFile();
 
-    genimage();
-    customizeImage();
-    packimage();
+        configureOSImageDefinition();
+
+        genimage();
+        customizeImage();
+        packimage();
+    }
 }
 
 void XCAT::addNode(const Node& node)
@@ -459,9 +506,7 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {
     std::string osimage;
 
-    // FIXME: If there's no nodes defined this switch will fail, it should
-    //  instead generate an image for future use.
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
+    switch (m_cluster->getDiskImage().getDistro()) {
         case OS::Distro::RHEL:
             osimage += "rhels";
             osimage += m_cluster->getNodes()[0].getOS().getVersion();
@@ -517,9 +562,10 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 {
 
-    if (imageType != XCAT::ImageType::Netboot)
+    if (imageType != XCAT::ImageType::Netboot) {
         throw std::logic_error(
             "Image path is only available on Netboot (Stateless) images");
+    }
 
     std::filesystem::path chroot = "/install/netboot/";
 
@@ -557,3 +603,154 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     chroot += "/compute/rootimg";
     m_stateless.chroot = chroot;
 }
+
+void XCAT::installRepositories()
+{
+    const std::filesystem::path& repofileDest
+        = std::filesystem::temp_directory_path();
+    LOG_INFO("Setting up XCAT repositories");
+    auto runner = cloyster::getRunner();
+
+    runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
+                         "core-snap/xcat-core.repo",
+        repofileDest.string());
+
+    switch (m_cluster->getHeadnode().getOS().getPlatform()) {
+        case OS::Platform::el8:
+            runner->downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh8/x86_64/xcat-dep.repo",
+                repofileDest.string());
+            break;
+        case OS::Platform::el9:
+#ifndef NDEBUG
+        // Hack to test EL10 only in debug mode
+        case OS::Platform::el10:
+#endif
+            runner->downloadFile(
+                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
+                "rh9/x86_64/xcat-dep.repo",
+                repofileDest.string());
+            break;
+        default:
+            throw std::runtime_error("Unsupported platform for xCAT");
+    }
+    const auto osinf = m_cluster->getHeadnode().getOS();
+    const auto repoManager = getRepoManager(osinf);
+    for (auto const& dir_entry :
+        std::filesystem::directory_iterator { repofileDest }) {
+        const auto& path = dir_entry.path();
+        if (path.extension() == ".repo") {
+            repoManager->install(path);
+        }
+    }
+}
+
+[[deprecated("Refactoring RepoManager, replace the function with the same name "
+             "in repo manager")]]
+std::vector<std::string> XCAT::getxCATOSImageRepos() const
+{
+    const auto osinfo = m_cluster->getHeadnode().getOS();
+    const auto osArch = magic_enum::enum_name(osinfo.getArch());
+    const auto osMajorVersion = osinfo.getMajorVersion();
+    const auto osVersion = osinfo.getVersion();
+
+    std::vector<std::string> repos;
+
+    /* FIXME: A LOT OF WORK TO BE DONE HERE BRUH */
+    /* BUG: This is a very bad implementation; it should find out the latest
+     * version and not be hardcoded. Also the directory formation does not work
+     * that way. We should support finding out the Repository paths by parsing
+     * /etc/yum.repos.d
+     */
+    std::vector<std::string> latestEL = { "8.10", "9.5" };
+
+    std::string crb = "CRB";
+    std::string rockyBranch
+        = "linux"; // To check if Rocky mirror directory points to 'linux'
+                   // (latest version) or 'vault'
+
+    // BUG: Really? A string?
+    std::string OpenHPCVersion = "3";
+
+    if (osMajorVersion < 9) {
+        crb = "PowerTools";
+        OpenHPCVersion = "2";
+    }
+
+    if (std::ranges::find(latestEL, osVersion) == latestEL.end()) {
+        rockyBranch = "vault";
+    }
+
+    switch (osinfo.getDistro()) {
+        case OS::Distro::RHEL:
+            repos.emplace_back(
+                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/appstream/os");
+            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
+                               "x86_64/codeready-builder/os");
+            break;
+        case OS::Distro::OL:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
+                            "baseos/latest/{}",
+                    osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "oracle/{}/codeready/builder/{}",
+                osMajorVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
+                osMajorVersion, osArch));
+            break;
+        case OS::Distro::Rocky:
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
+                rockyBranch, osVersion, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
+                rockyBranch, osVersion, crb, osArch));
+            repos.emplace_back(fmt::format(
+                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
+                rockyBranch, osVersion, osArch));
+            break;
+        case OS::Distro::AlmaLinux:
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/BaseOS/{}/os",
+                    osVersion, osArch));
+            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
+                                           "almalinux/almalinux/{}/{}/{}/os",
+                osVersion, crb, osArch));
+            repos.emplace_back(
+                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
+                            "almalinux/{}/AppStream/{}/os",
+                    osVersion, osArch));
+            break;
+    }
+
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
+            osMajorVersion, osArch));
+
+    // Modular repositories are only available on EL8
+    if (osMajorVersion == 8) {
+        repos.emplace_back(
+            fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
+                osMajorVersion, osArch));
+    }
+
+    repos.emplace_back(
+        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
+            OpenHPCVersion, osMajorVersion));
+    repos.emplace_back(fmt::format(
+        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
+        OpenHPCVersion, osMajorVersion));
+
+    return repos;
+}
+
+};

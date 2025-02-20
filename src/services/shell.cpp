@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -15,16 +17,44 @@
 #include <memory>
 
 #include <cloysterhpc/NFS.h>
-#include <cloysterhpc/cluster.h>
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/models/slurm.h>
 
 #include <cloysterhpc/dbus_client.h>
+#include <ranges>
 
+using cloyster::OS;
 using cloyster::runCommand;
 
-Shell::Shell(const std::unique_ptr<Cluster>& cluster)
-    : m_cluster(cluster)
+namespace {
+
+auto getToEnableRepoNames(const OS& osinfo)
+{
+    switch (osinfo.getPlatform()) {
+        case OS::Platform::el8:
+        case OS::Platform::el9:
+        case OS::Platform::el10:
+            return std::vector<std::string>(
+                       { "-beegfs", "-elrepo", "-epel", "-openhpc",
+                           "-openhpc-updates", "-rpmfusion-free-updates" })
+                | std::views::transform([](const std::string& repo) {
+                      return fmt::format("{}{}", cloyster::productName, repo);
+                  })
+                | std::ranges::to<std::vector<std::string>>();
+            break;
+        default:
+            throw std::logic_error("Not implemented");
+    }
+}
+
+}
+
+namespace cloyster::services {
+
+Shell::Shell(std::unique_ptr<Cluster> cluster)
+    : m_cluster(std::move(cluster))
 {
     // Initialize directory tree
     cloyster::createDirectory(installPath);
@@ -196,8 +226,17 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
-        deleteConnectionIfExists(
-            magic_enum::enum_name(connection.getNetwork()->getProfile()));
+        auto connectionName
+            = magic_enum::enum_name(connection.getNetwork()->getProfile());
+        if (!cloyster::dryRun
+            && runCommand(
+                   fmt::format("nmcli connection show {}", connectionName))
+                == 0) {
+            LOG_WARN("Connection exists {}, skipping", connectionName);
+            continue;
+        }
+
+        deleteConnectionIfExists(connectionName);
         runCommand(fmt::format("nmcli device set {} managed yes", interface));
         runCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
@@ -292,6 +331,10 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
     runCommand("systemctl enable --now chronyd");
 }
 
+using cloyster::models::PBS;
+using cloyster::models::QueueSystem;
+using cloyster::models::SLURM;
+
 void Shell::configureQueueSystem()
 {
     LOG_INFO("Setting up the queue system")
@@ -374,6 +417,19 @@ void Shell::installDevelopmentComponents()
     runCommand("dnf -y install lmod-defaults-gnu12-openmpi4-ohpc");
 }
 
+void Shell::configureRepositories()
+{
+    const auto& osinfo = m_cluster->getHeadnode().getOS();
+    auto repos = cloyster::getRepoManager(osinfo);
+    // 1. Install files into /etc, these files are the templates
+    //    at include/cloysterhpc/repos/el*/*.repo
+    repos->initializeDefaultRepositories();
+    // 2. Enable the repositories
+    repos->enable(getToEnableRepoNames(osinfo));
+    // 3. Commit data to disk
+    repos->updateDiskFiles();
+}
+
 /* This method is the entrypoint of shell based cluster install
  * The first session of the method will configure and install services on the
  * headnode. The last part will do provisioner related settings and image
@@ -394,30 +450,11 @@ void Shell::install()
 
     configureNetworks(m_cluster->getHeadnode().getConnections());
     runSystemUpdate();
-
-    // TODO: Pass headnode instead of cluster to reduce complexity
     configureTimeService(m_cluster->getHeadnode().getConnections());
-
     installRequiredPackages();
-
-    // TODO: This is the repos entrypoint. It should be replaced.
-    auto repos = m_cluster->getRepoManager();
-    repos.loadFiles();
-
-    std::vector<std::string> toEnable = { "-beegfs", "-elrepo", "-epel",
-        "-openhpc", "-openhpc-updates", "-rpmfusion-free-updates" };
-    for (auto& package : toEnable) {
-        package = cloyster::productName + package;
-    }
-
-    repos.enableMultiple(toEnable);
-    repos.commitStatus();
-    // End of Repos entrypoint
-
+    configureRepositories();
     runSystemUpdate();
-
     installOpenHPCBase();
-
     configureInfiniband();
 
     // BUG: Broken. Compute nodes does not mount anything.
@@ -451,7 +488,10 @@ void Shell::install()
 
     LOG_INFO("Setting up compute node images... This may take a while")
 
-    LOG_INFO("[{}] Installing packages", provisionerName)
+    LOG_INFO("[{}] Installing provisioner repositories", provisionerName)
+    provisioner->installRepositories();
+
+    LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
 
     LOG_INFO("[{}] Patching the provisioner", provisionerName)
@@ -473,4 +513,6 @@ void Shell::install()
         provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
+}
+
 }

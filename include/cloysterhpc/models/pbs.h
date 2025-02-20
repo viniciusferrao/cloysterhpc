@@ -6,7 +6,10 @@
 #ifndef CLOYSTERHPC_PBS_H_
 #define CLOYSTERHPC_PBS_H_
 
-#include <cloysterhpc/queuesystem/queuesystem.h>
+#include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/services/runner.h>
+
+namespace cloyster::models {
 
 class PBS : public QueueSystem {
 public:
@@ -21,6 +24,8 @@ public:
 
 public:
     explicit PBS(const Cluster& cluster);
+};
+
 };
 
 #endif // CLOYSTERHPC_PBS_H_

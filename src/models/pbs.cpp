@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/queuesystem/pbs.h>
+#include <cloysterhpc/models/pbs.h>
+
+namespace cloyster::models {
 
 PBS::PBS(const Cluster& cluster)
     : QueueSystem(cluster)
@@ -17,3 +19,5 @@ void PBS::setExecutionPlace(ExecutionPlace executionPlace)
 }
 
 PBS::ExecutionPlace PBS::getExecutionPlace(void) { return m_executionPlace; }
+
+}

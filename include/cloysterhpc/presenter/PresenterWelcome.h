@@ -9,6 +9,7 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/presenter/Presenter.h>
 
+namespace cloyster::presenter {
 class PresenterWelcome : public Presenter {
 private:
     struct Messages {
@@ -28,6 +29,7 @@ private:
 public:
     PresenterWelcome(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
 };
 
 #endif // CLOYSTERHPC_PRESENTERWELCOME_H_

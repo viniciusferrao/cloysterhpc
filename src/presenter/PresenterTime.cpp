@@ -6,6 +6,8 @@
 #include <cloysterhpc/presenter/PresenterTime.h>
 #include <set>
 
+namespace cloyster::presenter {
+
 PresenterTime::PresenterTime(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -73,3 +75,5 @@ PresenterTime::PresenterTime(
     LOG_DEBUG("Timeservers set to {}",
         fmt::join(m_model->getTimezone().getTimeservers(), ", "));
 }
+
+};

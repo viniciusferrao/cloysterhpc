@@ -9,14 +9,14 @@
 #include <expected>
 #include <fmt/format.h>
 #include <list>
-#include <regex>
 #include <string>
 
 #include <cloysterhpc/connection.h>
-#include <cloysterhpc/cpu.h>
-#include <cloysterhpc/os.h>
+#include <cloysterhpc/models/cpu.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/bmc.h>
 
+namespace cloyster::models {
 /**
  * @class Server
  * @brief Represents a server in a cluster.
@@ -107,5 +107,7 @@ public:
     virtual ~Server() = default;
     Server() = default;
 };
+
+}; // namespace cloyster::models
 
 #endif // CLOYSTERHPC_SERVER_H_
