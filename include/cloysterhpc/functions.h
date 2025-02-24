@@ -175,6 +175,14 @@ std::string findAndReplace(const std::string_view& source,
  */
 void copyFile(std::filesystem::path source, std::filesystem::path destination);
 
+/**
+ * @brief Create a file in path with the contents of data
+ *
+ * @param path The source file to install.
+ * @param data The contents of the file to install
+ */
+void installFile(const std::filesystem::path& path, std::istream& data);
+
 } // namespace cloyster
 
 /**

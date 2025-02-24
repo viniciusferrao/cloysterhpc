@@ -426,8 +426,6 @@ void Shell::configureRepositories()
     repos->initializeDefaultRepositories();
     // 2. Enable the repositories
     repos->enable(getToEnableRepoNames(osinfo));
-    // 3. Commit data to disk
-    repos->updateDiskFiles();
 }
 
 /* This method is the entrypoint of shell based cluster install
@@ -453,7 +451,6 @@ void Shell::install()
     configureTimeService(m_cluster->getHeadnode().getConnections());
     installRequiredPackages();
     configureRepositories();
-    runSystemUpdate();
     installOpenHPCBase();
     configureInfiniband();
 

@@ -60,8 +60,10 @@ protected:
 
 class RepoManager {
     using OS = cloyster::models::OS;
-
+    struct Impl;
+    std::unique_ptr<Impl> m_impl;
 public:
+    ~RepoManager();
     using Repositories
         = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
     explicit RepoManager(const OS& osinfo);
@@ -79,7 +81,7 @@ public:
 private:
     void loadFiles(const std::filesystem::path& basedir);
     void loadRPMRepos(const std::filesystem::path& source);
-    auto loadDefaults();
+    std::filesystem::path generateCloysterReposFile();
 
     Repositories m_repos;
     std::unordered_set<std::filesystem::path> m_filesLoaded;
@@ -89,7 +91,7 @@ private:
 
     void createFileFor(std::filesystem::path path);
 
-    RepoManager::Repositories getDefaultReposFromDisk(
+    void loadDefaultRPMReposFromDisk(
         const std::filesystem::path& basedir);
 
     void mergeWithCurrentList(Repositories&& repo);

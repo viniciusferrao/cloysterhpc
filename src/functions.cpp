@@ -401,4 +401,21 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
+void installFile(const std::filesystem::path& path, std::istream& data)
+{
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry Run: Would install file {}", path.string());
+        return;
+    }
+
+    if (std::filesystem::exists(path)) {
+        LOG_WARN("File already exists: {}, skipping", path.string());
+        return;
+    }
+
+    std::ofstream fil(path);
+    fil << data.rdbuf();
+}
+
+
 }; // namespace cloyster
