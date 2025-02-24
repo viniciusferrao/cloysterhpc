@@ -159,13 +159,6 @@ std::string toString(const T& input)
 class RPMRepositoryParser final {
 public:
     static void parse(
-        const std::filesystem::path& path, std::vector<RPMRepository>& output);
-
-    // Note: unparse save the output in the file
-    static void unparse(const std::vector<RPMRepository>& repos,
-        const std::filesystem::path& output);
-
-    static void parse(
         const std::filesystem::path& path,
         std::unordered_map<std::string,
             std::shared_ptr<RPMRepository>>& output)
@@ -224,8 +217,6 @@ public:
         LOG_DEBUG("UNPARSE FILE {}:\n{}", path.string(), file.toData());
     }
 };
-static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
-    std::vector<RPMRepository>>);
 static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
     std::unordered_map<std::string, std::shared_ptr<RPMRepository>>>);
 
@@ -486,60 +477,6 @@ std::filesystem::path RepoManager::generateCloysterReposFile()
 
     cloyster::installFile(path, stream);
     return path;
-}
-
-void RPMRepositoryParser::parse(
-    const std::filesystem::path& path, std::vector<RPMRepository>& output)
-{
-    auto file = KeyFile(path);
-    auto reponames = file.getGroups();
-    LOG_ASSERT(reponames.size() > 0,
-        fmt::format("Empty repository file at {}", path.string()));
-    output.reserve(reponames.size());
-    for (const auto& repogroup : reponames) {
-        auto name = file.getString(repogroup, "name");
-
-        if (name.empty()) {
-            throw std::runtime_error(std::format(
-                "Could not load repo name from repo '{}'", repogroup));
-        }
-
-        auto metalink = file.getStringOpt(repogroup, "metalink");
-        auto baseurl = file.getStringOpt(repogroup, "baseurl");
-        auto enabled = file.getBoolean(repogroup, "enabled");
-        auto gpgcheck = file.getBoolean(repogroup, "gpgcheck");
-        auto gpgkey = file.getString(repogroup, "gpgkey");
-
-        RPMRepository repo;
-        repo.group(repogroup);
-        repo.name(name);
-        repo.metalink(metalink);
-        repo.baseurl(baseurl);
-        repo.enabled(enabled);
-        repo.gpgcheck(gpgcheck);
-        repo.gpgkey(gpgkey);
-        repo.source(path.string());
-        repo.id(repogroup);
-        repo.valid();
-        output.emplace_back(std::move(repo));
-    }
-}
-
-void RPMRepositoryParser::unparse(
-    const std::vector<RPMRepository>& repositories,
-    const std::filesystem::path& output)
-{
-    auto file = cloyster::services::files::KeyFile(output);
-    for (const auto& repo : repositories) {
-        file.setString(repo.group(), "name", repo.name());
-        file.setBoolean(repo.group(), "enabled", repo.enabled());
-        file.setBoolean(repo.group(), "gpgcheck", repo.gpgcheck());
-        file.setString(repo.group(), "gpgkey", repo.gpgkey());
-        file.setString(repo.group(), "metalink", repo.metalink());
-        file.setString(repo.group(), "baseurl", repo.baseurl());
-    }
-
-    file.save();
 }
 
 inline void RPMRepository::valid() const
