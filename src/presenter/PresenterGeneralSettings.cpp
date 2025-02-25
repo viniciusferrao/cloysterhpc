@@ -5,6 +5,10 @@
 
 #include <cloysterhpc/presenter/PresenterGeneralSettings.h>
 
+namespace cloyster::presenter {
+
+using cloyster::models::Headnode;
+
 PresenterGeneralSettings::PresenterGeneralSettings(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -40,3 +44,5 @@ PresenterGeneralSettings::PresenterGeneralSettings(
         magic_enum::enum_name<Headnode::BootTarget>(
             m_model->getHeadnode().getBootTarget()));
 }
+
+};

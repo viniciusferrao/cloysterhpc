@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/os.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
 #include <magic_enum/magic_enum.hpp>
+#include <stdexcept>
+#include <variant>
 
-#ifndef NDEBUG
 #include <cloysterhpc/services/log.h>
-#endif
 
 #include <fstream>
 #include <memory>
@@ -21,6 +21,8 @@
 
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
+
+namespace cloyster::models {
 
 OS::OS()
 {
@@ -37,10 +39,11 @@ OS::OS()
     if (getFamily() == OS::Family::Linux) {
 #endif
         std::string filename = CHROOT "/etc/os-release";
+        LOG_INFO("Opening {}", filename);
         std::ifstream file(filename);
 
         if (!file.is_open()) {
-            perror(("Error while opening file " + filename).c_str());
+            LOG_ERROR("Error while opening file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while opening file: {}", filename));
         }
@@ -53,45 +56,36 @@ OS::OS()
 
             /* TODO: Refactor the next three conditions */
             if (line.starts_with("PLATFORM_ID=")) {
+                LOG_DEBUG("Found platform (PLATFORM_ID=)");
                 auto value = getValueFromKey(line);
                 if (value.starts_with("platform:")) {
-                    setPlatform(value.substr(9)); // Skip the 'platform:' prefix
+                    // Skip the 'platform:' prefix
+                    constexpr auto platform = std::string_view("platform:");
+                    setPlatform(value.substr(platform.size()));
                 } else {
                     setPlatform(value);
                 }
             }
 
             if (line.starts_with("ID=")) {
+                LOG_DEBUG("Found distro (ID=)");
                 setDistro(getValueFromKey(line));
             }
 
             if (line.starts_with("VERSION=")) {
+                LOG_DEBUG("Found version (VERSION=)");
                 setVersion(getValueFromKey(line));
             }
         }
 
         if (file.bad()) {
-            perror(("Error while reading file " + filename).c_str());
+            LOG_ERROR("Error while reading file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while reading file: {}", filename));
         }
     }
 
     factoryPackageManager(getPlatform());
-}
-
-OS::OS(OS::Arch arch, OS::Family family, OS::Platform platform,
-    OS::Distro distro, std::string_view kernel, unsigned majorVersion,
-    unsigned minorVersion)
-    : m_arch(arch)
-    , m_family(family)
-    , m_platform(platform)
-    , m_distro(distro)
-    , m_packageManager(factoryPackageManager(platform))
-{
-    setKernel(kernel);
-    setMajorVersion(majorVersion);
-    setMinorVersion(minorVersion);
 }
 
 OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
@@ -143,7 +137,25 @@ void OS::setPlatform(std::string_view platform)
     throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
-OS::Distro OS::getDistro() const { return std::get<OS::Distro>(m_distro); }
+OS::Distro OS::getDistro() const
+{
+    LOG_ASSERT(!std::holds_alternative<std::monostate>(m_distro),
+        "m_distro is uninitialized");
+    return std::get<OS::Distro>(m_distro);
+}
+
+OS::PackageType OS::getPackageType() const
+{
+    switch (getDistro()) {
+        case Distro::RHEL:
+        case Distro::OL:
+        case Distro::Rocky:
+        case Distro::AlmaLinux:
+            return PackageType::RPM;
+        default:
+            throw std::runtime_error("Unknonw distro type");
+    };
+}
 
 void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
@@ -254,9 +266,9 @@ gsl::not_null<package_manager*> OS::packageManager() const
     return m_packageManager.get();
 }
 
-#ifndef NDEBUG
 void OS::printData() const
 {
+#ifndef NDEBUG
     LOG_DEBUG("Architecture: {}", magic_enum::enum_name(std::get<Arch>(m_arch)))
     LOG_DEBUG("Family: {}", magic_enum::enum_name(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
@@ -266,5 +278,6 @@ void OS::printData() const
         "Distribution: {}", magic_enum::enum_name(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
-}
 #endif
+}
+};

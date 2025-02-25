@@ -8,6 +8,8 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
+namespace cloyster::presenter {
+
 class PresenterTime : public Presenter {
 private:
     struct Messages {
@@ -36,6 +38,8 @@ private:
 
 public:
     PresenterTime(std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERTIMEZONE_H_

@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterLocale.h>
 
+namespace cloyster::presenter {
+
 PresenterLocale::PresenterLocale(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -17,3 +19,5 @@ PresenterLocale::PresenterLocale(
     m_model->setLocale(selectedLocale);
     LOG_DEBUG("Locale set to: {}", m_model->getLocale().getLocale())
 }
+
+};

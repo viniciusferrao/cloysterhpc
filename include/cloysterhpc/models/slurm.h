@@ -6,8 +6,9 @@
 #ifndef CLOYSTERHPC_SLURM_H_
 #define CLOYSTERHPC_SLURM_H_
 
-#include <cloysterhpc/queuesystem/queuesystem.h>
+#include <cloysterhpc/models/queuesystem.h>
 
+namespace cloyster::models {
 /**
  * @class SLURM
  * @brief Manages SLURM server installation and configuration.
@@ -40,4 +41,5 @@ public:
     static void startServer();
 };
 
+};
 #endif // CLOYSTERHPC_SLURM_H_

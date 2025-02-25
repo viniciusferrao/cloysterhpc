@@ -13,16 +13,15 @@
 
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/diskImage.h>
-#include <cloysterhpc/headnode.h>
 #include <cloysterhpc/mailsystem/postfix.h>
+#include <cloysterhpc/models/headnode.h>
+#include <cloysterhpc/models/node.h>
+#include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/network.h>
-#include <cloysterhpc/node.h>
 #include <cloysterhpc/ofed.h>
-#include <cloysterhpc/queuesystem/pbs.h>
-#include <cloysterhpc/queuesystem/slurm.h>
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
 #include <cloysterhpc/services/locale.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/timezone.h>
 
 /**
@@ -33,13 +32,22 @@
  * environment, including headnode, nodes, networks, provisioner, timezone,
  * locale, and more.
  */
+
+namespace cloyster::models {
+
+/**
+ * @brief Represents the cluster state and configuration
+ */
 class Cluster {
 public:
     /**
      * @enum SELinuxMode
      * @brief Enumeration for SELinux modes.
+     *
      */
     enum class SELinuxMode { Permissive, Enforcing, Disabled };
+
+    // @TODO: This class should not know about DBusClient
 
     /**
      * @enum Provisioner
@@ -57,7 +65,6 @@ private:
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
     std::optional<Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
-    std::unique_ptr<BaseRunner> m_runner;
     std::shared_ptr<DBusClient> m_systemdBus;
 
     bool m_firewall { false };
@@ -70,8 +77,6 @@ private:
 
     bool m_updateSystem { false };
     DiskImage m_diskImage;
-
-    std::optional<RepoManager> m_repos = std::nullopt;
 
 public:
     Cluster();
@@ -100,9 +105,6 @@ public:
     Network& getNetwork(Network::Profile profile);
 
     std::shared_ptr<DBusClient> getDaemonBus();
-
-    void initRepoManager();
-    RepoManager& getRepoManager();
 
     /**
      * @brief Add a new network to the cluster.
@@ -185,9 +187,10 @@ public:
     void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
-    void setMailSystem(Postfix::Profile profile);
+    void setMailSystem(
+        Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
 
-    const std::filesystem::path& getDiskImage() const;
+    const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);
 
     // TODO: Add std::optional to BMC with std::nullopt as default initializer
@@ -255,5 +258,7 @@ public:
     address nodeStartIP;
     std::string nodeRootPassword;
 };
+
+}; // namespace cloyster::models
 
 #endif // CLOYSTERHPC_CLUSTER_H_

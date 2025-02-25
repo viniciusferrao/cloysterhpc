@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 
+namespace cloyster::services {
+
 /**
  * @class XCAT
  * @brief Manages the provisioning of nodes using the xCAT tool.
@@ -43,18 +45,18 @@ private:
      */
     enum class NodeType { Compute, Service };
 
-private:
     const std::unique_ptr<Cluster>& m_cluster;
 
     struct {
         std::vector<std::string_view> otherpkgs = {};
+        // @TODO: We need to support more than one osimage (:
+        //   this can be a default osimage though
         std::string osimage;
         std::filesystem::path chroot;
         std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
-        std::vector<std::string> synclists = {};
+        std::vector<std::string> synclists;
     } m_stateless;
 
-private:
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
 
@@ -63,7 +65,7 @@ private:
      *
      * @param diskImage The path to the disk image.
      */
-    static void copycds(const std::filesystem::path& diskImage);
+    void copycds(const std::filesystem::path& diskImage) const;
 
     /**
      * @brief Generates the OS image.
@@ -161,7 +163,7 @@ private:
      *
      * @param node The node to add.
      */
-    static void addNode(const Node& node);
+    static void addNode(const cloyster::models::Node& node);
 
     /**
      * @brief Generates the OS image name based on type and node.
@@ -187,6 +189,16 @@ private:
     static void configureEL9();
 
 public:
+    /**
+     * @brief Download the repositories
+     */
+    void installRepositories();
+
+    /**
+     * @brief Return a list of repos for xCAT image
+     */
+    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
+
     /**
      * @brief Installs the necessary packages.
      *
@@ -252,6 +264,8 @@ public:
     static void resetNodes();
 
     explicit XCAT(const std::unique_ptr<Cluster>& cluster);
+};
+
 };
 
 #endif // CLOYSTERHPC_XCAT_H_

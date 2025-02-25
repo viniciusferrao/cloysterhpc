@@ -8,9 +8,12 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/execution.h>
 
+namespace cloyster::services {
+
+using cloyster::models::Cluster;
 /**
  * @class Shell
  * @brief Manages the configuration and installation processes on a cluster.
@@ -18,11 +21,10 @@
  * This class provides functionalities for configuring various system settings,
  * installing required packages, and setting up cluster-specific services.
  */
-class Shell : public Execution {
+class Shell final : public Execution {
 private:
-    const std::unique_ptr<Cluster>& m_cluster;
+    const std::unique_ptr<Cluster> m_cluster;
 
-private:
     /**
      * @brief Configures SELinux mode.
      *
@@ -169,8 +171,6 @@ private:
     static void disableSELinux();
 
 public:
-    // FIXME: Guideline: Don’t use a const unique_ptr& as a parameter;
-    //  use widget* instead.
     /**
      * @brief Constructs a Shell object.
      *
@@ -178,13 +178,15 @@ public:
      *
      * @param cluster A reference to a unique pointer managing a Cluster object.
      */
-    explicit Shell(const std::unique_ptr<Cluster>& cluster);
+    explicit Shell(const std::unique_ptr<Cluster> cluster);
     /**
      * @brief Installs and configures the system.
      *
      * This function performs the installation and configuration processes.
      */
     void install() override;
+};
+
 };
 
 #endif // CLOYSTERHPC_SHELL_H_

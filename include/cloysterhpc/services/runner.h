@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+namespace cloyster::services {
+
 /**
  * Works as an abstraction for command execution.
  */
@@ -46,5 +48,7 @@ public:
 private:
     std::vector<std::string> m_cmds;
 };
+
+} // namespace cloyster::services
 
 #endif // CLOYSTERHPC_RUNNER_H_

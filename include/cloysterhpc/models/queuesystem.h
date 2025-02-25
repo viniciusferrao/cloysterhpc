@@ -12,6 +12,8 @@
 #include <cloysterhpc/functions.h>
 
 // Forward declaration of Cluster
+namespace cloyster::models {
+
 class Cluster;
 
 class QueueSystem {
@@ -34,6 +36,8 @@ public:
 
     explicit QueueSystem(const Cluster& cluster);
     virtual ~QueueSystem() = default;
+};
+
 };
 
 #endif // CLOYSTERHPC_QUEUESYSTEM_H_

@@ -6,18 +6,22 @@
 #include <cctype>
 #include <cstdlib>
 
+#include <glibmm/fileutils.h>
+#include <glibmm/keyfile.h>
+
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
-#include <cloysterhpc/cluster.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/hardware.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
+#include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/repo.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
+#include <regex>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -91,6 +95,10 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");
 
+    std::string loadConfFile {};
+    app.add_option("--test-conf-file", loadConfFile,
+        "Hook for testing configuration file loading");
+
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
@@ -104,6 +112,14 @@ int main(int argc, const char** argv)
                 .value();
         }
     }());
+
+    if (!loadConfFile.empty()) {
+        LOG_INFO("Loading file {}", loadConfFile);
+        auto file = cloyster::services::files::KeyFile(loadConfFile);
+        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
+        LOG_INFO("Contents: {}", file.toData());
+        return EXIT_SUCCESS;
+    }
 
     if (cloyster::showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
@@ -125,7 +141,7 @@ int main(int argc, const char** argv)
         cloyster::checkEffectiveUserId();
 
         if (cloyster::dryRun) {
-            fmt::print("Dry run enabled.\n");
+            LOG_INFO("Dry run enabled.");
         } else {
             while (!unattended) {
                 char response = 'N';
@@ -150,8 +166,7 @@ int main(int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
-        auto model = std::make_unique<Cluster>();
-
+        auto model = std::make_unique<cloyster::models::Cluster>();
         if (!cloyster::answerfile.empty()) {
             LOG_TRACE("Answerfile: {}", cloyster::answerfile)
             model->fillData(cloyster::answerfile);
@@ -167,7 +182,9 @@ int main(int argc, const char** argv)
         if (cloyster::enableTUI) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
-            auto presenter = std::make_unique<PresenterInstall>(model, view);
+            auto presenter
+                = std::make_unique<cloyster::presenter::PresenterInstall>(
+                    model, view);
         }
 
         LOG_TRACE("Starting execution engine");
@@ -177,7 +194,7 @@ int main(int argc, const char** argv)
         }
 
         std::unique_ptr<Execution> executionEngine
-            = std::make_unique<Shell>(model);
+            = std::make_unique<cloyster::services::Shell>(std::move(model));
 
         executionEngine->install();
 

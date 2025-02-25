@@ -5,6 +5,8 @@
 
 #include <cloysterhpc/presenter/PresenterWelcome.h>
 
+namespace cloyster::presenter {
+
 PresenterWelcome::PresenterWelcome(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -13,3 +15,5 @@ PresenterWelcome::PresenterWelcome(
     m_view->message(Messages::Welcome::message);
     LOG_DEBUG("Welcome message displayed")
 }
+
+};

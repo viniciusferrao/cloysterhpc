@@ -7,7 +7,8 @@
 #define CLOYSTERHPC_CPU_H_
 
 #include <cstddef>
-#include <stdexcept>
+
+namespace cloyster::models {
 
 class CPU {
 private:
@@ -38,5 +39,7 @@ public:
     void setCoresPerSocket(std::size_t coresPerSocket);
     void setThreadsPerCore(std::size_t threadsPerCore);
 };
+
+}; // namespace cloyster::models
 
 #endif // CLOYSTERHPC_CPU_H_

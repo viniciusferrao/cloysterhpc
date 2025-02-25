@@ -18,6 +18,7 @@
 #include <cloysterhpc/presenter/PresenterTime.h>
 #include <cloysterhpc/presenter/PresenterWelcome.h>
 
+namespace cloyster::presenter {
 PresenterInstall::PresenterInstall(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -88,4 +89,6 @@ PresenterInstall::PresenterInstall(
 
     // Destroy the view since we don't need it anymore
     m_view.reset();
+}
+
 }
