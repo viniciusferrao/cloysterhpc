@@ -65,13 +65,6 @@ KeyFile::KeyFile(const std::filesystem::path& path)
     m_impl->loadFromFile(path);
 }
 
-// KeyFile::KeyFile(const std::string& input)
-//     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(),
-//     std::filesystem::path()))
-// {
-//     m_impl->loadFromData(input);
-// }
-
 KeyFile::~KeyFile() = default;
 
 namespace {

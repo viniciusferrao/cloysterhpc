@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -33,6 +32,7 @@ using cloyster::services::repos::IRepository;
 
 namespace cloyster::services::repos {
 
+// Represents a debian repository file 
 class DebianRepository : public IRepository {
 private:
     std::string m_type; // "deb" or "deb-src"
@@ -61,6 +61,7 @@ public:
     void source(const std::filesystem::path value) override;
 };
 
+// Represents a RPM Repository inside a repository file (/etc/yum.repo.d/*.repo)
 class RPMRepository final : public IRepository {
     std::string m_id;
     bool m_enabled = true;
@@ -126,8 +127,6 @@ public:
     {
         return other.id() == id();
     }
-
-
 };
 
 namespace {
@@ -135,7 +134,7 @@ namespace {
 // Easy conversions for string
 std::ostream& operator<<(std::ostream& ostr, const RPMRepository& repo)
 {
-    ostr << "RPMRepository( ";
+    ostr << "RPMRepository(";
     ostr << repo.id() << " ";
     ostr << repo.name() << " ";
     ostr << repo.baseurl().value_or("") << " ";
@@ -155,7 +154,7 @@ std::string toString(const T& input)
 
 };
 
-// Parses .repo files
+// Parses RPM .repo files
 class RPMRepositoryParser final {
 public:
     static void parse(
@@ -213,8 +212,6 @@ public:
         }
 
         file.save();
-
-        LOG_DEBUG("UNPARSE FILE {}:\n{}", path.string(), file.toData());
     }
 };
 static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
@@ -230,6 +227,11 @@ public:
     : m_path(std::move(path))
     {
         m_parser.parse(m_path, m_repos);
+    }
+
+    const auto& path()
+    {
+        return m_path;
     }
 
     auto& repos()
@@ -325,11 +327,28 @@ public:
         repofile->save();
     }
 
+    // Enable a repo but dot not save the repofile, (used internally)
+    void enable(const auto& repo, auto& repofile, bool value)
+    {
+        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}",
+                  value, repo);
+        repofile->repo(repo)->enabled(value);
+    }
+
     // Enable/disable multiple repositories by name
     void enable(const std::vector<std::string>& repos, bool value)
     {
+        auto byIdPtr = [](const std::shared_ptr<RPMRepositoryFile>& rptr) {
+            return std::hash<std::string>{}(rptr->path());
+        };
+        std::unordered_set<std::shared_ptr<RPMRepositoryFile>, decltype(byIdPtr)> toSave;
         for (const auto& repo : repos) {
-            enable(repo, value);
+            auto& rfile = m_filesIdx.at(repo);
+            toSave.emplace(rfile);
+            enable(repo, rfile, value);
+        }
+        for (const auto& repoFil : toSave) {
+            repoFil->save();
         }
     }
 
@@ -359,8 +378,6 @@ public:
 }; // namespace cloyster::services::repos {
 
 namespace {
-
-using cloyster::services::repos::RPMRepository;
 
 // These files contains the repositories files data as 
 // format strings with which we inject the values for 
@@ -439,6 +456,7 @@ std::vector<std::string> getDependenciesEL(const OS& osinfo)
 
 namespace cloyster::services::repos {
 
+// Hidden implementation
 struct RepoManager::Impl {
      RPMRepoManager rpm;
      // Add debian repo manager here when the day arrives
@@ -531,7 +549,29 @@ void RepoManager::enable(const std::string& repoid)
 
 void RepoManager::enable(const std::vector<std::string>& repos)
 {
-    std::ranges::for_each(repos, [&](const auto& repoid) { enable(repoid); });
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry Run: Would enable these repos: {}",
+                 fmt::join(repos, ","));
+        return;
+    }
+    try {
+        switch (m_os.getPackageType()) {
+            case OS::PackageType::RPM:
+                m_impl->rpm.enable(repos, true);
+                break;
+            default:
+                throw std::logic_error("Not implemented");
+
+        }
+    } catch (const std::out_of_range&) {
+        LOG_ERROR("Trying to enable unknown repository {}, "
+                  "failed because the repository was not found.",
+            fmt::join(repos, ","));
+
+        for (const auto& [id, _] : m_repos) {
+            LOG_ERROR("Repository available: {}", id);
+        }
+    }
 }
 
 void RepoManager::disable(const std::string& repoid)
@@ -563,8 +603,29 @@ void RepoManager::disable(const std::string& repoid)
 
 void RepoManager::disable(const std::vector<std::string>& repos)
 {
-    std::ranges::for_each(
-        repos, [&](const auto& repoid) { disable(repoid); });
+    if (cloyster::dryRun) {
+        LOG_WARN("Dry Run: Would enable repository {}", fmt::join(repos, ","));
+        return;
+    }
+
+    try {
+        switch (m_os.getPackageType()) {
+            case OS::PackageType::RPM:
+                m_impl->rpm.enable(repos, false);
+                break;
+            default:
+                throw std::logic_error("Not implemented");
+
+        }
+    } catch (const std::out_of_range&) {
+        LOG_ERROR("Trying to disable unknown repository {}, "
+                  "failed because the repository was not found.",
+            fmt::join(repos, ","));
+
+        for (const auto& [id, _] : m_repos) {
+            LOG_ERROR("Repository available: {}", id);
+        }
+    }
 }
 
 void RepoManager::install(const std::filesystem::path& path)
