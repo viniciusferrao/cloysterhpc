@@ -417,5 +417,4 @@ void installFile(const std::filesystem::path& path, std::istream& data)
     fil << data.rdbuf();
 }
 
-
 }; // namespace cloyster

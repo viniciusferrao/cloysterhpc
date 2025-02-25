@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -12,7 +13,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <functional>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -32,7 +32,7 @@ using cloyster::services::repos::IRepository;
 
 namespace cloyster::services::repos {
 
-// Represents a debian repository file 
+// Represents a debian repository file
 class DebianRepository : public IRepository {
 private:
     std::string m_type; // "deb" or "deb-src"
@@ -123,44 +123,38 @@ public:
 
     void valid() const;
 
-    bool operator ==(const auto other) const 
-    {
-        return other.id() == id();
-    }
+    bool operator==(const auto other) const { return other.id() == id(); }
 };
 
 namespace {
 
-// Easy conversions for string
-std::ostream& operator<<(std::ostream& ostr, const RPMRepository& repo)
-{
-    ostr << "RPMRepository(";
-    ostr << repo.id() << " ";
-    ostr << repo.name() << " ";
-    ostr << repo.baseurl().value_or("") << " ";
-    ostr << "enabled=" << repo.enabled() << " ";
-    ostr << ")";
+    // Easy conversions for string
+    std::ostream& operator<<(std::ostream& ostr, const RPMRepository& repo)
+    {
+        ostr << "RPMRepository(";
+        ostr << repo.id() << " ";
+        ostr << repo.name() << " ";
+        ostr << repo.baseurl().value_or("") << " ";
+        ostr << "enabled=" << repo.enabled() << " ";
+        ostr << ")";
 
-    return ostr;
-};
+        return ostr;
+    };
 
-template<typename T>
-std::string toString(const T& input)
-{
-    std::ostringstream strm;
-    strm << input;
-    return strm.str();
-};
+    template <typename T> std::string toString(const T& input)
+    {
+        std::ostringstream strm;
+        strm << input;
+        return strm.str();
+    };
 
 };
 
 // Parses RPM .repo files
 class RPMRepositoryParser final {
 public:
-    static void parse(
-        const std::filesystem::path& path,
-        std::unordered_map<std::string,
-            std::shared_ptr<RPMRepository>>& output)
+    static void parse(const std::filesystem::path& path,
+        std::unordered_map<std::string, std::shared_ptr<RPMRepository>>& output)
     {
         LOG_DEBUG("Parsing file {}", path.string());
         auto file = KeyFile(path);
@@ -191,14 +185,13 @@ public:
             repo.id(repogroup);
             repo.valid();
 
-            output.emplace(
-                repo.id(), std::make_shared<RPMRepository>(repo));
-
+            output.emplace(repo.id(), std::make_shared<RPMRepository>(repo));
         }
     }
 
     static void unparse(
-        const std::unordered_map<std::string, std::shared_ptr<RPMRepository>>& repos,
+        const std::unordered_map<std::string, std::shared_ptr<RPMRepository>>&
+            repos,
         const std::filesystem::path& path)
     {
         auto file = cloyster::services::files::KeyFile(path);
@@ -222,27 +215,19 @@ class RPMRepositoryFile final {
     static constexpr auto m_parser = RPMRepositoryParser();
     std::filesystem::path m_path;
     std::unordered_map<std::string, std::shared_ptr<RPMRepository>> m_repos;
+
 public:
     explicit RPMRepositoryFile(auto path)
-    : m_path(std::move(path))
+        : m_path(std::move(path))
     {
         m_parser.parse(m_path, m_repos);
     }
 
-    const auto& path()
-    {
-        return m_path;
-    }
+    const auto& path() { return m_path; }
 
-    auto& repos()
-    {
-        return m_repos;
-    }
+    auto& repos() { return m_repos; }
 
-    auto repo(const std::string& name)
-    {
-        return m_repos.at(name);
-    }
+    auto repo(const std::string& name) { return m_repos.at(name); }
 
     void save()
     {
@@ -255,7 +240,8 @@ public:
 class RPMRepoManager final {
     static constexpr auto m_parser = RPMRepositoryParser();
     // Maps repo id to files
-    std::unordered_map<std::string, std::shared_ptr<RPMRepositoryFile>> m_filesIdx;
+    std::unordered_map<std::string, std::shared_ptr<RPMRepositoryFile>>
+        m_filesIdx;
 
 public:
     static constexpr auto basedir = "/etc/yum.repos.d/";
@@ -268,11 +254,12 @@ public:
         // Do not copy the file to the basedir if it
         // is already there
         if (source != dest) {
-            cloyster::copyFile(source, dest); 
+            cloyster::copyFile(source, dest);
         }
 
         if (m_filesIdx.contains(dest)) {
-            LOG_WARN("Repository already installed {}, skipping", dest.string());
+            LOG_WARN(
+                "Repository already installed {}, skipping", dest.string());
             return;
         }
 
@@ -282,8 +269,8 @@ public:
         }
 
         LOG_DEBUG("Installing repository {}", dest.string());
-        const auto& repofile = std::make_shared<RPMRepositoryFile>(
-            RPMRepositoryFile(dest));
+        const auto& repofile
+            = std::make_shared<RPMRepositoryFile>(RPMRepositoryFile(dest));
         LOG_ASSERT(repofile->repos().size() > 0, "BUG Loading file");
         for (auto& [repo, _] : repofile->repos()) {
             LOG_DEBUG("{} loaded", repo);
@@ -312,16 +299,12 @@ public:
         install(std::filesystem::directory_iterator(path));
     }
 
-    void installBaseDir()
-    {
-        installDir(basedir);
-    }
+    void installBaseDir() { installDir(basedir); }
 
     // Enable/diable a repository by name
     void enable(const auto& repo, bool value)
     {
-        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}",
-                  value, repo);
+        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}", value, repo);
         auto& repofile = m_filesIdx.at(repo);
         repofile->repo(repo)->enabled(value);
         repofile->save();
@@ -330,8 +313,7 @@ public:
     // Enable a repo but dot not save the repofile, (used internally)
     void enable(const auto& repo, auto& repofile, bool value)
     {
-        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}",
-                  value, repo);
+        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}", value, repo);
         repofile->repo(repo)->enabled(value);
     }
 
@@ -339,9 +321,11 @@ public:
     void enable(const std::vector<std::string>& repos, bool value)
     {
         auto byIdPtr = [](const std::shared_ptr<RPMRepositoryFile>& rptr) {
-            return std::hash<std::string>{}(rptr->path());
+            return std::hash<std::string> {}(rptr->path());
         };
-        std::unordered_set<std::shared_ptr<RPMRepositoryFile>, decltype(byIdPtr)> toSave;
+        std::unordered_set<std::shared_ptr<RPMRepositoryFile>,
+            decltype(byIdPtr)>
+            toSave;
         for (const auto& repo : repos) {
             auto& rfile = m_filesIdx.at(repo);
             toSave.emplace(rfile);
@@ -353,13 +337,12 @@ public:
     }
 
     // List repositories through a const shared pointer vector
-    // 
+    //
     // Rationale: IRepository type is to keep client code generic
     std::vector<std::shared_ptr<const IRepository>> repos()
     {
-        constexpr auto byId = [](auto& repo) {
-            return std::hash<std::string>{}(repo.id());
-        };
+        constexpr auto byId
+            = [](auto& repo) { return std::hash<std::string> {}(repo.id()); };
         std::unordered_set<RPMRepository, decltype(byId)> output;
         for (auto& [_id1, repoFile] : m_filesIdx) {
             for (const auto& [_id2, repo] : repoFile->repos()) {
@@ -367,11 +350,9 @@ public:
             }
         }
 
-        return output
-            | std::views::transform([](auto&& repo) {
-                return std::make_shared<const RPMRepository>(repo);
-            })
-            | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
+        return output | std::views::transform([](auto&& repo) {
+            return std::make_shared<const RPMRepository>(repo);
+        }) | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
     }
 };
 
@@ -379,8 +360,8 @@ public:
 
 namespace {
 
-// These files contains the repositories files data as 
-// format strings with which we inject the values for 
+// These files contains the repositories files data as
+// format strings with which we inject the values for
 constexpr std::string_view CLOYSTER_REPO_EL8 = {
 #include "cloysterhpc/repos/el8/cloyster.repo"
 };
@@ -458,8 +439,8 @@ namespace cloyster::services::repos {
 
 // Hidden implementation
 struct RepoManager::Impl {
-     RPMRepoManager rpm;
-     // Add debian repo manager here when the day arrives
+    RPMRepoManager rpm;
+    // Add debian repo manager here when the day arrives
 };
 
 RepoManager::~RepoManager() = default;
@@ -534,7 +515,6 @@ void RepoManager::enable(const std::string& repoid)
                 break;
             default:
                 throw std::logic_error("Not implemented");
-
         }
     } catch (const std::out_of_range&) {
         LOG_ERROR("Trying to enable unknown repository {}, "
@@ -550,8 +530,8 @@ void RepoManager::enable(const std::string& repoid)
 void RepoManager::enable(const std::vector<std::string>& repos)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would enable these repos: {}",
-                 fmt::join(repos, ","));
+        LOG_WARN(
+            "Dry Run: Would enable these repos: {}", fmt::join(repos, ","));
         return;
     }
     try {
@@ -561,7 +541,6 @@ void RepoManager::enable(const std::vector<std::string>& repos)
                 break;
             default:
                 throw std::logic_error("Not implemented");
-
         }
     } catch (const std::out_of_range&) {
         LOG_ERROR("Trying to enable unknown repository {}, "
@@ -588,7 +567,6 @@ void RepoManager::disable(const std::string& repoid)
                 break;
             default:
                 throw std::logic_error("Not implemented");
-
         }
     } catch (const std::out_of_range&) {
         LOG_ERROR("Trying to disable unknown repository {}, "
@@ -615,7 +593,6 @@ void RepoManager::disable(const std::vector<std::string>& repos)
                 break;
             default:
                 throw std::logic_error("Not implemented");
-
         }
     } catch (const std::out_of_range&) {
         LOG_ERROR("Trying to disable unknown repository {}, "
@@ -641,7 +618,6 @@ void RepoManager::install(const std::filesystem::path& path)
             break;
         default:
             throw std::logic_error("Not implemented");
-
     }
 }
 
@@ -666,7 +642,6 @@ std::vector<std::shared_ptr<const IRepository>> RepoManager::listRepos() const
             break;
         default:
             throw std::logic_error("Not implemented");
-
     }
 }
 

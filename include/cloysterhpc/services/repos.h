@@ -62,6 +62,7 @@ class RepoManager {
     using OS = cloyster::models::OS;
     struct Impl;
     std::unique_ptr<Impl> m_impl;
+
 public:
     ~RepoManager();
     using Repositories
@@ -91,8 +92,7 @@ private:
 
     void createFileFor(std::filesystem::path path);
 
-    void loadDefaultRPMReposFromDisk(
-        const std::filesystem::path& basedir);
+    void loadDefaultRPMReposFromDisk(const std::filesystem::path& basedir);
 
     void mergeWithCurrentList(Repositories&& repo);
 
