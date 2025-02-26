@@ -400,8 +400,7 @@ void Cluster::fillTestData()
     setProvisioner(Provisioner::xCAT);
 
     setDiskImage("/root/OracleLinux-R8-U5-x86_64-dvd.iso");
-    OS nodeOS(OS::Arch::x86_64, OS::Family::Linux, OS::Platform::el8,
-        OS::Distro::OL, "5.4.17-2136.302.6.1.el8uek.x86_64", 8, 5);
+    OS nodeOS;
     CPU nodeCPU(2, 4, 2);
 
     // TODO: Pass network connection as object
