@@ -13,11 +13,11 @@ namespace cloyster::services::files {
 
 struct KeyFile::Impl {
     std::filesystem::path m_path;
-    Glib::RefPtr<Glib::KeyFile> m_keyfile;
+    std::unique_ptr<Glib::KeyFile> m_keyfile;
 
-    Impl(Glib::RefPtr<Glib::KeyFile>&& keyfile, std::filesystem::path path)
+    Impl(Glib::KeyFile&& keyfile, std::filesystem::path path)
         : m_path(std::move(path))
-        , m_keyfile(std::move(keyfile)) { };
+        , m_keyfile(std::make_unique<Glib::KeyFile>(std::move(keyfile))) { };
 
     void safeToFile(const std::filesystem::path& path)
     {
@@ -59,7 +59,7 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 }
 
 KeyFile::KeyFile(const std::filesystem::path& path)
-    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path))
+    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
 {
     m_impl->m_path = path;
     m_impl->loadFromFile(path);
@@ -90,9 +90,8 @@ std::string KeyFile::getString(
 std::optional<std::string> KeyFile::getStringOpt(
     const std::string& group, const std::string& key) const
 {
-    auto keyFile = m_impl->m_keyfile;
-    if (keyFile->has_key(group, key)) {
-        return keyFile->get_string(group, key).raw();
+    if (m_impl->m_keyfile->has_key(group, key)) {
+        return m_impl->m_keyfile->get_string(group, key).raw();
     }
     return std::nullopt;
 }

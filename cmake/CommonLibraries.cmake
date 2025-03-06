@@ -9,7 +9,7 @@ set(COMMON_LIBS
         Boost::thread
         spdlog::spdlog
         gsl::gsl-lite
-        glibmm::glibmm
+        ${GLIBMM_LIBRARIES}
         magic_enum::magic_enum
         SimpleIni::SimpleIni
         resolv

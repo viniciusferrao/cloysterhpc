@@ -6,6 +6,10 @@ cmake_minimum_required(VERSION 3.26.5)
 # so that it works well with tools like CPM or other
 # manual dependency management
 
+# Load PkgConfig so we can use pkg_check_modules later
+# to find local packages.
+find_package(PkgConfig REQUIRED)
+
 # Only set the cxx_standard if it is not set by someone else
 if (NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 23)

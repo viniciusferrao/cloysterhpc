@@ -10,11 +10,12 @@
 #include <cloysterhpc/services/log.h>
 #include <cstddef>
 #include <fstream>
-#include <glibmm/checksum.h>
 #include <ios>
 #include <istream>
 #include <unordered_map>
 #include <vector>
+
+#include <glibmm.h>
 
 // @FIXME: This file need some work
 //
@@ -108,7 +109,7 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "e" }
     };
 
-    Glib::Checksum checksum(Glib::Checksum::Type::SHA256);
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
 
     std::ifstream file(path, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
@@ -122,14 +123,14 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 
     while (file.read(reinterpret_cast<std::istream::char_type*>(buffer.data()),
         static_cast<std::streamsize>(buffer.size()))) {
-        std::streamsize bytesRead = file.gcount();
+        auto bytesRead = static_cast<gsize>(file.gcount());
 
         checksum.update(
             reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
     }
 
     // Handle any leftover bytes after the while loop ends
-    std::streamsize bytesRead = file.gcount();
+    auto bytesRead = static_cast<gsize>(file.gcount());
     if (bytesRead > 0) {
         checksum.update(
             reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);

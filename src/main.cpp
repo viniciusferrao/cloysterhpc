@@ -6,9 +6,6 @@
 #include <cctype>
 #include <cstdlib>
 
-#include <glibmm/fileutils.h>
-#include <glibmm/keyfile.h>
-
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
