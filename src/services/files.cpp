@@ -1,8 +1,12 @@
-#include <concepts>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
+#include <cstddef>
+#include <fstream>
+#include <ios>
+#include <istream>
 
+#include <glibmm/checksum.h>
 #include <glibmm/fileutils.h>
 #include <glibmm/keyfile.h>
 
@@ -126,5 +130,41 @@ void KeyFile::setBoolean(
 void KeyFile::save() { m_impl->safeToFile(m_impl->m_path); }
 
 void KeyFile::load() { m_impl->loadFromFile(m_impl->m_path); }
+
+std::string checksum(const std::string& data)
+{
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
+    checksum.update(data);
+    return checksum.get_string();
+}
+
+std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize)
+{
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::filesystem::filesystem_error(
+            "Failed to open file", path, std::error_code());
+    }
+
+    std::vector<std::byte> buffer(chunkSize);
+
+    while (file.read(reinterpret_cast<std::istream::char_type*>(buffer.data()),
+        static_cast<std::streamsize>(buffer.size()))) {
+        auto bytesRead = static_cast<gsize>(file.gcount());
+
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    // Handle any leftover bytes after the while loop ends
+    auto bytesRead = static_cast<gsize>(file.gcount());
+    if (bytesRead > 0) {
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    return checksum.get_string();
+}
 
 } // namespace cloyster::services::files

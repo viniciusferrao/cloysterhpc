@@ -1,6 +1,5 @@
 from conan import ConanFile
 from conan.tools.cmake import cmake_layout, CMakeToolchain, CMake
-from conan.tools.gnu import PkgConfigDeps
 
 class MyProjectConan(ConanFile):
     name = "CloysterHPC"
@@ -8,7 +7,6 @@ class MyProjectConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
 
     def requirements(self):
-        self.tool_requires("pkgconf/1.9.3")  # Ensure pkg-config is available
         self.requires("cli11/[>=2.4.0 <2.5.0]")
         self.requires("spdlog/[>=1.14.0 <1.15.0]")
         self.requires("fmt/[>=10.0.0 <12.0.0]")
@@ -17,6 +15,8 @@ class MyProjectConan(ConanFile):
         self.requires("gsl-lite/[>=0.41.0 <0.42.0]")
         self.requires("doctest/[>=2.4.0 <2.5.0]")
         self.requires("sdbus-cpp/[>=2.0.0 <2.1.0]")
+
+        # We're using host's glibmm
         # self.requires("glibmm/[>=2.78.1 <2.79.0]")
 
         # Override libmount to unify on 2.39.2.
@@ -31,8 +31,6 @@ class MyProjectConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
-        pkg = PkgConfigDeps(self)
-        pkg.generate()
 
     def build(self):
         cmake = CMake(self)

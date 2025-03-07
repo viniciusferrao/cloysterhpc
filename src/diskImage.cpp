@@ -8,14 +8,9 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/log.h>
-#include <cstddef>
-#include <fstream>
-#include <ios>
-#include <istream>
+#include <cloysterhpc/services/files.h>
 #include <unordered_map>
-#include <vector>
 
-#include <glibmm.h>
 
 // @FIXME: This file need some work
 //
@@ -109,41 +104,15 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "e" }
     };
 
-    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
+    auto checksum = cloyster::services::files::checksum(path);
+    LOG_INFO("SHA256 checksum of file {} is: {}", path.string(), checksum);
 
-    std::ifstream file(path, std::ios::in | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::filesystem::filesystem_error(
-            "Failed to open file", path, std::error_code());
-    }
-
-    // Read the file in chunks of 16834 bytes
-    constexpr std::size_t chunk_size = 16384;
-    std::vector<std::byte> buffer(chunk_size);
-
-    while (file.read(reinterpret_cast<std::istream::char_type*>(buffer.data()),
-        static_cast<std::streamsize>(buffer.size()))) {
-        auto bytesRead = static_cast<gsize>(file.gcount());
-
-        checksum.update(
-            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
-    }
-
-    // Handle any leftover bytes after the while loop ends
-    auto bytesRead = static_cast<gsize>(file.gcount());
-    if (bytesRead > 0) {
-        checksum.update(
-            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
-    }
-
-    LOG_INFO(fmt::format("SHA256 checksum of file {} is: {}", path.string(),
-        checksum.get_string()));
-
-    if (checksum.get_string()
+    if (checksum
         == hash_map.find(path.filename().string())->second) {
         LOG_TRACE("Checksum - The disk image is valid")
         return true;
     }
+
 
     LOG_TRACE("Checksum - The disk image is invalid. Maybe you're using a "
               "custom image?");
