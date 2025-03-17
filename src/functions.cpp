@@ -30,6 +30,7 @@ using cloyster::services::BaseRunner;
 using cloyster::services::DryRunner;
 using cloyster::services::Runner;
 
+
 namespace {
     std::tuple<bool, std::optional<std::string>> retrieveLine(
         boost::process::ipstream& pipe_stream,
@@ -65,19 +66,6 @@ std::shared_ptr<BaseRunner> getRunner()
 
 using cloyster::models::Cluster;
 using cloyster::services::repos::RepoManager;
-
-static std::unique_ptr<Cluster> clusterSingleton;
-void initClusterSingleton(std::unique_ptr<Cluster> cluster)
-{
-    assert(!clusterSingleton);
-    clusterSingleton = std::move(cluster);
-}
-
-Cluster& getClusterSingleton()
-{
-    assert(clusterSingleton);
-    return *clusterSingleton;
-}
 
 std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
 {

@@ -29,8 +29,9 @@ gpgkey=https://linux.mellanox.com/public/repo/doca/{0}/GPG-KEY-Mellanox
 // https://linux.mellanox.com/public/repo/doca/latest/
 std::string headnodeDistroName()
 {
-    const auto& cluster = cloyster::getClusterSingleton();
-    switch (cluster.getHeadnode().getOS().getDistro()) {
+    using cloyster::models::Cluster;
+    auto cluster = cloyster::Singleton<Cluster>::get();
+    switch (cluster->getHeadnode().getOS().getDistro()) {
         // Assuming we'll be using the last distro version
         case cloyster::OS::Distro::RHEL:
             return "rhel9.5";

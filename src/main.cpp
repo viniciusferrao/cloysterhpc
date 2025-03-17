@@ -191,7 +191,8 @@ int main(int argc, const char** argv)
             model->dumpData(dumped_answerfile);
         }
 
-        cloyster::initClusterSingleton(std::move(model));
+        using cloyster::models::Cluster;
+        cloyster::Singleton<Cluster>::init(std::move(model));
 
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();

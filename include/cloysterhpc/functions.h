@@ -16,13 +16,47 @@
 #include <type_traits>
 
 namespace cloyster {
+
+template <typename T>
+class Singleton {
+    // Private constructor to prevent direct instantiation
+    Singleton() = default;
+
+    // Static members for singleton management
+    static std::unique_ptr<T> instance;
+    static std::once_flag initFlag;
+public:
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    ~Singleton() = delete;
+
+    static void init(std::unique_ptr<T> value) {
+        std::call_once(initFlag, [&](){
+            instance = std::move(value);
+        });
+    }
+
+    static gsl::not_null<T*> get() {
+        if (!instance) {
+            throw std::runtime_error("Singleton read before initialization");
+        }
+        return gsl::not_null<T*>(instance.get());
+    }
+};
+
+template <typename T>
+std::unique_ptr<T> Singleton<T>::instance = nullptr;
+
+template <typename T>
+std::once_flag Singleton<T>::initFlag;
+
 // Globals
 extern bool dryRun;
 
 using OS = cloyster::models::OS;
 
-void initClusterSingleton(std::unique_ptr<models::Cluster> cluster);
-models::Cluster& getClusterSingleton();
 std::shared_ptr<cloyster::services::BaseRunner> getRunner();
 std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(
     const OS& osinfo);

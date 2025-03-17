@@ -20,10 +20,13 @@
 #include <variant>
 
 namespace {
-inline cloyster::models::Cluster& cluster()
+using cloyster::models::Cluster;
+
+inline auto cluster()
 {
-    return cloyster::getClusterSingleton();
+    return cloyster::Singleton<Cluster>::get();
 }
+
 }
 
 namespace cloyster::services {
@@ -49,8 +52,8 @@ XCAT::XCAT()
 
 void XCAT::installPackages()
 {
-    cluster().getHeadnode().getOS().packageManager()->install("initscripts");
-    cluster().getHeadnode().getOS().packageManager()->install("xCAT");
+    cluster()->getHeadnode().getOS().packageManager()->install("initscripts");
+    cluster()->getHeadnode().getOS().packageManager()->install("xCAT");
 }
 
 void XCAT::patchInstall()
@@ -76,11 +79,11 @@ void XCAT::patchInstall()
 
 void XCAT::setup()
 {
-    setDHCPInterfaces(cluster().getHeadnode()
+    setDHCPInterfaces(cluster()->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getInterface()
             .value());
-    setDomain(cluster().getDomainName());
+    setDomain(cluster()->getDomainName());
 }
 
 /* TODO: Maybe create a chdef method to do it cleaner? */
@@ -168,7 +171,7 @@ void XCAT::configureTimeService()
 
     m_stateless.postinstall.emplace_back(fmt::format(
         "echo \"server {} iburst\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
-        cluster().getHeadnode()
+        cluster()->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress()
             .to_string()));
@@ -176,7 +179,7 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
-    if (const auto& ofed = cluster().getOFED())
+    if (const auto& ofed = cluster()->getOFED())
         switch (ofed->getKind()) {
             case OFED::Kind::Inbox:
                 m_stateless.otherpkgs.emplace_back("@infiniband");
@@ -204,7 +207,7 @@ void XCAT::configureSLURM()
     m_stateless.postinstall.emplace_back(
         fmt::format("echo SLURMD_OPTIONS=\\\"--conf-server {}\\\" > "
                     "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
-            cluster().getHeadnode()
+            cluster()->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getAddress()
                 .to_string()));
@@ -256,7 +259,7 @@ void XCAT::generatePostinstallFile()
                     "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
                     "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
                     "END\n\n",
-            cluster().getHeadnode()
+            cluster()->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getAddress()
                 .to_string()));
@@ -327,7 +330,7 @@ void XCAT::configureOSImageDefinition()
 void XCAT::customizeImage()
 {
     // Permission fixes for munge
-    if (cluster().getQueueSystem().value()->getKind()
+    if (cluster()->getQueueSystem().value()->getKind()
         == models::QueueSystem::Kind::SLURM) {
         // @TODO This is using the Runner above and cloyster::runCommand here
         //   choose only one!
@@ -424,7 +427,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
 
     const auto imageExists_ = imageExists(m_stateless.osimage);
     if (!imageExists_) {
-        copycds(cluster().getDiskImage().getPath());
+        copycds(cluster()->getDiskImage().getPath());
         generateOSImagePath(imageType, nodeType);
 
         createDirectoryTree();
@@ -482,7 +485,7 @@ void XCAT::addNode(const Node& node)
 
 void XCAT::addNodes()
 {
-    for (const auto& node : cluster().getNodes())
+    for (const auto& node : cluster()->getNodes())
         addNode(node);
 
     // TODO: Create separate functions
@@ -512,28 +515,28 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {
     std::string osimage;
 
-    switch (cluster().getDiskImage().getDistro()) {
+    switch (cluster()->getDiskImage().getDistro()) {
         case OS::Distro::RHEL:
             osimage += "rhels";
-            osimage += cluster().getNodes()[0].getOS().getVersion();
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::OL:
             osimage += "ol";
-            osimage += cluster().getNodes()[0].getOS().getVersion();
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
             osimage += ".0";
             break;
         case OS::Distro::Rocky:
             osimage += "rocky";
-            osimage += cluster().getNodes()[0].getOS().getVersion();
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::AlmaLinux:
             osimage += "alma";
-            osimage += cluster().getNodes()[0].getOS().getVersion();
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
             break;
     }
     osimage += "-";
 
-    switch (cluster().getNodes()[0].getOS().getArch()) {
+    switch (cluster()->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             osimage += "x86_64";
             break;
@@ -575,29 +578,29 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 
     std::filesystem::path chroot = "/install/netboot/";
 
-    switch (cluster().getNodes()[0].getOS().getDistro()) {
+    switch (cluster()->getNodes()[0].getOS().getDistro()) {
         case OS::Distro::RHEL:
             chroot += "rhels";
-            chroot += cluster().getNodes()[0].getOS().getVersion();
+            chroot += cluster()->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::OL:
             chroot += "ol";
-            chroot += cluster().getNodes()[0].getOS().getVersion();
+            chroot += cluster()->getNodes()[0].getOS().getVersion();
             chroot += ".0";
             break;
         case OS::Distro::Rocky:
             chroot += "rocky";
-            chroot += cluster().getNodes()[0].getOS().getVersion();
+            chroot += cluster()->getNodes()[0].getOS().getVersion();
             break;
         case OS::Distro::AlmaLinux:
             chroot += "alma";
-            chroot += cluster().getNodes()[0].getOS().getVersion();
+            chroot += cluster()->getNodes()[0].getOS().getVersion();
             break;
     }
 
     chroot += "/";
 
-    switch (cluster().getNodes()[0].getOS().getArch()) {
+    switch (cluster()->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             chroot += "x86_64";
             break;
@@ -621,7 +624,7 @@ void XCAT::installRepositories()
                          "core-snap/xcat-core.repo",
         repofileDest.string());
 
-    switch (cluster().getHeadnode().getOS().getPlatform()) {
+    switch (cluster()->getHeadnode().getOS().getPlatform()) {
         case OS::Platform::el8:
             runner->downloadFile(
                 "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
@@ -641,7 +644,7 @@ void XCAT::installRepositories()
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
     }
-    const auto osinf = cluster().getHeadnode().getOS();
+    const auto osinf = cluster()->getHeadnode().getOS();
     const auto repoManager = getRepoManager(osinf);
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { repofileDest }) {
@@ -656,7 +659,7 @@ void XCAT::installRepositories()
              "in repo manager")]]
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
-    const auto osinfo = cluster().getHeadnode().getOS();
+    const auto osinfo = cluster()->getHeadnode().getOS();
     const auto osArch = magic_enum::enum_name(osinfo.getArch());
     const auto osMajorVersion = osinfo.getMajorVersion();
     const auto osVersion = osinfo.getVersion();

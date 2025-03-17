@@ -25,9 +25,7 @@
 #include <cloysterhpc/dbus_client.h>
 #include <ranges>
 
-using cloyster::getClusterSingleton;
 using cloyster::OS;
-using cloyster::runCommand;
 using cloyster::models::Cluster;
 
 namespace {
@@ -51,7 +49,7 @@ auto getToEnableRepoNames(const OS& osinfo)
     }
 }
 
-Cluster& cluster() { return getClusterSingleton(); }
+auto cluster() { return cloyster::Singleton<Cluster>::get(); }
 }
 
 namespace cloyster::services {
@@ -81,7 +79,7 @@ void Shell::configureSELinuxMode()
 {
     LOG_INFO("Setting up SELinux")
 
-    switch (cluster().getSELinux()) {
+    switch (cluster()->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
             runCommand("setenforce 0");
             /* Permissive mode */
@@ -106,22 +104,22 @@ void Shell::configureFirewall()
 {
     LOG_INFO("Setting up firewall")
 
-    if (cluster().isFirewall()) {
+    if (cluster()->isFirewall()) {
         runCommand("systemctl enable --now firewalld");
 
         // Add the management interface as trusted
         runCommand(fmt::format(
             "firewall-cmd --permanent --zone=trusted --change-interface={}",
-            cluster().getHeadnode()
+            cluster()->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getInterface()
                 .value()));
 
         // If we have IB, also add its interface as trusted
-        if (cluster().getOFED())
+        if (cluster()->getOFED())
             runCommand(fmt::format(
                 "firewall-cmd --permanent --zone=trusted --change-interface={}",
-                cluster().getHeadnode()
+                cluster()->getHeadnode()
                     .getConnection(Network::Profile::Application)
                     .getInterface()
                     .value()));
@@ -139,7 +137,7 @@ void Shell::configureFQDN()
     LOG_INFO("Setting up hostname")
 
     runCommand(fmt::format(
-        "hostnamectl set-hostname {}", cluster().getHeadnode().getFQDN()));
+        "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
 }
 
 // TODO: Proper file parsing
@@ -147,7 +145,7 @@ void Shell::configureHostsFile()
 {
     LOG_INFO("Setting up additional entries on hosts file")
 
-    const auto& headnode = cluster().getHeadnode();
+    const auto& headnode = cluster()->getHeadnode();
 
     const auto& ip = headnode.getConnection(Network::Profile::Management)
                          .getAddress()
@@ -167,7 +165,7 @@ void Shell::configureTimezone()
     LOG_INFO("Setting up timezone")
 
     runCommand(fmt::format(
-        "timedatectl set-timezone {}", cluster().getTimezone().getTimezone()));
+        "timedatectl set-timezone {}", cluster()->getTimezone().getTimezone()));
 }
 
 void Shell::configureLocale()
@@ -175,7 +173,7 @@ void Shell::configureLocale()
     LOG_INFO("Setting up locale")
 
     runCommand(fmt::format(
-        "localectl set-locale {}", cluster().getLocale().getLocale()));
+        "localectl set-locale {}", cluster()->getLocale().getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride()
@@ -273,7 +271,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 
 void Shell::runSystemUpdate()
 {
-    if (cluster().isUpdateSystem()) {
+    if (cluster()->isUpdateSystem()) {
         LOG_INFO("Checking if system updates are available")
         runCommand("dnf -y update");
     }
@@ -341,7 +339,7 @@ void Shell::configureQueueSystem()
 {
     LOG_INFO("Setting up the queue system")
 
-    if (const auto& queue = cluster().getQueueSystem()) {
+    if (const auto& queue = cluster()->getQueueSystem()) {
         switch (queue.value()->getKind()) {
             case QueueSystem::Kind::None: {
                 __builtin_unreachable();
@@ -377,14 +375,14 @@ void Shell::configureMailSystem()
 {
     LOG_INFO("Setting up the mail system");
 
-    cluster().getMailSystem()->setup();
+    cluster()->getMailSystem()->setup();
 }
 
 void Shell::configureInfiniband()
 {
-    const auto& osinfo = cluster().getHeadnode().getOS();
+    const auto& osinfo = cluster()->getHeadnode().getOS();
     auto repos = cloyster::getRepoManager(osinfo);
-    if (const auto& ofed = cluster().getOFED()) {
+    if (const auto& ofed = cluster()->getOFED()) {
         LOG_INFO("Setting up Infiniband support")
         ofed->install(*repos); // shared pointer
     }
@@ -423,7 +421,7 @@ void Shell::installDevelopmentComponents()
 
 void Shell::configureRepositories()
 {
-    const auto& osinfo = cluster().getHeadnode().getOS();
+    const auto& osinfo = cluster()->getHeadnode().getOS();
     auto repos = cloyster::getRepoManager(osinfo);
     // 1. Install files into /etc, these files are the templates
     //    at include/cloysterhpc/repos/el*/*.repo
@@ -439,7 +437,7 @@ void Shell::configureRepositories()
  */
 void Shell::install()
 {
-    auto systemdBus = cluster().getDaemonBus();
+    auto systemdBus = cluster()->getDaemonBus();
 
     configureSELinuxMode();
     configureFirewall();
@@ -450,9 +448,9 @@ void Shell::install()
     configureTimezone();
     configureLocale();
 
-    configureNetworks(cluster().getHeadnode().getConnections());
+    configureNetworks(cluster()->getHeadnode().getConnections());
     runSystemUpdate();
-    configureTimeService(cluster().getHeadnode().getConnections());
+    configureTimeService(cluster()->getHeadnode().getConnections());
     installRequiredPackages();
     configureRepositories();
     installOpenHPCBase();
@@ -460,7 +458,7 @@ void Shell::install()
 
     // BUG: Broken. Compute nodes does not mount anything.
     NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
-        cluster().getHeadnode()
+        cluster()->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
@@ -469,7 +467,7 @@ void Shell::install()
     networkFileSystem.start();
 
     configureQueueSystem();
-    if (cluster().getMailSystem().has_value()) {
+    if (cluster()->getMailSystem().has_value()) {
         configureMailSystem();
     }
     removeMemlockLimits();
@@ -477,12 +475,12 @@ void Shell::install()
     installDevelopmentComponents();
 
     const auto& provisionerName { magic_enum::enum_name(
-        cluster().getProvisioner()) };
+        cluster()->getProvisioner()) };
 
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
     // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
-    switch (cluster().getProvisioner()) {
+    switch (cluster()->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
             provisioner = std::make_unique<XCAT>();
             break;
