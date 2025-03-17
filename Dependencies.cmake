@@ -86,14 +86,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET glibmm::glibmm)
-    if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME glibmm)
-    else()
-      CPMAddPackage("gh:GNOME/glibmm@2.78.1")
-    endif()
-  endif()
-
   if(NOT TARGET SDBusCpp::sdbus-c++)
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME sdbus-c++)
@@ -123,11 +115,27 @@ function(cloysterhpc_setup_dependencies)
   endif()
 
   # Standalone packages
+  include(FindPackageHandleStandardArgs)
+
   # Include module path for packages that we need to find or build
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
   include(cmake/Findnewt.cmake)
   if(NOT TARGET newt)
     CPMFindPackage(NAME newt)
+  endif()
+
+  if(NOT TARGET glibmm)
+    pkg_check_modules(GLIBMM REQUIRED glibmm-2.4)
+
+    message(STATUS "GLIBMM_LIBRARIES=${GLIBMM_LIBRARIES}")
+    message(STATUS "GLIBMM_INCLUDE_DIRS=${GLIBMM_INCLUDE_DIRS}")
+    find_package_handle_standard_args(glibmm
+      DEFAULT_MSG
+      GLIBMM_LIBRARIES
+      GLIBMM_INCLUDE_DIRS)
+
+    mark_as_advanced(GLIBMM_INCLUDE_DIRS GLIBMM_LIBRARIES)
+    # include_directories(${GLIBMM_INCLUDE_DIRS})
   endif()
 
   # Set the variable ${STDC++FS} to the correct library

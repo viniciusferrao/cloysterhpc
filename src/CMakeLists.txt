@@ -21,6 +21,10 @@ target_link_system_libraries(
 
 # Build a library and a ${cloysterhpc_BINARY_NAME} binary that links to the library
 add_library(cloysterhpc_object OBJECT ${SOURCE_FILES})
+
+# Include glibmm headers as SYSTEM header to avoid warnings
+target_include_directories(cloysterhpc_object SYSTEM PRIVATE ${GLIBMM_INCLUDE_DIRS})
+
 # add_library(cloysterhpc_static STATIC $<TARGET_OBJECTS:cloysterhpc_object>)
 add_library(cloysterhpc_static STATIC $<TARGET_OBJECTS:cloysterhpc_object> $<TARGET_OBJECTS:cloysterhpc_presenter_object>)
 add_executable(${cloysterhpc_BINARY_NAME} main.cpp)

@@ -4,7 +4,6 @@ from conan.tools.cmake import cmake_layout, CMakeToolchain, CMake
 class MyProjectConan(ConanFile):
     name = "CloysterHPC"
     version = "0.1.1"
-
     settings = "os", "arch", "compiler", "build_type"
 
     def requirements(self):
@@ -16,7 +15,9 @@ class MyProjectConan(ConanFile):
         self.requires("gsl-lite/[>=0.41.0 <0.42.0]")
         self.requires("doctest/[>=2.4.0 <2.5.0]")
         self.requires("sdbus-cpp/[>=2.0.0 <2.1.0]")
-        self.requires("glibmm/[>=2.78.1 <2.79.0]")
+
+        # We're using host's glibmm
+        # self.requires("glibmm/[>=2.78.1 <2.79.0]")
 
         # Override libmount to unify on 2.39.2.
         # This prevents the conflict with glib and sdbus-cpp requirements.

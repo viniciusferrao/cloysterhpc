@@ -1,8 +1,12 @@
-#include <concepts>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
+#include <cstddef>
+#include <fstream>
+#include <ios>
+#include <istream>
 
+#include <glibmm/checksum.h>
 #include <glibmm/fileutils.h>
 #include <glibmm/keyfile.h>
 
@@ -13,11 +17,11 @@ namespace cloyster::services::files {
 
 struct KeyFile::Impl {
     std::filesystem::path m_path;
-    Glib::RefPtr<Glib::KeyFile> m_keyfile;
+    std::unique_ptr<Glib::KeyFile> m_keyfile;
 
-    Impl(Glib::RefPtr<Glib::KeyFile>&& keyfile, std::filesystem::path path)
+    Impl(Glib::KeyFile&& keyfile, std::filesystem::path path)
         : m_path(std::move(path))
-        , m_keyfile(std::move(keyfile)) { };
+        , m_keyfile(std::make_unique<Glib::KeyFile>(std::move(keyfile))) { };
 
     void safeToFile(const std::filesystem::path& path)
     {
@@ -59,7 +63,7 @@ KeyFile::KeyFile(KeyFile::Impl&& impl)
 }
 
 KeyFile::KeyFile(const std::filesystem::path& path)
-    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile::create(), path))
+    : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
 {
     m_impl->m_path = path;
     m_impl->loadFromFile(path);
@@ -90,9 +94,8 @@ std::string KeyFile::getString(
 std::optional<std::string> KeyFile::getStringOpt(
     const std::string& group, const std::string& key) const
 {
-    auto keyFile = m_impl->m_keyfile;
-    if (keyFile->has_key(group, key)) {
-        return keyFile->get_string(group, key).raw();
+    if (m_impl->m_keyfile->has_key(group, key)) {
+        return m_impl->m_keyfile->get_string(group, key).raw();
     }
     return std::nullopt;
 }
@@ -127,5 +130,41 @@ void KeyFile::setBoolean(
 void KeyFile::save() { m_impl->safeToFile(m_impl->m_path); }
 
 void KeyFile::load() { m_impl->loadFromFile(m_impl->m_path); }
+
+std::string checksum(const std::string& data)
+{
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
+    checksum.update(data);
+    return checksum.get_string();
+}
+
+std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize)
+{
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+        throw std::filesystem::filesystem_error(
+            "Failed to open file", path, std::error_code());
+    }
+
+    std::vector<std::byte> buffer(chunkSize);
+
+    while (file.read(reinterpret_cast<std::istream::char_type*>(buffer.data()),
+        static_cast<std::streamsize>(buffer.size()))) {
+        auto bytesRead = static_cast<gsize>(file.gcount());
+
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    // Handle any leftover bytes after the while loop ends
+    auto bytesRead = static_cast<gsize>(file.gcount());
+    if (bytesRead > 0) {
+        checksum.update(
+            reinterpret_cast<const unsigned char*>(buffer.data()), bytesRead);
+    }
+
+    return checksum.get_string();
+}
 
 } // namespace cloyster::services::files
