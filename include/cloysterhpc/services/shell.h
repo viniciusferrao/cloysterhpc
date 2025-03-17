@@ -23,7 +23,6 @@ using cloyster::models::Cluster;
  */
 class Shell final : public Execution {
 private:
-    const std::unique_ptr<Cluster> m_cluster;
 
     /**
      * @brief Configures SELinux mode.
@@ -172,19 +171,13 @@ private:
 
 public:
     /**
-     * @brief Constructs a Shell object.
-     *
-     * Initializes the Shell object with a reference to a Cluster object.
-     *
-     * @param cluster A reference to a unique pointer managing a Cluster object.
-     */
-    explicit Shell(const std::unique_ptr<Cluster> cluster);
-    /**
      * @brief Installs and configures the system.
      *
      * This function performs the installation and configuration processes.
      */
     void install() override;
+
+    Shell();
 };
 
 };

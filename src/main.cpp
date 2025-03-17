@@ -17,6 +17,7 @@
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
+#include <cloysterhpc/functions.h>
 #include <internal_use_only/config.hpp>
 #include <regex>
 
@@ -190,8 +191,10 @@ int main(int argc, const char** argv)
             model->dumpData(dumped_answerfile);
         }
 
+        cloyster::initClusterSingleton(std::move(model));
+
         std::unique_ptr<Execution> executionEngine
-            = std::make_unique<cloyster::services::Shell>(std::move(model));
+            = std::make_unique<cloyster::services::Shell>();
 
         executionEngine->install();
 

@@ -11,6 +11,8 @@
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/tools/ITool.h>
+#include <cloysterhpc/ofed.h>
+#include <magic_enum/magic_enum.hpp>
 #include <optional>
 #include <vector>
 
@@ -156,6 +158,12 @@ private:
         std::filesystem::path key_file;
     };
 
+    struct AFOFED {
+        std::string kind = static_cast<std::string>(magic_enum::enum_name(OFED::Kind::Inbox));
+        std::string version = "latest";
+        bool enabled = false;
+    };
+
     std::filesystem::path m_path;
     inifile m_ini;
 
@@ -268,6 +276,7 @@ private:
     void loadNodes();
     void loadTools();
     void loadNVHPC();
+    void loadOFED();
 
     void dumpNodes();
 
@@ -343,6 +352,7 @@ public:
     AFSystem system;
     AFNodes nodes;
     AFPostfix postfix;
+    AFOFED ofed;
 
     /**
      * @brief Loads the answer file from the specified path.

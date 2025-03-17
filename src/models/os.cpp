@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
@@ -167,7 +168,7 @@ void OS::setDistro(std::string_view distro)
 
 #if 1
     if (const auto& rv
-        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
+        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive)) {
 #else
     if (const auto &rv
         = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
@@ -175,9 +176,10 @@ void OS::setDistro(std::string_view distro)
           }))
 #endif
         setDistro(rv.value());
-    else
+    } else {
         throw std::runtime_error(
             fmt::format("Unsupported Distribution: {}", distro));
+    }
 }
 
 std::string_view OS::getKernel() const { return m_kernel; }

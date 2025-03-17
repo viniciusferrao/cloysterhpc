@@ -282,7 +282,19 @@ public:
     void install(std::filesystem::directory_iterator&& dirIter)
     {
         for (const auto& fil : std::move(dirIter)) {
-            if (fil.path().filename().string().ends_with(".repo")) {
+            auto fname = fil.path().filename().string();
+            // Return true if the repository should not be loaded
+            constexpr auto blacklisted = [](const std::string& repo) {
+                if (repo.starts_with("doca-kernel-")) {
+                    // @FIXME: This is the repositories created by the doca scripts
+                    //   Skipping them for now because they break the glib parser
+                    LOG_DEBUG("Skipping DOCA local repositories {}", repo);
+                    return true; // doca repositories break glib parser
+                }
+
+                return false;
+            };
+            if (fname.ends_with(".repo") && !blacklisted(fname)) {
                 install(fil);
             }
         }

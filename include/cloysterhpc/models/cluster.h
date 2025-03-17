@@ -181,7 +181,7 @@ public:
     void setProvisioner(Provisioner);
 
     std::optional<OFED> getOFED() const;
-    void setOFED(OFED::Kind kind);
+    void setOFED(OFED::Kind kind, std::string version = "latest");
 
     std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
     void setQueueSystem(QueueSystem::Kind kind);

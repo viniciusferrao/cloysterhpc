@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
 
 #include <chrono>
 #include <cstdio> /* FILE*, fopen, fclose */
@@ -62,7 +63,21 @@ std::shared_ptr<BaseRunner> getRunner()
     return runner.value();
 }
 
+using cloyster::models::Cluster;
 using cloyster::services::repos::RepoManager;
+
+static std::unique_ptr<Cluster> clusterSingleton;
+void initClusterSingleton(std::unique_ptr<Cluster> cluster)
+{
+    assert(!clusterSingleton);
+    clusterSingleton = std::move(cluster);
+}
+
+Cluster& getClusterSingleton()
+{
+    assert(clusterSingleton);
+    return *clusterSingleton;
+}
 
 std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
 {

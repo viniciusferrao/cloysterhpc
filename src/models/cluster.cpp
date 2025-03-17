@@ -5,6 +5,7 @@
 
 #include <expected>
 #include <memory>
+#include <stdexcept>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
@@ -14,6 +15,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <utility>
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
@@ -210,7 +212,7 @@ void Cluster::setProvisioner(Cluster::Provisioner provisioner)
 
 std::optional<OFED> Cluster::getOFED() const { return m_ofed; }
 
-void Cluster::setOFED(OFED::Kind kind) { m_ofed = OFED(kind); }
+void Cluster::setOFED(OFED::Kind kind, std::string version) { m_ofed = OFED(kind, std::move(version)); }
 
 std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
 {
@@ -315,16 +317,20 @@ void Cluster::printConnections()
 
 void Cluster::printData()
 {
-    LOG_DEBUG("Dump cluster data:")
-    LOG_DEBUG("Cluster attributes defined:")
-    LOG_DEBUG("OS Data:")
+    LOG_DEBUG("Dump cluster data:");
+    LOG_DEBUG("Cluster attributes defined:");
+    LOG_DEBUG("OS Data:");
     m_headnode.getOS().printData();
-    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone())
-    LOG_DEBUG("Locale: {}", getLocale().getLocale())
-    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname())
-    LOG_DEBUG("DomainName: {}", getDomainName())
-    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN())
-
+    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone());
+    LOG_DEBUG("Locale: {}", getLocale().getLocale());
+    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname());
+    LOG_DEBUG("DomainName: {}", getDomainName());
+    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
+    if (m_ofed) {
+         auto ofed = m_ofed.value();
+         LOG_DEBUG("OFED: {} {}", utils::enumToString(ofed.getKind()), ofed.getVersion());
+     }
+        
     printNetworks(m_network);
     printConnections();
 
@@ -591,7 +597,23 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     this->m_headnode.setFQDN(fmt::format(
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
-    setOFED(OFED::Kind::Inbox);
+    if (answerfil.ofed.enabled) {
+         LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
+         auto kind = utils::enumOfStringOpt<OFED::Kind>(answerfil.ofed.kind);
+         if (!kind) {
+            throw std::runtime_error(
+                fmt::format("Invalid OFED kind, expected one of {}, found {}",
+                            fmt::join(magic_enum::enum_names<OFED::Kind>(), ", "),
+                            answerfil.ofed.kind
+                            ));
+         }
+         auto version = answerfil.ofed.version;
+         setOFED(kind.value(), version);
+    } else {
+         // @FIXME: Is this correct? It installs the Inbox infiniband stack by default
+         setOFED(OFED::Kind::Inbox);
+    }
+
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("execution");
 

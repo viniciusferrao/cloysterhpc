@@ -6,6 +6,7 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/functions.h>
 #include <filesystem>
 
 using cloyster::runCommand;

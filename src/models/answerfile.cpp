@@ -49,6 +49,7 @@ void AnswerFile::loadOptions()
     loadNodes();
     loadTools();
     loadPostfix();
+    loadOFED();
 }
 
 void AnswerFile::dumpNetwork(
@@ -397,6 +398,9 @@ void AnswerFile::loadSystemSettings()
             afDistro, magic_enum::case_insensitive)) {
         system.distro = formatDistro.value();
     } else {
+        if (cloyster::dryRun) {
+            return;
+        }
         throw std::runtime_error(
             fmt::format("Unsupported distro: {}", afDistro));
     }
@@ -605,6 +609,23 @@ void AnswerFile::loadPostfix()
 
     postfix.cert_file = m_ini.getValue("postfix", "smtpd_tls_cert_file", false);
     postfix.key_file = m_ini.getValue("postfix", "smtpd_tls_key_file", false);
+}
+
+void AnswerFile::loadOFED()
+{
+    auto kind = m_ini.getValue("ofed", "kind");
+    if (kind != "") {
+        ofed.enabled = true; 
+        ofed.kind = kind;
+        auto afVersion = m_ini.getValue("ofed", "version");
+        if (afVersion != "") {
+            ofed.version =  afVersion;
+        } else {
+            ofed.version = "latest"; // use as default
+        }
+
+        LOG_DEBUG("OFED enabled, {} {}", ofed.kind, ofed.version)
+    }
 }
 
 };

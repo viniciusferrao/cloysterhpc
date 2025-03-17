@@ -1,7 +1,8 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include "services/log.h"
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/services/log.h>
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
 #include <cloysterhpc/services/repos.h>
@@ -19,6 +20,9 @@ namespace cloyster {
 extern bool dryRun;
 
 using OS = cloyster::models::OS;
+
+void initClusterSingleton(std::unique_ptr<models::Cluster> cluster);
+models::Cluster& getClusterSingleton();
 std::shared_ptr<cloyster::services::BaseRunner> getRunner();
 std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(
     const OS& osinfo);
@@ -220,6 +224,29 @@ std::filesystem::directory_iterator openDir(const Path& path)
         static_cast<std::function<std::filesystem::directory_iterator()>>(
             [&path]() { return std::filesystem::directory_iterator(path); }),
         fmt::format("Dry Run: Would open directory {}", path.string()));
+}
+
+/**
+ * @brief Converts enum to string.
+ * @desc The case is the same used in the enum definition. Convert
+ * it to lower before comparing.
+ */
+template <typename T>
+requires std::is_enum_v<T>
+std::string enumToString(T enumValue)
+{
+    return static_cast<std::string>(magic_enum::enum_name<T>(enumValue));
+}
+
+/**
+ * @brief Converts a string to an enum if possible
+ * @desc The comparison is made case insensitive
+ */
+template <typename T>
+requires std::is_enum_v<T>
+std::optional<T> enumOfStringOpt(const std::string& str)
+{
+    return magic_enum::enum_cast<T>(str, magic_enum::case_insensitive);
 }
 
 }

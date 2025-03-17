@@ -25,6 +25,7 @@ PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
     if (m_view->yesNoQuestion(
             Messages::title, Messages::question, Messages::help)) {
 
+        // @FIXME: Prompt for the version
         m_model->setOFED(magic_enum::enum_cast<OFED::Kind>(
             m_view->listMenu(Messages::title, Messages::OFED::question,
                 magic_enum::enum_names<OFED::Kind>(), Messages::OFED::help))

@@ -45,8 +45,6 @@ private:
      */
     enum class NodeType { Compute, Service };
 
-    const std::unique_ptr<Cluster>& m_cluster;
-
     struct {
         std::vector<std::string_view> otherpkgs = {};
         // @TODO: We need to support more than one osimage (:
@@ -189,6 +187,9 @@ private:
     static void configureEL9();
 
 public:
+    XCAT();
+
+
     /**
      * @brief Download the repositories
      */
@@ -262,8 +263,6 @@ public:
      * This function resets the nodes.
      */
     static void resetNodes();
-
-    explicit XCAT(const std::unique_ptr<Cluster>& cluster);
 };
 
 };
