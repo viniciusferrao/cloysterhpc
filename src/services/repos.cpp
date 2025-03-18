@@ -264,7 +264,7 @@ public:
         }
 
         if (cloyster::dryRun) {
-            LOG_WARN("Dry Run: Would open {}", dest.string());
+            LOG_INFO("Dry Run: Would open {}", dest.string());
             return;
         }
 
@@ -304,7 +304,7 @@ public:
     void installDir(const std::filesystem::path& path)
     {
         if (cloyster::dryRun) {
-            LOG_WARN("Dry Run: Would open the directory {}", path.string());
+            LOG_INFO("Dry Run: Would open the directory {}", path.string());
             return;
         }
 
@@ -516,7 +516,7 @@ void RepoManager::initializeDefaultRepositories()
 void RepoManager::enable(const std::string& repoid)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would enable repository {}", repoid);
+        LOG_INFO("Dry Run: Would enable repository {}", repoid);
         return;
     }
 
@@ -568,7 +568,7 @@ void RepoManager::enable(const std::vector<std::string>& repos)
 void RepoManager::disable(const std::string& repoid)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would enable repository {}", repoid);
+        LOG_INFO("Dry Run: Would enable repository {}", repoid);
         return;
     }
 
@@ -594,7 +594,7 @@ void RepoManager::disable(const std::string& repoid)
 void RepoManager::disable(const std::vector<std::string>& repos)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would enable repository {}", fmt::join(repos, ","));
+        LOG_INFO("Dry Run: Would enable repository {}", fmt::join(repos, ","));
         return;
     }
 

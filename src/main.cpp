@@ -18,12 +18,45 @@
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/dbus_client.h>
 #include <internal_use_only/config.hpp>
 #include <regex>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
 #endif
+
+namespace {
+void initializeSingletons(auto&& cluster)
+{
+        using cloyster::models::Cluster;
+        cloyster::Singleton<Cluster>::init(std::forward<decltype(cluster)>(cluster));
+
+        cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
+            using cloyster::services::BaseRunner;
+            using cloyster::services::DryRunner;
+            using cloyster::services::Runner;
+
+            if (cloyster::dryRun) {
+                return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
+            }
+
+            return cloyster::makeUniqueDerived<BaseRunner, Runner>();
+        });
+
+        using cloyster::services::repos::RepoManager;
+        cloyster::Singleton<RepoManager>::init([]() {
+            auto clusterPtr = cloyster::Singleton<Cluster>::get();
+            const auto& osinfo = clusterPtr->getHeadnode().getOS();
+            return std::make_unique<RepoManager>(osinfo);
+        });
+
+        cloyster::Singleton<MessageBus>::init([]() {
+            return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
+                "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
+        });
+}
+}; // anonymous namespace 
 
 /**
  * @brief The entrypoint.
@@ -191,27 +224,7 @@ int main(int argc, const char** argv)
             model->dumpData(dumped_answerfile);
         }
 
-        using cloyster::models::Cluster;
-        cloyster::Singleton<Cluster>::init(std::move(model));
-
-        cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
-            using cloyster::services::BaseRunner;
-            using cloyster::services::DryRunner;
-            using cloyster::services::Runner;
-
-            if (cloyster::dryRun) {
-                return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
-            }
-
-            return cloyster::makeUniqueDerived<BaseRunner, Runner>();
-        });
-
-        using cloyster::services::repos::RepoManager;
-        cloyster::Singleton<RepoManager>::init([]() {
-            auto clusterPtr = cloyster::Singleton<Cluster>::get();
-            const auto& osinfo = clusterPtr->getHeadnode().getOS();
-            return std::make_unique<RepoManager>(osinfo);
-        });
+        initializeSingletons(std::move(model));
 
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();

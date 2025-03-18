@@ -127,7 +127,7 @@ int runCommand(const std::string& command, std::list<std::string>& output,
         LOG_DEBUG("Exit code: {}", child.exit_code())
         return child.exit_code();
     } else {
-        LOG_WARN("Dry Run: {}", command)
+        LOG_INFO("Dry Run: {}", command)
         return 0;
     }
 }
@@ -182,7 +182,7 @@ void writeConfig(const std::string& filename)
 void touchFile(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would touch the file {}", path.string())
+        LOG_INFO("Dry Run: Would touch the file {}", path.string())
         return;
     }
 
@@ -195,7 +195,7 @@ void touchFile(const std::filesystem::path& path)
 void createDirectory(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would create directory {}", path.string())
+        LOG_INFO("Dry Run: Would create directory {}", path.string())
         return;
     }
 
@@ -207,7 +207,7 @@ void createDirectory(const std::filesystem::path& path)
 void removeFile(std::string_view filename)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would remove file {}, if exists", filename)
+        LOG_INFO("Dry Run: Would remove file {}, if exists", filename)
         return;
     }
 
@@ -276,7 +276,7 @@ void changeValueInConfigurationFile(
     boost::property_tree::ptree tree;
 
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}",
+        LOG_INFO("Dry Run: Would change the {} on {} in configuration file {}",
             value, key, filename);
         return;
     }
@@ -361,7 +361,7 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
 void installFile(const std::filesystem::path& path, std::istream& data)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would install file {}", path.string());
+        LOG_INFO("Dry Run: Would install file {}", path.string());
         return;
     }
 

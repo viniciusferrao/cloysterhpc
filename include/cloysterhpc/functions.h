@@ -20,10 +20,10 @@ namespace cloyster {
 // Globals
 extern bool dryRun;
 
-template <typename B, typename T>
-constexpr std::unique_ptr<B> makeUniqueDerived()
+template <typename B, typename T, typename... Args>
+constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
 {
-    return static_cast<std::unique_ptr<B>>(std::make_unique<T>());
+    return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
 template <typename T>
@@ -254,7 +254,7 @@ template <typename T>
 inline T dryrun(const std::function<T()>& func, const std::string& msg)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: {}", msg);
+        LOG_INFO("Dry Run: {}", msg);
         return T();
     }
 

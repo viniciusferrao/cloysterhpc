@@ -74,7 +74,7 @@ cloyster::models::OS::Distro DiskImage::getDistro() const
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would verify disk image checksum.")
+        LOG_INFO("Dry Run: Would verify disk image checksum.")
         return true;
     }
 

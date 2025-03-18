@@ -279,7 +279,7 @@ void XCAT::generatePostinstallFile()
     }
 
     if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would change file {} permissions", filename)
+        LOG_INFO("Dry Run: Would change file {} permissions", filename)
         return;
     }
     std::filesystem::permissions(filename,

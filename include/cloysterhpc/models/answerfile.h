@@ -384,7 +384,7 @@ public:
 
     ~answerfile_validation_exception() override = default;
 
-    const char* what() const noexcept override { return message.c_str(); }
+    [[nodiscard]] const char* what() const noexcept override { return message.c_str(); }
 };
 
 };

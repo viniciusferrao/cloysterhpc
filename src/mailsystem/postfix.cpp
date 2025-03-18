@@ -259,8 +259,7 @@ void Postfix::configureSASL(const std::filesystem::path& basedir)
         std::filesystem::perm_options::add);
 
     auto passwordFile = basedir / "sasl_password";
-    cloyster::Singleton<BaseRunner>::get()
-        ->executeCommand(fmt::format("postmap {}", passwordFile.string()));
+    cloyster::Singleton<BaseRunner>::get()->executeCommand(fmt::format("postmap {}", passwordFile.string()));
 
     std::filesystem::permissions(dbFilename,
         std::filesystem::perms::owner_write
