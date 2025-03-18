@@ -21,7 +21,7 @@ PresenterMailSystem::PresenterMailSystem(
                     magic_enum::enum_names<Postfix::Profile>(),
                     Messages::Profile::help))
                   .value();
-        m_model->setMailSystem(mailSystemProfile, cloyster::getRunner());
+        m_model->setMailSystem(mailSystemProfile);
         auto mailSystem = m_model->getMailSystem().value();
 
         LOG_DEBUG("Enabled Postfix with profile: {}",

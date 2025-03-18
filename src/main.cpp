@@ -194,6 +194,25 @@ int main(int argc, const char** argv)
         using cloyster::models::Cluster;
         cloyster::Singleton<Cluster>::init(std::move(model));
 
+        cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
+            using cloyster::services::BaseRunner;
+            using cloyster::services::DryRunner;
+            using cloyster::services::Runner;
+
+            if (cloyster::dryRun) {
+                return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
+            }
+
+            return cloyster::makeUniqueDerived<BaseRunner, Runner>();
+        });
+
+        using cloyster::services::repos::RepoManager;
+        cloyster::Singleton<RepoManager>::init([]() {
+            auto clusterPtr = cloyster::Singleton<Cluster>::get();
+            const auto& osinfo = clusterPtr->getHeadnode().getOS();
+            return std::make_unique<RepoManager>(osinfo);
+        });
+
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();
 

@@ -6,7 +6,6 @@
 #ifndef CLOYSTERHPC_POSTFIX_H_
 #define CLOYSTERHPC_POSTFIX_H_
 
-#include <cloysterhpc/services/runner.h>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
@@ -21,7 +20,6 @@ public:
     enum class Profile { Local, Relay, SASL };
 
 private:
-    cloyster::services::BaseRunner& m_runner;
     Profile m_profile;
     std::optional<std::string> m_hostname {};
     std::optional<std::string> m_domain {};
@@ -75,8 +73,7 @@ public:
 
     void setup(const std::filesystem::path& basedir = "/etc/postfix");
 
-    explicit Postfix(std::shared_ptr<MessageBus> bus,
-        cloyster::services::BaseRunner& runner, Profile profile);
+    explicit Postfix(std::shared_ptr<MessageBus> bus, Profile profile);
 };
 
 #endif // CLOYSTERHPC_POSTFIX_H_

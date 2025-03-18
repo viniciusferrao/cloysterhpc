@@ -22,10 +22,7 @@
 namespace {
 using cloyster::models::Cluster;
 
-inline auto cluster()
-{
-    return cloyster::Singleton<Cluster>::get();
-}
+inline auto cluster() { return cloyster::Singleton<Cluster>::get(); }
 
 }
 
@@ -79,7 +76,8 @@ void XCAT::patchInstall()
 
 void XCAT::setup()
 {
-    setDHCPInterfaces(cluster()->getHeadnode()
+    setDHCPInterfaces(cluster()
+            ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getInterface()
             .value());
@@ -171,7 +169,8 @@ void XCAT::configureTimeService()
 
     m_stateless.postinstall.emplace_back(fmt::format(
         "echo \"server {} iburst\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
-        cluster()->getHeadnode()
+        cluster()
+            ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress()
             .to_string()));
@@ -207,7 +206,8 @@ void XCAT::configureSLURM()
     m_stateless.postinstall.emplace_back(
         fmt::format("echo SLURMD_OPTIONS=\\\"--conf-server {}\\\" > "
                     "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
-            cluster()->getHeadnode()
+            cluster()
+                ->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getAddress()
                 .to_string()));
@@ -259,7 +259,8 @@ void XCAT::generatePostinstallFile()
                     "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
                     "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
                     "END\n\n",
-            cluster()->getHeadnode()
+            cluster()
+                ->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getAddress()
                 .to_string()));
@@ -303,7 +304,7 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    auto runner = getRunner();
+    auto runner = cloyster::Singleton<BaseRunner>::get();
     runner->executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkglist="
                     "/install/custom/netboot/compute.otherpkglist",
@@ -618,7 +619,7 @@ void XCAT::installRepositories()
     const std::filesystem::path& repofileDest
         = std::filesystem::temp_directory_path();
     LOG_INFO("Setting up XCAT repositories");
-    auto runner = cloyster::getRunner();
+    auto runner = cloyster::Singleton<BaseRunner>::get();
 
     runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
                          "core-snap/xcat-core.repo",
@@ -644,8 +645,7 @@ void XCAT::installRepositories()
         default:
             throw std::runtime_error("Unsupported platform for xCAT");
     }
-    const auto osinf = cluster()->getHeadnode().getOS();
-    const auto repoManager = getRepoManager(osinf);
+    const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
     for (auto const& dir_entry :
         std::filesystem::directory_iterator { repofileDest }) {
         const auto& path = dir_entry.path();

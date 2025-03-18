@@ -59,11 +59,6 @@ std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
 const Headnode& Cluster::getHeadnode() const { return m_headnode; }
-// template <typename Runner>
-// std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
-//{
-//     return m_runner;
-// }
 
 std::string_view Cluster::getName() const { return m_name; }
 
@@ -241,9 +236,9 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
 void Cluster::setMailSystem(
-    Postfix::Profile profile, std::shared_ptr<BaseRunner> runner)
+    Postfix::Profile profile)
 {
-    m_mailSystem.emplace(m_systemdBus, *runner, profile);
+    m_mailSystem.emplace(m_systemdBus, profile);
 }
 
 const DiskImage& Cluster::getDiskImage() const { return m_diskImage; }
@@ -893,7 +888,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     }
 
     if (answerfil.postfix.enabled) {
-        setMailSystem(answerfil.postfix.profile, cloyster::getRunner());
+        setMailSystem(answerfil.postfix.profile);
         m_mailSystem->setHostname(this->m_headnode.getHostname());
         m_mailSystem->setDomain(getDomainName());
         m_mailSystem->setDestination(answerfil.postfix.destination);

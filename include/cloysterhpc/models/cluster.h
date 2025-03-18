@@ -188,7 +188,7 @@ public:
 
     std::optional<Postfix>& getMailSystem();
     void setMailSystem(
-        Postfix::Profile profile, std::shared_ptr<services::BaseRunner> runner);
+        Postfix::Profile profile);
 
     const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);

@@ -17,9 +17,8 @@ using cloyster::runCommand;
 using cloyster::services::BaseRunner;
 
 Postfix::Postfix(
-    std::shared_ptr<MessageBus> bus, BaseRunner& runner, Profile profile)
+    std::shared_ptr<MessageBus> bus, Profile profile)
     : IService(bus, "postfix.service")
-    , m_runner(runner)
     , m_profile(profile)
 {
 }
@@ -118,7 +117,8 @@ void Postfix::setKeyFile(const std::optional<std::filesystem::path>& key_file)
 void Postfix::install()
 {
     LOG_INFO("Installing Postfix");
-    m_runner.executeCommand("dnf -y install postfix");
+    cloyster::Singleton<BaseRunner>::get()
+        ->executeCommand("dnf -y install postfix");
 }
 
 static void maybeDisableLocalOnMasterFile(std::string& line)
@@ -209,7 +209,7 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
 
     if (!std::filesystem::exists(basedir / "transport.db")) {
         auto transport = basedir / "transport";
-        m_runner.executeCommand(
+        cloyster::Singleton<BaseRunner>::get()->executeCommand(
             fmt::format("postmap hash:{}", transport.string()));
     }
 
@@ -259,7 +259,8 @@ void Postfix::configureSASL(const std::filesystem::path& basedir)
         std::filesystem::perm_options::add);
 
     auto passwordFile = basedir / "sasl_password";
-    m_runner.executeCommand(fmt::format("postmap {}", passwordFile.string()));
+    cloyster::Singleton<BaseRunner>::get()
+        ->executeCommand(fmt::format("postmap {}", passwordFile.string()));
 
     std::filesystem::permissions(dbFilename,
         std::filesystem::perms::owner_write

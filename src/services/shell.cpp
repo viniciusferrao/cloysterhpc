@@ -380,8 +380,7 @@ void Shell::configureMailSystem()
 
 void Shell::configureInfiniband()
 {
-    const auto& osinfo = cluster()->getHeadnode().getOS();
-    auto repos = cloyster::getRepoManager(osinfo);
+    auto repos = cloyster::Singleton<repos::RepoManager>::get();
     if (const auto& ofed = cluster()->getOFED()) {
         LOG_INFO("Setting up Infiniband support")
         ofed->install(*repos); // shared pointer
@@ -422,7 +421,7 @@ void Shell::installDevelopmentComponents()
 void Shell::configureRepositories()
 {
     const auto& osinfo = cluster()->getHeadnode().getOS();
-    auto repos = cloyster::getRepoManager(osinfo);
+    auto repos = cloyster::Singleton<repos::RepoManager>::get();
     // 1. Install files into /etc, these files are the templates
     //    at include/cloysterhpc/repos/el*/*.repo
     repos->initializeDefaultRepositories();

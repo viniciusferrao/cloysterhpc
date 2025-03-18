@@ -26,11 +26,6 @@
 
 namespace cloyster {
 
-using cloyster::services::BaseRunner;
-using cloyster::services::DryRunner;
-using cloyster::services::Runner;
-
-
 namespace {
     std::tuple<bool, std::optional<std::string>> retrieveLine(
         boost::process::ipstream& pipe_stream,
@@ -42,50 +37,9 @@ namespace {
 
         return make_tuple(pipe_stream.good(), std::nullopt);
     }
-
-    std::shared_ptr<BaseRunner> makeRunner(const bool dryRun)
-    {
-        if (dryRun) {
-            return std::make_shared<DryRunner>();
-        }
-
-        return std::make_shared<Runner>();
-    }
-
 } // anonymous namespace
 
-std::shared_ptr<BaseRunner> getRunner()
-{
-    static std::optional<std::shared_ptr<BaseRunner>> runner = std::nullopt;
-    if (!runner) {
-        runner = makeRunner(cloyster::dryRun);
-    }
-
-    return runner.value();
-}
-
-using cloyster::models::Cluster;
 using cloyster::services::repos::RepoManager;
-
-std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
-{
-    static std::optional<std::shared_ptr<RepoManager>> repoManager
-        = std::nullopt;
-    if (!repoManager) {
-        LOG_DEBUG("Initializing RepoManager");
-        switch (osinfo.getPackageType()) {
-            case OS::PackageType::RPM:
-                repoManager = std::make_shared<RepoManager>(osinfo);
-                break;
-            case OS::PackageType::DEB:
-                // @TODO Implement
-                throw std::logic_error("Not implemented");
-                break;
-        }
-    }
-
-    return repoManager.value();
-}
 
 std::optional<std::string> CommandProxy::getline()
 {

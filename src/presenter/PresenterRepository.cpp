@@ -13,7 +13,7 @@ PresenterRepository::PresenterRepository(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
-    auto manager = cloyster::getRepoManager(model->getHeadnode().getOS());
+    auto manager = cloyster::Singleton<services::repos::RepoManager>::get();
 
     manager->initializeDefaultRepositories();
 

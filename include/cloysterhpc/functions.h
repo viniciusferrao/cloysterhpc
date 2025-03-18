@@ -17,6 +17,15 @@
 
 namespace cloyster {
 
+// Globals
+extern bool dryRun;
+
+template <typename B, typename T>
+constexpr std::unique_ptr<B> makeUniqueDerived()
+{
+    return static_cast<std::unique_ptr<B>>(std::make_unique<T>());
+}
+
 template <typename T>
 class Singleton {
     // Private constructor to prevent direct instantiation
@@ -32,9 +41,17 @@ public:
     Singleton& operator=(const Singleton&) = delete;
     ~Singleton() = delete;
 
-    static void init(std::unique_ptr<T> value) {
+    static void init(std::unique_ptr<T> value)
+    {
         std::call_once(initFlag, [&](){
             instance = std::move(value);
+        });
+    }
+
+    static void init(const auto& factory)
+    {
+        std::call_once(initFlag, [&](){
+            instance = std::move(factory());
         });
     }
 
@@ -52,14 +69,8 @@ std::unique_ptr<T> Singleton<T>::instance = nullptr;
 template <typename T>
 std::once_flag Singleton<T>::initFlag;
 
-// Globals
-extern bool dryRun;
-
-using OS = cloyster::models::OS;
-
-std::shared_ptr<cloyster::services::BaseRunner> getRunner();
-std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(
-    const OS& osinfo);
+using cloyster::services::BaseRunner;
+using cloyster::models::OS;
 
 /**
  * A command proxy, to us to be able to get the

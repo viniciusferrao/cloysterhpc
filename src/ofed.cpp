@@ -50,7 +50,7 @@ std::string headnodeDistroName()
 
 void installMellanoxDoca(cloyster::services::repos::RepoManager& repoManager, const OFED& ofed)
 {
-    auto runner = cloyster::getRunner();
+    auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
 
     if (runner->executeCommand("modprobe mlx5_core") == 0) {
         LOG_WARN("mlx5_core module loaded, skiping DOCA setup");
