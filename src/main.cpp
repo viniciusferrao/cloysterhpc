@@ -126,9 +126,12 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");
 
+#ifndef NDEBUG
     std::string loadConfFile {};
     app.add_option("--test-conf-file", loadConfFile,
         "Hook for testing configuration file loading");
+
+#endif
 
     CLI11_PARSE(app, argc, argv)
 

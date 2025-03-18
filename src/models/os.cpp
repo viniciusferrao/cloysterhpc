@@ -80,7 +80,6 @@ OS::OS()
         }
 
         if (file.bad()) {
-            LOG_ERROR("Error while reading file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while reading file: {}", filename));
         }
