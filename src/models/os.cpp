@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/dnf.h>
 #include <cloysterhpc/services/package_manager.h>
@@ -161,20 +162,9 @@ void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
-    // This code block is left for future reference, if an insensitive
-    // comparison in magic_enum would be implemented it may easily replace the
-    // lambda block. Reference: https://github.com/Neargye/magic_enum/pull/139
-
-#if 1
-    if (const auto& rv
-        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive)) {
-#else
-    if (const auto &rv
-        = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
-              return std::tolower(lhs) == std::tolower(rhs);
-          }))
-#endif
-        setDistro(rv.value());
+    if (const auto& rval
+        = cloyster::utils::enumOfStringOpt<OS::Distro>(std::string(distro))) {
+        setDistro(rval.value());
     } else {
         throw std::runtime_error(
             fmt::format("Unsupported Distribution: {}", distro));

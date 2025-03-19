@@ -6,10 +6,10 @@
 #ifndef CLOYSTERHPC_OFED_H_
 #define CLOYSTERHPC_OFED_H_
 
-#include "services/repos.h"
 #include <string>
-
 #include <utility>
+
+#include <cloysterhpc/services/repos.h>
 
 
 /**
@@ -51,7 +51,7 @@ public:
      * This method installs the appropriate OFED components based on the
      * specified kind.
      */
-    void install(cloyster::services::repos::RepoManager& repoManager) const;
+    void install() const;
 };
 
 #endif // CLOYSTERHPC_OFED_H_

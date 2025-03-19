@@ -228,6 +228,7 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
  * @param data The contents of the file to install
  */
 void installFile(const std::filesystem::path& path, std::istream& data);
+void installFile(const std::filesystem::path& path, std::string&& data);
 
 } // namespace cloyster
 
@@ -289,7 +290,7 @@ std::string enumToString(T enumValue)
  */
 template <typename T>
 requires std::is_enum_v<T>
-std::optional<T> enumOfStringOpt(const std::string& str)
+std::optional<T> enumOfStringOpt(std::string_view str)
 {
     return magic_enum::enum_cast<T>(str, magic_enum::case_insensitive);
 }

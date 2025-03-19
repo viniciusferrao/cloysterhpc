@@ -29,32 +29,33 @@
 namespace {
 void initializeSingletons(auto&& cluster)
 {
-        using cloyster::models::Cluster;
-        cloyster::Singleton<Cluster>::init(std::forward<decltype(cluster)>(cluster));
+    using cloyster::models::Cluster;
+    cloyster::Singleton<Cluster>::init(
+        std::forward<decltype(cluster)>(cluster));
 
-        cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
-            using cloyster::services::BaseRunner;
-            using cloyster::services::DryRunner;
-            using cloyster::services::Runner;
+    cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
+        using cloyster::services::BaseRunner;
+        using cloyster::services::DryRunner;
+        using cloyster::services::Runner;
 
-            if (cloyster::dryRun) {
-                return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
-            }
+        if (cloyster::dryRun) {
+            return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
+        }
 
-            return cloyster::makeUniqueDerived<BaseRunner, Runner>();
-        });
+        return cloyster::makeUniqueDerived<BaseRunner, Runner>();
+    });
 
-        using cloyster::services::repos::RepoManager;
-        cloyster::Singleton<RepoManager>::init([]() {
-            auto clusterPtr = cloyster::Singleton<Cluster>::get();
-            const auto& osinfo = clusterPtr->getHeadnode().getOS();
-            return std::make_unique<RepoManager>(osinfo);
-        });
+    using cloyster::services::repos::RepoManager;
+    cloyster::Singleton<RepoManager>::init([]() {
+        auto clusterPtr = cloyster::Singleton<Cluster>::get();
+        const auto& osinfo = clusterPtr->getHeadnode().getOS();
+        return std::make_unique<RepoManager>(osinfo);
+    });
 
-        cloyster::Singleton<MessageBus>::init([]() {
-            return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
-                "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
-        });
+    cloyster::Singleton<MessageBus>::init([]() {
+        return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
+            "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
+    });
 }
 }; // anonymous namespace 
 
@@ -73,9 +74,6 @@ int main(int argc, const char** argv)
 
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
-#if 0    
-    app.add_flag("-c, --cli", cloyster::enableCLI, "Enable CLI");
-#endif
 
     cloyster::logLevelInput
         = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
@@ -147,6 +145,7 @@ int main(int argc, const char** argv)
         }
     }());
 
+#ifndef NDEBUG
     if (!loadConfFile.empty()) {
         LOG_INFO("Loading file {}", loadConfFile);
         auto file = cloyster::services::files::KeyFile(loadConfFile);
@@ -154,6 +153,7 @@ int main(int argc, const char** argv)
         LOG_INFO("Contents: {}", file.toData());
         return EXIT_SUCCESS;
     }
+#endif
 
     if (cloyster::showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);

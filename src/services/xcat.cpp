@@ -24,7 +24,34 @@ using cloyster::models::Cluster;
 
 inline auto cluster() { return cloyster::Singleton<Cluster>::get(); }
 
+// Returns the distribution name with the version, e.g., rocky9.5
+std::string getOSImageDistroVersion()
+{
+    using cloyster::models::OS;
+    std::string osimage;
+
+    switch (cluster()->getDiskImage().getDistro()) {
+        case OS::Distro::RHEL:
+            osimage += "rhels";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+        case OS::Distro::OL:
+            osimage += "ol";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            osimage += ".0";
+            break;
+        case OS::Distro::Rocky:
+            osimage += "rocky";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+        case OS::Distro::AlmaLinux:
+            osimage += "alma";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+    }
+    return osimage;
 }
+}; // namespace{}
 
 namespace cloyster::services {
 
@@ -49,8 +76,9 @@ XCAT::XCAT()
 
 void XCAT::installPackages()
 {
-    cluster()->getHeadnode().getOS().packageManager()->install("initscripts");
-    cluster()->getHeadnode().getOS().packageManager()->install("xCAT");
+    auto packageManager = cluster()->getHeadnode().getOS().packageManager();
+    packageManager->install("initscripts");
+    packageManager->install("xCAT");
 }
 
 void XCAT::patchInstall()
@@ -178,7 +206,8 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
-    if (const auto& ofed = cluster()->getOFED())
+    LOG_INFO("[xCAT] Configuring infiniband");
+    if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {
             case OFED::Kind::Inbox:
                 m_stateless.otherpkgs.emplace_back("@infiniband");
@@ -186,8 +215,42 @@ void XCAT::configureInfiniband()
                 break;
 
             case OFED::Kind::Mellanox:
-                throw std::logic_error("@TODO MLNX OFED is not yet supported");
+                {
+                    // Add the rpm to the image
+                    m_stateless.otherpkgs.emplace_back("kmod-mlnx-ofa_kernel");
+                    auto runner = cloyster::Singleton<BaseRunner>::get();
+                    auto arch = cloyster::utils::enumToString(cluster()->getNodes()[0].getOS().getArch());
 
+                    // Cofigure Apache to serve the RPM repository
+                    auto repoFolder = std::string_view("/var/www/html/rpmrepo");
+                    cloyster::createDirectory(repoFolder);
+                    cloyster::installFile(
+                        "/etc/httpd.d/conf.d/rpmrepo.conf",
+                        fmt::format(
+                            R"(Alias "/rpmrepo" "{0}" 
+<Directory "{0}"> 
+    Options +Indexes +FollowSymLinks 
+    AllowOverride None 
+    Require all granted 
+    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8 
+</Directory>
+)", repoFolder));
+                    runner->executeCommand("apachectl configtest");
+                    runner->executeCommand("systemctl restart httpd");
+
+                    // Create the RPM repository
+                    runner->executeCommand(
+                        fmt::format("bash -c \"cp -v /usr/share/doca-host-*/Modules/*.{}/*.rpm {}\"", 
+                                    arch, repoFolder));
+                    runner->executeCommand(
+                        fmt::format("createrepo {}", repoFolder));
+
+
+                    // Add the repository to the image
+                    runner->executeCommand(
+                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir=http://$(hostname)/rpmrepo\"",
+                            m_stateless.osimage));
+                }
                 break;
 
             case OFED::Kind::Oracle:
@@ -196,6 +259,7 @@ void XCAT::configureInfiniband()
 
                 break;
         }
+    }
 }
 
 void XCAT::configureSLURM()
@@ -514,27 +578,7 @@ void XCAT::resetNodes() { cloyster::runCommand("rpower compute reset"); }
 
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {
-    std::string osimage;
-
-    switch (cluster()->getDiskImage().getDistro()) {
-        case OS::Distro::RHEL:
-            osimage += "rhels";
-            osimage += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::OL:
-            osimage += "ol";
-            osimage += cluster()->getNodes()[0].getOS().getVersion();
-            osimage += ".0";
-            break;
-        case OS::Distro::Rocky:
-            osimage += "rocky";
-            osimage += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::AlmaLinux:
-            osimage += "alma";
-            osimage += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-    }
+    std::string osimage = getOSImageDistroVersion();
     osimage += "-";
 
     switch (cluster()->getNodes()[0].getOS().getArch()) {
@@ -578,27 +622,7 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     }
 
     std::filesystem::path chroot = "/install/netboot/";
-
-    switch (cluster()->getNodes()[0].getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            chroot += "rhels";
-            chroot += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::OL:
-            chroot += "ol";
-            chroot += cluster()->getNodes()[0].getOS().getVersion();
-            chroot += ".0";
-            break;
-        case OS::Distro::Rocky:
-            chroot += "rocky";
-            chroot += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::AlmaLinux:
-            chroot += "alma";
-            chroot += cluster()->getNodes()[0].getOS().getVersion();
-            break;
-    }
-
+    chroot += getOSImageDistroVersion();
     chroot += "/";
 
     switch (cluster()->getNodes()[0].getOS().getArch()) {
@@ -654,6 +678,7 @@ void XCAT::installRepositories()
         }
     }
 }
+
 
 [[deprecated("Refactoring RepoManager, replace the function with the same name "
              "in repo manager")]]

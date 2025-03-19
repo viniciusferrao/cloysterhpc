@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/ofed.h>
 #include <utility>
 
@@ -48,39 +49,8 @@ std::string headnodeDistroName()
     std::unreachable();
 }
 
-void installMellanoxDoca(cloyster::services::repos::RepoManager& repoManager, const OFED& ofed)
+void installMellanoxDoca(const OFED& ofed)
 {
-    auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
-
-    if (runner->executeCommand("modprobe mlx5_core") == 0) {
-        LOG_WARN("mlx5_core module loaded, skiping DOCA setup");
-        return;
-    }
-
-    // @FIMXE deduce "rockylinux9.2"
-    auto repoData = docaRepoTemplate(ofed.getVersion(), headnodeDistroName());
-    std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
-
-    // Install the repository and enable it
-    cloyster::installFile(path, repoData);
-    repoManager.install(path);
-    repoManager.enable("doca");
-
-    // Install the required packages
-    runner->executeCommand("dnf makecache");
-    runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
-
-    // Run the Mellanox script, this generates an RPM at tmp
-    assert(runner->executeCommand("/opt/mellanox/doca/tools/doca-kernel-support -k $(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel") == 0);
-
-    // Install the generated rpm
-    runner->executeCommand("rpm -ivh $(find /tmp/DOCA.*/ -name '*.rpm' -printf \"%T@ %p\n\" | sort -nrk1 | tail -1 | awk '{print $2}')");
-
-    runner->executeCommand("dnf makecache");
-    runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
-    if (runner->executeCommand("lsmod | grep mlx5_core") != 0) {
-        runner->executeCommand("modprobe mlx_core");
-    }
 }
 };
 
@@ -88,7 +58,7 @@ void OFED::setKind(Kind kind) { m_kind = kind; }
 
 OFED::Kind OFED::getKind() const { return m_kind; }
 
-void OFED::install(cloyster::services::repos::RepoManager& repoManager) const
+void OFED::install() const
 {
     switch (m_kind) {
         case OFED::Kind::Inbox:
@@ -97,8 +67,40 @@ void OFED::install(cloyster::services::repos::RepoManager& repoManager) const
             break;
 
         case OFED::Kind::Mellanox:
-            installMellanoxDoca(repoManager, *this);
+            {
+                auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
+                auto repoManager = cloyster::Singleton<cloyster::services::repos::RepoManager>::get();
 
+                if (runner->executeCommand("modprobe mlx5_core") == 0) {
+                    LOG_WARN("mlx5_core module loaded, skiping DOCA setup");
+                    return;
+                }
+
+                auto repoData = docaRepoTemplate(getVersion(), headnodeDistroName());
+                std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
+
+                // Install the repository and enable it
+                cloyster::installFile(path, repoData);
+                repoManager->install(path);
+                repoManager->enable("doca");
+
+                // Install the required packages
+                runner->executeCommand("dnf makecache");
+                runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
+
+                // Run the Mellanox script, this generates an RPM at tmp
+                assert(runner->executeCommand("/opt/mellanox/doca/tools/doca-kernel-support -k $(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel") == 0);
+
+                // Install the (last) generated rpm
+                runner->executeCommand("rpm -ivh $(find /tmp/DOCA.*/ -name '*.rpm' -printf \"%T@ %p\n\" | sort -nrk1 | tail -1 | awk '{print $2}')");
+
+                runner->executeCommand("dnf makecache");
+                runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
+                if (runner->executeCommand("lsmod | grep mlx5_core") != 0) {
+                    runner->executeCommand("modprobe mlx_core");
+                }
+
+            }
             break;
 
         case OFED::Kind::Oracle:

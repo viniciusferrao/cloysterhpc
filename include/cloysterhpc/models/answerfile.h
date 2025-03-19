@@ -159,7 +159,7 @@ private:
     };
 
     struct AFOFED {
-        std::string kind = static_cast<std::string>(magic_enum::enum_name(OFED::Kind::Inbox));
+        std::string kind = cloyster::utils::enumToString(OFED::Kind::Inbox);
         std::string version = "latest";
         bool enabled = false;
     };

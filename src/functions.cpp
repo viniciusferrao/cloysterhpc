@@ -374,4 +374,10 @@ void installFile(const std::filesystem::path& path, std::istream& data)
     fil << data.rdbuf();
 }
 
+void installFile(const std::filesystem::path& path, std::string&& data)
+{
+    std::istringstream stringData(std::move(data));
+    installFile(path, stringData);
+}
+
 }; // namespace cloyster

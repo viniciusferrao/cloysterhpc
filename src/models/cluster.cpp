@@ -322,8 +322,7 @@ void Cluster::printData()
     LOG_DEBUG("DomainName: {}", getDomainName());
     LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
     if (m_ofed) {
-         auto ofed = m_ofed.value();
-         LOG_DEBUG("OFED: {} {}", utils::enumToString(ofed.getKind()), ofed.getVersion());
+         LOG_DEBUG("OFED: {} {}", utils::enumToString(m_ofed->getKind()), m_ofed->getVersion());
      }
         
     printNetworks(m_network);
@@ -593,19 +592,20 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
     if (answerfil.ofed.enabled) {
+         // Install the cofigured OFED variant
          LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
          auto kind = utils::enumOfStringOpt<OFED::Kind>(answerfil.ofed.kind);
          if (!kind) {
             throw std::runtime_error(
-                fmt::format("Invalid OFED kind, expected one of {}, found {}",
+                fmt::format("Invalid OFED kind, expected one of {}, found {}. Edit the anwerfile {} [ofed] sectino and try again.",
+                            cloyster::answerfile,
                             fmt::join(magic_enum::enum_names<OFED::Kind>(), ", "),
                             answerfil.ofed.kind
                             ));
          }
-         auto version = answerfil.ofed.version;
-         setOFED(kind.value(), version);
+         setOFED(kind.value(), answerfil.ofed.version);
     } else {
-         // @FIXME: Is this correct? It installs the Inbox infiniband stack by default
+         // Install Inbox OFED by default
          setOFED(OFED::Kind::Inbox);
     }
 

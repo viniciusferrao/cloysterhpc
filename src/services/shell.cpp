@@ -380,10 +380,9 @@ void Shell::configureMailSystem()
 
 void Shell::configureInfiniband()
 {
-    auto repos = cloyster::Singleton<repos::RepoManager>::get();
     if (const auto& ofed = cluster()->getOFED()) {
         LOG_INFO("Setting up Infiniband support")
-        ofed->install(*repos); // shared pointer
+        ofed->install(); // shared pointer
     }
 }
 

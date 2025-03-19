@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <functional>
+#include <glibmm/keyfile.h>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -68,8 +69,8 @@ class RPMRepository final : public IRepository {
     std::string m_name;
     std::optional<std::string> m_baseurl;
     std::optional<std::string> m_metalink;
+    std::optional<std::string> m_gpgkey;
     bool m_gpgcheck = true;
-    std::string m_gpgkey;
     std::filesystem::path m_source;
     std::string m_group;
 
@@ -102,7 +103,7 @@ public:
         return m_metalink;
     };
     [[nodiscard]] bool gpgcheck() const { return m_gpgcheck; };
-    [[nodiscard]] std::string gpgkey() const { return m_gpgkey; };
+    [[nodiscard]] std::optional<std::string> gpgkey() const { return m_gpgkey; };
 
     void id(std::string value) override { m_id = value; };
     void enabled(bool enabled) override { m_enabled = enabled; };
@@ -119,7 +120,7 @@ public:
         m_metalink = std::move(metalink);
     };
     void gpgcheck(bool gpgcheck) { m_gpgcheck = gpgcheck; };
-    void gpgkey(std::string gpgkey) { m_gpgkey = std::move(gpgkey); };
+    void gpgkey(std::optional<std::string> gpgkey) { m_gpgkey = std::move(gpgkey); };
 
     void valid() const;
 
@@ -171,7 +172,7 @@ public:
             auto baseurl = file.getStringOpt(repogroup, "baseurl");
             auto enabled = file.getBoolean(repogroup, "enabled");
             auto gpgcheck = file.getBoolean(repogroup, "gpgcheck");
-            auto gpgkey = file.getString(repogroup, "gpgkey");
+            auto gpgkey = file.getStringOpt(repogroup, "gpgkey");
 
             RPMRepository repo;
             repo.group(repogroup);
@@ -282,19 +283,8 @@ public:
     void install(std::filesystem::directory_iterator&& dirIter)
     {
         for (const auto& fil : std::move(dirIter)) {
-            auto fname = fil.path().filename().string();
-            // Return true if the repository should not be loaded
-            constexpr auto blacklisted = [](const std::string& repo) {
-                if (repo.starts_with("doca-kernel-")) {
-                    // @FIXME: This is the repositories created by the doca scripts
-                    //   Skipping them for now because they break the glib parser
-                    LOG_DEBUG("Skipping DOCA local repositories {}", repo);
-                    return true; // doca repositories break glib parser
-                }
-
-                return false;
-            };
-            if (fname.ends_with(".repo") && !blacklisted(fname)) {
+            std::string fname = fil.path().filename().string();
+            if (fname.ends_with(".repo")) {
                 install(fil);
             }
         }
