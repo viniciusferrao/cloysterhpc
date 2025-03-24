@@ -10,6 +10,8 @@
 
 namespace cloyster::services::files {
 
+constexpr std::size_t CHUNK_SIZE = 16384;
+
 template <typename File>
 concept IsKeyFileReadable = requires(
     const File& file, const std::string& group, const std::string& key) {
@@ -91,9 +93,8 @@ static_assert(cloyster::concepts::IsSaveable<KeyFile>);
 static_assert(concepts::IsMoveable<KeyFile>);
 static_assert(!concepts::IsCopyable<KeyFile>);
 
-
 std::string checksum(const std::string& data);
-std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize = 16384);
+std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize = CHUNK_SIZE);
 
 };
 

@@ -52,6 +52,11 @@ public:
      * specified kind.
      */
     void install() const;
+
+    /**
+     * @brief Returns true if OFED is already installed
+     */
+    [[nodiscard]] bool installed() const;
 };
 
 #endif // CLOYSTERHPC_OFED_H_

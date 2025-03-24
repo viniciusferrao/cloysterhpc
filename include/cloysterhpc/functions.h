@@ -230,6 +230,10 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
 void installFile(const std::filesystem::path& path, std::istream& data);
 void installFile(const std::filesystem::path& path, std::string&& data);
 
+bool exists(const std::filesystem::path& path);
+
+void createHTTPRepo(const std::string_view repoName);
+
 } // namespace cloyster
 
 /**

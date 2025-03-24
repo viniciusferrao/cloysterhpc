@@ -324,7 +324,7 @@ void Cluster::printData()
     if (m_ofed) {
          LOG_DEBUG("OFED: {} {}", utils::enumToString(m_ofed->getKind()), m_ofed->getVersion());
      }
-        
+
     printNetworks(m_network);
     printConnections();
 

@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 Vinícius Ferrão <vinicius@ferrao.net.br>
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -281,7 +282,7 @@ void Shell::installRequiredPackages()
 {
     LOG_INFO("Installing required system packages")
 
-    runCommand("dnf -y install wget dnf-plugins-core");
+    runCommand("dnf -y install wget dnf-plugins-core chkconfig");
 }
 
 void Shell::disallowSSHRootPasswordLogin()

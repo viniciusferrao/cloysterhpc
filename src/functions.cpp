@@ -380,4 +380,29 @@ void installFile(const std::filesystem::path& path, std::string&& data)
     installFile(path, stringData);
 }
 
+bool exists(const std::filesystem::path& path)
+{
+    return std::filesystem::exists(path);
+}
+
+void createHTTPRepo(const std::string_view repoName)
+{
+    auto runner = cloyster::Singleton<BaseRunner>::get();
+    auto repoFolder = fmt::format("/var/www/html/{}", repoName);
+    cloyster::createDirectory(repoFolder);
+    cloyster::installFile(
+        fmt::format("/etc/httpd.d/conf.d/{}.conf", repoName),
+        fmt::format(
+            R"(Alias "/rpmrepo" "{0}"
+<Directory "{0}">
+Options +Indexes +FollowSymLinks
+AllowOverride None
+Require all granted
+IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+</Directory>
+)", repoFolder));
+    runner->checkCommand("apachectl configtest");
+    runner->checkCommand("systemctl restart httpd");
+}
+
 }; // namespace cloyster

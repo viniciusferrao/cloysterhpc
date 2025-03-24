@@ -30,6 +30,7 @@ using cloyster::concepts::IsParser;
 using cloyster::services::files::IsKeyFileReadable;
 using cloyster::services::files::KeyFile;
 using cloyster::services::repos::IRepository;
+using std::make_unique;
 
 namespace cloyster::services::repos {
 
@@ -258,12 +259,6 @@ public:
             cloyster::copyFile(source, dest);
         }
 
-        if (m_filesIdx.contains(dest)) {
-            LOG_WARN(
-                "Repository already installed {}, skipping", dest.string());
-            return;
-        }
-
         if (cloyster::dryRun) {
             LOG_INFO("Dry Run: Would open {}", dest.string());
             return;
@@ -303,6 +298,24 @@ public:
 
     void installBaseDir() { installDir(basedir); }
 
+    auto repo(const std::string& repoName)
+    {
+        try {
+            auto repoFile = m_filesIdx.at(repoName);
+            auto repoObj = repoFile->repo(repoName);
+            return std::make_unique<const RPMRepository>(*repoObj); // copy to unique ptr
+        } catch (const std::out_of_range& e) {
+            auto repos = m_filesIdx | std::views::transform([](const auto& pair){
+                return pair.first;
+            });
+            auto msg = fmt::format(
+                "Cannot enable repository {}, no such repository loaded, repositories: available: {}",
+                repoName,
+                fmt::join(repos, ","));
+            throw std::runtime_error(msg);
+        }
+    }
+
     // Enable/diable a repository by name
     void enable(const auto& repo, bool value)
     {
@@ -338,13 +351,15 @@ public:
         }
     }
 
-    // List repositories through a const shared pointer vector
+    // List repositories through a const unique pointer vector
     //
     // Rationale: IRepository type is to keep client code generic
-    std::vector<std::shared_ptr<const IRepository>> repos()
+    std::vector<std::unique_ptr<const IRepository>> repos()
     {
+        // Function to iterate over map by id
         constexpr auto byId
-            = [](auto& repo) { return std::hash<std::string> {}(repo.id()); };
+            = [](auto& repo) { return std::hash<std::string>{}(repo.id()); };
+
         std::unordered_set<RPMRepository, decltype(byId)> output;
         for (auto& [_id1, repoFile] : m_filesIdx) {
             for (const auto& [_id2, repo] : repoFile->repos()) {
@@ -353,8 +368,8 @@ public:
         }
 
         return output | std::views::transform([](auto&& repo) {
-            return std::make_shared<const RPMRepository>(repo);
-        }) | std::ranges::to<std::vector<std::shared_ptr<const IRepository>>>();
+            return std::make_unique<const RPMRepository>(repo);
+        }) | std::ranges::to<std::vector<std::unique_ptr<const IRepository>>>();
     }
 };
 
@@ -522,10 +537,6 @@ void RepoManager::enable(const std::string& repoid)
         LOG_ERROR("Trying to enable unknown repository {}, "
                   "failed because the repository was not found.",
             repoid);
-
-        for (const auto& [id, _] : m_repos) {
-            LOG_ERROR("Repository available: {}", id);
-        }
     }
 }
 
@@ -548,10 +559,6 @@ void RepoManager::enable(const std::vector<std::string>& repos)
         LOG_ERROR("Trying to enable unknown repository {}, "
                   "failed because the repository was not found.",
             fmt::join(repos, ","));
-
-        for (const auto& [id, _] : m_repos) {
-            LOG_ERROR("Repository available: {}", id);
-        }
     }
 }
 
@@ -574,10 +581,6 @@ void RepoManager::disable(const std::string& repoid)
         LOG_ERROR("Trying to disable unknown repository {}, "
                   "failed because the repository was not found.",
             repoid);
-
-        for (const auto& [id, _] : m_repos) {
-            LOG_ERROR("Repository available: {}", id);
-        }
     }
 }
 
@@ -600,10 +603,6 @@ void RepoManager::disable(const std::vector<std::string>& repos)
         LOG_ERROR("Trying to disable unknown repository {}, "
                   "failed because the repository was not found.",
             fmt::join(repos, ","));
-
-        for (const auto& [id, _] : m_repos) {
-            LOG_ERROR("Repository available: {}", id);
-        }
     }
 }
 
@@ -636,11 +635,22 @@ void RepoManager::install(const std::vector<std::filesystem::path>& paths)
 // is to keep client code agostic to the repository implementations. They
 // must dynamic dispatch over the shared pointer in order to treat the
 // repository abstractly.
-std::vector<std::shared_ptr<const IRepository>> RepoManager::listRepos() const
+std::vector<std::unique_ptr<const IRepository>> RepoManager::listRepos() const
 {
     switch (m_os.getPackageType()) {
         case OS::PackageType::RPM:
             return m_impl->rpm.repos();
+            break;
+        default:
+            throw std::logic_error("Not implemented");
+    }
+}
+
+std::unique_ptr<const IRepository> RepoManager::repo(const std::string& repo) const
+{
+    switch (m_os.getPackageType()) {
+        case OS::PackageType::RPM:
+            return static_cast<std::unique_ptr<const IRepository>>(m_impl->rpm.repo(repo));
             break;
         default:
             throw std::logic_error("Not implemented");

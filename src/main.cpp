@@ -57,7 +57,7 @@ void initializeSingletons(auto&& cluster)
             "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
     });
 }
-}; // anonymous namespace 
+}; // anonymous namespace
 
 /**
  * @brief The entrypoint.
@@ -125,10 +125,13 @@ int main(int argc, const char** argv)
         "-u, --unattended", unattended, "Perform an unattended installation");
 
 #ifndef NDEBUG
-    std::string loadConfFile {};
+    std::string loadConfFile{};
     app.add_option("--test-conf-file", loadConfFile,
         "Hook for testing configuration file loading");
 
+    std::string testCommand{};
+    app.add_option("--test-command", testCommand,
+        "Run a command for testing  purposes");
 #endif
 
     CLI11_PARSE(app, argc, argv)
@@ -228,6 +231,16 @@ int main(int argc, const char** argv)
         }
 
         initializeSingletons(std::move(model));
+
+#ifndef NDEBUG
+    if (!testCommand.empty()) {
+        LOG_INFO("Running test command {}", testCommand);
+        auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
+        runner->checkCommand(testCommand);
+        return EXIT_SUCCESS;
+    }
+#endif
+
 
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();

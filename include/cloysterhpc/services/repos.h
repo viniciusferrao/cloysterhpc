@@ -66,7 +66,7 @@ class RepoManager {
 public:
     ~RepoManager();
     using Repositories
-        = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
+        = std::unordered_map<std::string, std::unique_ptr<IRepository>>;
     explicit RepoManager(const OS& osinfo);
     void initializeDefaultRepositories();
     void updateDiskFiles();
@@ -76,15 +76,15 @@ public:
     void disable(const std::vector<std::string>& repos);
     void install(const std::filesystem::path& path);
     void install(const std::vector<std::filesystem::path>& paths);
-    [[nodiscard]] std::vector<std::shared_ptr<const IRepository>>
+    [[nodiscard]] std::vector<std::unique_ptr<const IRepository>>
     listRepos() const;
+    [[nodiscard]] std::unique_ptr<const IRepository> repo(const std::string& repo) const;
 
 private:
     void loadFiles(const std::filesystem::path& basedir);
     void loadRPMRepos(const std::filesystem::path& source);
     std::filesystem::path generateCloysterReposFile();
 
-    Repositories m_repos;
     std::unordered_set<std::filesystem::path> m_filesLoaded;
 
     // @FIXME: Make these shared pointers

@@ -36,5 +36,5 @@ install -m 755 build/src/cloysterhpc %{buildroot}/usr/bin/cloysterhpc
 /usr/bin/cloysterhpc
 
 %changelog
-* Tue Feb 25 2025 Daniel Hilst <danielhilst@versatushpc.com> - 1.0-1
+* Tue Feb 25 2025 Daniel Hilst <daniel@versatushpc.com.br> - 1.0-1
 - Initial release

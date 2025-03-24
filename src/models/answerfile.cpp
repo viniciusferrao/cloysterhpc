@@ -615,7 +615,7 @@ void AnswerFile::loadOFED()
 {
     auto kind = m_ini.getValue("ofed", "kind");
     if (kind != "") {
-        ofed.enabled = true; 
+        ofed.enabled = true;
         ofed.kind = kind;
         auto afVersion = m_ini.getValue("ofed", "version");
         if (afVersion != "") {

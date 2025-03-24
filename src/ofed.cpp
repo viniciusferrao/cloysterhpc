@@ -8,21 +8,22 @@
 #include <cloysterhpc/ofed.h>
 #include <utility>
 
+using cloyster::BaseRunner;
 using cloyster::runCommand;
 
 namespace {
 
-auto docaRepoTemplate(std::string version, std::string distro)
+auto docaRepoTemplate(std::string version, std::string distro, std::string arch)
 {
-    static constexpr std::string_view templ = R"( 
-[doca] 
-name=NVIDIA DOCA Repository - RHEL {1} 
-baseurl=https://linux.mellanox.com/public/repo/doca/{0}/{1}/x86_64/ 
-enabled=1 
-gpgcheck=1 
-gpgkey=https://linux.mellanox.com/public/repo/doca/{0}/GPG-KEY-Mellanox 
-)"; 
-    std::istringstream data(fmt::format(templ, version, distro)); 
+    static constexpr std::string_view templ = R"(
+[doca]
+name=NVIDIA DOCA Repository - RHEL {1}
+baseurl=https://linux.mellanox.com/public/repo/doca/{0}/{1}/{2}/
+enabled=1
+gpgcheck=1
+gpgkey=https://linux.mellanox.com/public/repo/doca/{0}/{1}/{2}/GPG-KEY-Mellanox.pub
+)";
+    std::istringstream data(fmt::format(templ, version, distro, arch));
     return data;
 }
 
@@ -58,25 +59,52 @@ void OFED::setKind(Kind kind) { m_kind = kind; }
 
 OFED::Kind OFED::getKind() const { return m_kind; }
 
+bool OFED::installed() const
+{
+    if (cloyster::getEnvironmentVariable("CATTUS_FORCE_INFINIBAND_INSTALL") == "1") {
+        return false;
+    }
+
+    // Return false so the installation runs on dry run
+    if (cloyster::dryRun) {
+        return false;
+    }
+
+    auto runner = cloyster::Singleton<BaseRunner>::get();
+    switch (m_kind) {
+        case OFED::Kind::Mellanox:
+            return runner->executeCommand("rpm -q doca-ofed") == 0;
+        case OFED::Kind::Inbox:
+            return runner->executeCommand("dnf group info \"Infiniband Support\"") == 0;
+        case OFED::Kind::Oracle:
+            throw std::logic_error("Not implemented");
+    }
+
+    std::unreachable();
+}
+
 void OFED::install() const
 {
+    // Idempotency check
+    if (installed()) {
+        LOG_WARN("Inifiniband already installed, skipping");
+        return;
+    }
+
     switch (m_kind) {
         case OFED::Kind::Inbox:
             runCommand("dnf -y groupinstall \"Infiniband Support\"");
-
             break;
 
         case OFED::Kind::Mellanox:
             {
+                auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
                 auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
                 auto repoManager = cloyster::Singleton<cloyster::services::repos::RepoManager>::get();
 
-                if (runner->executeCommand("modprobe mlx5_core") == 0) {
-                    LOG_WARN("mlx5_core module loaded, skiping DOCA setup");
-                    return;
-                }
-
-                auto repoData = docaRepoTemplate(getVersion(), headnodeDistroName());
+                auto repoData = docaRepoTemplate(
+                    getVersion(), headnodeDistroName(),
+                    cloyster::utils::enumToString(cluster->getHeadnode().getOS().getArch()));
                 std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
 
                 // Install the repository and enable it
@@ -85,21 +113,33 @@ void OFED::install() const
                 repoManager->enable("doca");
 
                 // Install the required packages
-                runner->executeCommand("dnf makecache");
-                runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
+                runner->checkCommand("dnf makecache");
+                runner->checkCommand("dnf -y install kernel kernel-devel doca-extra");
 
-                // Run the Mellanox script, this generates an RPM at tmp
-                assert(runner->executeCommand("/opt/mellanox/doca/tools/doca-kernel-support -k $(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel") == 0);
-
-                // Install the (last) generated rpm
-                runner->executeCommand("rpm -ivh $(find /tmp/DOCA.*/ -name '*.rpm' -printf \"%T@ %p\n\" | sort -nrk1 | tail -1 | awk '{print $2}')");
-
-                runner->executeCommand("dnf makecache");
-                runner->executeCommand("dnf install –y kernel kernel-devel doca-extra");
-                if (runner->executeCommand("lsmod | grep mlx5_core") != 0) {
-                    runner->executeCommand("modprobe mlx_core");
+                LOG_INFO("Compiling OFED DOCA drivers, this may take a while");
+                // Run the Mellanox script, this generates an RPM at tmp.
+                //
+                // Use the kernel-devel version instead of the booted kernel
+                // version, this is to handle the case where a new kernel is
+                // installed but no reboot was done yet. After compiling the
+                // drivers the headnode should be rebooted to reload the new kernel.
+                // The driver may support weak updates modules and load without
+                // need for reboot.
+                if (cloyster::getEnvironmentVariable("CATTUS_SKIP_INFINIBAND_COMPILE_DOCA_DRIVER") != "1") {
+                    runner->checkCommand("bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k $(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel)\"");
                 }
 
+                // Get the last rpm in /tmp/DOCA*/ folder
+                auto rpm = runner->checkOutput("bash -c \"find /tmp/DOCA*/ -name '*.rpm' -printf '%T@ %p\n' | sort -nk1 | tail -1 | awk '{print $2}'\"");
+                assert(rpm.size() > 0); // at last one line
+
+                // Install the (last) generated rpm
+                runner->executeCommand(fmt::format("rpm -vih {}", rpm[0]));
+
+                runner->checkCommand("dnf makecache");
+                // @NOTE: Are these packages correct/good default?
+                runner->checkCommand("dnf install -y doca-ofed mlnx-fw-updater");
+                runner->checkCommand("modprobe mlx5_core");
             }
             break;
 

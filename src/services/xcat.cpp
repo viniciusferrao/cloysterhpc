@@ -56,6 +56,7 @@ std::string getOSImageDistroVersion()
 namespace cloyster::services {
 
 using cloyster::models::Node;
+using cloyster::services::repos::RepoManager;
 
 XCAT::XCAT()
 {
@@ -216,40 +217,38 @@ void XCAT::configureInfiniband()
 
             case OFED::Kind::Mellanox:
                 {
-                    // Add the rpm to the image
-                    m_stateless.otherpkgs.emplace_back("kmod-mlnx-ofa_kernel");
+                    auto repoManager = cloyster::Singleton<RepoManager>::get();
                     auto runner = cloyster::Singleton<BaseRunner>::get();
                     auto arch = cloyster::utils::enumToString(cluster()->getNodes()[0].getOS().getArch());
 
-                    // Cofigure Apache to serve the RPM repository
-                    auto repoFolder = std::string_view("/var/www/html/rpmrepo");
-                    cloyster::createDirectory(repoFolder);
-                    cloyster::installFile(
-                        "/etc/httpd.d/conf.d/rpmrepo.conf",
-                        fmt::format(
-                            R"(Alias "/rpmrepo" "{0}" 
-<Directory "{0}"> 
-    Options +Indexes +FollowSymLinks 
-    AllowOverride None 
-    Require all granted 
-    IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8 
-</Directory>
-)", repoFolder));
-                    runner->executeCommand("apachectl configtest");
-                    runner->executeCommand("systemctl restart httpd");
+                    // Add the rpm to the image
+                    m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
+                    m_stateless.otherpkgs.emplace_back("doca-ofed");
+
+
+                    // Configure Apache to serve the RPM repository
+                    const std::string_view repoName = "rpmrepo";
+                    const auto repoFolder = fmt::format("/var/www/html/{}", repoName);
+                    cloyster::createHTTPRepo(repoName);
 
                     // Create the RPM repository
-                    runner->executeCommand(
+                    runner->checkCommand(
                         fmt::format("bash -c \"cp -v /usr/share/doca-host-*/Modules/*.{}/*.rpm {}\"", 
                                     arch, repoFolder));
-                    runner->executeCommand(
+                    runner->checkCommand(
                         fmt::format("createrepo {}", repoFolder));
 
 
-                    // Add the repository to the image
-                    runner->executeCommand(
-                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir=http://$(hostname)/rpmrepo\"",
+                    auto docaUrl = repoManager->repo("doca")->uri().value();
+                    runner->checkCommand(
+                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                            m_stateless.osimage, docaUrl));
+
+                    // Add the local repository to the stateless image
+                    runner->checkCommand(
+                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir=http://localhost/rpmrepo/\"",
                             m_stateless.osimage));
+
                 }
                 break;
 
@@ -680,8 +679,6 @@ void XCAT::installRepositories()
 }
 
 
-[[deprecated("Refactoring RepoManager, replace the function with the same name "
-             "in repo manager")]]
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
     const auto osinfo = cluster()->getHeadnode().getOS();
