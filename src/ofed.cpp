@@ -27,32 +27,6 @@ gpgkey=https://linux.mellanox.com/public/repo/doca/{0}/{1}/{2}/GPG-KEY-Mellanox.
     return data;
 }
 
-// Return distro to match repositories at
-// https://linux.mellanox.com/public/repo/doca/latest/
-std::string headnodeDistroName()
-{
-    using cloyster::models::Cluster;
-    auto cluster = cloyster::Singleton<Cluster>::get();
-    switch (cluster->getHeadnode().getOS().getDistro()) {
-        // Assuming we'll be using the last distro version
-        case cloyster::OS::Distro::RHEL:
-            return "rhel9.5";
-        case cloyster::OS::Distro::OL:
-            return "ol9.4";
-        case cloyster::OS::Distro::Rocky:
-            return "rockylinux9.2";
-        case cloyster::OS::Distro::AlmaLinux:
-            return "alinux3.2";
-        default:
-            std::unreachable();
-    };
-
-    std::unreachable();
-}
-
-void installMellanoxDoca(const OFED& ofed)
-{
-}
 };
 
 void OFED::setKind(Kind kind) { m_kind = kind; }
@@ -99,12 +73,23 @@ void OFED::install() const
         case OFED::Kind::Mellanox:
             {
                 auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
+                auto hnOs = cluster->getHeadnode().getOS();
                 auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
                 auto repoManager = cloyster::Singleton<cloyster::services::repos::RepoManager>::get();
+                // distroName denotes a folder in the remote repository:
+                // https://linux.mellanox.com/public/repo/doca/latest/. All
+                // distributions except Oracle Linux use rhelX.Y folder. Oracle
+                // Linux does not uses rhelX.Y package because it uses a distinct
+                // kernel
+                auto distroName = fmt::format(
+                    "{}{}",
+                    (hnOs.getDistro() == cloyster::OS::Distro::OL ? "ol" : "rhel"),
+                    hnOs.getVersion());
 
                 auto repoData = docaRepoTemplate(
-                    getVersion(), headnodeDistroName(),
-                    cloyster::utils::enumToString(cluster->getHeadnode().getOS().getArch()));
+                    getVersion(),
+                    distroName,
+                    cloyster::utils::enumToString(hnOs.getArch()));
                 std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
 
                 // Install the repository and enable it
@@ -126,7 +111,9 @@ void OFED::install() const
                 // The driver may support weak updates modules and load without
                 // need for reboot.
                 if (cloyster::getEnvironmentVariable("CATTUS_SKIP_INFINIBAND_COMPILE_DOCA_DRIVER") != "1") {
-                    runner->checkCommand("bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k $(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel)\"");
+                    runner->checkCommand(
+                        "bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k "
+                        "$(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel)\"");
                 }
 
                 // Get the last rpm in /tmp/DOCA*/ folder
@@ -134,12 +121,11 @@ void OFED::install() const
                 assert(rpm.size() > 0); // at last one line
 
                 // Install the (last) generated rpm
-                runner->executeCommand(fmt::format("rpm -vih {}", rpm[0]));
+                runner->executeCommand(fmt::format("dnf install -y {}", rpm[0]));
 
                 runner->checkCommand("dnf makecache");
-                // @NOTE: Are these packages correct/good default?
                 runner->checkCommand("dnf install -y doca-ofed mlnx-fw-updater");
-                runner->checkCommand("modprobe mlx5_core");
+                runner->checkCommand("systemctl restart openibd");
             }
             break;
 

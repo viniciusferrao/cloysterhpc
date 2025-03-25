@@ -3,6 +3,7 @@
 
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/patterns/singleton.h>
 #include <boost/process/child.hpp>
 #include <boost/process/pipe.hpp>
 #include <cloysterhpc/services/repos.h>
@@ -25,49 +26,6 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
 {
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
-
-template <typename T>
-class Singleton {
-    // Private constructor to prevent direct instantiation
-    Singleton() = default;
-
-    // Static members for singleton management
-    static std::unique_ptr<T> instance;
-    static std::once_flag initFlag;
-public:
-    Singleton(Singleton&&) = delete;
-    Singleton& operator=(Singleton&&) = delete;
-    Singleton(const Singleton&) = delete;
-    Singleton& operator=(const Singleton&) = delete;
-    ~Singleton() = delete;
-
-    static void init(std::unique_ptr<T> value)
-    {
-        std::call_once(initFlag, [&](){
-            instance = std::move(value);
-        });
-    }
-
-    static void init(const auto& factory)
-    {
-        std::call_once(initFlag, [&](){
-            instance = std::move(factory());
-        });
-    }
-
-    static gsl::not_null<T*> get() {
-        if (!instance) {
-            throw std::runtime_error("Singleton read before initialization");
-        }
-        return gsl::not_null<T*>(instance.get());
-    }
-};
-
-template <typename T>
-std::unique_ptr<T> Singleton<T>::instance = nullptr;
-
-template <typename T>
-std::once_flag Singleton<T>::initFlag;
 
 using cloyster::services::BaseRunner;
 using cloyster::models::OS;

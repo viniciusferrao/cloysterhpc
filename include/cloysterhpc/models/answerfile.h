@@ -160,7 +160,7 @@ private:
 
     struct AFOFED {
         std::string kind = cloyster::utils::enumToString(OFED::Kind::Inbox);
-        std::string version = "latest";
+        std::optional<std::string> version = "latest";
         bool enabled = false;
     };
 

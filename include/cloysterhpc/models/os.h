@@ -106,6 +106,7 @@ public:
     void setPlatform(std::string_view platform);
 
     [[nodiscard]] Distro getDistro() const;
+    [[nodiscard]] std::string getDistroString() const;
     void setDistro(Distro distro);
     void setDistro(std::string_view distro);
 

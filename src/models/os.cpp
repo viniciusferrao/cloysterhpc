@@ -145,6 +145,30 @@ OS::Distro OS::getDistro() const
     return std::get<OS::Distro>(m_distro);
 }
 
+std::string OS::getDistroString() const
+{
+    std::string distro;
+    switch (getDistro())
+    {
+        case OS::Distro::RHEL:
+            distro = "rhel";
+            break;
+        case OS::Distro::AlmaLinux:
+            distro = "almalinux";
+            break;
+        case OS::Distro::Rocky:
+            distro = "rockylinux";
+            break;
+        case OS::Distro::OL:
+            distro = "ol";
+            break;
+        default:
+            std::unreachable();
+    }
+
+    return fmt::format("{}{}.{}", distro, m_minorVersion, m_majorVersion);
+}
+
 OS::PackageType OS::getPackageType() const
 {
     switch (getDistro()) {

@@ -227,7 +227,7 @@ void XCAT::configureInfiniband()
 
 
                     // Configure Apache to serve the RPM repository
-                    const std::string_view repoName = "rpmrepo";
+                    std::string_view repoName = "repos";
                     const auto repoFolder = fmt::format("/var/www/html/{}", repoName);
                     cloyster::createHTTPRepo(repoName);
 
@@ -246,8 +246,9 @@ void XCAT::configureInfiniband()
 
                     // Add the local repository to the stateless image
                     runner->checkCommand(
-                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir=http://localhost/rpmrepo/\"",
-                            m_stateless.osimage));
+                        fmt::format(
+                            "bash -c \"chdef -t osimage {} --plus otherpkgdir=http://localhost/{}/\"",
+                             m_stateless.osimage, repoName));
 
                 }
                 break;

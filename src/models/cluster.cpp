@@ -603,7 +603,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
                             answerfil.ofed.kind
                             ));
          }
-         setOFED(kind.value(), answerfil.ofed.version);
+         setOFED(kind.value(), answerfil.ofed.version.value());
     } else {
          // Install Inbox OFED by default
          setOFED(OFED::Kind::Inbox);

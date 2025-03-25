@@ -624,7 +624,7 @@ void AnswerFile::loadOFED()
             ofed.version = "latest"; // use as default
         }
 
-        LOG_DEBUG("OFED enabled, {} {}", ofed.kind, ofed.version)
+        LOG_DEBUG("OFED enabled, {} {}", ofed.kind, ofed.version.value())
     }
 }
 
