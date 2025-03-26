@@ -1,5 +1,5 @@
-#ifndef CLOYSTER_SINGLETON_H
-#define CLOYSTER_SINGLETON_H
+#ifndef CLOYSTER_SINGLETON_H_
+#define CLOYSTER_SINGLETON_H_
 
 #include <memory>
 #include <mutex>

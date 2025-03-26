@@ -385,14 +385,18 @@ bool exists(const std::filesystem::path& path)
     return std::filesystem::exists(path);
 }
 
-void createHTTPRepo(const std::string_view repoName)
+HTTPRepo createHTTPRepo(const std::string_view repoName)
 {
     const auto confPath = fmt::format("/etc/httpd/conf.d/{}.conf", repoName);
+    const auto repoFolder = fmt::format("/var/www/html/repos/{}", repoName);
+    // @FIXME:  Use the HN hostname instead of localhost to make it work in the nodes
+    HTTPRepo repo(repoFolder, std::string(repoName), fmt::format("http://localhost/repos/{}", repoName));
     if (exists(confPath)) {
         LOG_WARN("Skipping the creation of HTTP repository, {} already exists", confPath);
-        return;
+        return repo;
     }
-    auto repoFolder = fmt::format("/var/www/html/{}", repoName);
+
+    cloyster::createDirectory("/var/www/html/repos/");
     LOG_INFO("Creating HTTP repository {} at {}", confPath, repoFolder);
     auto runner = cloyster::Singleton<BaseRunner>::get();
     cloyster::createDirectory(repoFolder);
@@ -409,6 +413,7 @@ IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
 
     runner->checkCommand("apachectl configtest");
     runner->checkCommand("systemctl restart httpd");
+    return repo;
 }
 
 }; // namespace cloyster

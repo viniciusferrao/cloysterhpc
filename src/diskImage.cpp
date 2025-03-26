@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
@@ -78,10 +79,9 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
         return true;
     }
 
-    LOG_INFO("Verifying disk image checksum... This may take a while")
-    if (cloyster::getEnvironmentVariable("CATTUS_SKIP_DISK_CHECKSUM") == "1") {
-        LOG_WARN("Skiping disk the image checksum because "
-                 "CATTUS_SKIP_DISK_CHECKSUM=1");
+    LOG_INFO("Verifying disk image checksum... This may take a while, use `--skip disk-checksum` to skip")
+    if (cloyster::shouldSkip("disk-checksum")) {
+        LOG_WARN("Skiping disk the image checksum because `--skip disk-checksum`");
         return true;
     }
 

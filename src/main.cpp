@@ -6,15 +6,19 @@
 #include <cctype>
 #include <cstdlib>
 
+
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/hardware.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <cloysterhpc/functions.h>
@@ -26,7 +30,11 @@
 #include "include/i18n-cpp.hpp"
 #endif
 
+
+
 namespace {
+
+
 void initializeSingletons(auto&& cluster)
 {
     using cloyster::models::Cluster;
@@ -49,13 +57,58 @@ void initializeSingletons(auto&& cluster)
     cloyster::Singleton<RepoManager>::init([]() {
         auto clusterPtr = cloyster::Singleton<Cluster>::get();
         const auto& osinfo = clusterPtr->getHeadnode().getOS();
-        return std::make_unique<RepoManager>(osinfo);
+        auto repoManager = std::make_unique<RepoManager>(osinfo);
+        repoManager->initializeDefaultRepositories();
+        return repoManager;
     });
 
     cloyster::Singleton<MessageBus>::init([]() {
         return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
             "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
     });
+
+    cloyster::Singleton<cloyster::services::IOSService>::init([]() {
+        const auto& osinfo = cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
+        return cloyster::services::IOSService::factory(osinfo);
+    });
+}
+
+// Run test commands and exit. This is to make easier to test
+// code during development and troubleshooting.  Use a combination of
+// --force and --skip to control what code to run.
+int runTestCommand(const std::string& testCommand, const std::vector<std::string>& testCommandArgs)
+{
+#ifndef NDEBUG
+    LOG_INFO("Running test command {} {} ", testCommand, fmt::join(testCommandArgs, ","));
+    auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
+    auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
+    if (testCommand == "execute-command") {
+        runner->checkCommand(testCommandArgs[0]);
+    } else if (testCommand == "create-http-repo") {
+        assert(testCommandArgs.size() > 0);
+        cloyster::createHTTPRepo(testCommandArgs[0]);
+    } else if (testCommand == "parse-key-file") {
+        assert(testCommandArgs.size() > 0);
+        LOG_INFO("Loading file {}", testCommandArgs[0]);
+        auto file = cloyster::services::files::KeyFile(testCommandArgs[0]);
+        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
+        LOG_INFO("Contents: {}", file.toData());
+    } else if (testCommand == "install-mellanox-ofed") {
+        OFED(OFED::Kind::Mellanox, "latest").install();
+    } else if (testCommand == "image-install-mellanox-ofed") {
+        auto provisioner = std::make_unique<cloyster::services::XCAT>();
+        provisioner->configureInfiniband();
+    } else if (testCommand == "dump-headnode-os") {
+        LOG_INFO("OS: {}", cluster->getHeadnode().getOS());
+    } else if (testCommand == "dump-xcat-osimage") {
+        auto provisioner = std::make_unique<cloyster::services::XCAT>();
+        LOG_INFO("xCAT osimage: {}", provisioner->getImage());
+    } else {
+        LOG_ERROR("Invalid test command {}", testCommand);
+        return EXIT_FAILURE;
+    }
+#endif
+    return EXIT_SUCCESS;
 }
 }; // anonymous namespace
 
@@ -124,15 +177,17 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");
 
-#ifndef NDEBUG
+    app.add_option("--skip", cloyster::skipSteps, "Skip a specific step during the installation");
+    app.add_option("--force", cloyster::forceSteps, "Force a specific step during the installation");
 
+#ifndef NDEBUG
     std::string testCommand{};
     app.add_option("--test", testCommand,
         "Run a command for testing purposes");
 
-    std::string testCommandArgs{};
+    std::vector<std::string> testCommandArgs{};
     app.add_option("--test-args", testCommandArgs,
-        "Run a command for testing purposes with arguments");
+        "Run a command for testing purposes with arguments, can be specified multiple times");
 #endif
 
     CLI11_PARSE(app, argc, argv)
@@ -228,32 +283,14 @@ int main(int argc, const char** argv)
 
         initializeSingletons(std::move(model));
 
-#ifndef NDEBUG
-        // Run The Test Commands and exit
-        if (!testCommand.empty()) {
-            LOG_INFO("Running test command {} {} ", testCommand, testCommandArgs);
-            auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
-            if (testCommand == "checkCommand") {
-                runner->checkCommand(testCommandArgs);
-            } else if (testCommand == "createHTTPRepo") {
-                assert(testCommandArgs.size() > 0);
-                cloyster::createHTTPRepo(testCommandArgs);
-            } else if (testCommand == "keyFile") {
-                assert(testCommandArgs.size() > 0);
-                LOG_INFO("Loading file {}", testCommandArgs);
-                auto file = cloyster::services::files::KeyFile(testCommandArgs);
-                LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
-                LOG_INFO("Contents: {}", file.toData());
-            } else {
-                LOG_ERROR("Invalid test command {}", testCommand);
-                return EXIT_FAILURE;
-            }
-            return EXIT_SUCCESS;
-        }
-#endif
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();
 
+#ifndef NDEBUG
+        if (!testCommand.empty()) {
+            return runTestCommand(testCommand, testCommandArgs);
+        }
+#endif
         executionEngine->install();
 
     } catch (const std::exception& e) {

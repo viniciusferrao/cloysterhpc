@@ -4,7 +4,9 @@
  */
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/ofed.h>
 #include <utility>
 
@@ -35,7 +37,7 @@ OFED::Kind OFED::getKind() const { return m_kind; }
 
 bool OFED::installed() const
 {
-    if (cloyster::getEnvironmentVariable("CATTUS_FORCE_INFINIBAND_INSTALL") == "1") {
+    if (cloyster::shouldForce("infiniband-install")) {
         return false;
     }
 
@@ -61,7 +63,7 @@ void OFED::install() const
 {
     // Idempotency check
     if (installed()) {
-        LOG_WARN("Inifiniband already installed, skipping");
+        LOG_WARN("Inifiniband already installed, skipping, use `--force infiniband-install` to force");
         return;
     }
 
@@ -76,6 +78,7 @@ void OFED::install() const
                 auto hnOs = cluster->getHeadnode().getOS();
                 auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
                 auto repoManager = cloyster::Singleton<cloyster::services::repos::RepoManager>::get();
+                auto osService = cloyster::Singleton<cloyster::services::IOSService>::get();
                 // distroName denotes a folder in the remote repository:
                 // https://linux.mellanox.com/public/repo/doca/latest/. All
                 // distributions except Oracle Linux use rhelX.Y folder. Oracle
@@ -98,10 +101,14 @@ void OFED::install() const
                 repoManager->enable("doca");
 
                 // Install the required packages
-                runner->checkCommand("dnf makecache");
+                runner->checkCommand("dnf makecache --repo=doca");
                 runner->checkCommand("dnf -y install kernel kernel-devel doca-extra");
 
-                LOG_INFO("Compiling OFED DOCA drivers, this may take a while");
+                if (osService->getKernelRunning() != osService->getKernelInstalled()) {
+                    LOG_WARN("New kernel installed! Rebooting after the installation finishes is advised!");
+                }
+
+                LOG_INFO("Compiling OFED DOCA drivers, this may take a while, use `--skip compile-doca-driver` to skip");
                 // Run the Mellanox script, this generates an RPM at tmp.
                 //
                 // Use the kernel-devel version instead of the booted kernel
@@ -110,7 +117,7 @@ void OFED::install() const
                 // drivers the headnode should be rebooted to reload the new kernel.
                 // The driver may support weak updates modules and load without
                 // need for reboot.
-                if (cloyster::getEnvironmentVariable("CATTUS_SKIP_INFINIBAND_COMPILE_DOCA_DRIVER") != "1") {
+                if (!cloyster::shouldSkip("compile-doca-driver")) {
                     runner->checkCommand(
                         "bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k "
                         "$(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" kernel-devel)\"");
@@ -123,7 +130,7 @@ void OFED::install() const
                 // Install the (last) generated rpm
                 runner->executeCommand(fmt::format("dnf install -y {}", rpm[0]));
 
-                runner->checkCommand("dnf makecache");
+                runner->checkCommand(R"(dnf makecache --repo=doca*)");
                 runner->checkCommand("dnf install -y doca-ofed mlnx-fw-updater");
                 runner->checkCommand("systemctl restart openibd");
             }

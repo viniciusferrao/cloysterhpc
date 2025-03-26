@@ -190,7 +190,13 @@ void installFile(const std::filesystem::path& path, std::string&& data);
 
 bool exists(const std::filesystem::path& path);
 
-void createHTTPRepo(const std::string_view repoName);
+struct HTTPRepo {
+    std::filesystem::path directory;
+    std::string name;
+    std::string url;
+};
+
+HTTPRepo createHTTPRepo(const std::string_view repoName);
 
 } // namespace cloyster
 

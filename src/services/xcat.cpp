@@ -17,7 +17,8 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
-#include <variant>
+#include <cloysterhpc/services/osservice.h>
+
 
 namespace {
 using cloyster::models::Cluster;
@@ -73,6 +74,15 @@ XCAT::XCAT()
 
     // TODO: Hacky, we should properly set environment variable on locale
     setenv("PERL_BADLANG", "0", false);
+
+    // Ensure image name is setted
+    generateOSImageName(ImageType::Netboot, NodeType::Compute);
+
+}
+
+XCAT::Image XCAT::getImage() const
+{
+    return m_stateless;
 }
 
 void XCAT::installPackages()
@@ -220,23 +230,27 @@ void XCAT::configureInfiniband()
                     auto repoManager = cloyster::Singleton<RepoManager>::get();
                     auto runner = cloyster::Singleton<BaseRunner>::get();
                     auto arch = cloyster::utils::enumToString(cluster()->getNodes()[0].getOS().getArch());
+                    auto osService = cloyster::Singleton<IOSService>::get();
 
                     // Add the rpm to the image
                     m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
                     m_stateless.otherpkgs.emplace_back("doca-ofed");
 
 
+                    // The kernel modules are build by the OFED.cpp module, see OFED.cpp
+                    const auto kernelVersion = osService->getKernelInstalled();
                     // Configure Apache to serve the RPM repository
-                    std::string_view repoName = "repos";
-                    const auto repoFolder = fmt::format("/var/www/html/{}", repoName);
-                    cloyster::createHTTPRepo(repoName);
+                    const auto repoName = fmt::format("doca-kernel-{}", kernelVersion);
+                    const auto localRepo = cloyster::createHTTPRepo(repoName);
+
+                    // @FIXME: Copy only the rpms for the proper kernel version
 
                     // Create the RPM repository
                     runner->checkCommand(
-                        fmt::format("bash -c \"cp -v /usr/share/doca-host-*/Modules/*.{}/*.rpm {}\"", 
-                                    arch, repoFolder));
+                        fmt::format("bash -c \"cp -v /usr/share/doca-host-*/Modules/{}.{}/*.rpm {}\"",
+                                    kernelVersion, arch, localRepo.directory.string()));
                     runner->checkCommand(
-                        fmt::format("createrepo {}", repoFolder));
+                        fmt::format("createrepo {}", localRepo.directory.string()));
 
 
                     auto docaUrl = repoManager->repo("doca")->uri().value();
@@ -247,8 +261,8 @@ void XCAT::configureInfiniband()
                     // Add the local repository to the stateless image
                     runner->checkCommand(
                         fmt::format(
-                            "bash -c \"chdef -t osimage {} --plus otherpkgdir=http://localhost/{}/\"",
-                             m_stateless.osimage, repoName));
+                            "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                             m_stateless.osimage, localRepo.url));
 
                 }
                 break;

@@ -6,17 +6,19 @@
 #ifndef CLOYSTERHPC_XCAT_H_
 #define CLOYSTERHPC_XCAT_H_
 
+#include <filesystem>
+#include <string>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h> // for std::vector formatters
+#include <magic_enum/magic_enum.hpp>
+
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/execution.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/provisioner.h>
 #include <cloysterhpc/services/shell.h>
 
-#include <magic_enum/magic_enum.hpp>
-
-#include <filesystem>
-#include <memory>
-#include <string>
 
 namespace cloyster::services {
 
@@ -28,7 +30,20 @@ namespace cloyster::services {
  * provisioning process of compute and service nodes in a cluster using xCAT.
  */
 class XCAT : public Provisioner {
+public:
+    struct Image {
+        std::vector<std::string_view> otherpkgs = {};
+        // @TODO: We need to support more than one osimage (:
+        //   this can be a default osimage though
+        std::string osimage;
+        std::filesystem::path chroot;
+        std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
+        std::vector<std::string> synclists;
+    };
+
 private:
+    Image m_stateless;
+
     /**
      * @enum ImageType
      * @brief Defines the types of OS images.
@@ -45,15 +60,6 @@ private:
      */
     enum class NodeType { Compute, Service };
 
-    struct {
-        std::vector<std::string_view> otherpkgs = {};
-        // @TODO: We need to support more than one osimage (:
-        //   this can be a default osimage though
-        std::string osimage;
-        std::filesystem::path chroot;
-        std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
-        std::vector<std::string> synclists;
-    } m_stateless;
 
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
@@ -106,13 +112,6 @@ private:
      * This function sets up the time synchronization service.
      */
     void configureTimeService();
-
-    /**
-     * @brief Configures InfiniBand settings.
-     *
-     * This function sets up InfiniBand interconnect settings.
-     */
-    void configureInfiniband();
 
     /**
      * @brief Configures SLURM settings.
@@ -263,8 +262,31 @@ public:
      * This function resets the nodes.
      */
     static void resetNodes();
+
+    /**
+     * @brief Configures InfiniBand settings.
+     *
+     * This function sets up InfiniBand interconnect settings.
+     */
+    void configureInfiniband();
+
+    /**
+    * @brief Return the Image
+    */
+    [[nodiscard]] Image getImage() const;
 };
 
+};
+
+template <>
+struct fmt::formatter<cloyster::services::XCAT::Image> : formatter<string_view> {
+    template <typename FormatContext>
+    auto format(const cloyster::services::XCAT::Image& image, FormatContext& ctx) const
+    -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "XCAT::Image({}, {})", 
+                              image.osimage, image.otherpkgs);
+    }
 };
 
 #endif // CLOYSTERHPC_XCAT_H_
