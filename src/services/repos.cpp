@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <filesystem>
 #include <functional>
-#include <glibmm/keyfile.h>
 #include <memory>
 #include <ranges>
 #include <sstream>

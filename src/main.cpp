@@ -125,13 +125,14 @@ int main(int argc, const char** argv)
         "-u, --unattended", unattended, "Perform an unattended installation");
 
 #ifndef NDEBUG
-    std::string loadConfFile{};
-    app.add_option("--test-conf-file", loadConfFile,
-        "Hook for testing configuration file loading");
 
     std::string testCommand{};
-    app.add_option("--test-command", testCommand,
-        "Run a command for testing  purposes");
+    app.add_option("--test", testCommand,
+        "Run a command for testing purposes");
+
+    std::string testCommandArgs{};
+    app.add_option("--test-args", testCommandArgs,
+        "Run a command for testing purposes with arguments");
 #endif
 
     CLI11_PARSE(app, argc, argv)
@@ -147,16 +148,6 @@ int main(int argc, const char** argv)
                 .value();
         }
     }());
-
-#ifndef NDEBUG
-    if (!loadConfFile.empty()) {
-        LOG_INFO("Loading file {}", loadConfFile);
-        auto file = cloyster::services::files::KeyFile(loadConfFile);
-        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
-        LOG_INFO("Contents: {}", file.toData());
-        return EXIT_SUCCESS;
-    }
-#endif
 
     if (cloyster::showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
@@ -176,6 +167,11 @@ int main(int argc, const char** argv)
         }
 
         cloyster::checkEffectiveUserId();
+
+        // --test implies --unattended
+        if (!testCommand.empty()) {
+            unattended = true;
+        }
 
         if (cloyster::dryRun) {
             LOG_INFO("Dry run enabled.");
@@ -216,7 +212,7 @@ int main(int argc, const char** argv)
         model->printData();
 #endif
 
-        if (cloyster::enableTUI) {
+        if (cloyster::enableTUI && testCommand.empty()) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
             auto presenter
@@ -233,15 +229,28 @@ int main(int argc, const char** argv)
         initializeSingletons(std::move(model));
 
 #ifndef NDEBUG
-    if (!testCommand.empty()) {
-        LOG_INFO("Running test command {}", testCommand);
-        auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
-        runner->checkCommand(testCommand);
-        return EXIT_SUCCESS;
-    }
+        // Run The Test Commands and exit
+        if (!testCommand.empty()) {
+            LOG_INFO("Running test command {} {} ", testCommand, testCommandArgs);
+            auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
+            if (testCommand == "checkCommand") {
+                runner->checkCommand(testCommandArgs);
+            } else if (testCommand == "createHTTPRepo") {
+                assert(testCommandArgs.size() > 0);
+                cloyster::createHTTPRepo(testCommandArgs);
+            } else if (testCommand == "keyFile") {
+                assert(testCommandArgs.size() > 0);
+                LOG_INFO("Loading file {}", testCommandArgs);
+                auto file = cloyster::services::files::KeyFile(testCommandArgs);
+                LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
+                LOG_INFO("Contents: {}", file.toData());
+            } else {
+                LOG_ERROR("Invalid test command {}", testCommand);
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
+        }
 #endif
-
-
         std::unique_ptr<Execution> executionEngine
             = std::make_unique<cloyster::services::Shell>();
 
