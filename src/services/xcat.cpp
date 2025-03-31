@@ -87,9 +87,9 @@ XCAT::Image XCAT::getImage() const
 
 void XCAT::installPackages()
 {
-    auto packageManager = cluster()->getHeadnode().getOS().packageManager();
-    packageManager->install("initscripts");
-    packageManager->install("xCAT");
+    auto osservice = cloyster::Singleton<IOSService>::get();
+    osservice->install("initscripts");
+    osservice->install("xCAT");
 }
 
 void XCAT::patchInstall()

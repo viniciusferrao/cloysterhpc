@@ -7,7 +7,6 @@
 #define CLOYSTERHPC_OS_H_
 
 #include <cloysterhpc/const.h>
-#include <cloysterhpc/services/package_manager.h>
 #include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
 #include <memory>
@@ -72,8 +71,6 @@ private:
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
 
-    std::shared_ptr<package_manager> m_packageManager;
-
     void setMajorVersion(unsigned int majorVersion);
 
     void setMinorVersion(unsigned int minorVersion);
@@ -85,9 +82,6 @@ private:
      * @return The value extracted from the key-value pair string.
      */
     static std::string getValueFromKey(const std::string& line);
-
-    std::shared_ptr<package_manager> factoryPackageManager(
-        OS::Platform platform);
 
 public:
     OS();
@@ -117,9 +111,6 @@ public:
 
     [[nodiscard]] unsigned int getMajorVersion() const;
     [[nodiscard]] unsigned int getMinorVersion() const;
-
-    gsl::not_null<package_manager*> packageManager() const;
-
     [[nodiscard]] PackageType getPackageType() const;
 
     /**

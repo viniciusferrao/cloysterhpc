@@ -6,8 +6,6 @@
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/services/dnf.h>
-#include <cloysterhpc/services/package_manager.h>
 #include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
 #include <variant>
@@ -85,8 +83,6 @@ OS::OS()
                 fmt::format("Error while reading file: {}", filename));
         }
     }
-
-    factoryPackageManager(getPlatform());
 }
 
 OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
@@ -260,26 +256,6 @@ std::string OS::getValueFromKey(const std::string& line)
     value.erase(std::remove(value.begin(), value.end(), '"'), value.end());
 
     return value;
-}
-
-std::shared_ptr<package_manager> OS::factoryPackageManager(
-    OS::Platform platform)
-{
-    auto platformName = cloyster::utils::enums::toString(platform);
-    for (const auto& supportedPlatform : cloyster::utils::enums::toStrings<Platform>()) {
-        if (platformName == supportedPlatform) {
-            m_packageManager = std::make_shared<dnf>();
-            return m_packageManager;
-        }
-    }
-
-    throw std::runtime_error(fmt::format(
-        "Unsupported OS platform: {}", cloyster::utils::enums::toString(platform)));
-}
-
-gsl::not_null<package_manager*> OS::packageManager() const
-{
-    return m_packageManager.get();
 }
 
 void OS::printData() const

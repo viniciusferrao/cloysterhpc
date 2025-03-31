@@ -2,6 +2,7 @@
 #define CLOYSTER_OSSERVICE_H_
 
 #include <string>
+#include <vector>
 
 #include <cloysterhpc/models/os.h>
 
@@ -24,7 +25,7 @@ using cloyster::models::OS;
  * recipes used by the installer. Also this interface is for getting runtime
  * information from the operating system, for in-memory state use
  * cloyster::models::OS class instead.
- * 
+ *
  * @see See main.cpp for intialization and osservice.cpp for more info.
  */
 class IOSService {
@@ -38,6 +39,17 @@ public:
 
     [[nodiscard]] virtual std::string getKernelInstalled() const = 0;
     [[nodiscard]] virtual std::string getKernelRunning() const = 0;
+
+    // These methods are const because the implementation is expected to be stateless
+    // The implementation is expect to be stateless to avoid double source of true,
+    // the internal state vs the OS runtime state
+    virtual bool install(std::string_view package) const = 0;
+    virtual bool remove(std::string_view package) const = 0;
+    virtual bool update(std::string_view package) const = 0;
+    virtual bool update() const = 0;
+    virtual void check() const = 0;
+    virtual void clean() const = 0;
+    virtual std::vector<std::string> repolist() const = 0;
 
     static std::unique_ptr<IOSService> factory(const OS& osinfo);
 };

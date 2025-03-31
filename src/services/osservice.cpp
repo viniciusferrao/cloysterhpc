@@ -20,6 +20,38 @@ public:
     {
         return Singleton<IRunner>::get()->checkOutput("uname -r")[0];
     }
+
+    bool install(std::string_view package) const override
+    {
+        return (
+        cloyster::runCommand(fmt::format("dnf -y install {}", package)) != 0);
+    }
+
+    bool remove(std::string_view package) const override
+    {
+        return (
+        cloyster::runCommand(fmt::format("dnf -y remove {}", package)) != 0);
+    }
+
+    bool update(std::string_view package) const override
+    {
+        return (
+        cloyster::runCommand(fmt::format("dnf -y update {}", package)) != 0);
+    }
+
+    bool update() const override
+    {
+        return (cloyster::runCommand("dnf -y update") != 0);
+    }
+
+    void check() const override { cloyster::runCommand("dnf check"); }
+
+    void clean() const override { cloyster::runCommand("dnf clean all"); }
+
+    [[nodiscard]] std::vector<std::string> repolist() const override
+    {
+        return Singleton<IRunner>::get()->checkOutput("dnf repolist");
+    }
 };
 
 std::unique_ptr<IOSService> IOSService::factory(const OS& osinfo)
