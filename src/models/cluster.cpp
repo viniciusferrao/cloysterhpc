@@ -33,11 +33,11 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-using cloyster::services::BaseRunner;
+using cloyster::services::IRunner;
 using cloyster::services::DryRunner;
 using cloyster::services::Runner;
 
-static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
+static constexpr std::unique_ptr<IRunner> makeRunner(const bool option)
 {
     if (option) {
         return std::make_unique<DryRunner>();

@@ -10,7 +10,7 @@
 #include <cloysterhpc/ofed.h>
 #include <utility>
 
-using cloyster::BaseRunner;
+using cloyster::IRunner;
 using cloyster::runCommand;
 
 namespace {
@@ -46,7 +46,7 @@ bool OFED::installed() const
         return false;
     }
 
-    auto runner = cloyster::Singleton<BaseRunner>::get();
+    auto runner = cloyster::Singleton<IRunner>::get();
     switch (m_kind) {
         case OFED::Kind::Mellanox:
             return runner->executeCommand("rpm -q doca-ofed") == 0;
@@ -76,7 +76,7 @@ void OFED::install() const
             {
                 auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
                 auto hnOs = cluster->getHeadnode().getOS();
-                auto runner = cloyster::Singleton<cloyster::services::BaseRunner>::get();
+                auto runner = cloyster::Singleton<cloyster::services::IRunner>::get();
                 auto repoManager = cloyster::Singleton<cloyster::services::repos::RepoManager>::get();
                 auto osService = cloyster::Singleton<cloyster::services::IOSService>::get();
                 // distroName denotes a folder in the remote repository:

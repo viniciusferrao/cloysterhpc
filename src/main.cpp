@@ -41,16 +41,16 @@ void initializeSingletons(auto&& cluster)
     cloyster::Singleton<Cluster>::init(
         std::forward<decltype(cluster)>(cluster));
 
-    cloyster::Singleton<cloyster::services::BaseRunner>::init([](){
-        using cloyster::services::BaseRunner;
+    cloyster::Singleton<cloyster::services::IRunner>::init([](){
+        using cloyster::services::IRunner;
         using cloyster::services::DryRunner;
         using cloyster::services::Runner;
 
         if (cloyster::dryRun) {
-            return cloyster::makeUniqueDerived<BaseRunner, DryRunner>();
+            return cloyster::makeUniqueDerived<IRunner, DryRunner>();
         }
 
-        return cloyster::makeUniqueDerived<BaseRunner, Runner>();
+        return cloyster::makeUniqueDerived<IRunner, Runner>();
     });
 
     using cloyster::services::repos::RepoManager;
@@ -81,7 +81,7 @@ int runTestCommand(const std::string& testCommand, const std::vector<std::string
 #ifndef NDEBUG
     LOG_INFO("Running test command {} {} ", testCommand, fmt::join(testCommandArgs, ","));
     auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
-    auto runner = cloyster::Singleton<cloyster::BaseRunner>::get();
+    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
     if (testCommand == "execute-command") {
         runner->checkCommand(testCommandArgs[0]);
     } else if (testCommand == "create-http-repo") {

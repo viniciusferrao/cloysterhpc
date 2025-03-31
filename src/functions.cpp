@@ -398,7 +398,7 @@ HTTPRepo createHTTPRepo(const std::string_view repoName)
 
     cloyster::createDirectory("/var/www/html/repos/");
     LOG_INFO("Creating HTTP repository {} at {}", confPath, repoFolder);
-    auto runner = cloyster::Singleton<BaseRunner>::get();
+    auto runner = cloyster::Singleton<IRunner>::get();
     cloyster::createDirectory(repoFolder);
     cloyster::installFile(
         confPath,

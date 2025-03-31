@@ -21,7 +21,9 @@ using cloyster::models::OS;
  * headnode OS instance.
  *
  * This interface must be enough to absctract OS command from the installation
- * recipes used by the installer.
+ * recipes used by the installer. Also this interface is for getting runtime
+ * information from the operating system, for in-memory state use
+ * cloyster::models::OS class instead.
  * 
  * @see See main.cpp for intialization and osservice.cpp for more info.
  */

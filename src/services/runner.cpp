@@ -8,7 +8,7 @@
 
 namespace cloyster::services {
 
-int BaseRunner::downloadFile(const std::string& url, const std::string& file)
+int IRunner::downloadFile(const std::string& url, const std::string& file)
 {
     auto cmd = fmt::format("wget -NP {} {}", file, url);
     return this->executeCommand(cmd);

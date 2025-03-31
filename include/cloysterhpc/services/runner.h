@@ -14,7 +14,7 @@ namespace cloyster::services {
 /**
  * Works as an abstraction for command execution.
  */
-class BaseRunner {
+class IRunner {
 public:
     virtual int executeCommand(const std::string&) = 0;
     virtual void checkCommand(const std::string&) = 0;
@@ -22,10 +22,10 @@ public:
 
     virtual int downloadFile(const std::string& url, const std::string& file);
 
-    virtual ~BaseRunner() = default;
+    virtual ~IRunner() = default;
 };
 
-class Runner : public BaseRunner {
+class Runner : public IRunner {
 public:
     int executeCommand(const std::string&) override;
     void checkCommand(const std::string&) override;
@@ -34,7 +34,7 @@ public:
     virtual ~Runner() = default;
 };
 
-class DryRunner : public BaseRunner {
+class DryRunner : public IRunner {
 public:
     int executeCommand(const std::string&) override;
     void checkCommand(const std::string&) override;
@@ -43,7 +43,7 @@ public:
     virtual ~DryRunner() = default;
 };
 
-class MockRunner : public BaseRunner {
+class MockRunner : public IRunner {
 public:
     int executeCommand(const std::string&) override;
     void checkCommand(const std::string&) override;

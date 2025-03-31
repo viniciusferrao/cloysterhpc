@@ -228,7 +228,7 @@ void XCAT::configureInfiniband()
             case OFED::Kind::Mellanox:
                 {
                     auto repoManager = cloyster::Singleton<RepoManager>::get();
-                    auto runner = cloyster::Singleton<BaseRunner>::get();
+                    auto runner = cloyster::Singleton<IRunner>::get();
                     auto arch = cloyster::utils::enumToString(cluster()->getNodes()[0].getOS().getArch());
                     auto osService = cloyster::Singleton<IOSService>::get();
 
@@ -382,7 +382,7 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    auto runner = cloyster::Singleton<BaseRunner>::get();
+    auto runner = cloyster::Singleton<IRunner>::get();
     runner->executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkglist="
                     "/install/custom/netboot/compute.otherpkglist",
@@ -657,7 +657,7 @@ void XCAT::installRepositories()
     const std::filesystem::path& repofileDest
         = std::filesystem::temp_directory_path();
     LOG_INFO("Setting up XCAT repositories");
-    auto runner = cloyster::Singleton<BaseRunner>::get();
+    auto runner = cloyster::Singleton<IRunner>::get();
 
     runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
                          "core-snap/xcat-core.repo",

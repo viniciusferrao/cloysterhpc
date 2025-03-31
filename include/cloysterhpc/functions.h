@@ -27,7 +27,7 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
-using cloyster::services::BaseRunner;
+using cloyster::services::IRunner;
 using cloyster::models::OS;
 
 /**

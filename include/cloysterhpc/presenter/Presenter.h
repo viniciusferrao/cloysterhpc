@@ -15,7 +15,7 @@
 
 namespace cloyster::presenter {
 
-using BaseRunner = cloyster::services::BaseRunner;
+using IRunner = cloyster::services::IRunner;
 using Cluster = cloyster::models::Cluster;
 using QueueSystem = cloyster::models::QueueSystem;
 using SLURM = cloyster::models::SLURM;
