@@ -129,16 +129,9 @@ int main(int argc, const char** argv)
 
 
     cloyster::logLevelInput
-        = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
-    constexpr std::size_t logLevels { magic_enum::enum_count<Log::Level>() };
-
-    const std::vector<std::string> logLevelVector = []() {
-        constexpr const auto& logLevelNames {
-            magic_enum::enum_names<Log::Level>()
-        };
-        return std::vector<std::string> { logLevelNames.begin(),
-            logLevelNames.end() };
-    }();
+        = fmt::format("{}", cloyster::utils::enums::toString(Log::Level::Info));
+    constexpr std::size_t logLevels = cloyster::utils::enums::count<Log::Level>();
+    const std::vector<std::string> logLevelVector = cloyster::utils::enums::toStrings<Log::Level>();
 
     app.add_option("-l, --log-level", cloyster::logLevelInput,
            [&logLevelVector]() {
@@ -194,12 +187,16 @@ int main(int argc, const char** argv)
 
     Log::init([]() {
         if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
-            return magic_enum::enum_cast<Log::Level>(
-                stoi(cloyster::logLevelInput))
+            // @FIXME: 
+            // - Convert cloyster::logLevelInput to int I 
+            // - Initialize the enum from the int
+            // - Return it
+            return cloyster::utils::enums::ofStringOpt<Log::Level>(
+                cloyster::logLevelInput)
                 .value();
         } else {
-            return magic_enum::enum_cast<Log::Level>(
-                cloyster::logLevelInput, magic_enum::case_insensitive)
+            return cloyster::utils::enums::ofStringOpt<Log::Level>(
+                cloyster::logLevelInput, cloyster::utils::enums::Case::Insensitive)
                 .value();
         }
     }());

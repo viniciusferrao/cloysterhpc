@@ -16,7 +16,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <magic_enum/magic_enum.hpp>
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/files.h>
@@ -443,7 +442,7 @@ std::vector<std::string> getDependenciesEL(const OS& osinfo)
             break;
         default:
             throw std::runtime_error(fmt::format("Unsupported distribution: {}",
-                magic_enum::enum_name(osinfo.getDistro())));
+                cloyster::utils::enums::toString(osinfo.getDistro())));
     }
 
     return dependencies;
@@ -487,7 +486,7 @@ std::filesystem::path RepoManager::generateCloysterReposFile()
             break;
         default:
             throw std::runtime_error(fmt::format("Unsupported platform {}",
-                magic_enum::enum_name(m_os.getPlatform())));
+                cloyster::utils::enums::toString(m_os.getPlatform())));
     };
 
     cloyster::installFile(path, stream);

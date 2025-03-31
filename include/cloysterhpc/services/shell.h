@@ -6,8 +6,6 @@
 #ifndef CLOYSTERHPC_SHELL_H_
 #define CLOYSTERHPC_SHELL_H_
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/execution.h>
 

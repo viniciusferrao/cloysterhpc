@@ -4,6 +4,7 @@
  */
 
 #include <boost/system/detail/errc.hpp>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/connection.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
@@ -316,8 +317,8 @@ void Connection::dumpConnection() const
 {
     LOG_DEBUG("Dumping Connection Info:")
     LOG_DEBUG("Connection with Network: {} ({})",
-        magic_enum::enum_name(m_network->getProfile()),
-        magic_enum::enum_name(m_network->getType()));
+        cloyster::utils::enums::toString(m_network->getProfile()),
+        cloyster::utils::enums::toString(m_network->getType()));
 
     LOG_DEBUG("Interface: {}", m_interface.value_or("NONE"))
     LOG_DEBUG("MAC Address: {}", m_mac.value_or("NONE"))

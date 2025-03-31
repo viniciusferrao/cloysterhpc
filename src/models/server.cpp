@@ -5,6 +5,7 @@
  */
 
 #include <cloysterhpc/models/server.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
 #include <regex>
 #include <string_view>
@@ -120,7 +121,7 @@ const Connection& Server::getConnection(Network::Profile profile) const
 
     throw std::runtime_error(
         fmt::format("Cannot get any connection with profile {}",
-            magic_enum::enum_name(profile)));
+            cloyster::utils::enums::toString(profile)));
 }
 
 void Server::setConnection(const std::list<Connection>& connection)

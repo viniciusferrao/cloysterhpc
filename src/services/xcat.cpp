@@ -229,7 +229,7 @@ void XCAT::configureInfiniband()
                 {
                     auto repoManager = cloyster::Singleton<RepoManager>::get();
                     auto runner = cloyster::Singleton<IRunner>::get();
-                    auto arch = cloyster::utils::enumToString(cluster()->getNodes()[0].getOS().getArch());
+                    auto arch = cloyster::utils::enums::toString(cluster()->getNodes()[0].getOS().getArch());
                     auto osService = cloyster::Singleton<IOSService>::get();
 
                     // Add the rpm to the image
@@ -534,7 +534,7 @@ void XCAT::addNode(const Node& node)
     std::string command = fmt::format(
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
         "netboot=xnba ",
-        node.getHostname(), magic_enum::enum_name(node.getOS().getArch()),
+        node.getHostname(), cloyster::utils::enums::toString(node.getOS().getArch()),
         node.getConnection(Network::Profile::Management)
             .getAddress()
             .to_string(),
@@ -697,7 +697,7 @@ void XCAT::installRepositories()
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
     const auto osinfo = cluster()->getHeadnode().getOS();
-    const auto osArch = magic_enum::enum_name(osinfo.getArch());
+    const auto osArch = cloyster::utils::enums::toString(osinfo.getArch());
     const auto osMajorVersion = osinfo.getMajorVersion();
     const auto osVersion = osinfo.getVersion();
 

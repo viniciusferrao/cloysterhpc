@@ -4,6 +4,7 @@
  */
 
 #include <cloysterhpc/connection.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 
@@ -95,7 +96,7 @@ void Network::setAddress(const address& ip)
         throw std::runtime_error("IP address cannot be 0.0.0.0");
 
     m_address = ip;
-    LOG_TRACE("{} network address set to {}", magic_enum::enum_name(m_profile),
+    LOG_TRACE("{} network address set to {}", cloyster::utils::enums::toString(m_profile),
         m_address.to_string());
 }
 
@@ -402,7 +403,7 @@ std::vector<address> Network::fetchNameservers()
 #ifndef NDEBUG
 void Network::dumpNetwork() const
 {
-    LOG_DEBUG("Profile: {}", magic_enum::enum_name(m_profile))
-    LOG_DEBUG("Type: {}", magic_enum::enum_name(m_type))
+    LOG_DEBUG("Profile: {}", cloyster::utils::enums::toString(m_profile))
+    LOG_DEBUG("Type: {}", cloyster::utils::enums::toString(m_type))
 }
 #endif

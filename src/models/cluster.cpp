@@ -127,7 +127,7 @@ Network& Cluster::getNetwork(Network::Profile profile)
 
     throw std::runtime_error(
         fmt::format("Cannot get any network with the profile {}",
-            magic_enum::enum_name(profile)));
+            cloyster::utils::enums::toString(profile)));
 }
 
 #if 0
@@ -287,7 +287,7 @@ void Cluster::printNetworks(
     for (size_t i = 0; const auto& network : networks) {
 #endif
         LOG_DEBUG("Network [{}]", i++)
-        LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()))
+        LOG_DEBUG("Profile: {}", cloyster::utils::enums::toString(network->getProfile()))
         LOG_DEBUG("Address: {}", network->getAddress().to_string())
         LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string())
         LOG_DEBUG("Gateway: {}", network->getGateway().to_string())
@@ -322,7 +322,7 @@ void Cluster::printData()
     LOG_DEBUG("DomainName: {}", getDomainName());
     LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
     if (m_ofed) {
-         LOG_DEBUG("OFED: {} {}", utils::enumToString(m_ofed->getKind()), m_ofed->getVersion());
+         LOG_DEBUG("OFED: {} {}", utils::enums::toString(m_ofed->getKind()), m_ofed->getVersion());
      }
 
     printNetworks(m_network);
@@ -565,7 +565,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     // OS and Information
 
-    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfil.system.distro));
+    LOG_INFO("Distro: {}", cloyster::utils::enums::toString(answerfil.system.distro));
     LOG_INFO("Kernel: {}", answerfil.system.kernel);
     LOG_INFO("Version: {}", answerfil.system.version);
 
@@ -594,12 +594,12 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     if (answerfil.ofed.enabled) {
          // Install the cofigured OFED variant
          LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
-         auto kind = utils::enumOfStringOpt<OFED::Kind>(answerfil.ofed.kind);
+         auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind);
          if (!kind) {
             throw std::runtime_error(
                 fmt::format("Invalid OFED kind, expected one of {}, found {}. Edit the anwerfile {} [ofed] sectino and try again.",
                             cloyster::answerfile,
-                            fmt::join(magic_enum::enum_names<OFED::Kind>(), ", "),
+                            fmt::join(cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
                             answerfil.ofed.kind
                             ));
          }

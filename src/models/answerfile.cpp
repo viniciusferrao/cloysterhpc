@@ -10,10 +10,10 @@
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/tools/nvhpc.h>
+#include <cloysterhpc/functions.h>
 #include <cstddef>
 #include <fmt/core.h>
 #include <iterator>
-#include <magic_enum/magic_enum.hpp>
 #include <ranges>
 
 namespace cloyster::models {
@@ -125,7 +125,7 @@ void AnswerFile::dumpHostnameSettings()
 
 void AnswerFile::dumpSystemSettings()
 {
-    auto distroName = magic_enum::enum_name(system.distro);
+    auto distroName = cloyster::utils::enums::toString(system.distro);
 
     m_ini.setValue("system", "disk_image", system.disk_image);
     m_ini.setValue("system", "distro", std::string { distroName });
@@ -183,7 +183,7 @@ void AnswerFile::dumpPostfix()
         return;
     }
 
-    auto profileName = magic_enum::enum_name(postfix.profile);
+    auto profileName = cloyster::utils::enums::toString(postfix.profile);
     m_ini.setValue("postfix", "profile", std::string { profileName });
     m_ini.setValue(
         "postfix", "smtpd_tls_cert_file", postfix.cert_file.string());
@@ -394,8 +394,8 @@ void AnswerFile::loadSystemSettings()
 
     // Verify supported distros
     auto afDistro = m_ini.getValue("system", "distro", false, false);
-    if (const auto& formatDistro = magic_enum::enum_cast<OS::Distro>(
-            afDistro, magic_enum::case_insensitive)) {
+    if (const auto& formatDistro = cloyster::utils::enums::ofStringOpt<OS::Distro>(
+            afDistro, cloyster::utils::enums::Case::Insensitive)) {
         system.distro = formatDistro.value();
     } else {
         if (cloyster::dryRun) {
@@ -574,9 +574,8 @@ void AnswerFile::loadPostfix()
         m_ini.getValue("postfix", "destination", false), boost::is_any_of(", "),
         boost::token_compress_on);
 
-    auto castProfile = magic_enum::enum_cast<Postfix::Profile>(
-        m_ini.getValue("postfix", "profile", false),
-        magic_enum::case_insensitive);
+    auto castProfile = cloyster::utils::enums::ofStringOpt<Postfix::Profile>(
+        m_ini.getValue("postfix", "profile", false), cloyster::utils::enums::Case::Insensitive);
 
     if (castProfile.has_value())
         postfix.profile = castProfile.value();

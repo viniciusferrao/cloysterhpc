@@ -14,8 +14,6 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/newt.h>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <memory>
 #include <utility>
 
@@ -63,8 +61,8 @@ private:
                 Network::Type type, Network::Profile profile)
             {
                 return fmt::format("Select your {} ({}) network interface",
-                    magic_enum::enum_name(profile),
-                    magic_enum::enum_name(type));
+                    cloyster::utils::enums::toString(profile),
+                    cloyster::utils::enums::toString(type));
             }
 
             static constexpr const auto help

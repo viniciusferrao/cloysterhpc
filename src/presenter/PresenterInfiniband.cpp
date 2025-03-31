@@ -26,19 +26,19 @@ PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
             Messages::title, Messages::question, Messages::help)) {
 
         // @FIXME: Prompt for the version
-        m_model->setOFED(magic_enum::enum_cast<OFED::Kind>(
+        m_model->setOFED(cloyster::utils::enums::ofStringOpt<OFED::Kind>(
             m_view->listMenu(Messages::title, Messages::OFED::question,
-                magic_enum::enum_names<OFED::Kind>(), Messages::OFED::help))
+                cloyster::utils::enums::toStrings<OFED::Kind>(), Messages::OFED::help))
                 .value());
         LOG_DEBUG("Set OFED stack as: {}",
-            magic_enum::enum_name<OFED::Kind>(m_model->getOFED()->getKind()));
+            cloyster::utils::enums::toString<OFED::Kind>(m_model->getOFED()->getKind()));
 
         try {
             Call<PresenterNetwork>(
                 nc, Network::Profile::Application, Network::Type::Infiniband);
         } catch (const std::exception& ex) {
             LOG_ERROR("Failed to add {} network: {}",
-                magic_enum::enum_name(Network::Profile::Application),
+                cloyster::utils::enums::toString(Network::Profile::Application),
                 ex.what());
         }
     }

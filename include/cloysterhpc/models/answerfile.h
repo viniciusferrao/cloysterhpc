@@ -12,7 +12,6 @@
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/tools/ITool.h>
 #include <cloysterhpc/ofed.h>
-#include <magic_enum/magic_enum.hpp>
 #include <optional>
 #include <vector>
 
@@ -159,7 +158,7 @@ private:
     };
 
     struct AFOFED {
-        std::string kind = cloyster::utils::enumToString(OFED::Kind::Inbox);
+        std::string kind = cloyster::utils::enums::toString(OFED::Kind::Inbox);
         std::optional<std::string> version = "latest";
         bool enabled = false;
     };

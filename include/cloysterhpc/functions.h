@@ -1,6 +1,7 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
+#include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/patterns/singleton.h>
@@ -238,29 +239,6 @@ std::filesystem::directory_iterator openDir(const Path& path)
         static_cast<std::function<std::filesystem::directory_iterator()>>(
             [&path]() { return std::filesystem::directory_iterator(path); }),
         fmt::format("Dry Run: Would open directory {}", path.string()));
-}
-
-/**
- * @brief Converts enum to string.
- * @desc The case is the same used in the enum definition. Convert
- * it to lower before comparing.
- */
-template <typename T>
-requires std::is_enum_v<T>
-std::string enumToString(T enumValue)
-{
-    return static_cast<std::string>(magic_enum::enum_name<T>(enumValue));
-}
-
-/**
- * @brief Converts a string to an enum if possible
- * @desc The comparison is made case insensitive
- */
-template <typename T>
-requires std::is_enum_v<T>
-std::optional<T> enumOfStringOpt(std::string_view str)
-{
-    return magic_enum::enum_cast<T>(str, magic_enum::case_insensitive);
 }
 
 }

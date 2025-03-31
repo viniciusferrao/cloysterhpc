@@ -9,7 +9,6 @@
 #include <cloysterhpc/presenter/Presenter.h>
 
 #include <boost/lexical_cast.hpp>
-#include <magic_enum/magic_enum.hpp>
 
 namespace cloyster::presenter {
 class PresenterInstall : public Presenter {

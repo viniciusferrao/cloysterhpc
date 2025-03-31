@@ -1,4 +1,5 @@
 #include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
 
 namespace cloyster {
 bool showVersion = false;
@@ -9,7 +10,7 @@ bool enableCLI = false;
 bool runAsDaemon = false;
 
 std::string logLevelInput
-    = fmt::format("{}", magic_enum::enum_name(Log::Level::Info));
+    = fmt::format("{}", cloyster::utils::enums::toString(Log::Level::Info));
 std::string answerfile = "";
 std::string customRepofilePath = "";
 

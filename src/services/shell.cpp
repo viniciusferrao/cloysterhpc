@@ -228,7 +228,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         }
 
         auto connectionName
-            = magic_enum::enum_name(connection.getNetwork()->getProfile());
+            = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
         if (!cloyster::dryRun
             && runCommand(
                    fmt::format("nmcli connection show {}", connectionName))
@@ -247,9 +247,9 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                         "ipv4.dns \"{}\" "
                         // "ipv4.gateway {} ipv4.dns \"{}\" "
                         "ipv4.dns-search {} ipv6.method disabled",
-                magic_enum::enum_name(connection.getNetwork()->getProfile()),
+                cloyster::utils::enums::toString(connection.getNetwork()->getProfile()),
                 interface,
-                magic_enum::enum_name(connection.getNetwork()->getType()),
+                cloyster::utils::enums::toString(connection.getNetwork()->getType()),
                 connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
                     connection.getNetwork()->getSubnetMask().to_string()),
@@ -363,7 +363,7 @@ void Shell::configureQueueSystem()
                 runCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
                 runCommand(fmt::format(
                     "qmgr -c \"set server resources_default.place={}\"",
-                    magic_enum::enum_name<PBS::ExecutionPlace>(
+                    cloyster::utils::enums::toString<PBS::ExecutionPlace>(
                         pbs->getExecutionPlace())));
                 runCommand("qmgr -c \"set server job_history_enable=True\"");
                 break;
@@ -473,7 +473,7 @@ void Shell::install()
 
     installDevelopmentComponents();
 
-    const auto& provisionerName { magic_enum::enum_name(
+    const auto& provisionerName { cloyster::utils::enums::toString(
         cluster()->getProvisioner()) };
 
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName)

@@ -10,7 +10,6 @@
 #include <cloysterhpc/services/package_manager.h>
 #include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <string>
 #include <variant>

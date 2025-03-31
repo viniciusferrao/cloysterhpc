@@ -27,7 +27,7 @@ std::string PresenterNodesOperationalSystem::getDownloadURL(
     auto [majorVersion, minorVersion, arch] = version;
 
     fmt::dynamic_format_arg_store<fmt::format_context> store;
-    store.push_back(fmt::arg("arch", magic_enum::enum_name(arch)));
+    store.push_back(fmt::arg("arch", cloyster::utils::enums::toString(arch)));
     store.push_back(fmt::arg("major", majorVersion));
     store.push_back(fmt::arg("minor", minorVersion));
 
@@ -91,7 +91,7 @@ PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
         | std::views::transform([](const PresenterNodesVersionCombo& c) {
               auto [maj, min, arch] = c;
               return fmt::format(
-                  "{}.{} ({})", maj, min, magic_enum::enum_name(arch));
+                  "{}.{} ({})", maj, min, cloyster::utils::enums::toString(arch));
           });
 
     std::vector<std::string> versions;

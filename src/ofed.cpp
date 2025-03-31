@@ -92,7 +92,7 @@ void OFED::install() const
                 auto repoData = docaRepoTemplate(
                     getVersion(),
                     distroName,
-                    cloyster::utils::enumToString(hnOs.getArch()));
+                    cloyster::utils::enums::toString(hnOs.getArch()));
                 std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
 
                 // Install the repository and enable it

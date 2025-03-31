@@ -11,7 +11,6 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h> // for std::vector formatters
-#include <magic_enum/magic_enum.hpp>
 
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/execution.h>
