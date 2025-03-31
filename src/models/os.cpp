@@ -124,7 +124,8 @@ void OS::setPlatform(std::string_view platform)
     std::transform(lowercasePlatform.begin(), lowercasePlatform.end(),
         lowercasePlatform.begin(), ::tolower);
 
-    for (const auto& enumValue : cloyster::utils::enums::toStrings<Platform>()) {
+    for (const auto& enumValue :
+        cloyster::utils::enums::toStrings<Platform>()) {
         if (lowercasePlatform == enumValue) {
             setPlatform(enumValue);
             return;
@@ -144,8 +145,7 @@ OS::Distro OS::getDistro() const
 std::string OS::getDistroString() const
 {
     std::string distro;
-    switch (getDistro())
-    {
+    switch (getDistro()) {
         case OS::Distro::RHEL:
             distro = "rhel";
             break;
@@ -182,8 +182,8 @@ void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
-    if (const auto& rval
-        = cloyster::utils::enums::ofStringOpt<OS::Distro>(std::string(distro))) {
+    if (const auto& rval = cloyster::utils::enums::ofStringOpt<OS::Distro>(
+            std::string(distro))) {
         setDistro(rval.value());
     } else {
         throw std::runtime_error(
@@ -261,13 +261,15 @@ std::string OS::getValueFromKey(const std::string& line)
 void OS::printData() const
 {
 #ifndef NDEBUG
-    LOG_DEBUG("Architecture: {}", cloyster::utils::enums::toString(std::get<Arch>(m_arch)))
-    LOG_DEBUG("Family: {}", cloyster::utils::enums::toString(std::get<Family>(m_family)))
+    LOG_DEBUG("Architecture: {}",
+        cloyster::utils::enums::toString(std::get<Arch>(m_arch)))
+    LOG_DEBUG("Family: {}",
+        cloyster::utils::enums::toString(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
-    LOG_DEBUG(
-        "Platform: {}", cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
-    LOG_DEBUG(
-        "Distribution: {}", cloyster::utils::enums::toString(std::get<Distro>(m_distro)))
+    LOG_DEBUG("Platform: {}",
+        cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
+    LOG_DEBUG("Distribution: {}",
+        cloyster::utils::enums::toString(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
 #endif

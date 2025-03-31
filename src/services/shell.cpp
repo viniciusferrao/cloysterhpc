@@ -6,9 +6,9 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -27,10 +27,10 @@
 #include <cloysterhpc/dbus_client.h>
 #include <ranges>
 
-using cloyster::models::OS;
 using cloyster::models::Cluster;
-using cloyster::services::IRunner;
+using cloyster::models::OS;
 using cloyster::services::IOSService;
+using cloyster::services::IRunner;
 
 namespace {
 
@@ -52,7 +52,6 @@ auto getToEnableRepoNames(const OS& osinfo)
             throw std::logic_error("Not implemented");
     }
 }
-
 
 auto cluster() { return cloyster::Singleton<Cluster>::get(); }
 auto runner() { return cloyster::Singleton<IRunner>::get(); }
@@ -118,7 +117,8 @@ void Shell::configureFirewall()
         // Add the management interface as trusted
         runner()->executeCommand(fmt::format(
             "firewall-cmd --permanent --zone=trusted --change-interface={}",
-            cluster()->getHeadnode()
+            cluster()
+                ->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getInterface()
                 .value()));
@@ -127,7 +127,8 @@ void Shell::configureFirewall()
         if (cluster()->getOFED())
             runner()->executeCommand(fmt::format(
                 "firewall-cmd --permanent --zone=trusted --change-interface={}",
-                cluster()->getHeadnode()
+                cluster()
+                    ->getHeadnode()
                     .getConnection(Network::Profile::Application)
                     .getInterface()
                     .value()));
@@ -180,8 +181,8 @@ void Shell::configureLocale()
 {
     LOG_INFO("Setting up locale")
 
-    runner()->executeCommand(fmt::format(
-        "localectl set-locale {}", cluster()->getLocale()));
+    runner()->executeCommand(
+        fmt::format("localectl set-locale {}", cluster()->getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride()
@@ -205,7 +206,8 @@ void Shell::disableNetworkManagerDNSOverride()
 // BUG: Why this method exists? The name does not do what it says.
 void Shell::deleteConnectionIfExists(std::string_view connectionName)
 {
-    runner()->executeCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
+    runner()->executeCommand(
+        fmt::format("nmcli connection delete \"{}\"", connectionName));
 }
 
 /* This function configure host networks at once with NetworkManager.
@@ -234,8 +236,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
-        auto connectionName
-            = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+        auto connectionName = cloyster::utils::enums::toString(
+            connection.getNetwork()->getProfile());
         if (!cloyster::dryRun
             && runner()->executeCommand(
                    fmt::format("nmcli connection show {}", connectionName))
@@ -245,7 +247,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         }
 
         deleteConnectionIfExists(connectionName);
-        runner()->executeCommand(fmt::format("nmcli device set {} managed yes", interface));
+        runner()->executeCommand(
+            fmt::format("nmcli device set {} managed yes", interface));
         runner()->executeCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
         runner()->executeCommand(
@@ -254,9 +257,11 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                         "ipv4.dns \"{}\" "
                         // "ipv4.gateway {} ipv4.dns \"{}\" "
                         "ipv4.dns-search {} ipv6.method disabled",
-                cloyster::utils::enums::toString(connection.getNetwork()->getProfile()),
+                cloyster::utils::enums::toString(
+                    connection.getNetwork()->getProfile()),
                 interface,
-                cloyster::utils::enums::toString(connection.getNetwork()->getType()),
+                cloyster::utils::enums::toString(
+                    connection.getNetwork()->getType()),
                 connection.getMTU(), connection.getAddress().to_string(),
                 connection.getNetwork()->cidr.at(
                     connection.getNetwork()->getSubnetMask().to_string()),
@@ -271,7 +276,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         // Breaking my ssh connection during development
-        runner()->executeCommand(fmt::format("nmcli device connect {}", interface));
+        runner()->executeCommand(
+            fmt::format("nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();
@@ -366,12 +372,14 @@ void Shell::configureQueueSystem()
 
                 osservice()->install("openpbs-server-ohpc");
                 osservice()->enableService("pbs");
-                runner()->executeCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
+                runner()->executeCommand(
+                    "qmgr -c \"set server default_qsub_arguments= -V\"");
                 runner()->executeCommand(fmt::format(
                     "qmgr -c \"set server resources_default.place={}\"",
                     cloyster::utils::enums::toString<PBS::ExecutionPlace>(
                         pbs->getExecutionPlace())));
-                runner()->executeCommand("qmgr -c \"set server job_history_enable=True\"");
+                runner()->executeCommand(
+                    "qmgr -c \"set server job_history_enable=True\"");
                 break;
             }
         }
@@ -426,7 +434,7 @@ void Shell::installDevelopmentComponents()
         "valgrind-ohpc",
     };
 
-     osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
+    osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
 
 void Shell::configureRepositories()
@@ -468,7 +476,8 @@ void Shell::install()
 
     // BUG: Broken. Compute nodes does not mount anything.
     NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
-        cluster()->getHeadnode()
+        cluster()
+            ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");

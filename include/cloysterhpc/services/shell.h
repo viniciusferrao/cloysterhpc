@@ -21,7 +21,6 @@ using cloyster::models::Cluster;
  */
 class Shell final : public Execution {
 private:
-
     /**
      * @brief Configures SELinux mode.
      *

@@ -1,11 +1,11 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/utils/enums.h>
 #include <filesystem>
 #include <list>
 #include <optional>
@@ -26,8 +26,8 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
-using cloyster::services::IRunner;
 using cloyster::models::OS;
+using cloyster::services::IRunner;
 
 /* shell execution */
 

@@ -6,23 +6,22 @@
 #include <cctype>
 #include <cstdlib>
 
-
 #include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
+#include <cloysterhpc/dbus_client.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/hardware.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
-#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
-#include <cloysterhpc/functions.h>
-#include <cloysterhpc/dbus_client.h>
 #include <internal_use_only/config.hpp>
 #include <regex>
 
@@ -30,10 +29,7 @@
 #include "include/i18n-cpp.hpp"
 #endif
 
-
-
 namespace {
-
 
 void initializeSingletons(auto&& cluster)
 {
@@ -41,7 +37,7 @@ void initializeSingletons(auto&& cluster)
     cloyster::Singleton<Cluster>::init(
         std::forward<decltype(cluster)>(cluster));
 
-    cloyster::Singleton<cloyster::services::IRunner>::init([](){
+    cloyster::Singleton<cloyster::services::IRunner>::init([]() {
         using cloyster::services::IRunner;
         using cloyster::services::DryRunner;
         using cloyster::services::Runner;
@@ -68,7 +64,8 @@ void initializeSingletons(auto&& cluster)
     });
 
     cloyster::Singleton<cloyster::services::IOSService>::init([]() {
-        const auto& osinfo = cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
+        const auto& osinfo
+            = cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
         return cloyster::services::IOSService::factory(osinfo);
     });
 }
@@ -76,10 +73,12 @@ void initializeSingletons(auto&& cluster)
 // Run test commands and exit. This is to make easier to test
 // code during development and troubleshooting.  Use a combination of
 // --force and --skip to control what code to run.
-int runTestCommand(const std::string& testCommand, const std::vector<std::string>& testCommandArgs)
+int runTestCommand(const std::string& testCommand,
+    const std::vector<std::string>& testCommandArgs)
 {
 #ifndef NDEBUG
-    LOG_INFO("Running test command {} {} ", testCommand, fmt::join(testCommandArgs, ","));
+    LOG_INFO("Running test command {} {} ", testCommand,
+        fmt::join(testCommandArgs, ","));
     auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
     auto runner = cloyster::Singleton<cloyster::IRunner>::get();
     if (testCommand == "execute-command") {
@@ -127,11 +126,12 @@ int main(int argc, const char** argv)
 
     app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
 
-
     cloyster::logLevelInput
         = fmt::format("{}", cloyster::utils::enums::toString(Log::Level::Info));
-    constexpr std::size_t logLevels = cloyster::utils::enums::count<Log::Level>();
-    const std::vector<std::string> logLevelVector = cloyster::utils::enums::toStrings<Log::Level>();
+    constexpr std::size_t logLevels
+        = cloyster::utils::enums::count<Log::Level>();
+    const std::vector<std::string> logLevelVector
+        = cloyster::utils::enums::toStrings<Log::Level>();
 
     app.add_option("-l, --log-level", cloyster::logLevelInput,
            [&logLevelVector]() {
@@ -170,25 +170,27 @@ int main(int argc, const char** argv)
     app.add_flag(
         "-u, --unattended", unattended, "Perform an unattended installation");
 
-    app.add_option("--skip", cloyster::skipSteps, "Skip a specific step during the installation");
-    app.add_option("--force", cloyster::forceSteps, "Force a specific step during the installation");
+    app.add_option("--skip", cloyster::skipSteps,
+        "Skip a specific step during the installation");
+    app.add_option("--force", cloyster::forceSteps,
+        "Force a specific step during the installation");
 
 #ifndef NDEBUG
-    std::string testCommand{};
-    app.add_option("--test", testCommand,
-        "Run a command for testing purposes");
+    std::string testCommand {};
+    app.add_option("--test", testCommand, "Run a command for testing purposes");
 
-    std::vector<std::string> testCommandArgs{};
+    std::vector<std::string> testCommandArgs {};
     app.add_option("--test-args", testCommandArgs,
-        "Run a command for testing purposes with arguments, can be specified multiple times");
+        "Run a command for testing purposes with arguments, can be specified "
+        "multiple times");
 #endif
 
     CLI11_PARSE(app, argc, argv)
 
     Log::init([]() {
         if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
-            // @FIXME: 
-            // - Convert cloyster::logLevelInput to int I 
+            // @FIXME:
+            // - Convert cloyster::logLevelInput to int I
             // - Initialize the enum from the int
             // - Return it
             return cloyster::utils::enums::ofStringOpt<Log::Level>(
@@ -196,7 +198,8 @@ int main(int argc, const char** argv)
                 .value();
         } else {
             return cloyster::utils::enums::ofStringOpt<Log::Level>(
-                cloyster::logLevelInput, cloyster::utils::enums::Case::Insensitive)
+                cloyster::logLevelInput,
+                cloyster::utils::enums::Case::Insensitive)
                 .value();
         }
     }());

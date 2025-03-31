@@ -254,7 +254,6 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
-
 bool exists(const std::filesystem::path& path)
 {
     return std::filesystem::exists(path);
@@ -286,10 +285,13 @@ HTTPRepo createHTTPRepo(const std::string_view repoName)
 {
     const auto confPath = fmt::format("/etc/httpd/conf.d/{}.conf", repoName);
     const auto repoFolder = fmt::format("/var/www/html/repos/{}", repoName);
-    // @FIXME:  Use the HN hostname instead of localhost to make it work in the nodes
-    HTTPRepo repo(repoFolder, std::string(repoName), fmt::format("http://localhost/repos/{}", repoName));
+    // @FIXME:  Use the HN hostname instead of localhost to make it work in the
+    // nodes
+    HTTPRepo repo(repoFolder, std::string(repoName),
+        fmt::format("http://localhost/repos/{}", repoName));
     if (cloyster::exists(confPath)) {
-        LOG_WARN("Skipping the creation of HTTP repository, {} already exists", confPath);
+        LOG_WARN("Skipping the creation of HTTP repository, {} already exists",
+            confPath);
         return repo;
     }
 
@@ -297,8 +299,7 @@ HTTPRepo createHTTPRepo(const std::string_view repoName)
     LOG_INFO("Creating HTTP repository {} at {}", confPath, repoFolder);
     auto runner = cloyster::Singleton<IRunner>::get();
     cloyster::createDirectory(repoFolder);
-    cloyster::installFile(
-        confPath,
+    cloyster::installFile(confPath,
         fmt::format(
             R"(<Directory "{0}">
 Options +Indexes +FollowSymLinks
@@ -306,7 +307,8 @@ AllowOverride None
 Require all granted
 IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
 </Directory>
-)", repoFolder));
+)",
+            repoFolder));
 
     runner->checkCommand("apachectl configtest");
     runner->checkCommand("systemctl restart httpd");

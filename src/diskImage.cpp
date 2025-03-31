@@ -8,10 +8,9 @@
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/files.h>
+#include <cloysterhpc/services/log.h>
 #include <unordered_map>
-
 
 // @FIXME: This file need some work
 //
@@ -79,9 +78,11 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
         return true;
     }
 
-    LOG_INFO("Verifying disk image checksum... This may take a while, use `--skip disk-checksum` to skip")
+    LOG_INFO("Verifying disk image checksum... This may take a while, use "
+             "`--skip disk-checksum` to skip")
     if (cloyster::shouldSkip("disk-checksum")) {
-        LOG_WARN("Skiping disk the image checksum because `--skip disk-checksum`");
+        LOG_WARN(
+            "Skiping disk the image checksum because `--skip disk-checksum`");
         return true;
     }
 
@@ -107,12 +108,10 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
     auto checksum = cloyster::services::files::checksum(path);
     LOG_INFO("SHA256 checksum of file {} is: {}", path.string(), checksum);
 
-    if (checksum
-        == hash_map.find(path.filename().string())->second) {
+    if (checksum == hash_map.find(path.filename().string())->second) {
         LOG_TRACE("Checksum - The disk image is valid")
         return true;
     }
-
 
     LOG_TRACE("Checksum - The disk image is invalid. Maybe you're using a "
               "custom image?");

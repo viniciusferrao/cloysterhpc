@@ -113,16 +113,19 @@ PresenterNetwork::PresenterNetwork(std::unique_ptr<Cluster>& model,
     : Presenter(model, view)
     , m_network(std::make_unique<Network>(profile, type))
 {
-    LOG_DEBUG("Added {} network with type {}", cloyster::utils::enums::toString(profile),
+    LOG_DEBUG("Added {} network with type {}",
+        cloyster::utils::enums::toString(profile),
         cloyster::utils::enums::toString(type));
 
-    LOG_DEBUG("Added connection to {} network", cloyster::utils::enums::toString(profile));
+    LOG_DEBUG("Added connection to {} network",
+        cloyster::utils::enums::toString(profile));
 
     // TODO: This should be on the header and be constexpr (if possible)
     m_view->message(Messages::title,
         fmt::format(
             "We will now ask questions about your {} ({}) network interface",
-            cloyster::utils::enums::toString(profile), cloyster::utils::enums::toString(type))
+            cloyster::utils::enums::toString(profile),
+            cloyster::utils::enums::toString(type))
             .c_str());
 
     auto interfaces = retrievePossibleInterfaces(nc);

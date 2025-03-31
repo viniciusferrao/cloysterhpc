@@ -12,14 +12,14 @@ using cloyster::models::OS;
 
 /**
  * @brief Abstract operating system utilities, like probing kernel version or
- * packages installed. Use this class to avoid spreading distro dependent commands
- * in the installation repices.
+ * packages installed. Use this class to avoid spreading distro dependent
+ * commands in the installation repices.
  *
  * @details The implementations are hidden in the object file, client code
  * should usually consume this behind a Singleton<IOSService> pointer to ensure
  * proper dynamic dispatch. The initialization uses factory function to generate
- * the proper instance at runtime. The singleton is intialized based the cluster's
- * headnode OS instance.
+ * the proper instance at runtime. The singleton is intialized based the
+ * cluster's headnode OS instance.
  *
  * This interface must be enough to absctract OS command from the installation
  * recipes used by the installer. Also this interface is for getting runtime
@@ -41,11 +41,12 @@ public:
     [[nodiscard]] virtual std::string getKernelRunning() const = 0;
 
     [[nodiscard]] virtual std::string getLocale() const = 0;
-    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const = 0;
+    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const
+        = 0;
 
-    // These methods are const because the implementation is expected to be stateless
-    // The implementation is expect to be stateless to avoid double source of true.
-    // In-memory state should live in the OS model
+    // These methods are const because the implementation is expected to be
+    // stateless The implementation is expect to be stateless to avoid double
+    // source of true. In-memory state should live in the OS model
     virtual bool install(std::string_view package) const = 0;
     virtual bool groupInstall(std::string_view package) const = 0;
     virtual bool remove(std::string_view package) const = 0;

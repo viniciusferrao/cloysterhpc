@@ -11,7 +11,6 @@ using cloyster::services::Stream;
 
 namespace {
 
-
 std::tuple<bool, std::optional<std::string>> retrieveLine(
     boost::process::ipstream& pipe_stream,
     const std::function<std::string(boost::process::ipstream&)>& linecheck)
@@ -48,7 +47,6 @@ CommandProxy runCommandIter(
 
     return CommandProxy {};
 }
-
 
 int runCommand(const std::string& command, std::list<std::string>& output,
     bool overrideDryRun)
@@ -112,20 +110,19 @@ std::optional<std::string> CommandProxy::getUntil(char chr)
         return std::nullopt;
     }
 
-    auto [new_valid, out_line]
-        = retrieveLine(pipe_stream, [this, chr](boost::process::ipstream& pipe) {
-              if (std::string line; std::getline(pipe, line, chr)) {
-                  return line;
-              }
+    auto [new_valid, out_line] = retrieveLine(
+        pipe_stream, [this, chr](boost::process::ipstream& pipe) {
+            if (std::string line; std::getline(pipe, line, chr)) {
+                return line;
+            }
 
-              valid = false;
-              return std::string {};
-          });
+            valid = false;
+            return std::string {};
+        });
 
     valid = new_valid;
     return out_line;
 }
-
 
 // Runner impl
 int Runner::executeCommand(const std::string& cmd)
@@ -133,9 +130,9 @@ int Runner::executeCommand(const std::string& cmd)
     return runCommand(cmd, true);
 }
 
-CommandProxy Runner::executeCommandIter(const std::string& cmd, Stream  /*out*/)
+CommandProxy Runner::executeCommandIter(const std::string& cmd, Stream /*out*/)
 {
-    return CommandProxy{}; // Return an invalid CommandProxy
+    return CommandProxy {}; // Return an invalid CommandProxy
 }
 
 int Runner::downloadFile(const std::string& url, const std::string& file)
@@ -144,11 +141,11 @@ int Runner::downloadFile(const std::string& url, const std::string& file)
     return this->executeCommand(cmd);
 }
 
-
 void Runner::checkCommand(const std::string& cmd)
 {
     if (runCommand(cmd, true) != 0) {
-        throw std::runtime_error(fmt::format("ERROR: Command failed '{}'", cmd));
+        throw std::runtime_error(
+            fmt::format("ERROR: Command failed '{}'", cmd));
     }
 }
 
@@ -156,11 +153,11 @@ std::vector<std::string> Runner::checkOutput(const std::string& cmd)
 {
     std::list<std::string> output;
     if (runCommand(cmd, output, false) != 0) {
-        throw std::runtime_error(fmt::format("ERROR: Command failed '{}'", cmd));
+        throw std::runtime_error(
+            fmt::format("ERROR: Command failed '{}'", cmd));
     }
     return output | std::ranges::to<std::vector>();
 }
-
 
 int DryRunner::executeCommand(const std::string& cmd)
 {
@@ -179,11 +176,11 @@ std::vector<std::string> DryRunner::checkOutput(const std::string& cmd)
     return {};
 }
 
-
-CommandProxy DryRunner::executeCommandIter(const std::string& cmd, Stream  /*out*/)
+CommandProxy DryRunner::executeCommandIter(
+    const std::string& cmd, Stream /*out*/)
 {
     LOG_WARN("Dry Run: Would execute iterative command: {}", cmd);
-    return CommandProxy{}; // Return an invalid CommandProxy
+    return CommandProxy {}; // Return an invalid CommandProxy
 }
 
 int DryRunner::downloadFile(const std::string& url, const std::string& file)
@@ -192,18 +189,15 @@ int DryRunner::downloadFile(const std::string& url, const std::string& file)
     return OK;
 }
 
-
 int MockRunner::executeCommand(const std::string& cmd)
 {
     m_cmds.push_back(cmd);
     return OK;
 }
 
-void MockRunner::checkCommand(const std::string& cmd)
-{
-}
+void MockRunner::checkCommand(const std::string& cmd) { }
 
-std::vector<std::string> MockRunner::checkOutput(const std::string&  /*cmd*/)
+std::vector<std::string> MockRunner::checkOutput(const std::string& /*cmd*/)
 {
     return {};
 }
@@ -213,13 +207,15 @@ const std::vector<std::string>& MockRunner::listCommands() const
     return m_cmds;
 }
 
-CommandProxy MockRunner::executeCommandIter(const std::string& cmd, Stream  /*out*/)
+CommandProxy MockRunner::executeCommandIter(
+    const std::string& cmd, Stream /*out*/)
 {
     m_cmds.push_back(cmd);
-    return CommandProxy{}; // Return an invalid CommandProxy
+    return CommandProxy {}; // Return an invalid CommandProxy
 }
 
-int MockRunner::downloadFile(const std::string& url, const std::string& file) {
+int MockRunner::downloadFile(const std::string& url, const std::string& file)
+{
     auto cmd = fmt::format("wget -NP {} {}", file, url);
     m_cmds.push_back(cmd);
     return OK;

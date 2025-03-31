@@ -41,7 +41,8 @@ PresenterGeneralSettings::PresenterGeneralSettings(
                 Messages::BootTarget::help))
             .value());
     LOG_DEBUG("{} boot target set on headnode",
-        cloyster::utils::enums::toString<Headnode::BootTarget>(m_model->getHeadnode().getBootTarget()));
+        cloyster::utils::enums::toString<Headnode::BootTarget>(
+            m_model->getHeadnode().getBootTarget()));
 }
 
 };

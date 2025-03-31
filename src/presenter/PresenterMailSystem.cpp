@@ -25,7 +25,8 @@ PresenterMailSystem::PresenterMailSystem(
         auto mailSystem = m_model->getMailSystem().value();
 
         LOG_DEBUG("Enabled Postfix with profile: {}",
-            cloyster::utils::enums::toString<Postfix::Profile>(mailSystemProfile));
+            cloyster::utils::enums::toString<Postfix::Profile>(
+                mailSystemProfile));
 
         switch (mailSystemProfile) {
             case Postfix::Profile::Local: {

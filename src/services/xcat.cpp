@@ -13,12 +13,11 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/execution.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
-#include <cloysterhpc/services/osservice.h>
-
 
 namespace {
 using cloyster::models::Cluster;
@@ -77,13 +76,9 @@ XCAT::XCAT()
 
     // Ensure image name is setted
     generateOSImageName(ImageType::Netboot, NodeType::Compute);
-
 }
 
-XCAT::Image XCAT::getImage() const
-{
-    return m_stateless;
-}
+XCAT::Image XCAT::getImage() const { return m_stateless; }
 
 void XCAT::installPackages()
 {
@@ -136,8 +131,7 @@ void XCAT::setDHCPInterfaces(std::string_view interface)
 void XCAT::setDomain(std::string_view domain)
 {
     auto runner = cloyster::Singleton<services::IRunner>::get();
-    runner->checkCommand(
-        fmt::format("chdef -t site domain={}", domain));
+    runner->checkCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
 namespace {
@@ -146,11 +140,11 @@ namespace {
         LOG_ASSERT(
             image.size() > 0, "Trying to generate an image with empty name");
         auto runner = cloyster::Singleton<services::IRunner>::get();
-        std::vector<std::string> output = runner->checkOutput(
-            fmt::format("lsdef -t osimage {}", image));
+        std::vector<std::string> output
+            = runner->checkOutput(fmt::format("lsdef -t osimage {}", image));
         if (output.size() > 0
-                && output.front()
-                    != "Could not find any object definitions to display") {
+            && output.front()
+                != "Could not find any object definitions to display") {
             LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o "
                      "{}` to remove "
                      "the image if you want it to be regenerated.",
@@ -166,26 +160,26 @@ namespace {
 
 void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
-    cloyster::Singleton<IRunner>::get()
-        ->checkCommand(fmt::format("copycds {}", diskImage.string()));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("copycds {}", diskImage.string()));
 }
 
 void XCAT::genimage()
 {
-    cloyster::Singleton<IRunner>::get()
-        ->checkCommand(fmt::format("genimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("genimage {}", m_stateless.osimage));
 }
 
 void XCAT::packimage()
 {
-    cloyster::Singleton<IRunner>::get()
-        ->checkCommand(fmt::format("packimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("packimage {}", m_stateless.osimage));
 }
 
 void XCAT::nodeset(std::string_view nodes)
 {
-    cloyster::Singleton<IRunner>::get()
-        ->checkCommand(fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree()
@@ -232,47 +226,46 @@ void XCAT::configureInfiniband()
 
                 break;
 
-            case OFED::Kind::Mellanox:
-                {
-                    auto repoManager = cloyster::Singleton<RepoManager>::get();
-                    auto runner = cloyster::Singleton<IRunner>::get();
-                    auto arch = cloyster::utils::enums::toString(cluster()->getNodes()[0].getOS().getArch());
-                    auto osService = cloyster::Singleton<IOSService>::get();
+            case OFED::Kind::Mellanox: {
+                auto repoManager = cloyster::Singleton<RepoManager>::get();
+                auto runner = cloyster::Singleton<IRunner>::get();
+                auto arch = cloyster::utils::enums::toString(
+                    cluster()->getNodes()[0].getOS().getArch());
+                auto osService = cloyster::Singleton<IOSService>::get();
 
-                    // Add the rpm to the image
-                    m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
-                    m_stateless.otherpkgs.emplace_back("doca-ofed");
+                // Add the rpm to the image
+                m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
+                m_stateless.otherpkgs.emplace_back("doca-ofed");
 
+                // The kernel modules are build by the OFED.cpp module, see
+                // OFED.cpp
+                const auto kernelVersion = osService->getKernelInstalled();
+                // Configure Apache to serve the RPM repository
+                const auto repoName
+                    = fmt::format("doca-kernel-{}", kernelVersion);
+                const auto localRepo = cloyster::createHTTPRepo(repoName);
 
-                    // The kernel modules are build by the OFED.cpp module, see OFED.cpp
-                    const auto kernelVersion = osService->getKernelInstalled();
-                    // Configure Apache to serve the RPM repository
-                    const auto repoName = fmt::format("doca-kernel-{}", kernelVersion);
-                    const auto localRepo = cloyster::createHTTPRepo(repoName);
+                // @FIXME: Copy only the rpms for the proper kernel version
 
-                    // @FIXME: Copy only the rpms for the proper kernel version
+                // Create the RPM repository
+                runner->checkCommand(fmt::format(
+                    "bash -c \"cp -v "
+                    "/usr/share/doca-host-*/Modules/{}.{}/*.rpm {}\"",
+                    kernelVersion, arch, localRepo.directory.string()));
+                runner->checkCommand(
+                    fmt::format("createrepo {}", localRepo.directory.string()));
 
-                    // Create the RPM repository
-                    runner->checkCommand(
-                        fmt::format("bash -c \"cp -v /usr/share/doca-host-*/Modules/{}.{}/*.rpm {}\"",
-                                    kernelVersion, arch, localRepo.directory.string()));
-                    runner->checkCommand(
-                        fmt::format("createrepo {}", localRepo.directory.string()));
+                auto docaUrl = repoManager->repo("doca")->uri().value();
+                runner->checkCommand(fmt::format(
+                    "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                    m_stateless.osimage, docaUrl));
 
+                // Add the local repository to the stateless image
+                runner->checkCommand(fmt::format(
+                    "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                    m_stateless.osimage, localRepo.url));
 
-                    auto docaUrl = repoManager->repo("doca")->uri().value();
-                    runner->checkCommand(
-                        fmt::format("bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
-                            m_stateless.osimage, docaUrl));
-
-                    // Add the local repository to the stateless image
-                    runner->checkCommand(
-                        fmt::format(
-                            "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
-                             m_stateless.osimage, localRepo.url));
-
-                }
-                break;
+            } break;
 
             case OFED::Kind::Oracle:
                 throw std::logic_error(
@@ -541,7 +534,8 @@ void XCAT::addNode(const Node& node)
     std::string command = fmt::format(
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
         "netboot=xnba ",
-        node.getHostname(), cloyster::utils::enums::toString(node.getOS().getArch()),
+        node.getHostname(),
+        cloyster::utils::enums::toString(node.getOS().getArch()),
         node.getConnection(Network::Profile::Management)
             .getAddress()
             .to_string(),
@@ -600,7 +594,7 @@ void XCAT::setNodesBoot()
 }
 
 void XCAT::resetNodes()
-{ 
+{
     auto runner = cloyster::Singleton<IRunner>::get();
     runner->executeCommand("rpower compute reset");
 }
@@ -707,7 +701,6 @@ void XCAT::installRepositories()
         }
     }
 }
-
 
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {

@@ -30,9 +30,8 @@ void NFS::setFullPath()
 void NFS::configure()
 {
     LOG_INFO("Configuring NFS");
-    cloyster::Singleton<cloyster::services::IOSService>::get()
-        ->install("nfs-utils");
-
+    cloyster::Singleton<cloyster::services::IOSService>::get()->install(
+        "nfs-utils");
 
     // TODO: detect nfs existence before proceeding
     // might check if nfs-utils package is installed.
@@ -45,8 +44,8 @@ void NFS::configure()
                     "{} *({},fsid={})\n",
             m_fullPath, m_permissions, 11));
 
-    cloyster::Singleton<cloyster::IRunner>::get()
-        ->executeCommand("exportfs -a");
+    cloyster::Singleton<cloyster::IRunner>::get()->executeCommand(
+        "exportfs -a");
 
     cloyster::touchFile(fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs",
         installPath, m_directoryName));

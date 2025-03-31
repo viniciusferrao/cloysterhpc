@@ -185,8 +185,7 @@ public:
     void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<Postfix>& getMailSystem();
-    void setMailSystem(
-        Postfix::Profile profile);
+    void setMailSystem(Postfix::Profile profile);
 
     const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);

@@ -51,16 +51,20 @@ public:
     virtual ~IRunner() = default;
 
     virtual int executeCommand(const std::string&) = 0;
-    virtual CommandProxy executeCommandIter(const std::string&, Stream out = Stream::Stdout) = 0;
+    virtual CommandProxy executeCommandIter(
+        const std::string&, Stream out = Stream::Stdout)
+        = 0;
     virtual void checkCommand(const std::string&) = 0;
     virtual std::vector<std::string> checkOutput(const std::string&) = 0;
-    virtual int downloadFile(const std::string& url, const std::string& file) = 0;
+    virtual int downloadFile(const std::string& url, const std::string& file)
+        = 0;
 };
 
 class Runner final : public IRunner {
 public:
     int executeCommand(const std::string& cmd) override;
-    CommandProxy executeCommandIter(const std::string& cmd, Stream out = Stream::Stdout) override;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;
@@ -68,7 +72,8 @@ public:
 
 class DryRunner final : public IRunner {
 public:
-    CommandProxy executeCommandIter(const std::string& cmd, Stream out = Stream::Stdout) override;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
     int executeCommand(const std::string& cmd) override;
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
@@ -77,7 +82,8 @@ public:
 
 class MockRunner final : public IRunner {
 public:
-    CommandProxy executeCommandIter(const std::string& cmd, Stream out = Stream::Stdout) override;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
     int executeCommand(const std::string& cmd) override;
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;

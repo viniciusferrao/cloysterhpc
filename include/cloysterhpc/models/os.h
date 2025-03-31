@@ -121,18 +121,17 @@ public:
     void printData() const;
 };
 
-
 }; // namespace cloyster::models
 
 template <>
 struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
     template <typename FormatContext>
     auto format(const cloyster::models::OS& osinfo, FormatContext& ctx) const
-    -> decltype(ctx.out())
+        -> decltype(ctx.out())
     {
-        return fmt::format_to(ctx.out(), "OS(distro={}, kernel={})", osinfo.getDistroString(), osinfo.getKernel());
+        return fmt::format_to(ctx.out(), "OS(distro={}, kernel={})",
+            osinfo.getDistroString(), osinfo.getKernel());
     }
 };
-
 
 #endif // CLOYSTERHPC_OS_H_

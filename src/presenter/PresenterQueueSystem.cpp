@@ -14,9 +14,11 @@ PresenterQueueSystem::PresenterQueueSystem(
     : Presenter(model, view)
 {
 
-    m_model->setQueueSystem(cloyster::utils::enums::ofStringOpt<QueueSystem::Kind>(
-        m_view->listMenu(Messages::title, Messages::question,
-            cloyster::utils::enums::toStrings<QueueSystem::Kind>(), Messages::help))
+    m_model->setQueueSystem(
+        cloyster::utils::enums::ofStringOpt<QueueSystem::Kind>(
+            m_view->listMenu(Messages::title, Messages::question,
+                cloyster::utils::enums::toStrings<QueueSystem::Kind>(),
+                Messages::help))
             .value());
 
     // TODO: Placeholder data
@@ -50,7 +52,8 @@ PresenterQueueSystem::PresenterQueueSystem(
 
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
-                    cloyster::utils::enums::ofStringOpt<PBS::ExecutionPlace>(execution)
+                    cloyster::utils::enums::ofStringOpt<PBS::ExecutionPlace>(
+                        execution)
                         .value());
                 LOG_DEBUG("Set PBS Execution Place: {}",
                     cloyster::utils::enums::toString<PBS::ExecutionPlace>(

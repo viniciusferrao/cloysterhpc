@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/presenter/PresenterLocale.h>
+#include <cloysterhpc/services/osservice.h>
 
 namespace cloyster::presenter {
 

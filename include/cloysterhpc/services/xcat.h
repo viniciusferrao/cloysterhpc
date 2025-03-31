@@ -18,7 +18,6 @@
 #include <cloysterhpc/services/provisioner.h>
 #include <cloysterhpc/services/shell.h>
 
-
 namespace cloyster::services {
 
 /**
@@ -58,7 +57,6 @@ private:
      * This enum specifies the types of nodes in the cluster.
      */
     enum class NodeType { Compute, Service };
-
 
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
@@ -187,7 +185,6 @@ private:
 public:
     XCAT();
 
-
     /**
      * @brief Download the repositories
      */
@@ -270,21 +267,22 @@ public:
     void configureInfiniband();
 
     /**
-    * @brief Return the Image
-    */
+     * @brief Return the Image
+     */
     [[nodiscard]] Image getImage() const;
 };
 
 };
 
 template <>
-struct fmt::formatter<cloyster::services::XCAT::Image> : formatter<string_view> {
+struct fmt::formatter<cloyster::services::XCAT::Image>
+    : formatter<string_view> {
     template <typename FormatContext>
-    auto format(const cloyster::services::XCAT::Image& image, FormatContext& ctx) const
-    -> decltype(ctx.out())
+    auto format(const cloyster::services::XCAT::Image& image,
+        FormatContext& ctx) const -> decltype(ctx.out())
     {
-        return fmt::format_to(ctx.out(), "XCAT::Image({}, {})", 
-                              image.osimage, image.otherpkgs);
+        return fmt::format_to(
+            ctx.out(), "XCAT::Image({}, {})", image.osimage, image.otherpkgs);
     }
 };
 

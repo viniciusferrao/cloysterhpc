@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/osservice.h>
-#include <cloysterhpc/functions.h>
 #include <filesystem>
 
 namespace cloyster::models {
@@ -18,9 +18,9 @@ SLURM::SLURM(const Cluster& cluster)
 }
 
 void SLURM::installServer()
-{ 
-    cloyster::Singleton<cloyster::services::IOSService>::get()
-        ->install("ohpc-slurm-server");
+{
+    cloyster::Singleton<cloyster::services::IOSService>::get()->install(
+        "ohpc-slurm-server");
 }
 
 void SLURM::configureServer()

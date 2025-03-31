@@ -8,10 +8,10 @@
 
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
-#include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/ofed.h>
+#include <cloysterhpc/utils/enums.h>
 #include <optional>
 #include <vector>
 
@@ -380,7 +380,10 @@ public:
 
     ~answerfile_validation_exception() override = default;
 
-    [[nodiscard]] const char* what() const noexcept override { return message.c_str(); }
+    [[nodiscard]] const char* what() const noexcept override
+    {
+        return message.c_str();
+    }
 };
 
 };

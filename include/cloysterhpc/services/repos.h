@@ -78,7 +78,8 @@ public:
     void install(const std::vector<std::filesystem::path>& paths);
     [[nodiscard]] std::vector<std::unique_ptr<const IRepository>>
     listRepos() const;
-    [[nodiscard]] std::unique_ptr<const IRepository> repo(const std::string& repo) const;
+    [[nodiscard]] std::unique_ptr<const IRepository> repo(
+        const std::string& repo) const;
 
 private:
     void loadFiles(const std::filesystem::path& basedir);

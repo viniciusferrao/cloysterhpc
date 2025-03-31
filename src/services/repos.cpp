@@ -102,7 +102,10 @@ public:
         return m_metalink;
     };
     [[nodiscard]] bool gpgcheck() const { return m_gpgcheck; };
-    [[nodiscard]] std::optional<std::string> gpgkey() const { return m_gpgkey; };
+    [[nodiscard]] std::optional<std::string> gpgkey() const
+    {
+        return m_gpgkey;
+    };
 
     void id(std::string value) override { m_id = value; };
     void enabled(bool enabled) override { m_enabled = enabled; };
@@ -119,7 +122,10 @@ public:
         m_metalink = std::move(metalink);
     };
     void gpgcheck(bool gpgcheck) { m_gpgcheck = gpgcheck; };
-    void gpgkey(std::optional<std::string> gpgkey) { m_gpgkey = std::move(gpgkey); };
+    void gpgkey(std::optional<std::string> gpgkey)
+    {
+        m_gpgkey = std::move(gpgkey);
+    };
 
     void valid() const;
 
@@ -301,15 +307,16 @@ public:
         try {
             auto repoFile = m_filesIdx.at(repoName);
             auto repoObj = repoFile->repo(repoName);
-            return std::make_unique<const RPMRepository>(*repoObj); // copy to unique ptr
+            return std::make_unique<const RPMRepository>(
+                *repoObj); // copy to unique ptr
         } catch (const std::out_of_range& e) {
-            auto repos = m_filesIdx | std::views::transform([](const auto& pair){
-                return pair.first;
-            });
-            auto msg = fmt::format(
-                "Cannot enable repository {}, no such repository loaded, repositories: available: {}",
-                repoName,
-                fmt::join(repos, ","));
+            auto repos = m_filesIdx
+                | std::views::transform(
+                    [](const auto& pair) { return pair.first; });
+            auto msg
+                = fmt::format("Cannot enable repository {}, no such repository "
+                              "loaded, repositories: available: {}",
+                    repoName, fmt::join(repos, ","));
             throw std::runtime_error(msg);
         }
     }
@@ -356,7 +363,7 @@ public:
     {
         // Function to iterate over map by id
         constexpr auto byId
-            = [](auto& repo) { return std::hash<std::string>{}(repo.id()); };
+            = [](auto& repo) { return std::hash<std::string> {}(repo.id()); };
 
         std::unordered_set<RPMRepository, decltype(byId)> output;
         for (auto& [_id1, repoFile] : m_filesIdx) {
@@ -644,11 +651,13 @@ std::vector<std::unique_ptr<const IRepository>> RepoManager::listRepos() const
     }
 }
 
-std::unique_ptr<const IRepository> RepoManager::repo(const std::string& repo) const
+std::unique_ptr<const IRepository> RepoManager::repo(
+    const std::string& repo) const
 {
     switch (m_os.getPackageType()) {
         case OS::PackageType::RPM:
-            return static_cast<std::unique_ptr<const IRepository>>(m_impl->rpm.repo(repo));
+            return static_cast<std::unique_ptr<const IRepository>>(
+                m_impl->rpm.repo(repo));
             break;
         default:
             throw std::logic_error("Not implemented");

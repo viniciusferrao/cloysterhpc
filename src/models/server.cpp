@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/models/server.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/server.h>
 #include <cloysterhpc/services/log.h>
 #include <regex>
 #include <string_view>

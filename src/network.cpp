@@ -96,8 +96,8 @@ void Network::setAddress(const address& ip)
         throw std::runtime_error("IP address cannot be 0.0.0.0");
 
     m_address = ip;
-    LOG_TRACE("{} network address set to {}", cloyster::utils::enums::toString(m_profile),
-        m_address.to_string());
+    LOG_TRACE("{} network address set to {}",
+        cloyster::utils::enums::toString(m_profile), m_address.to_string());
 }
 
 void Network::setAddress(const std::string& ip)

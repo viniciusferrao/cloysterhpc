@@ -7,9 +7,9 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/functions.h>
 #include <cstddef>
 #include <fmt/core.h>
 #include <iterator>
@@ -391,7 +391,8 @@ void AnswerFile::loadSystemSettings()
 
     // Verify supported distros
     auto afDistro = m_ini.getValue("system", "distro", false, false);
-    if (const auto& formatDistro = cloyster::utils::enums::ofStringOpt<OS::Distro>(
+    if (const auto& formatDistro
+        = cloyster::utils::enums::ofStringOpt<OS::Distro>(
             afDistro, cloyster::utils::enums::Case::Insensitive)) {
         system.distro = formatDistro.value();
     } else {
@@ -545,7 +546,6 @@ bool AnswerFile::checkEnabled(const std::string& section)
         && m_ini.getValue(section, "enabled") == "1";
 }
 
-
 void AnswerFile::loadPostfix()
 {
     if (!m_ini.exists("postfix"))
@@ -560,7 +560,8 @@ void AnswerFile::loadPostfix()
         boost::token_compress_on);
 
     auto castProfile = cloyster::utils::enums::ofStringOpt<Postfix::Profile>(
-        m_ini.getValue("postfix", "profile", false), cloyster::utils::enums::Case::Insensitive);
+        m_ini.getValue("postfix", "profile", false),
+        cloyster::utils::enums::Case::Insensitive);
 
     if (castProfile.has_value())
         postfix.profile = castProfile.value();
@@ -603,7 +604,7 @@ void AnswerFile::loadOFED()
         ofed.kind = kind;
         auto afVersion = m_ini.getValue("ofed", "version");
         if (afVersion != "") {
-            ofed.version =  afVersion;
+            ofed.version = afVersion;
         } else {
             ofed.version = "latest"; // use as default
         }

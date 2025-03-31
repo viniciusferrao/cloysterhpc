@@ -11,7 +11,6 @@
 
 #include <cloysterhpc/services/repos.h>
 
-
 /**
  * @class OFED
  * @brief A class representing the OpenFabrics Enterprise Distribution (OFED).
@@ -35,9 +34,10 @@ private:
 public:
     OFED() = default;
     OFED(Kind kind, std::string version)
-    : m_kind(kind)
-    , m_version(std::move(version))
-    {}
+        : m_kind(kind)
+        , m_version(std::move(version))
+    {
+    }
 
     void setKind(Kind kind);
     [[nodiscard]] Kind getKind() const;

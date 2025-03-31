@@ -57,14 +57,16 @@ PresenterInstall::PresenterInstall(
         Call<PresenterNetwork>(nc, Network::Profile::External);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-            cloyster::utils::enums::toString(Network::Profile::External), ex.what());
+            cloyster::utils::enums::toString(Network::Profile::External),
+            ex.what());
     }
 
     try {
         Call<PresenterNetwork>(nc, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-            cloyster::utils::enums::toString(Network::Profile::Management), ex.what());
+            cloyster::utils::enums::toString(Network::Profile::Management),
+            ex.what());
     }
 
 #endif

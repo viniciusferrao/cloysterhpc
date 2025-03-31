@@ -1,10 +1,10 @@
-#include <ranges>
-#include <stdexcept>
-#include <utility>
 #include <cstddef>
 #include <fstream>
 #include <ios>
 #include <istream>
+#include <ranges>
+#include <stdexcept>
+#include <utility>
 
 #include <glibmm/checksum.h>
 #include <glibmm/fileutils.h>
@@ -138,7 +138,8 @@ std::string checksum(const std::string& data)
     return checksum.get_string();
 }
 
-std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize)
+std::string checksum(
+    const std::filesystem::path& path, const std::size_t chunkSize)
 {
     Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
     std::ifstream file(path, std::ios::in | std::ios::binary);

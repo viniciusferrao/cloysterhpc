@@ -90,8 +90,8 @@ PresenterNodesOperationalSystem::selectVersion(OS::Distro distro)
     auto nameiter = version_map.at(distro)
         | std::views::transform([](const PresenterNodesVersionCombo& c) {
               auto [maj, min, arch] = c;
-              return fmt::format(
-                  "{}.{} ({})", maj, min, cloyster::utils::enums::toString(arch));
+              return fmt::format("{}.{} ({})", maj, min,
+                  cloyster::utils::enums::toString(arch));
           });
 
     std::vector<std::string> versions;
@@ -156,8 +156,7 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             = distroDownloadURL.substr(distroDownloadURL.find_last_of('/'));
 
         //@TODO Implement newt GUI progress bar
-        auto command = Singleton<IRunner>::get()
-            ->executeCommandIter(
+        auto command = Singleton<IRunner>::get()->executeCommandIter(
             fmt::format("wget -NP /root {}", distroDownloadURL),
             cloyster::services::Stream::Stderr);
 
@@ -165,7 +164,8 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             Messages::OperationalSystemDownloadIso::Progress::download,
             selectedDistro->first, distroDownloadURL);
         m_view->progressMenu(Messages::title, desc.c_str(), std::move(command),
-            [&](cloyster::services::CommandProxy& cmd) -> std::optional<double> {
+            [&](cloyster::services::CommandProxy& cmd)
+                -> std::optional<double> {
                 auto out = cmd.getline();
                 if (!out) {
                     return std::nullopt;

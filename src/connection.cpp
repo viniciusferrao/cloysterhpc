@@ -4,8 +4,8 @@
  */
 
 #include <boost/system/detail/errc.hpp>
-#include <cloysterhpc/functions.h>
 #include <cloysterhpc/connection.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 

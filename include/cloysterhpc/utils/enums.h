@@ -2,14 +2,15 @@
  * @file cloyster_utils_enum.h
  * @brief Utility functions for enum manipulation using the magic_enum library.
  *
- * This header provides a set of utility functions within the `cloyster::utils::enums`
- * namespace to simplify working with C++ enums. It wraps the `magic_enum` library to
- * offer features such as converting enums to strings, retrieving all enum names,
- * counting enum values, and parsing strings back to enums with optional case-insensitive
- * matching.
+ * This header provides a set of utility functions within the
+ * `cloyster::utils::enums` namespace to simplify working with C++ enums. It
+ * wraps the `magic_enum` library to offer features such as converting enums to
+ * strings, retrieving all enum names, counting enum values, and parsing strings
+ * back to enums with optional case-insensitive matching.
  *
  * @note This header depends on the `magic_enum` library
- *       (https://github.com/Neargye/magic_enum) for enum reflection capabilities.
+ *       (https://github.com/Neargye/magic_enum) for enum reflection
+ * capabilities.
  *
  */
 
@@ -17,10 +18,10 @@
 #define CLOYSTER_UTILS_ENUM_H
 
 #include <cstdint>
+#include <magic_enum/magic_enum.hpp>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <magic_enum/magic_enum.hpp>
 
 namespace cloyster::utils::enums {
 
@@ -32,8 +33,8 @@ namespace cloyster::utils::enums {
  * case-sensitive or case-insensitive when converting strings to enum values.
  */
 enum class Case : std::uint8_t {
-    Sensitive,   ///< Case-sensitive matching (exact match required).
-    Insensitive  ///< Case-insensitive matching (e.g., "Value" matches "value").
+    Sensitive, ///< Case-sensitive matching (exact match required).
+    Insensitive ///< Case-insensitive matching (e.g., "Value" matches "value").
 };
 
 /**
@@ -43,7 +44,7 @@ enum class Case : std::uint8_t {
  * @return The string name of the enum value, or an empty string if invalid.
  */
 template <typename T>
-requires std::is_enum_v<T>
+    requires std::is_enum_v<T>
 std::string toString(T enumValue)
 {
     return static_cast<std::string>(magic_enum::enum_name<T>(enumValue));
@@ -54,8 +55,7 @@ std::string toString(T enumValue)
  * @tparam T The enum type to query. Must be an enumeration type.
  * @return A vector containing the string names of all enum values.
  */
-template <typename T>
-std::vector<std::string> toStrings()
+template <typename T> std::vector<std::string> toStrings()
 {
     auto array = magic_enum::enum_names<T>();
     std::vector<std::string> output(array.begin(), array.end());
@@ -67,8 +67,7 @@ std::vector<std::string> toStrings()
  * @tparam T The enum type to count. Must be an enumeration type.
  * @return The total number of enum values.
  */
-template <typename T>
-constexpr std::size_t count()
+template <typename T> constexpr std::size_t count()
 {
     return magic_enum::enum_count<T>();
 }
@@ -78,11 +77,11 @@ constexpr std::size_t count()
  * @tparam T The enum type to parse into. Must be an enumeration type.
  * @param str The string to parse (e.g., "Value", "value").
  * @param case_ The case sensitivity mode (default: Case::Sensitive).
- * @return An optional containing the parsed enum value, or std::nullopt if the string
- *         does not match any enum value.
+ * @return An optional containing the parsed enum value, or std::nullopt if the
+ * string does not match any enum value.
  */
 template <typename T>
-requires std::is_enum_v<T>
+    requires std::is_enum_v<T>
 std::optional<T> ofStringOpt(std::string_view str, Case case_ = Case::Sensitive)
 {
     if (case_ == Case::Insensitive) {
@@ -97,10 +96,11 @@ std::optional<T> ofStringOpt(std::string_view str, Case case_ = Case::Sensitive)
  * @code
  * enum class Color { RED, GREEN, BLUE };
  * std::string name = cloyster::utils::enums::toString(Color::GREEN); // "GREEN"
- * auto colors = cloyster::utils::enums::toStrings<Color>(); // {"RED", "GREEN", "BLUE"}
- * std::size_t count = cloyster::utils::enums::count<Color>(); // 3
- * auto parsed = cloyster::utils::enums::ofStringOpt<Color>("blue", Case::Insensitive);
- * if (parsed) { std::cout << cloyster::utils::enums::toString(*parsed) << "\n"; } // "BLUE"
+ * auto colors = cloyster::utils::enums::toStrings<Color>(); // {"RED", "GREEN",
+ * "BLUE"} std::size_t count = cloyster::utils::enums::count<Color>(); // 3 auto
+ * parsed = cloyster::utils::enums::ofStringOpt<Color>("blue",
+ * Case::Insensitive); if (parsed) { std::cout <<
+ * cloyster::utils::enums::toString(*parsed) << "\n"; } // "BLUE"
  * @endcode
  */
 

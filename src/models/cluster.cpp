@@ -33,8 +33,8 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-using cloyster::services::IRunner;
 using cloyster::services::DryRunner;
+using cloyster::services::IRunner;
 using cloyster::services::Runner;
 
 static constexpr std::unique_ptr<IRunner> makeRunner(const bool option)
@@ -92,10 +92,7 @@ void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
 const std::string& Cluster::getLocale() const { return m_locale; }
 
-void Cluster::setLocale(const std::string& locale)
-{
-    m_locale = locale;
-}
+void Cluster::setLocale(const std::string& locale) { m_locale = locale; }
 
 const std::string Cluster::getDomainName() const
 {
@@ -205,7 +202,10 @@ void Cluster::setProvisioner(Cluster::Provisioner provisioner)
 
 std::optional<OFED> Cluster::getOFED() const { return m_ofed; }
 
-void Cluster::setOFED(OFED::Kind kind, std::string version) { m_ofed = OFED(kind, std::move(version)); }
+void Cluster::setOFED(OFED::Kind kind, std::string version)
+{
+    m_ofed = OFED(kind, std::move(version));
+}
 
 std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
 {
@@ -233,8 +233,7 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
 
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(
-    Postfix::Profile profile)
+void Cluster::setMailSystem(Postfix::Profile profile)
 {
     m_mailSystem.emplace(m_systemdBus, profile);
 }
@@ -285,7 +284,8 @@ void Cluster::printNetworks(
     for (size_t i = 0; const auto& network : networks) {
 #endif
         LOG_DEBUG("Network [{}]", i++)
-        LOG_DEBUG("Profile: {}", cloyster::utils::enums::toString(network->getProfile()))
+        LOG_DEBUG("Profile: {}",
+            cloyster::utils::enums::toString(network->getProfile()))
         LOG_DEBUG("Address: {}", network->getAddress().to_string())
         LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string())
         LOG_DEBUG("Gateway: {}", network->getGateway().to_string())
@@ -320,8 +320,9 @@ void Cluster::printData()
     LOG_DEBUG("DomainName: {}", getDomainName());
     LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
     if (m_ofed) {
-         LOG_DEBUG("OFED: {} {}", utils::enums::toString(m_ofed->getKind()), m_ofed->getVersion());
-     }
+        LOG_DEBUG("OFED: {} {}", utils::enums::toString(m_ofed->getKind()),
+            m_ofed->getVersion());
+    }
 
     printNetworks(m_network);
     printConnections();
@@ -563,7 +564,8 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     // OS and Information
 
-    LOG_INFO("Distro: {}", cloyster::utils::enums::toString(answerfil.system.distro));
+    LOG_INFO("Distro: {}",
+        cloyster::utils::enums::toString(answerfil.system.distro));
     LOG_INFO("Kernel: {}", answerfil.system.kernel);
     LOG_INFO("Version: {}", answerfil.system.version);
 
@@ -590,21 +592,22 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
     if (answerfil.ofed.enabled) {
-         // Install the cofigured OFED variant
-         LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
-         auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind);
-         if (!kind) {
-            throw std::runtime_error(
-                fmt::format("Invalid OFED kind, expected one of {}, found {}. Edit the anwerfile {} [ofed] sectino and try again.",
-                            cloyster::answerfile,
-                            fmt::join(cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
-                            answerfil.ofed.kind
-                            ));
-         }
-         setOFED(kind.value(), answerfil.ofed.version.value());
+        // Install the cofigured OFED variant
+        LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
+        auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind);
+        if (!kind) {
+            throw std::runtime_error(fmt::format(
+                "Invalid OFED kind, expected one of {}, found {}. Edit the "
+                "anwerfile {} [ofed] sectino and try again.",
+                cloyster::answerfile,
+                fmt::join(
+                    cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
+                answerfil.ofed.kind));
+        }
+        setOFED(kind.value(), answerfil.ofed.version.value());
     } else {
-         // Install Inbox OFED by default
-         setOFED(OFED::Kind::Inbox);
+        // Install Inbox OFED by default
+        setOFED(OFED::Kind::Inbox);
     }
 
     setQueueSystem(QueueSystem::Kind::SLURM);

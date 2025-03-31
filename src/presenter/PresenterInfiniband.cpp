@@ -28,10 +28,12 @@ PresenterInfiniband::PresenterInfiniband(std::unique_ptr<Cluster>& model,
         // @FIXME: Prompt for the version
         m_model->setOFED(cloyster::utils::enums::ofStringOpt<OFED::Kind>(
             m_view->listMenu(Messages::title, Messages::OFED::question,
-                cloyster::utils::enums::toStrings<OFED::Kind>(), Messages::OFED::help))
+                cloyster::utils::enums::toStrings<OFED::Kind>(),
+                Messages::OFED::help))
                 .value());
         LOG_DEBUG("Set OFED stack as: {}",
-            cloyster::utils::enums::toString<OFED::Kind>(m_model->getOFED()->getKind()));
+            cloyster::utils::enums::toString<OFED::Kind>(
+                m_model->getOFED()->getKind()));
 
         try {
             Call<PresenterNetwork>(
