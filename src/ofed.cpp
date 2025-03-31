@@ -11,7 +11,6 @@
 #include <utility>
 
 using cloyster::IRunner;
-using cloyster::runCommand;
 
 namespace {
 
@@ -69,7 +68,8 @@ void OFED::install() const
 
     switch (m_kind) {
         case OFED::Kind::Inbox:
-            runCommand("dnf -y groupinstall \"Infiniband Support\"");
+            cloyster::Singleton<cloyster::services::IOSService>::get()
+                ->groupInstall("Infiniband Support");
             break;
 
         case OFED::Kind::Mellanox:

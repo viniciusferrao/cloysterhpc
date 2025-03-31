@@ -6,10 +6,9 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/functions.h>
 #include <filesystem>
-
-using cloyster::runCommand;
 
 namespace cloyster::models {
 SLURM::SLURM(const Cluster& cluster)
@@ -18,7 +17,11 @@ SLURM::SLURM(const Cluster& cluster)
     setKind(QueueSystem::Kind::SLURM);
 }
 
-void SLURM::installServer() { runCommand("dnf -y install ohpc-slurm-server"); }
+void SLURM::installServer()
+{ 
+    cloyster::Singleton<cloyster::services::IOSService>::get()
+        ->install("ohpc-slurm-server");
+}
 
 void SLURM::configureServer()
 {
@@ -52,14 +55,16 @@ void SLURM::configureServer()
 
 void SLURM::enableServer()
 {
-    runCommand("systemctl enable --now munge");
-    runCommand("systemctl enable --now slurmctld");
+    auto osservice = cloyster::Singleton<services::IOSService>::get();
+    osservice->enableService("munge");
+    osservice->enableService("slurmctld");
 }
 
 void SLURM::startServer()
 {
-    runCommand("systemctl start munge");
-    runCommand("systemctl start slurmctld");
+    auto osservice = cloyster::Singleton<services::IOSService>::get();
+    osservice->startService("munge");
+    osservice->startService("slurmctld");
 }
 
 }

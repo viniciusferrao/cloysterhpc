@@ -7,9 +7,8 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/osservice.h>
 #include <fmt/format.h>
-
-using cloyster::runCommand;
 
 NFS::NFS(std::shared_ptr<MessageBus> bus, const std::string& directoryName,
     const std::string& directoryPath, const boost::asio::ip::address& address,
@@ -31,8 +30,9 @@ void NFS::setFullPath()
 void NFS::configure()
 {
     LOG_INFO("Configuring NFS");
+    cloyster::Singleton<cloyster::services::IOSService>::get()
+        ->install("nfs-utils");
 
-    runCommand("dnf -y install nfs-utils");
 
     // TODO: detect nfs existence before proceeding
     // might check if nfs-utils package is installed.
@@ -45,7 +45,8 @@ void NFS::configure()
                     "{} *({},fsid={})\n",
             m_fullPath, m_permissions, 11));
 
-    runCommand("exportfs -a");
+    cloyster::Singleton<cloyster::IRunner>::get()
+        ->executeCommand("exportfs -a");
 
     cloyster::touchFile(fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs",
         installPath, m_directoryName));

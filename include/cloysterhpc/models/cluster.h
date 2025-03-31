@@ -19,7 +19,6 @@
 #include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/ofed.h>
-#include <cloysterhpc/services/locale.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/timezone.h>
@@ -70,7 +69,7 @@ private:
     bool m_firewall { false };
     SELinuxMode m_selinux { SELinuxMode::Disabled };
     Timezone m_timezone;
-    Locale m_locale; /* Default locale cluster wide */
+    std::string m_locale; /* Default locale cluster wide */
     std::string m_domainName;
 
     std::list<std::unique_ptr<Network>> m_network;
@@ -96,8 +95,7 @@ public:
     void setSELinux(SELinuxMode);
     [[nodiscard]] Timezone& getTimezone();
     void setTimezone(const std::string& tz);
-    [[nodiscard]] const Locale& getLocale() const;
-    void setLocale(const Locale& locale);
+    [[nodiscard]] const std::string& getLocale() const;
     void setLocale(const std::string& locale);
     [[nodiscard]] const std::string getDomainName() const;
     void setDomainName(const std::string& domainName);

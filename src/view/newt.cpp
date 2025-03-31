@@ -101,8 +101,8 @@ std::vector<const char*> Newt::convertToNewtList(
  * into a percent (a 0 to 100 value)
  */
 bool Newt::progressMenu(const char* title, const char* message,
-    cloyster::CommandProxy&& cmd,
-    std::function<std::optional<double>(cloyster::CommandProxy&)> fPercent)
+    cloyster::services::CommandProxy&& cmd,
+    std::function<std::optional<double>(cloyster::services::CommandProxy&)> fPercent)
 {
 
     std::string text;

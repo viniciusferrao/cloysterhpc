@@ -27,7 +27,8 @@ std::string_view Timezone::getTimezoneArea() const { return m_timezoneArea; }
 void Timezone::setSystemTimezone()
 {
     LOG_DEBUG("Setting system timezone to {}\n", m_timezone)
-    cloyster::runCommand(
+    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    runner->executeCommand(
         fmt::format("timedatectl set timezone {}", m_timezone));
 }
 
@@ -39,15 +40,10 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
     LOG_DEBUG("Fetching available system timezones")
-    std::list<std::string> output;
 
-// TODO: Remove this hack
-#if __APPLE__
-    output.insert(output.end(), { "UTC-3", "GMT", "America/Sao_Paolo" });
-#else // Linux or others Unixes
-    cloyster::runCommand(
-        fmt::format("timedatectl list-timezones --no-pager"), output, true);
-#endif
+    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    auto output = runner->checkOutput(
+        fmt::format("timedatectl list-timezones --no-pager"));
 
     std::multimap<std::string, std::string> timezones;
 

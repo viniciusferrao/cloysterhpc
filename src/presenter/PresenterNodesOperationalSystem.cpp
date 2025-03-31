@@ -156,15 +156,16 @@ PresenterNodesOperationalSystem::PresenterNodesOperationalSystem(
             = distroDownloadURL.substr(distroDownloadURL.find_last_of('/'));
 
         //@TODO Implement newt GUI progress bar
-        auto command = cloyster::runCommandIter(
+        auto command = Singleton<IRunner>::get()
+            ->executeCommandIter(
             fmt::format("wget -NP /root {}", distroDownloadURL),
-            cloyster::Stream::Stderr);
+            cloyster::services::Stream::Stderr);
 
         auto desc = fmt::format(
             Messages::OperationalSystemDownloadIso::Progress::download,
             selectedDistro->first, distroDownloadURL);
         m_view->progressMenu(Messages::title, desc.c_str(), std::move(command),
-            [&](cloyster::CommandProxy& cmd) -> std::optional<double> {
+            [&](cloyster::services::CommandProxy& cmd) -> std::optional<double> {
                 auto out = cmd.getline();
                 if (!out) {
                     return std::nullopt;

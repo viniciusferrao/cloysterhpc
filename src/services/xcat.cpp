@@ -97,17 +97,19 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    if (cloyster::runCommand(
+
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    if (runner->executeCommand(
             "grep -q \"extensions usr_cert\" "
             "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
         == 0) {
-        cloyster::runCommand(
+        runner->executeCommand(
             "sed -i \"s/-extensions usr_cert //g\" "
             "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-        cloyster::runCommand(
+        runner->executeCommand(
             "sed -i \"s/-extensions server //g\" "
             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
-        cloyster::runCommand("xcatconfig -f");
+        runner->executeCommand("xcatconfig -f");
     } else {
         LOG_WARN("xCAT Already patched, skipping");
     }
@@ -126,13 +128,16 @@ void XCAT::setup()
 /* TODO: Maybe create a chdef method to do it cleaner? */
 void XCAT::setDHCPInterfaces(std::string_view interface)
 {
-    cloyster::runCommand(
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    runner->checkCommand(
         fmt::format("chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface));
 }
 
 void XCAT::setDomain(std::string_view domain)
 {
-    cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    runner->checkCommand(
+        fmt::format("chdef -t site domain={}", domain));
 }
 
 namespace {
@@ -140,13 +145,12 @@ namespace {
     {
         LOG_ASSERT(
             image.size() > 0, "Trying to generate an image with empty name");
-        std::list<std::string> output;
-        int code = cloyster::runCommand(
-            fmt::format("lsdef -t osimage {}", image), output);
-        if (code == 0 // success
-            && (output.size() > 0
+        auto runner = cloyster::Singleton<services::IRunner>::get();
+        std::vector<std::string> output = runner->checkOutput(
+            fmt::format("lsdef -t osimage {}", image));
+        if (output.size() > 0
                 && output.front()
-                    != "Could not find any object definitions to display")) {
+                    != "Could not find any object definitions to display") {
             LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o "
                      "{}` to remove "
                      "the image if you want it to be regenerated.",
@@ -162,23 +166,26 @@ namespace {
 
 void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
-    cloyster::runCommand(fmt::format("copycds {}", diskImage.string()));
+    cloyster::Singleton<IRunner>::get()
+        ->checkCommand(fmt::format("copycds {}", diskImage.string()));
 }
 
 void XCAT::genimage()
 {
-    cloyster::runCommand(fmt::format("genimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()
+        ->checkCommand(fmt::format("genimage {}", m_stateless.osimage));
 }
 
 void XCAT::packimage()
 {
-    cloyster::runCommand(fmt::format("packimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()
+        ->checkCommand(fmt::format("packimage {}", m_stateless.osimage));
 }
 
 void XCAT::nodeset(std::string_view nodes)
 {
-    cloyster::runCommand(
-        fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()
+        ->checkCommand(fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree()
@@ -411,22 +418,21 @@ void XCAT::customizeImage()
     // Permission fixes for munge
     if (cluster()->getQueueSystem().value()->getKind()
         == models::QueueSystem::Kind::SLURM) {
-        // @TODO This is using the Runner above and cloyster::runCommand here
-        //   choose only one!
-        cloyster::runCommand(
+        auto runner = cloyster::Singleton<IRunner>::get();
+        runner->executeCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));
-        cloyster::runCommand(
+        runner->executeCommand(
             fmt::format("mkdir -p {0}/var/lib/munge {0}/var/log/munge "
                         "{0}/etc/munge {0}/run/munge",
                 m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/var/lib/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/var/log/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/etc/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/run/munge", m_stateless.chroot.string()));
     }
 }
@@ -490,8 +496,9 @@ void XCAT::configureEL9()
         commands.insert(commands.end(), temp.begin(), temp.end());
     }
 
+    auto runner = cloyster::Singleton<IRunner>::get();
     for (const auto& command : commands) {
-        cloyster::runCommand(command);
+        runner->executeCommand(command);
     }
 }
 
@@ -559,19 +566,22 @@ void XCAT::addNode(const Node& node)
     } catch (...) {
     }
 
-    cloyster::runCommand(command);
+    cloyster::Singleton<IRunner>::get()->executeCommand(command);
 }
 
 void XCAT::addNodes()
 {
-    for (const auto& node : cluster()->getNodes())
+    for (const auto& node : cluster()->getNodes()) {
         addNode(node);
+    }
+
+    auto runner = cloyster::Singleton<IRunner>::get();
 
     // TODO: Create separate functions
-    cloyster::runCommand("makehosts");
-    cloyster::runCommand("makedhcp -n");
-    cloyster::runCommand("makedns -n");
-    cloyster::runCommand("makegocons");
+    runner->executeCommand("makehosts");
+    runner->executeCommand("makedhcp -n");
+    runner->executeCommand("makedns -n");
+    runner->executeCommand("makegocons");
     setNodesImage();
 }
 
@@ -585,10 +595,15 @@ void XCAT::setNodesBoot()
 {
     // TODO: Do proper checking if a given node have BMC support, and then issue
     //  rsetboot only on the compatible machines instead of running in compute.
-    cloyster::runCommand("rsetboot compute net");
+    auto runner = cloyster::Singleton<IRunner>::get();
+    runner->executeCommand("rsetboot compute net");
 }
 
-void XCAT::resetNodes() { cloyster::runCommand("rpower compute reset"); }
+void XCAT::resetNodes()
+{ 
+    auto runner = cloyster::Singleton<IRunner>::get();
+    runner->executeCommand("rpower compute reset");
+}
 
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {

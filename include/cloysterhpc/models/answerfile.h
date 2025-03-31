@@ -8,9 +8,9 @@
 
 #include <boost/asio.hpp>
 #include <cloysterhpc/inifile.h>
+#include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/tools/ITool.h>
 #include <cloysterhpc/ofed.h>
 #include <optional>
 #include <vector>
@@ -134,8 +134,6 @@ private:
         std::optional<AFNode> generic;
         std::vector<AFNode> nodes;
     };
-
-    std::vector<std::shared_ptr<ITool>> m_tools;
 
     struct AFPostfix {
         struct SASL {
@@ -360,7 +358,6 @@ public:
      */
     void loadFile(const std::filesystem::path& path);
     void dumpFile(const std::filesystem::path& path);
-    std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);

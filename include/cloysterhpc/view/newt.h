@@ -8,6 +8,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/view.h>
 #include <fmt/format.h>
@@ -277,8 +278,8 @@ public:
      * into a percent (a 0 to 100 value)
      */
     bool progressMenu(const char* title, const char* message,
-        cloyster::CommandProxy&&,
-        std::function<std::optional<double>(cloyster::CommandProxy&)> fPercent);
+        cloyster::services::CommandProxy&&,
+        std::function<std::optional<double>(cloyster::services::CommandProxy&)> fPercent);
 
     // TODO:
     //  * Optimize for std::string_view and std::string.

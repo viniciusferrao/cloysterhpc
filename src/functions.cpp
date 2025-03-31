@@ -26,117 +26,7 @@
 
 namespace cloyster {
 
-namespace {
-    std::tuple<bool, std::optional<std::string>> retrieveLine(
-        boost::process::ipstream& pipe_stream,
-        const std::function<std::string(boost::process::ipstream&)>& linecheck)
-    {
-        if (pipe_stream.good()) {
-            return make_tuple(true, make_optional(linecheck(pipe_stream)));
-        }
-
-        return make_tuple(pipe_stream.good(), std::nullopt);
-    }
-} // anonymous namespace
-
 using cloyster::services::repos::RepoManager;
-
-std::optional<std::string> CommandProxy::getline()
-{
-
-    if (!valid)
-        return std::nullopt;
-
-    auto [new_valid, out_line]
-        = retrieveLine(pipe_stream, [this](boost::process::ipstream& pipe) {
-              if (std::string line = ""; std::getline(pipe, line)) {
-                  return line;
-              }
-
-              valid = false;
-              return std::string {};
-          });
-
-    valid = new_valid;
-    return out_line;
-}
-
-std::optional<std::string> CommandProxy::getUntil(char c)
-{
-    if (!valid)
-        return std::nullopt;
-
-    auto [new_valid, out_line]
-        = retrieveLine(pipe_stream, [this, c](boost::process::ipstream& pipe) {
-              if (std::string line = ""; std::getline(pipe, line, c)) {
-                  return line;
-              }
-
-              valid = false;
-              return std::string {};
-          });
-
-    valid = new_valid;
-    return out_line;
-}
-
-CommandProxy runCommandIter(
-    const std::string& command, Stream out, bool overrideDryRun)
-{
-    if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running interative command: {}", command)
-        boost::process::ipstream pipe_stream;
-
-        if (out == Stream::Stderr) {
-            boost::process::child child(
-                command, boost::process::std_err > pipe_stream);
-            return CommandProxy { .valid = true,
-                .child = std::move(child),
-                .pipe_stream = std::move(pipe_stream) };
-
-        } else {
-            boost::process::child child(
-                command, boost::process::std_out > pipe_stream);
-            return CommandProxy { .valid = true,
-                .child = std::move(child),
-                .pipe_stream = std::move(pipe_stream) };
-        }
-    }
-
-    return CommandProxy {};
-}
-
-int runCommand(const std::string& command, std::list<std::string>& output,
-    bool overrideDryRun)
-{
-
-    if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running command: {}", command)
-        boost::process::ipstream pipe_stream;
-        boost::process::child child(
-            command, boost::process::std_out > pipe_stream);
-
-        std::string line;
-
-        while (pipe_stream && std::getline(pipe_stream, line)) {
-            LOG_TRACE("{}", line)
-            output.emplace_back(line);
-        }
-
-        child.wait();
-        LOG_DEBUG("Exit code: {}", child.exit_code())
-        return child.exit_code();
-    } else {
-        LOG_INFO("Dry Run: {}", command)
-        return 0;
-    }
-}
-
-int runCommand(const std::string& command, bool overrideDryRun)
-{
-    std::list<std::string> discard;
-    return runCommand(command, discard, overrideDryRun);
-}
 
 /* Returns a specific environment variable when requested.
  * If the variable is not set it will return as an empty string. That's by
@@ -149,6 +39,7 @@ std::string getEnvironmentVariable(const std::string& key)
 }
 
 /* Read .conf file */
+[[deprecated]]
 std::string readConfig(const std::string& filename)
 {
     boost::property_tree::ptree tree;
@@ -170,6 +61,7 @@ std::string readConfig(const std::string& filename)
 }
 
 /* Write .conf file function */
+[[deprecated]]
 void writeConfig(const std::string& filename)
 {
     boost::property_tree::ptree tree;
@@ -186,10 +78,14 @@ void touchFile(const std::filesystem::path& path)
         return;
     }
 
-    // BUG: I don't have to comment why this is a BUG, right?
-    FILE* f = fopen(path.c_str(), "ab");
-    (void)fflush(f);
-    (void)fclose(f);
+    if (cloyster::exists(path)) {
+        LOG_WARN("File already exists, skiping {}", path.string())
+        return;
+    }
+    std::ofstream file(path, std::ios::app);
+    if (!file) {
+        throw std::runtime_error("Failed to touch file: " + path.string());
+    }
 }
 
 void createDirectory(const std::filesystem::path& path)
@@ -358,6 +254,12 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
+
+bool exists(const std::filesystem::path& path)
+{
+    return std::filesystem::exists(path);
+}
+
 void installFile(const std::filesystem::path& path, std::istream& data)
 {
     if (cloyster::dryRun) {
@@ -365,7 +267,7 @@ void installFile(const std::filesystem::path& path, std::istream& data)
         return;
     }
 
-    if (std::filesystem::exists(path)) {
+    if (cloyster::exists(path)) {
         LOG_WARN("File already exists: {}, skipping", path.string());
         return;
     }
@@ -380,18 +282,13 @@ void installFile(const std::filesystem::path& path, std::string&& data)
     installFile(path, stringData);
 }
 
-bool exists(const std::filesystem::path& path)
-{
-    return std::filesystem::exists(path);
-}
-
 HTTPRepo createHTTPRepo(const std::string_view repoName)
 {
     const auto confPath = fmt::format("/etc/httpd/conf.d/{}.conf", repoName);
     const auto repoFolder = fmt::format("/var/www/html/repos/{}", repoName);
     // @FIXME:  Use the HN hostname instead of localhost to make it work in the nodes
     HTTPRepo repo(repoFolder, std::string(repoName), fmt::format("http://localhost/repos/{}", repoName));
-    if (exists(confPath)) {
+    if (cloyster::exists(confPath)) {
         LOG_WARN("Skipping the creation of HTTP repository, {} already exists", confPath);
         return repo;
     }

@@ -9,7 +9,6 @@
 #include <boost/lexical_cast.hpp>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/tools/nvhpc.h>
 #include <cloysterhpc/functions.h>
 #include <cstddef>
 #include <fmt/core.h>
@@ -47,7 +46,6 @@ void AnswerFile::loadOptions()
     loadHostnameSettings();
     loadSystemSettings();
     loadNodes();
-    loadTools();
     loadPostfix();
     loadOFED();
 }
@@ -222,7 +220,6 @@ void AnswerFile::dumpOptions()
     dumpSystemSettings();
 
     dumpNodes();
-    // dumpTools();
     dumpPostfix();
 }
 
@@ -548,18 +545,6 @@ bool AnswerFile::checkEnabled(const std::string& section)
         && m_ini.getValue(section, "enabled") == "1";
 }
 
-void AnswerFile::loadTools() { loadNVHPC(); }
-
-void AnswerFile::loadNVHPC()
-{
-    if (!checkEnabled("nvhpc")) {
-        return;
-    }
-
-    m_tools.emplace_back(std::make_shared<NVhpc>());
-}
-
-std::vector<std::shared_ptr<ITool>> AnswerFile::getTools() { return m_tools; }
 
 void AnswerFile::loadPostfix()
 {

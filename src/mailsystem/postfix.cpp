@@ -13,7 +13,6 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
 
-using cloyster::runCommand;
 using cloyster::services::IRunner;
 
 Postfix::Postfix(

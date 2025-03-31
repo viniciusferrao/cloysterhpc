@@ -8,6 +8,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -26,8 +27,10 @@
 #include <cloysterhpc/dbus_client.h>
 #include <ranges>
 
-using cloyster::OS;
+using cloyster::models::OS;
 using cloyster::models::Cluster;
+using cloyster::services::IRunner;
+using cloyster::services::IOSService;
 
 namespace {
 
@@ -50,7 +53,11 @@ auto getToEnableRepoNames(const OS& osinfo)
     }
 }
 
+
 auto cluster() { return cloyster::Singleton<Cluster>::get(); }
+auto runner() { return cloyster::Singleton<IRunner>::get(); }
+auto osservice() { return cloyster::Singleton<IOSService>::get(); }
+
 }
 
 namespace cloyster::services {
@@ -66,7 +73,7 @@ Shell::Shell()
 
 void Shell::disableSELinux()
 {
-    runCommand("setenforce 0");
+    runner()->executeCommand("setenforce 0");
 
     const auto filename = CHROOT "/etc/sysconfig/selinux";
 
@@ -82,13 +89,13 @@ void Shell::configureSELinuxMode()
 
     switch (cluster()->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
-            runCommand("setenforce 0");
+            runner()->executeCommand("setenforce 0");
             /* Permissive mode */
             break;
 
         case Cluster::SELinuxMode::Enforcing:
             /* Enforcing mode */
-            runCommand("setenforce 1");
+            runner()->executeCommand("setenforce 1");
             break;
 
         case Cluster::SELinuxMode::Disabled:
@@ -106,10 +113,10 @@ void Shell::configureFirewall()
     LOG_INFO("Setting up firewall")
 
     if (cluster()->isFirewall()) {
-        runCommand("systemctl enable --now firewalld");
+        osservice()->enableService("firewalld");
 
         // Add the management interface as trusted
-        runCommand(fmt::format(
+        runner()->executeCommand(fmt::format(
             "firewall-cmd --permanent --zone=trusted --change-interface={}",
             cluster()->getHeadnode()
                 .getConnection(Network::Profile::Management)
@@ -118,16 +125,16 @@ void Shell::configureFirewall()
 
         // If we have IB, also add its interface as trusted
         if (cluster()->getOFED())
-            runCommand(fmt::format(
+            runner()->executeCommand(fmt::format(
                 "firewall-cmd --permanent --zone=trusted --change-interface={}",
                 cluster()->getHeadnode()
                     .getConnection(Network::Profile::Application)
                     .getInterface()
                     .value()));
 
-        runCommand("firewall-cmd --reload");
+        runner()->executeCommand("firewall-cmd --reload");
     } else {
-        runCommand("systemctl disable --now firewalld");
+        osservice()->disableService("firewalld");
 
         LOG_WARN("Firewalld has been disabled")
     }
@@ -137,7 +144,7 @@ void Shell::configureFQDN()
 {
     LOG_INFO("Setting up hostname")
 
-    runCommand(fmt::format(
+    runner()->executeCommand(fmt::format(
         "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
 }
 
@@ -165,7 +172,7 @@ void Shell::configureTimezone()
 {
     LOG_INFO("Setting up timezone")
 
-    runCommand(fmt::format(
+    runner()->executeCommand(fmt::format(
         "timedatectl set-timezone {}", cluster()->getTimezone().getTimezone()));
 }
 
@@ -173,8 +180,8 @@ void Shell::configureLocale()
 {
     LOG_INFO("Setting up locale")
 
-    runCommand(fmt::format(
-        "localectl set-locale {}", cluster()->getLocale().getLocale()));
+    runner()->executeCommand(fmt::format(
+        "localectl set-locale {}", cluster()->getLocale()));
 }
 
 void Shell::disableNetworkManagerDNSOverride()
@@ -192,13 +199,13 @@ void Shell::disableNetworkManagerDNSOverride()
         "[main]\n"
         "dns=none\n");
 
-    runCommand("systemctl restart NetworkManager");
+    osservice()->restartService("systemctl restart NetworkManager");
 }
 
 // BUG: Why this method exists? The name does not do what it says.
 void Shell::deleteConnectionIfExists(std::string_view connectionName)
 {
-    runCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
+    runner()->executeCommand(fmt::format("nmcli connection delete \"{}\"", connectionName));
 }
 
 /* This function configure host networks at once with NetworkManager.
@@ -211,7 +218,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
 {
     LOG_INFO("Setting up networks")
 
-    runCommand("systemctl enable --now NetworkManager");
+    osservice()->enableService("NetworkManager");
 
     for (const auto& connection : std::as_const(connections)) {
         /* For now, we just skip the external network to avoid disconnects */
@@ -230,7 +237,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         auto connectionName
             = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
         if (!cloyster::dryRun
-            && runCommand(
+            && runner()->executeCommand(
                    fmt::format("nmcli connection show {}", connectionName))
                 == 0) {
             LOG_WARN("Connection exists {}, skipping", connectionName);
@@ -238,10 +245,10 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         }
 
         deleteConnectionIfExists(connectionName);
-        runCommand(fmt::format("nmcli device set {} managed yes", interface));
-        runCommand(
+        runner()->executeCommand(fmt::format("nmcli device set {} managed yes", interface));
+        runner()->executeCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
-        runCommand(
+        runner()->executeCommand(
             fmt::format("nmcli connection add con-name {} ifname {} type {} "
                         "mtu {} ipv4.method manual ipv4.address {}/{} "
                         "ipv4.dns \"{}\" "
@@ -264,7 +271,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         // Breaking my ssh connection during development
-        runCommand(fmt::format("nmcli device connect {}", interface));
+        runner()->executeCommand(fmt::format("nmcli device connect {}", interface));
     }
 
     disableNetworkManagerDNSOverride();
@@ -274,7 +281,7 @@ void Shell::runSystemUpdate()
 {
     if (cluster()->isUpdateSystem()) {
         LOG_INFO("Checking if system updates are available")
-        runCommand("dnf -y update");
+        osservice()->update();
     }
 }
 
@@ -282,14 +289,14 @@ void Shell::installRequiredPackages()
 {
     LOG_INFO("Installing required system packages")
 
-    runCommand("dnf -y install wget dnf-plugins-core chkconfig");
+    osservice()->install("wget dnf-plugins-core chkconfig");
 }
 
 void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
-    runCommand(
+    runner()->executeCommand(
         "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
         " /etc/ssh/sshd_config");
 }
@@ -298,15 +305,14 @@ void Shell::installOpenHPCBase()
 {
     LOG_INFO("Installing base OpenHPC packages")
 
-    runCommand("dnf -y install ohpc-base");
+    osservice()->install("ohpc-base");
 }
 
 void Shell::configureTimeService(const std::list<Connection>& connections)
 {
     LOG_INFO("Setting up time services")
 
-    if (runCommand("rpm -q chrony"))
-        runCommand("dnf -y install chrony");
+    osservice()->install("chrony");
 
     std::string_view filename = CHROOT "/etc/chrony.conf";
 
@@ -329,7 +335,7 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
         }
     }
 
-    runCommand("systemctl enable --now chronyd");
+    osservice()->enableService("chronyd");
 }
 
 using cloyster::models::PBS;
@@ -358,14 +364,14 @@ void Shell::configureQueueSystem()
             case QueueSystem::Kind::PBS: {
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
 
-                runCommand("dnf -y install openpbs-server-ohpc");
-                runCommand("systemctl enable --now pbs");
-                runCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
-                runCommand(fmt::format(
+                osservice()->install("openpbs-server-ohpc");
+                osservice()->enableService("pbs");
+                runner()->executeCommand("qmgr -c \"set server default_qsub_arguments= -V\"");
+                runner()->executeCommand(fmt::format(
                     "qmgr -c \"set server resources_default.place={}\"",
                     cloyster::utils::enums::toString<PBS::ExecutionPlace>(
                         pbs->getExecutionPlace())));
-                runCommand("qmgr -c \"set server job_history_enable=True\"");
+                runner()->executeCommand("qmgr -c \"set server job_history_enable=True\"");
                 break;
             }
         }
@@ -407,15 +413,20 @@ void Shell::installDevelopmentComponents()
     LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
              "MPI stacks");
 
-    runCommand("dnf -y install ohpc-autotools hwloc-ohpc spack-ohpc "
-               "valgrind-ohpc");
+    // @FIXME: Make this a configuration instead of hardcoded
+    auto ohpcPackages = std::vector {
+        "openmpi4-gnu12-ohpc",
+        "mpich-ofi-gnu12-ohpc",
+        "mpich-ucx-gnu12-ohpc",
+        "mvapich2-gnu12-ohpc",
+        "lmod-defaults-gnu12-openmpi4-ohpc",
+        "ohpc-autotools",
+        "hwloc-ohpc",
+        "spack-ohpc",
+        "valgrind-ohpc",
+    };
 
-    /* Compiler and MPI stacks */
-    runCommand("dnf -y install openmpi4-gnu12-ohpc mpich-ofi-gnu12-ohpc "
-               "mpich-ucx-gnu12-ohpc mvapich2-gnu12-ohpc");
-
-    /* Default OpenHPC environment */
-    runCommand("dnf -y install lmod-defaults-gnu12-openmpi4-ohpc");
+     osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
 
 void Shell::configureRepositories()

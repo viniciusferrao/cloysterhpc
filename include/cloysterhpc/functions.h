@@ -5,8 +5,6 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/patterns/singleton.h>
-#include <boost/process/child.hpp>
-#include <boost/process/pipe.hpp>
 #include <cloysterhpc/services/repos.h>
 #include <filesystem>
 #include <list>
@@ -31,72 +29,7 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
 using cloyster::services::IRunner;
 using cloyster::models::OS;
 
-/**
- * A command proxy, to us to be able to get the
- * command output while the command is running
- *
- * We will use this in the progress dialog
- */
-/**
- * @struct CommandProxy
- * @brief A command proxy to capture the command output while the command is
- * running.
- *
- * This structure is used to capture the output of a command in real-time,
- * useful for displaying progress in a dialog.
- */
-struct CommandProxy {
-    bool valid = false;
-    boost::process::child child;
-    boost::process::ipstream pipe_stream;
-
-    /**
-     * @brief Gets a line of output from the command.
-     *
-     * @return An optional string containing a line of output if available,
-     * otherwise std::nullopt.
-     */
-    std::optional<std::string> getline();
-
-    std::optional<std::string> getUntil(char c);
-};
-
-enum class Stream { Stdout, Stderr };
-
 /* shell execution */
-
-/**
- * @brief Executes a command and captures its output.
- *
- * @param command The command to execute.
- * @param output A list to store the output lines of the command.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return The exit code of the command.
- */
-int runCommand(const std::string& command, std::list<std::string>& output,
-    bool overrideDryRun = false);
-
-/**
- * @brief Executes a command.
- *
- * @param command The command to execute.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return The exit code of the command.
- */
-int runCommand(const std::string& command, bool overrideDryRun = false);
-
-/**
- * @brief Executes a command and provides a proxy to capture its output
- * iteratively.
- *
- * @param command The command to execute.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return A CommandProxy to capture the command's output.
- */
-CommandProxy runCommandIter(const std::string& command,
-    Stream out = Stream::Stdout, bool overrideDryRun = false);
-
-/* environment variables helper functions */
 
 /**
  * @brief Retrieves the value of an environment variable.

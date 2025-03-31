@@ -90,13 +90,11 @@ Timezone& Cluster::getTimezone() { return m_timezone; }
 
 void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
-const Locale& Cluster::getLocale() const { return m_locale; }
-
-void Cluster::setLocale(const Locale& locale) { m_locale = locale; }
+const std::string& Cluster::getLocale() const { return m_locale; }
 
 void Cluster::setLocale(const std::string& locale)
 {
-    m_locale.setLocale(locale);
+    m_locale = locale;
 }
 
 const std::string Cluster::getDomainName() const
@@ -317,7 +315,7 @@ void Cluster::printData()
     LOG_DEBUG("OS Data:");
     m_headnode.getOS().printData();
     LOG_DEBUG("Timezone: {}", getTimezone().getTimezone());
-    LOG_DEBUG("Locale: {}", getLocale().getLocale());
+    LOG_DEBUG("Locale: {}", getLocale());
     LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname());
     LOG_DEBUG("DomainName: {}", getDomainName());
     LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
@@ -470,7 +468,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
     answerfil.information.administrator_email = getAdminMail();
 
     answerfil.time.timezone = getTimezone().getTimezone();
-    answerfil.time.locale = getLocale().getLocale();
+    answerfil.time.locale = getLocale();
 
     for (const auto& node : this->m_nodes) {
         AFNode afNode;
@@ -773,10 +771,6 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     // FIXME: This should come from /etc/os-release
     m_headnode.setOS(nodeOS);
-
-    for (const auto& tool : answerfil.getTools()) {
-        tool->install();
-    }
 
     LOG_INFO("Configure Nodes")
     for (const auto& node : answerfil.nodes.nodes) {
