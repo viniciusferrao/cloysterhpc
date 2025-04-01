@@ -11,7 +11,6 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/hardware.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
@@ -159,10 +158,6 @@ int main(int argc, const char** argv)
         "If you pass this parameter, the software will create an answefile "
         "based on your input, and save it in the specified path");
 
-    bool showHardwareInfo = false;
-    app.add_flag("-i, --hardwareinfo", showHardwareInfo,
-        "Show a detailed hardware and system overview");
-
     app.add_option("--customrepo", cloyster::customRepofilePath,
         "Full path to a custom repofile");
 
@@ -214,12 +209,6 @@ int main(int argc, const char** argv)
         LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput)
 #endif
         LOG_INFO("{} Started", productName)
-
-        if (showHardwareInfo) {
-            Hardware hardware;
-            hardware.printOverview();
-            return EXIT_SUCCESS;
-        }
 
         cloyster::checkEffectiveUserId();
 

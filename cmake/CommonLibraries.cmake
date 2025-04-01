@@ -15,5 +15,4 @@ set(COMMON_LIBS
         resolv
         ${STDC++FS}
         doctest::doctest
-        SDBusCpp::sdbus-c++
-        hwinfo)
+        SDBusCpp::sdbus-c++)
