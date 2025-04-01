@@ -8,12 +8,13 @@
 #include <iostream>
 
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
+#include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
 
 using cloyster::services::IRunner;
+using cloyster::services::files::KeyFile;
 
 Postfix::Postfix(std::shared_ptr<MessageBus> bus, Profile profile)
     : IService(bus, "postfix.service")
@@ -162,30 +163,35 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
     const std::filesystem::path mainFile = basedir / "main.cf";
     const std::filesystem::path masterFile = basedir / "master.cf";
 
-    inifile baseini;
+    KeyFile baseini(mainFile);
     baseini.loadData(
 #include "cloysterhpc/tmpl/postfix/main.cf.tmpl"
     );
 
     if (m_hostname) {
-        baseini.setValue("", "myhostname", m_hostname.value());
+        baseini.setString("", "myhostname", m_hostname.value());
     }
 
     if (m_domain) {
-        baseini.setValue("", "mydomain", m_domain.value());
+        baseini.setString("", "mydomain", m_domain.value());
     }
 
     if (m_destination) {
-        baseini.setValue("", "mydestination",
+        baseini.setString("", "mydestination",
             fmt::format("{}", fmt::join(m_destination.value(), ",")));
     }
 
     if (m_cert_file && m_key_file) {
-        baseini.setValue("", "smtpd_tls_cert_file", m_cert_file->string());
-        baseini.setValue("", "smtpd_tls_key_file", m_key_file->string());
+        baseini.setString("", "smtpd_tls_cert_file", m_cert_file->string());
+        baseini.setString("", "smtpd_tls_key_file", m_key_file->string());
     }
 
-    inifile ini = baseini.mergeInto(mainFile);
+    // @FIXME: KeyFile does not have mergeInto, I didn't undestand why this
+    //   is necessary (it seems it is not) so I commented for now, but the
+    //   below code may be broken.
+    //   Test postfix file generation and remove this comment
+    //
+    // KeyFile ini = baseini.mergeInto(mainFile);
 
     //@TODO Check if m_domain is the right key. Maybe a new variable is needed
     // here, m_relayhost_domain?.
@@ -195,13 +201,13 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
         case Profile::SASL:
         case Profile::Relay:
             if (m_domain && m_port) {
-                ini.setValue("", "relayhost",
+                baseini.setString("", "relayhost",
                     fmt::format("[{}]:{}", m_domain.value(), m_port.value()));
             }
             break;
     }
 
-    ini.saveFile(mainFile);
+    baseini.save();
 
     changeMasterFile(masterFile);
 
@@ -269,13 +275,13 @@ void Postfix::configureSASL(const std::filesystem::path& basedir)
 void Postfix::configureRelay(const std::filesystem::path& basedir)
 {
     const std::filesystem::path mainFile = basedir / "main.cf";
-    inifile ini;
-    ini.loadData(mainFile);
+    KeyFile ini(mainFile);
+    ;
 
     if (m_smtp_server && m_port) {
-        ini.setValue("", "relayhost",
+        ini.setString("", "relayhost",
             fmt::format("{}:{}", m_smtp_server.value(), m_port.value()));
     }
 
-    ini.saveFile(mainFile);
+    ini.save();
 }

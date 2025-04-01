@@ -19,7 +19,6 @@
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/headnode.h>
@@ -728,7 +727,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         auto throwIfEmpty = [](bool optional_cast_value,
                                 const char* fieldname) {
             if (!optional_cast_value) {
-                throw answerfile_validation_exception(fmt::format(
+                throw AnswerfileValidationException(fmt::format(
                     "Field {} of application network is empty", fieldname));
             }
         };
@@ -799,14 +798,14 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         if (mac_address) {
             if (auto err = Connection::validateMAC(mac_address.value());
                 !err.has_value()) {
-                throw answerfile_validation_exception { fmt::format(
+                throw AnswerfileValidationException { fmt::format(
                     "Error decoding MAC address (read {}) of node {}: {}",
                     mac_address.value(), nodename, err.error()) };
             } else {
                 newNode.setMACAddress(mac_address.value());
             }
         } else {
-            throw answerfile_validation_exception { fmt::format(
+            throw AnswerfileValidationException { fmt::format(
                 "Missing MAC address on node {}", nodename) };
         }
         LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
@@ -822,7 +821,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
                   try {
                       return std::stoul(value);
                   } catch (std::invalid_argument& e) {
-                      throw answerfile_validation_exception { fmt::format(
+                      throw AnswerfileValidationException { fmt::format(
                           "Conversion error on node {}: field {} is not a "
                           "number (value is {})",
                           nodename, field_name, value) };
@@ -891,7 +890,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         m_mailSystem->setDestination(answerfil.postfix.destination);
 
         if (!m_mailSystem->getDomain()) {
-            throw answerfile_validation_exception(
+            throw AnswerfileValidationException(
                 "A domain is needed for e-mail configuration");
         }
 

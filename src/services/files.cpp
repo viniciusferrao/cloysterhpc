@@ -57,10 +57,10 @@ struct KeyFile::Impl {
     }
 };
 
-KeyFile::KeyFile(KeyFile::Impl&& impl)
-    : m_impl(std::make_unique<KeyFile::Impl>(std::move(impl)))
-{
-}
+// KeyFile::KeyFile(KeyFile::Impl&& impl)
+//     : m_impl(std::make_unique<KeyFile::Impl>(std::move(impl)))
+// {
+// }
 
 KeyFile::KeyFile(const std::filesystem::path& path)
     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
@@ -80,9 +80,24 @@ namespace {
     }
 }
 
+std::vector<std::string> KeyFile::listAllPrefixedEntries(
+    const std::string_view prefix) const
+{
+    auto groups = getGroups();
+
+    return groups | std::views::filter([&](const auto& group) {
+        return group.starts_with(prefix);
+    }) | std::ranges::to<std::vector>();
+}
+
 std::vector<std::string> KeyFile::getGroups() const
 {
     return toStrings(m_impl->m_keyfile->get_groups());
+}
+
+bool KeyFile::hasGroup(std::string_view group) const
+{
+    return m_impl->m_keyfile->has_group(std::string(group));
 }
 
 std::string KeyFile::getString(
@@ -130,6 +145,8 @@ void KeyFile::setBoolean(
 void KeyFile::save() { m_impl->safeToFile(m_impl->m_path); }
 
 void KeyFile::load() { m_impl->loadFromFile(m_impl->m_path); }
+
+void KeyFile::loadData(const std::string& data) { m_impl->loadFromData(data); }
 
 std::string checksum(const std::string& data)
 {

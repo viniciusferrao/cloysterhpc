@@ -19,6 +19,7 @@ namespace cloyster::models {
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)
     : m_path(path)
+    , m_keyfile(path)
 {
     loadFile(m_path);
 }
@@ -28,10 +29,8 @@ AnswerFile::AnswerFile(const std::filesystem::path& path)
 void AnswerFile::loadFile(const std::filesystem::path& path)
 {
     m_path = path;
-    m_ini.loadFile(m_path);
-#ifndef BUILD_TESTING
+    m_keyfile.load();
     loadOptions();
-#endif
 };
 
 void AnswerFile::loadOptions()
@@ -54,34 +53,38 @@ void AnswerFile::dumpNetwork(
     const AFNetwork& network, const std::string& networkSection)
 {
     if (network.con_interface) {
-        m_ini.setValue(networkSection, "interface", *network.con_interface);
+        m_keyfile.setString(
+            networkSection, "interface", network.con_interface.value());
     }
 
     if (network.con_ip_addr) {
-        m_ini.setValue(
+        m_keyfile.setString(
             networkSection, "ip_address", network.con_ip_addr->to_string());
     }
 
     if (network.con_mac_addr) {
-        m_ini.setValue(networkSection, "mac_address", *network.con_mac_addr);
+        m_keyfile.setString(
+            networkSection, "mac_address", *network.con_mac_addr);
     }
 
     if (network.subnet_mask) {
-        m_ini.setValue(
+        m_keyfile.setString(
             networkSection, "subnet_mask", network.subnet_mask->to_string());
     }
 
     if (network.domain_name) {
-        m_ini.setValue(networkSection, "domain_name", *network.domain_name);
+        m_keyfile.setString(
+            networkSection, "domain_name", *network.domain_name);
     }
 
     if (network.gateway) {
-        m_ini.setValue(networkSection, "gateway", network.gateway->to_string());
+        m_keyfile.setString(
+            networkSection, "gateway", network.gateway->to_string());
     }
 
     if (network.nameservers && !network.nameservers->empty()) {
         auto nameval = boost::algorithm::join(*network.nameservers, ", ");
-        m_ini.setValue(networkSection, "nameservers", nameval);
+        m_keyfile.setString(networkSection, "nameservers", nameval);
     }
 }
 
@@ -102,33 +105,35 @@ void AnswerFile::dumpApplicationNetwork()
 
 void AnswerFile::dumpInformation()
 {
-    m_ini.setValue("information", "cluster_name", information.cluster_name);
-    m_ini.setValue("information", "company_name", information.company_name);
-    m_ini.setValue("information", "admm_inistrator_email",
+    m_keyfile.setString(
+        "information", "cluster_name", information.cluster_name);
+    m_keyfile.setString(
+        "information", "company_name", information.company_name);
+    m_keyfile.setString("information", "admm_keyfilestrator_email",
         information.administrator_email);
 }
 
 void AnswerFile::dumpTimeSettings()
 {
-    m_ini.setValue("time", "timezone", time.timezone);
-    m_ini.setValue("time", "timeserver", time.timeserver);
-    m_ini.setValue("time", "locale", time.locale);
+    m_keyfile.setString("time", "timezone", time.timezone);
+    m_keyfile.setString("time", "timeserver", time.timeserver);
+    m_keyfile.setString("time", "locale", time.locale);
 }
 
 void AnswerFile::dumpHostnameSettings()
 {
-    m_ini.setValue("hostname", "hostname", hostname.hostname);
-    m_ini.setValue("hostname", "domain_name", hostname.domain_name);
+    m_keyfile.setString("hostname", "hostname", hostname.hostname);
+    m_keyfile.setString("hostname", "domain_name", hostname.domain_name);
 }
 
 void AnswerFile::dumpSystemSettings()
 {
     auto distroName = cloyster::utils::enums::toString(system.distro);
 
-    m_ini.setValue("system", "disk_image", system.disk_image);
-    m_ini.setValue("system", "distro", std::string { distroName });
-    m_ini.setValue("system", "version", system.version);
-    m_ini.setValue("system", "kernel", system.kernel);
+    m_keyfile.setString("system", "disk_image", system.disk_image.string());
+    m_keyfile.setString("system", "distro", std::string { distroName });
+    m_keyfile.setString("system", "version", system.version);
+    m_keyfile.setString("system", "kernel", system.kernel);
 }
 
 void AnswerFile::dumpNodes()
@@ -137,38 +142,48 @@ void AnswerFile::dumpNodes()
     for (const auto& node : nodes.nodes) {
         std::string sectionName = fmt::format("node.{}", counter);
 
-        if (node.hostname)
-            m_ini.setValue(sectionName, "hostname", *node.hostname);
+        if (node.hostname) {
+            m_keyfile.setString(sectionName, "hostname", *node.hostname);
+        }
 
-        if (node.root_password)
-            m_ini.setValue(
+        if (node.root_password) {
+            m_keyfile.setString(
                 sectionName, "node_root_password", *node.root_password);
+        }
 
-        if (node.sockets)
-            m_ini.setValue(sectionName, "sockets", *node.sockets);
+        if (node.sockets) {
+            m_keyfile.setString(sectionName, "sockets", *node.sockets);
+        }
 
-        if (node.cores_per_socket)
-            m_ini.setValue(
+        if (node.cores_per_socket) {
+            m_keyfile.setString(
                 sectionName, "cores_per_socket", *node.cores_per_socket);
+        }
 
-        if (node.threads_per_core)
-            m_ini.setValue(
+        if (node.threads_per_core) {
+            m_keyfile.setString(
                 sectionName, "threads_per_core", *node.threads_per_core);
+        }
 
-        if (node.bmc_address)
-            m_ini.setValue(sectionName, "bmc_address", *node.bmc_address);
+        if (node.bmc_address) {
+            m_keyfile.setString(sectionName, "bmc_address", *node.bmc_address);
+        }
 
-        if (node.bmc_username)
-            m_ini.setValue(sectionName, "bmc_username", *node.bmc_username);
+        if (node.bmc_username) {
+            m_keyfile.setString(
+                sectionName, "bmc_username", *node.bmc_username);
+        }
 
         if (node.bmc_password)
-            m_ini.setValue(sectionName, "bmc_password", *node.bmc_password);
+            m_keyfile.setString(
+                sectionName, "bmc_password", *node.bmc_password);
 
         if (node.bmc_serialport)
-            m_ini.setValue(sectionName, "bmc_serialport", *node.bmc_serialport);
+            m_keyfile.setString(
+                sectionName, "bmc_serialport", *node.bmc_serialport);
 
         if (node.bmc_serialspeed)
-            m_ini.setValue(
+            m_keyfile.setString(
                 sectionName, "bmc_serialspeed", *node.bmc_serialspeed);
 
         counter++;
@@ -182,26 +197,28 @@ void AnswerFile::dumpPostfix()
     }
 
     auto profileName = cloyster::utils::enums::toString(postfix.profile);
-    m_ini.setValue("postfix", "profile", std::string { profileName });
-    m_ini.setValue(
+    m_keyfile.setString("postfix", "profile", std::string { profileName });
+    m_keyfile.setString(
         "postfix", "smtpd_tls_cert_file", postfix.cert_file.string());
-    m_ini.setValue("postfix", "smtpd_tls_key_file", postfix.key_file.string());
+    m_keyfile.setString(
+        "postfix", "smtpd_tls_key_file", postfix.key_file.string());
 
     switch (postfix.profile) {
         case Postfix::Profile::Local:
             break;
         case Postfix::Profile::Relay:
-            m_ini.setValue("postfix.relay", "server", postfix.smtp->server);
-            m_ini.setValue(
+            m_keyfile.setString(
+                "postfix.relay", "server", postfix.smtp->server);
+            m_keyfile.setString(
                 "postfix.relay", "port", std::to_string(postfix.smtp->port));
             break;
         case Postfix::Profile::SASL:
-            m_ini.setValue("postfix.sasl", "server", postfix.smtp->server);
-            m_ini.setValue(
+            m_keyfile.setString("postfix.sasl", "server", postfix.smtp->server);
+            m_keyfile.setString(
                 "postfix.sasl", "port", std::to_string(postfix.smtp->port));
-            m_ini.setValue(
+            m_keyfile.setString(
                 "postfix.sasl", "username", postfix.smtp->sasl->username);
-            m_ini.setValue(
+            m_keyfile.setString(
                 "postfix.sasl", "password", postfix.smtp->sasl->password);
             break;
     }
@@ -226,7 +243,7 @@ void AnswerFile::dumpOptions()
 void AnswerFile::dumpFile(const std::filesystem::path& path)
 {
     dumpOptions();
-    m_ini.saveFile(path);
+    m_keyfile.save();
 };
 
 address AnswerFile::convertStringToAddress(const std::string& addr)
@@ -297,10 +314,11 @@ void AnswerFile::convertNetworkAddressAndValidate(
     const std::string& sectionName, const std::string& fieldName,
     T& destination, bool isOptional)
 {
-    if (!m_ini.exists(sectionName, fieldName))
+    if (!m_keyfile.getStringOpt(sectionName, fieldName)) {
         return;
+    }
 
-    auto value = m_ini.getValue(sectionName, fieldName, isOptional);
+    auto value = m_keyfile.getString(sectionName, fieldName);
     try {
         destination = convertStringToAddress(value);
     } catch (const std::invalid_argument& e) {
@@ -310,25 +328,25 @@ void AnswerFile::convertNetworkAddressAndValidate(
     }
 }
 
-void AnswerFile::loadNetwork(const std::string& networkSection,
-    AFNetwork& network, bool optionalNameservers)
+void AnswerFile::loadNetwork(
+    const std::string& networkSection, AFNetwork& network)
 {
     LOG_TRACE("Loading network section {}", networkSection);
 
-    network.con_interface = m_ini.getValue(networkSection, "interface", false);
+    network.con_interface = m_keyfile.getString(networkSection, "interface");
     convertNetworkAddressAndValidate(
         networkSection, "ip_address", network.con_ip_addr);
-    network.con_mac_addr = m_ini.getValue(networkSection, "mac_address");
+    network.con_mac_addr = m_keyfile.getString(networkSection, "mac_address");
     convertNetworkAddressAndValidate(
         networkSection, "subnet_mask", network.subnet_mask);
-    network.domain_name = m_ini.getValue(networkSection, "domain_name");
+    network.domain_name = m_keyfile.getString(networkSection, "domain_name");
     convertNetworkAddressAndValidate(
         networkSection, "gateway", network.gateway);
 
-    if (m_ini.exists(networkSection, "nameservers")) {
+    if (m_keyfile.getStringOpt(networkSection, "nameservers")) {
         std::vector<std::string> nameservers;
         boost::split(nameservers,
-            m_ini.getValue(networkSection, "nameservers", optionalNameservers),
+            m_keyfile.getString(networkSection, "nameservers"),
             boost::is_any_of(", "), boost::token_compress_on);
 
         network.nameservers = nameservers;
@@ -347,7 +365,7 @@ void AnswerFile::loadManagementNetwork()
 
 void AnswerFile::loadServiceNetwork()
 {
-    if (!m_ini.exists("network_service"))
+    if (!m_keyfile.hasGroup("network_service"))
         return;
 
     loadNetwork("network_service", service);
@@ -355,42 +373,41 @@ void AnswerFile::loadServiceNetwork()
 
 void AnswerFile::loadApplicationNetwork()
 {
-    if (!m_ini.exists("network_application"))
+    if (!m_keyfile.hasGroup("network_application"))
         return;
 
-    loadNetwork("network_application", application, false);
+    loadNetwork("network_application", application);
 }
 
 void AnswerFile::loadInformation()
 {
     information.cluster_name
-        = m_ini.getValue("information", "cluster_name", false, false);
+        = m_keyfile.getString("information", "cluster_name");
     information.company_name
-        = m_ini.getValue("information", "company_name", false, false);
+        = m_keyfile.getString("information", "company_name");
     information.administrator_email
-        = m_ini.getValue("information", "administrator_email", false, false);
+        = m_keyfile.getString("information", "administrator_email");
 }
 
 void AnswerFile::loadTimeSettings()
 {
-    time.timezone = m_ini.getValue("time", "timezone", false, false);
-    time.timeserver = m_ini.getValue("time", "timeserver", false, false);
-    time.locale = m_ini.getValue("time", "locale", false, false);
+    time.timezone = m_keyfile.getString("time", "timezone");
+    time.timeserver = m_keyfile.getString("time", "timeserver");
+    time.locale = m_keyfile.getString("time", "locale");
 }
 
 void AnswerFile::loadHostnameSettings()
 {
-    hostname.hostname = m_ini.getValue("hostname", "hostname", false, false);
-    hostname.domain_name
-        = m_ini.getValue("hostname", "domain_name", false, false);
+    hostname.hostname = m_keyfile.getString("hostname", "hostname");
+    hostname.domain_name = m_keyfile.getString("hostname", "domain_name");
 }
 
 void AnswerFile::loadSystemSettings()
 {
-    system.disk_image = m_ini.getValue("system", "disk_image", false, false);
+    system.disk_image = m_keyfile.getString("system", "disk_image");
 
     // Verify supported distros
-    auto afDistro = m_ini.getValue("system", "distro", false, false);
+    auto afDistro = m_keyfile.getString("system", "distro");
     if (const auto& formatDistro
         = cloyster::utils::enums::ofStringOpt<OS::Distro>(
             afDistro, cloyster::utils::enums::Case::Insensitive)) {
@@ -403,8 +420,8 @@ void AnswerFile::loadSystemSettings()
             fmt::format("Unsupported distro: {}", afDistro));
     }
 
-    system.version = m_ini.getValue("system", "version", false, false);
-    system.kernel = m_ini.getValue("system", "kernel", false, false);
+    system.version = m_keyfile.getString("system", "version");
+    system.kernel = m_keyfile.getString("system", "kernel");
 }
 
 AFNode AnswerFile::loadNode(const std::string& section)
@@ -412,16 +429,16 @@ AFNode AnswerFile::loadNode(const std::string& section)
     AFNode node;
 
     if (section == "node") {
-        node.prefix = m_ini.getValue(section, "prefix");
-        node.padding = m_ini.getValue(section, "padding");
+        node.prefix = m_keyfile.getString(section, "prefix");
+        node.padding = m_keyfile.getString(section, "padding");
     } else {
-        node.mac_address = m_ini.getValue(section, "mac_address", false);
+        node.mac_address = m_keyfile.getString(section, "mac_address");
     }
 
-    if (m_ini.exists(section, "node_ip")) {
+    if (m_keyfile.getStringOpt(section, "node_ip")) {
         try {
-            node.start_ip
-                = convertStringToAddress(m_ini.getValue(section, "node_ip"));
+            node.start_ip = convertStringToAddress(
+                m_keyfile.getString(section, "node_ip"));
         } catch (const std::invalid_argument& e) {
             throw std::invalid_argument(
                 fmt::format("Section '{}' field 'node_ip' "
@@ -430,16 +447,16 @@ AFNode AnswerFile::loadNode(const std::string& section)
         }
     }
 
-    node.hostname = m_ini.getValue(section, "hostname");
-    node.root_password = m_ini.getValue(section, "node_root_password");
-    node.sockets = m_ini.getValue(section, "sockets");
-    node.cores_per_socket = m_ini.getValue(section, "cores_per_socket");
-    node.threads_per_core = m_ini.getValue(section, "threads_per_core");
-    node.bmc_address = m_ini.getValue(section, "bmc_address");
-    node.bmc_username = m_ini.getValue(section, "bmc_username");
-    node.bmc_password = m_ini.getValue(section, "bmc_password");
-    node.bmc_serialport = m_ini.getValue(section, "bmc_serialport");
-    node.bmc_serialspeed = m_ini.getValue(section, "bmc_serialspeed");
+    node.hostname = m_keyfile.getString(section, "hostname");
+    node.root_password = m_keyfile.getString(section, "node_root_password");
+    node.sockets = m_keyfile.getString(section, "sockets");
+    node.cores_per_socket = m_keyfile.getString(section, "cores_per_socket");
+    node.threads_per_core = m_keyfile.getString(section, "threads_per_core");
+    node.bmc_address = m_keyfile.getString(section, "bmc_address");
+    node.bmc_username = m_keyfile.getString(section, "bmc_username");
+    node.bmc_password = m_keyfile.getString(section, "bmc_password");
+    node.bmc_serialport = m_keyfile.getString(section, "bmc_serialport");
+    node.bmc_serialspeed = m_keyfile.getString(section, "bmc_serialspeed");
 
     return node;
 }
@@ -461,7 +478,7 @@ void AnswerFile::loadNodes()
      */
 
     LOG_INFO("Enumerating nodes in the file");
-    auto nodelist = m_ini.listAllPrefixedEntries("node.");
+    auto nodelist = m_keyfile.listAllPrefixedEntries("node.");
 
     LOG_INFO("Found {} possible nodes", nodelist.size());
 
@@ -542,13 +559,13 @@ AFNode AnswerFile::validateNode(AFNode node)
 
 bool AnswerFile::checkEnabled(const std::string& section)
 {
-    return m_ini.exists(section, "enabled")
-        && m_ini.getValue(section, "enabled") == "1";
+    return m_keyfile.getStringOpt(section, "enabled")
+        && m_keyfile.getString(section, "enabled") == "1";
 }
 
 void AnswerFile::loadPostfix()
 {
-    if (!m_ini.exists("postfix"))
+    if (!m_keyfile.hasGroup("postfix"))
         return;
 
     LOG_TRACE("Postfix enabled");
@@ -556,11 +573,11 @@ void AnswerFile::loadPostfix()
     postfix.enabled = true;
 
     boost::split(postfix.destination,
-        m_ini.getValue("postfix", "destination", false), boost::is_any_of(", "),
+        m_keyfile.getString("postfix", "destination"), boost::is_any_of(", "),
         boost::token_compress_on);
 
     auto castProfile = cloyster::utils::enums::ofStringOpt<Postfix::Profile>(
-        m_ini.getValue("postfix", "profile", false),
+        m_keyfile.getString("postfix", "profile"),
         cloyster::utils::enums::Case::Insensitive);
 
     if (castProfile.has_value())
@@ -576,33 +593,31 @@ void AnswerFile::loadPostfix()
         case Postfix::Profile::Local:
             break;
         case Postfix::Profile::Relay:
-            smtp.server = m_ini.getValue("postfix.relay", "server", false);
-            smtp.port
-                = std::stoi(m_ini.getValue("postfix.relay", "port", false));
+            smtp.server = m_keyfile.getString("postfix.relay", "server");
+            smtp.port = std::stoi(m_keyfile.getString("postfix.relay", "port"));
             postfix.smtp = smtp;
             break;
         case Postfix::Profile::SASL:
-            smtp.server = m_ini.getValue("postfix.sasl", "server", false);
-            smtp.port
-                = std::stoi(m_ini.getValue("postfix.sasl", "port", false));
-            sasl.username = m_ini.getValue("postfix.sasl", "username", false);
-            sasl.password = m_ini.getValue("postfix.sasl", "password", false);
+            smtp.server = m_keyfile.getString("postfix.sasl", "server");
+            smtp.port = std::stoi(m_keyfile.getString("postfix.sasl", "port"));
+            sasl.username = m_keyfile.getString("postfix.sasl", "username");
+            sasl.password = m_keyfile.getString("postfix.sasl", "password");
             smtp.sasl = sasl;
             postfix.smtp = smtp;
             break;
     }
 
-    postfix.cert_file = m_ini.getValue("postfix", "smtpd_tls_cert_file", false);
-    postfix.key_file = m_ini.getValue("postfix", "smtpd_tls_key_file", false);
+    postfix.cert_file = m_keyfile.getString("postfix", "smtpd_tls_cert_file");
+    postfix.key_file = m_keyfile.getString("postfix", "smtpd_tls_key_file");
 }
 
 void AnswerFile::loadOFED()
 {
-    auto kind = m_ini.getValue("ofed", "kind");
+    auto kind = m_keyfile.getString("ofed", "kind");
     if (kind != "") {
         ofed.enabled = true;
         ofed.kind = kind;
-        auto afVersion = m_ini.getValue("ofed", "version");
+        auto afVersion = m_keyfile.getString("ofed", "version");
         if (afVersion != "") {
             ofed.version = afVersion;
         } else {

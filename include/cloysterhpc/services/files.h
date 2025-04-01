@@ -15,7 +15,7 @@ constexpr std::size_t CHUNK_SIZE = 16384;
 template <typename File>
 concept IsKeyFileReadable = requires(
     const File& file, const std::string& group, const std::string& key) {
-    { file.getGroups() } -> std::convertible_to<std::vector<std::string>>;
+    { file.getGroups() } -> std::same_as<std::vector<std::string>>;
     { file.getString(group, key) } -> std::same_as<std::string>;
     { file.getBoolean(group, key) } -> std::same_as<bool>;
     {
@@ -49,7 +49,6 @@ public:
 class KeyFile {
     struct Impl; // Pointer to Implementation (PIMPL) pattern
     std::unique_ptr<Impl> m_impl;
-    explicit KeyFile(Impl&& impl);
 
 public:
     ~KeyFile(); // The destructor is required to be defined in
@@ -61,6 +60,9 @@ public:
     KeyFile& operator=(const KeyFile&) = delete;
     KeyFile& operator=(KeyFile&&) = default;
 
+    [[nodiscard]] std::vector<std::string> listAllPrefixedEntries(
+        const std::string_view prefix) const;
+    [[nodiscard]] bool hasGroup(std::string_view group) const;
     [[nodiscard]] std::vector<std::string> getGroups() const;
     [[nodiscard]] std::string getString(
         const std::string& group, const std::string& key) const;
@@ -74,18 +76,14 @@ public:
         const std::string& value);
     void setString(const std::string& group, const std::string& key,
         const std::optional<std::string>& value);
-    template <typename Stringable>
-        requires std::convertible_to<Stringable, std::string>
-    void setString(const Stringable& group, const Stringable& key,
-        const Stringable& value);
     void setBoolean(
         const std::string& group, const std::string& key, const bool value);
 
     void save();
     void load();
+    void loadData(const std::string& data);
 
     explicit KeyFile(const std::filesystem::path& path);
-    // explicit KeyFile(const std::string& str);
 };
 static_assert(IsKeyFileReadable<KeyFile>);
 static_assert(IsKeyFileWriteable<KeyFile>);

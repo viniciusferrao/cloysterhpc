@@ -4,26 +4,33 @@
  */
 
 #include <algorithm>
-#include <cloysterhpc/inifile.h>
 #include <filesystem>
-#include <fmt/format.h>
 
-void inifile::loadData(const std::string& data) { ini.LoadData(data); }
+#include <fmt/format.h>
+#include <SimpleIni.h>
+
+#include <cloysterhpc/inifile.h>
+
+struct inifile::Impl {
+    CSimpleIniA ini;
+};
+
+void inifile::loadData(const std::string& data) { m_impl->ini.LoadData(data); }
 
 // TODO: Template<T> the next three functions
 void inifile::loadFile(const std::string& filepath)
 {
-    ini.LoadFile(filepath.c_str());
+    m_impl->ini.LoadFile(filepath.c_str());
 }
 
 void inifile::loadFile(std::string_view filepath)
 {
-    ini.LoadFile(filepath.data());
+    m_impl->ini.LoadFile(filepath.data());
 }
 
 void inifile::loadFile(const std::filesystem::path& filepath)
 {
-    SI_Error result = ini.LoadFile(filepath.c_str());
+    SI_Error result = m_impl->ini.LoadFile(filepath.c_str());
     if (result < 0) {
         throw std::runtime_error(
             fmt::format(R"(File "{}" could not be open, error {} )",
@@ -39,7 +46,7 @@ std::string inifile::getValue(const std::string& section,
             fmt::format(R"(Answerfile section "{}" must have "{}" key filled)",
                 section, key));
 
-    std::string value = ini.GetValue(section.c_str(), key.c_str(), "");
+    std::string value = m_impl->ini.GetValue(section.c_str(), key.c_str(), "");
 
     if (!canBeNull && value.empty())
         throw std::runtime_error(fmt::format(
@@ -48,11 +55,11 @@ std::string inifile::getValue(const std::string& section,
     return value;
 }
 
-inifile::inifile() { ini.SetUnicode(); }
+inifile::inifile() { m_impl->ini.SetUnicode(); }
 
 inifile::inifile(const std::string& file)
 {
-    ini.SetUnicode();
+    m_impl->ini.SetUnicode();
     loadData(file);
 }
 
@@ -80,42 +87,42 @@ inifile inifile::mergeInto(const std::filesystem::path& other)
 void inifile::setValue(const std::string& section, const std::string& key,
     const std::string& newValue)
 {
-    ini.SetValue(section.c_str(), key.c_str(), newValue.c_str());
+    m_impl->ini.SetValue(section.c_str(), key.c_str(), newValue.c_str());
 }
 
 bool inifile::deleteValue(const std::string& section, const std::string& key)
 {
-    return ini.Delete(section.c_str(), key.c_str());
+    return m_impl->ini.Delete(section.c_str(), key.c_str());
 }
 
 // Saves inifile data in a std::string
-void inifile::save(std::string& holder) const { ini.Save(holder); }
+void inifile::save(std::string& holder) const { m_impl->ini.Save(holder); }
 
 void inifile::saveFile(const std::string& filepath)
 {
-    ini.SaveFile(filepath.c_str());
+    m_impl->ini.SaveFile(filepath.c_str());
 }
 
 void inifile::saveFile(std::string_view filepath)
 {
-    ini.SaveFile(filepath.data());
+    m_impl->ini.SaveFile(filepath.data());
 }
 
 void inifile::saveFile(const std::filesystem::path& filepath)
 {
-    ini.SaveFile(filepath.c_str());
+    m_impl->ini.SaveFile(filepath.c_str());
 }
 
 // BUG: Returning a pointer is not a good idea, it causes ownership issues.
 bool inifile::exists(const std::string& section, const std::string& key)
 {
-    return ini.KeyExists(section.c_str(), key.c_str());
+    return m_impl->ini.KeyExists(section.c_str(), key.c_str());
 }
 
 // BUG: Returning a pointer is not a good idea, it causes ownership issues.
 bool inifile::exists(const std::string& section)
 {
-    return ini.SectionExists(section.c_str());
+    return m_impl->ini.SectionExists(section.c_str());
 }
 
 static std::vector<std::string> convertIniNames(
@@ -132,7 +139,7 @@ static std::vector<std::string> convertIniNames(
 std::vector<std::string> inifile::listAllSections() const
 {
     CSimpleIniA::TNamesDepend sections;
-    ini.GetAllSections(sections);
+    m_impl->ini.GetAllSections(sections);
 
     return convertIniNames(std::move(sections));
 }
@@ -159,7 +166,7 @@ std::vector<std::string> inifile::listAllEntries(
     const std::string& section) const
 {
     CSimpleIniA::TNamesDepend keys;
-    ini.GetAllKeys(section.c_str(), keys);
+    m_impl->ini.GetAllKeys(section.c_str(), keys);
 
     return convertIniNames(std::move(keys));
 }

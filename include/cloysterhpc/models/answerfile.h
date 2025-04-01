@@ -7,12 +7,13 @@
 #define CLOYSTERHPC_ANSWERFILE_H_
 
 #include <boost/asio.hpp>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/ofed.h>
+#include <cloysterhpc/services/files.h>
 #include <cloysterhpc/utils/enums.h>
 #include <optional>
+#include <utility>
 #include <vector>
 
 using boost::asio::ip::address;
@@ -162,7 +163,7 @@ private:
     };
 
     std::filesystem::path m_path;
-    inifile m_ini;
+    cloyster::services::files::KeyFile m_keyfile;
 
     /**
      * Do the inverse of `loadOptions`, i.e, move the stored settings
@@ -332,8 +333,7 @@ private:
      * @param network The network configuration to load.
      * @param optionalNameservers Indicates if the nameservers are optional.
      */
-    void loadNetwork(const std::string& networkSection, AFNetwork& network,
-        bool optionalNameservers = true);
+    void loadNetwork(const std::string& networkSection, AFNetwork& network);
 
     void dumpNetwork(
         const AFNetwork& network, const std::string& networkSection);
@@ -363,22 +363,31 @@ public:
     explicit AnswerFile(const std::filesystem::path& path);
 };
 
-class answerfile_validation_exception : public std::exception {
+class AnswerfileValidationException : public std::exception {
 private:
     std::string message;
 
 public:
-    explicit answerfile_validation_exception(const char* msg)
+    AnswerfileValidationException(const AnswerfileValidationException&)
+        = default;
+    AnswerfileValidationException(AnswerfileValidationException&&) = delete;
+    AnswerfileValidationException& operator=(
+        const AnswerfileValidationException&)
+        = default;
+    AnswerfileValidationException& operator=(AnswerfileValidationException&&)
+        = delete;
+
+    explicit AnswerfileValidationException(const char* msg)
         : message(msg)
     {
     }
 
-    explicit answerfile_validation_exception(const std::string& msg)
-        : message(msg)
+    explicit AnswerfileValidationException(std::string msg)
+        : message(std::move(msg))
     {
     }
 
-    ~answerfile_validation_exception() override = default;
+    ~AnswerfileValidationException() override = default;
 
     [[nodiscard]] const char* what() const noexcept override
     {

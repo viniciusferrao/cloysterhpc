@@ -11,7 +11,6 @@ set(COMMON_LIBS
         gsl::gsl-lite
         ${GLIBMM_LIBRARIES}
         magic_enum::magic_enum
-        SimpleIni::SimpleIni
         resolv
         ${STDC++FS}
         doctest::doctest
