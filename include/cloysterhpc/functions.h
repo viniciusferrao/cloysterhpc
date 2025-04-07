@@ -17,9 +17,8 @@
 
 namespace cloyster {
 
-// Globals
+// Globals, intialized by the command line parser
 extern bool dryRun;
-
 extern bool airGap;
 extern std::string airGapUrl;
 extern std::string mirrorBaseUrl;
