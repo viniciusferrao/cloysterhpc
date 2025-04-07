@@ -19,6 +19,10 @@ extern bool enableTUI;
 extern bool enableCLI;
 extern bool runAsDaemon;
 
+extern bool airGap;
+extern std::string airGapUrl;
+extern std::string mirrorBaseUrl;
+
 extern std::string logLevelInput;
 extern std::string answerfile;
 extern std::string customRepofilePath;

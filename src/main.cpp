@@ -52,7 +52,7 @@ void initializeSingletons(auto&& cluster)
     cloyster::Singleton<RepoManager>::init([]() {
         auto clusterPtr = cloyster::Singleton<Cluster>::get();
         const auto& osinfo = clusterPtr->getHeadnode().getOS();
-        auto repoManager = std::make_unique<RepoManager>(osinfo);
+        auto repoManager = std::make_unique<RepoManager>();
         repoManager->initializeDefaultRepositories();
         return repoManager;
     });

@@ -9,6 +9,13 @@ bool enableTUI = false;
 bool enableCLI = false;
 bool runAsDaemon = false;
 
+
+bool airGap = false;
+std::string airGapUrl = "file:///var/repos/";
+std::string mirrorBaseUrl = "https://mirror.versatushpc.com.br"; // Global mirror URL
+std::string beegfsVersion = "beegfs_7.3.3"; // Default BeeGFS version, configurable via command-line
+
+
 std::string logLevelInput
     = fmt::format("{}", cloyster::utils::enums::toString(Log::Level::Info));
 std::string answerfile = "";

@@ -58,18 +58,21 @@ protected:
         = default; // Protected constructor to prevent direct instantiation
 };
 
-class RepoManager {
+class RepoManager final {
     using OS = cloyster::models::OS;
     struct Impl;
     std::unique_ptr<Impl> m_impl;
 
 public:
-    ~RepoManager();
+    ~RepoManager(); // required by Impl opaque type
     using Repositories
         = std::unordered_map<std::string, std::unique_ptr<IRepository>>;
-    explicit RepoManager(const OS& osinfo);
+    RepoManager();
+    RepoManager(const RepoManager&) = delete;
+    RepoManager(RepoManager&&) = delete;
+    RepoManager& operator=(const RepoManager&) = delete;
+    RepoManager& operator=(RepoManager&&) = delete;
     void initializeDefaultRepositories();
-    void updateDiskFiles();
     void enable(const std::string& repo);
     void enable(const std::vector<std::string>& repos);
     void disable(const std::string& repo);
@@ -77,29 +80,9 @@ public:
     void install(const std::filesystem::path& path);
     void install(const std::vector<std::filesystem::path>& paths);
     [[nodiscard]] std::vector<std::unique_ptr<const IRepository>>
-    listRepos() const;
+        listRepos() const;
     [[nodiscard]] std::unique_ptr<const IRepository> repo(
         const std::string& repo) const;
-
-private:
-    void loadFiles(const std::filesystem::path& basedir);
-    void loadRPMRepos(const std::filesystem::path& source);
-    std::filesystem::path generateCloysterReposFile();
-
-    std::unordered_set<std::filesystem::path> m_filesLoaded;
-
-    // @FIXME: Make these shared pointers
-    const OS& m_os;
-
-    void createFileFor(std::filesystem::path path);
-
-    void loadDefaultRPMReposFromDisk(const std::filesystem::path& basedir);
-
-    void mergeWithCurrentList(Repositories&& repo);
-
-    void loadSingleFile(const std::filesystem::path& source);
-    void saveRepositories();
-    void configureEL();
 };
 
 };

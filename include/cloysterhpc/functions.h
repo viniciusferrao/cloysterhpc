@@ -20,6 +20,11 @@ namespace cloyster {
 // Globals
 extern bool dryRun;
 
+extern bool airGap;
+extern std::string airGapUrl;
+extern std::string mirrorBaseUrl;
+extern std::string beegfsVersion;
+
 template <typename B, typename T, typename... Args>
 constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
 {

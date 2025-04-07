@@ -13,22 +13,25 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
+#include <gsl/gsl-lite.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
+
 
 using cloyster::OS;
 using cloyster::concepts::IsParser;
 using cloyster::services::files::IsKeyFileReadable;
 using cloyster::services::files::KeyFile;
 using cloyster::services::repos::IRepository;
-using std::make_unique;
 
 namespace cloyster::services::repos {
 
@@ -80,6 +83,7 @@ public:
     RPMRepository(RPMRepository&&) = default;
     RPMRepository& operator=(const RPMRepository&) = default;
     RPMRepository& operator=(RPMRepository&&) = default;
+
 
     [[nodiscard]] std::string id() const override { return m_id; };
     [[nodiscard]] bool enabled() const override { return m_enabled; };
@@ -229,6 +233,11 @@ public:
         m_parser.parse(m_path, m_repos);
     }
 
+    RPMRepositoryFile(std::filesystem::path path, std::unordered_map<std::string, std::shared_ptr<RPMRepository>> repos)
+        : m_path(std::move(path)), m_repos(std::move(repos))
+    {
+    }
+
     const auto& path() { return m_path; }
 
     auto& repos() { return m_repos; }
@@ -290,7 +299,7 @@ public:
     }
 
     // Install all .repos files inside a folder
-    void installDir(const std::filesystem::path& path)
+    void loadDir(const std::filesystem::path& path)
     {
         if (cloyster::dryRun) {
             LOG_INFO("Dry Run: Would open the directory {}", path.string());
@@ -300,7 +309,7 @@ public:
         install(std::filesystem::directory_iterator(path));
     }
 
-    void installBaseDir() { installDir(basedir); }
+    void loadBaseDir() { loadDir(basedir); }
 
     auto repo(const std::string& repoName)
     {
@@ -321,10 +330,14 @@ public:
         }
     }
 
-    // Enable/diable a repository by name
+    // Enable/disable a repository by name
     void enable(const auto& repo, bool value)
     {
-        LOG_DEBUG("Enabling/Disabling[{}] RPM repo {}", value, repo);
+        if (value) {
+            LOG_DEBUG("Enabling RPM repo {}", repo);
+        } else {
+            LOG_DEBUG("Disabling RPM repo {}", repo);
+        }
         auto& repofile = m_filesIdx.at(repo);
         repofile->repo(repo)->enabled(value);
         repofile->save();
@@ -380,83 +393,6 @@ public:
 
 }; // namespace cloyster::services::repos {
 
-namespace {
-
-// These files contains the repositories files data as
-// format strings with which we inject the values for
-constexpr std::string_view CLOYSTER_REPO_EL8 = {
-#include "cloysterhpc/repos/el8/cloyster.repo"
-};
-
-constexpr std::string_view CLOYSTER_REPO_EL9 = {
-#include "cloysterhpc/repos/el9/cloyster.repo"
-};
-
-constexpr std::string_view CLOYSTER_REPO_EL10 = {
-#include "cloysterhpc/repos/el10/cloyster.repo"
-};
-
-constexpr auto getCloysterRepoPath(const auto& osinfo)
-{
-    switch (osinfo.getPlatform()) {
-        case OS::Platform::el8:
-        case OS::Platform::el9:
-        case OS::Platform::el10:
-            return "/etc/yum.repos.d/cloyster.repo";
-        default:
-            throw std::logic_error(
-                "Not implemented: Debian default repository path");
-    }
-}
-
-inline std::string buildPackageName(std::string stem)
-{
-    return fmt::format("{}{}", cloyster::productName, stem);
-}
-
-// Returns a list of repositories to be enabled
-std::vector<std::string> getDependenciesEL(const OS& osinfo)
-{
-    const auto platform = osinfo.getPlatform();
-    std::vector<std::string> dependencies;
-
-    std::size_t version = osinfo.getMajorVersion();
-    std::string powertools = "powertools";
-    switch (platform) {
-        case OS::Platform::el8:
-        case OS::Platform::el9:
-            powertools = "crb";
-            break;
-        default:
-            break;
-    };
-
-    switch (osinfo.getDistro()) {
-        case OS::Distro::AlmaLinux:
-            dependencies
-                = { buildPackageName("-AlmaLinux-BaseOS"), powertools };
-            break;
-        case OS::Distro::RHEL:
-            dependencies = { fmt::format(
-                "codeready-builder-for-rhel-{}-x86_64-rpms", version) };
-            break;
-        case OS::Distro::OL:
-            dependencies = { buildPackageName("-OL-BaseOS"),
-                fmt::format("ol{}_codeready_builder", version) };
-            break;
-        case OS::Distro::Rocky:
-            dependencies = { buildPackageName("-Rocky-BaseOS"), powertools };
-            break;
-        default:
-            throw std::runtime_error(fmt::format("Unsupported distribution: {}",
-                cloyster::utils::enums::toString(osinfo.getDistro())));
-    }
-
-    return dependencies;
-}
-
-}; // anonymous namespace
-
 namespace cloyster::services::repos {
 
 // Hidden implementation
@@ -467,37 +403,9 @@ struct RepoManager::Impl {
 
 RepoManager::~RepoManager() = default;
 
-RepoManager::RepoManager(const OS& osinfo)
+RepoManager::RepoManager()
     : m_impl(std::make_unique<RepoManager::Impl>())
-    , m_os(osinfo)
 {
-}
-
-// Installs the cloyster.repo file and return its path
-std::filesystem::path RepoManager::generateCloysterReposFile()
-{
-    const auto& path = getCloysterRepoPath(m_os);
-    std::istringstream stream;
-    switch (m_os.getPlatform()) {
-        case OS::Platform::el8:
-            stream = std::istringstream(
-                fmt::format(CLOYSTER_REPO_EL8, cloyster::productName));
-            break;
-        case OS::Platform::el9:
-            stream = std::istringstream(
-                fmt::format(CLOYSTER_REPO_EL9, cloyster::productName));
-            break;
-        case OS::Platform::el10:
-            stream = std::istringstream(
-                fmt::format(CLOYSTER_REPO_EL10, cloyster::productName));
-            break;
-        default:
-            throw std::runtime_error(fmt::format("Unsupported platform {}",
-                cloyster::utils::enums::toString(m_os.getPlatform())));
-    };
-
-    cloyster::installFile(path, stream);
-    return path;
 }
 
 inline void RPMRepository::valid() const
@@ -508,14 +416,250 @@ inline void RPMRepository::valid() const
     LOG_ASSERT(isValid, "Invalid RPM Repository");
 }
 
+
+struct ELConfig {
+    static inline const std::filesystem::path baseDir = "/etc/yum.repos.d/";
+
+    static std::vector<RPMRepositoryFile> getRepositories() {
+        const auto& osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+        std::string releasever = std::to_string(osinfo.getMajorVersion());            // e.g., "8"
+        std::string arch = cloyster::utils::enums::toString(osinfo.getArch());        // e.g., "x86_64"
+
+        // Local function for air-gap URL construction
+        auto makeAirGapUrl = [](const std::string& repoName, const std::string& path, const std::string& originalUrl) {
+            return cloyster::airGap ? cloyster::airGapUrl + "/" + repoName + "/" + path : originalUrl;
+        };
+
+        std::vector<RPMRepositoryFile> repoFiles;
+
+        auto addRepo = [](std::unordered_map<std::string, std::shared_ptr<RPMRepository>>& repoMap,
+                          // NOLINTNEXTLINE
+                          const std::string& id, const std::string& name, 
+                          const std::string& baseurl, bool enabled, 
+                          const std::string& gpgkey) {
+            auto repo = std::make_shared<RPMRepository>();
+            repo->id(id);
+            repo->name(name);
+            repo->baseurl(baseurl);
+            repo->enabled(enabled);
+            repo->gpgcheck(true);
+            repo->gpgkey(gpgkey);
+            repoMap.emplace(id, repo);
+        };
+
+        // oracle.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> oracleRepos;
+            addRepo(oracleRepos, "OLBaseOS", "Oracle Linux " + releasever + " BaseOS Latest ($basearch)",
+                    makeAirGapUrl("OLBaseOS", "repo/OracleLinux/OL" + releasever + "/baseos/latest/$basearch/",
+                                  "https://yum$ociregion.oracle.com/repo/OracleLinux/OL" + releasever + "/baseos/latest/$basearch/"),
+                    false,
+                    makeAirGapUrl("OLBaseOS", "RPM-GPG-KEY-oracle-ol" + releasever,
+                                  "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol" + releasever));
+            repoFiles.emplace_back(baseDir / "oracle.repo", std::move(oracleRepos));
+        }
+
+        // rocky.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> rockyRepos;
+            addRepo(rockyRepos, "RockyBaseOS", "Rocky Linux $releasever - BaseOS",
+                    makeAirGapUrl("RockyBaseOS", "$contentdir/" + releasever + "/BaseOS/$basearch/os/",
+                                  "http://dl.rockylinux.org/$contentdir/" + releasever + "/BaseOS/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("RockyBaseOS", "RPM-GPG-KEY-Rocky-" + releasever,
+                                  mirrorBaseUrl + "/rocky/linux/RPM-GPG-KEY-Rocky-" + releasever));
+            repoFiles.emplace_back(baseDir / "rocky.repo", std::move(rockyRepos));
+        }
+
+        // almalinux.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> almaRepos;
+            addRepo(almaRepos, "AlmaLinuxBaseOS", "AlmaLinux $releasever - BaseOS",
+                    makeAirGapUrl("AlmaLinuxBaseOS", "almalinux/" + releasever + "/BaseOS/$basearch/os/",
+                                  "https://repo.almalinux.org/almalinux/" + releasever + "/BaseOS/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("AlmaLinuxBaseOS", "RPM-GPG-KEY-AlmaLinux-" + releasever,
+                                  mirrorBaseUrl + "/almalinux/almalinux/RPM-GPG-KEY-AlmaLinux-" + releasever));
+            repoFiles.emplace_back(baseDir / "almalinux.repo", std::move(almaRepos));
+        }
+
+        // beegfs.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> beegfsRepos;
+            addRepo(beegfsRepos, "beegfs", "BeeGFS",
+                    makeAirGapUrl("beegfs", beegfsVersion + "/dists/rhel" + releasever + "/",
+                                  mirrorBaseUrl + "/" + beegfsVersion + "/dists/rhel" + releasever + "/"),
+                    false,
+                    makeAirGapUrl("beegfs", beegfsVersion + "/gpg/GPG-KEY-beegfs",
+                                  mirrorBaseUrl + "/" + beegfsVersion + "/gpg/GPG-KEY-beegfs"));
+            repoFiles.emplace_back(baseDir / "beegfs.repo", std::move(beegfsRepos));
+        }
+
+        // grafana.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> grafanaRepos;
+            addRepo(grafanaRepos, "grafana", "grafana",
+                    makeAirGapUrl("grafana", "", mirrorBaseUrl + "/grafana/"),
+                    false,
+                    makeAirGapUrl("grafana", "gpg.key", "https://rpm.grafana.com/gpg.key"));
+            repoFiles.emplace_back(baseDir / "grafana.repo", std::move(grafanaRepos));
+        }
+
+        // influxdata.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> influxRepos;
+            addRepo(influxRepos, "influxdata", "InfluxData Repository - Stable",
+                    makeAirGapUrl("influxdata", "", mirrorBaseUrl + "/influxdata/"),
+                    false,
+                    makeAirGapUrl("influxdata", "influxdata-archive_compat.key",
+                                  "https://repos.influxdata.com/influxdata-archive_compat.key"));
+            repoFiles.emplace_back(baseDir / "influxdata.repo", std::move(influxRepos));
+        }
+
+        // intel.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> intelRepos;
+            addRepo(intelRepos, "oneAPI", "Intel oneAPI repository",
+                    makeAirGapUrl("oneAPI", "", mirrorBaseUrl + "/oneAPI/"),
+                    false,
+                    makeAirGapUrl("oneAPI", "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB",
+                                  "https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB"));
+            repoFiles.emplace_back(baseDir / "intel.repo", std::move(intelRepos));
+        }
+
+        // zabbix.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> zabbixRepos;
+            addRepo(zabbixRepos, "zabbix", "zabbix",
+                    makeAirGapUrl("zabbix", "zabbix/6.4/rhel/" + releasever + "/" + arch + "/",
+                                  mirrorBaseUrl + "/zabbix/zabbix/6.4/rhel/" + releasever + "/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("zabbix", "RPM-GPG-KEY-ZABBIX",
+                                  mirrorBaseUrl + "/zabbix/RPM-GPG-KEY-ZABBIX"));
+            repoFiles.emplace_back(baseDir / "zabbix.repo", std::move(zabbixRepos));
+        }
+
+        // elrepo.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> elrepoRepos;
+            addRepo(elrepoRepos, "elrepo", "elrepo",
+                    makeAirGapUrl("elrepo", "elrepo/el" + releasever + "/" + arch + "/",
+                                  mirrorBaseUrl + "/elrepo/elrepo/el" + releasever + "/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("elrepo", "RPM-GPG-KEY-elrepo.org",
+                                  "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"));
+            repoFiles.emplace_back(baseDir / "elrepo.repo", std::move(elrepoRepos));
+        }
+
+        // rpmfusion.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> rpmfusionRepos;
+            addRepo(rpmfusionRepos, "rpmfusion-free-updates", "rpmfusion-free-updates",
+                    makeAirGapUrl("rpmfusion-free-updates", "free/el/updates/" + releasever + "/" + arch + "/",
+                                  mirrorBaseUrl + "/rpmfusion/free/el/updates/" + releasever + "/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("rpmfusion-free-updates", "RPM-GPG-KEY-rpmfusion-free-el-" + releasever,
+                                  mirrorBaseUrl + "/rpmfusion/free/el/RPM-GPG-KEY-rpmfusion-free-el-" + releasever));
+            repoFiles.emplace_back(baseDir / "rpmfusion.repo", std::move(rpmfusionRepos));
+        }
+
+        // epel.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> epelRepos;
+            addRepo(epelRepos, "epel", "Extra Packages for Enterprise Linux " + releasever + " - $basearch",
+                    makeAirGapUrl("epel", releasever + "/Everything/" + arch + "/",
+                                  mirrorBaseUrl + "/epel/" + releasever + "/Everything/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("epel", "RPM-GPG-KEY-EPEL-" + releasever,
+                                  mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-" + releasever));
+            addRepo(epelRepos, "epel-debuginfo", "Extra Packages for Enterprise Linux " + releasever + " - $basearch - Debug",
+                    makeAirGapUrl("epel-debuginfo", releasever + "/Everything/" + arch + "/debug/",
+                                  mirrorBaseUrl + "/epel/" + releasever + "/Everything/" + arch + "/debug/"),
+                    false,
+                    makeAirGapUrl("epel-debuginfo", "RPM-GPG-KEY-EPEL-" + releasever,
+                                  mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-" + releasever));
+            addRepo(epelRepos, "epel-source", "Extra Packages for Enterprise Linux " + releasever + " - $basearch - Source",
+                    makeAirGapUrl("epel-source", releasever + "/Everything/source/tree/",
+                                  mirrorBaseUrl + "/epel/" + releasever + "/Everything/source/tree/"),
+                    false,
+                    makeAirGapUrl("epel-source", "RPM-GPG-KEY-EPEL-" + releasever,
+                                  mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-" + releasever));
+            repoFiles.emplace_back(baseDir / "epel.repo", std::move(epelRepos));
+        }
+
+        // openhpc.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> openhpcRepos;
+            addRepo(openhpcRepos, "openhpc", "OpenHPC",
+                    makeAirGapUrl("openhpc", "2/EL_" + releasever + "/",
+                                  mirrorBaseUrl + "/openhpc/2/EL_" + releasever + "/"),
+                    false,
+                    makeAirGapUrl("openhpc", "public_key",
+                                  "https://obs.openhpc.community/projects/OpenHPC/public_key"));
+            addRepo(openhpcRepos, "openhpc-updates", "OpenHPC Updates",
+                    makeAirGapUrl("openhpc-updates", "2/updates/EL_" + releasever + "/",
+                                  mirrorBaseUrl + "/openhpc/2/updates/EL_" + releasever + "/"),
+                    false,
+                    makeAirGapUrl("openhpc-updates", "public_key",
+                                  "https://obs.openhpc.community/projects/OpenHPC/public_key"));
+            repoFiles.emplace_back(baseDir / "openhpc.repo", std::move(openhpcRepos));
+        }
+
+        // nvidia.repo
+        {
+            std::unordered_map<std::string, std::shared_ptr<RPMRepository>> nvidiaRepos;
+            addRepo(nvidiaRepos, "nvhpc", "NVIDIA HPC SDK",
+                    makeAirGapUrl("nvhpc", "hpc-sdk/rhel/$basearch",
+                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/$basearch"),
+                    false,
+                    makeAirGapUrl("nvhpc", "RPM-GPG-KEY-NVIDIA-HPC-SDK",
+                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/RPM-GPG-KEY-NVIDIA-HPC-SDK"));
+            repoFiles.emplace_back(baseDir / "nvidia.repo", std::move(nvidiaRepos));
+        }
+
+        return repoFiles;
+    }
+};
+
+struct RPMDependencyResolver {
+    static std::string resolveCodeReadyBuilderName(const OS& osinfo) {
+        auto distro = osinfo.getDistro();
+        auto majorVersion = osinfo.getMajorVersion();
+        std::string arch = cloyster::utils::enums::toString(osinfo.getArch());
+
+        switch (distro) {
+            case OS::Distro::AlmaLinux:
+            case OS::Distro::Rocky:
+                return "crb";
+            case OS::Distro::RHEL:
+                return fmt::format("codeready-builder-for-rhel-{}-{}-rpms", majorVersion, arch);
+            case OS::Distro::OL:
+                return fmt::format("ol{}_codeready_builder", majorVersion);
+            default:
+                throw std::runtime_error("Unsupported distro");
+        }
+    }
+};
+
+struct RPMRepositoryGenerator {
+    static void generate() {
+        auto repoFiles = ELConfig::getRepositories();
+        for (auto& repoFile : repoFiles) {
+            repoFile.save(); // Save each RPMRepositoryFile
+        }
+    }
+};
+
 void RepoManager::initializeDefaultRepositories()
 {
-    switch (m_os.getPackageType()) {
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM:
-            m_impl->rpm.installBaseDir();
-            m_impl->rpm.install(generateCloysterReposFile());
+            // Generate the repositories files in the disk
+            RPMRepositoryGenerator::generate();
+            m_impl->rpm.loadBaseDir();
             // enable() is dryRun aware
-            enable(getDependenciesEL(m_os));
+            enable(RPMDependencyResolver::resolveCodeReadyBuilderName(osinfo));
             break;
         case OS::PackageType::DEB:
             throw std::logic_error("DEB packages not implemented");
@@ -529,9 +673,10 @@ void RepoManager::enable(const std::string& repoid)
         LOG_INFO("Dry Run: Would enable repository {}", repoid);
         return;
     }
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
 
     try {
-        switch (m_os.getPackageType()) {
+        switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 m_impl->rpm.enable(repoid, true);
                 break;
@@ -552,8 +697,9 @@ void RepoManager::enable(const std::vector<std::string>& repos)
             "Dry Run: Would enable these repos: {}", fmt::join(repos, ","));
         return;
     }
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     try {
-        switch (m_os.getPackageType()) {
+        switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 m_impl->rpm.enable(repos, true);
                 break;
@@ -574,8 +720,9 @@ void RepoManager::disable(const std::string& repoid)
         return;
     }
 
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     try {
-        switch (m_os.getPackageType()) {
+        switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 m_impl->rpm.enable(repoid, false);
                 break;
@@ -596,8 +743,9 @@ void RepoManager::disable(const std::vector<std::string>& repos)
         return;
     }
 
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     try {
-        switch (m_os.getPackageType()) {
+        switch (osinfo.getPackageType()) {
             case OS::PackageType::RPM:
                 m_impl->rpm.enable(repos, false);
                 break;
@@ -618,7 +766,9 @@ void RepoManager::install(const std::filesystem::path& path)
     LOG_ASSERT(
         path.has_filename(), "RepoManager::install called with a directory?");
     LOG_INFO("Installing repository {}", path.string());
-    switch (m_os.getPackageType()) {
+
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM:
             m_impl->rpm.install(path);
             break;
@@ -642,7 +792,8 @@ void RepoManager::install(const std::vector<std::filesystem::path>& paths)
 // repository abstractly.
 std::vector<std::unique_ptr<const IRepository>> RepoManager::listRepos() const
 {
-    switch (m_os.getPackageType()) {
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM:
             return m_impl->rpm.repos();
             break;
@@ -654,7 +805,8 @@ std::vector<std::unique_ptr<const IRepository>> RepoManager::listRepos() const
 std::unique_ptr<const IRepository> RepoManager::repo(
     const std::string& repo) const
 {
-    switch (m_os.getPackageType()) {
+    auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM:
             return static_cast<std::unique_ptr<const IRepository>>(
                 m_impl->rpm.repo(repo));
