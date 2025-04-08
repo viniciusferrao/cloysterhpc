@@ -9,6 +9,19 @@
 namespace cloyster::services {
 using std::ifstream;
 
+Options::Options() 
+  : helpAndExit{false}
+  , showVersion{false}
+  , runAsRoot{false}
+  , dryRun{false}
+  , enableTUI{false}
+  , enableCLI{false}
+  , runAsDaemon{false}
+  , airGap{false} // Explicitly set to false
+  , unattended{false} // Default log level
+  , logLevelInput{3} // Added from main.cpp
+{};
+
 std::unique_ptr<Options> Options::factory(int argc, const char** argv)
 {
     namespace po = boost::program_options;

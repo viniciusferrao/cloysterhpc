@@ -43,7 +43,7 @@ struct Options final {
     static std::unique_ptr<Options> factory(int argc, const char** argv);
 
 private:
-    Options() = default;
+    Options();
 };
 }
 
