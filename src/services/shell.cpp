@@ -7,6 +7,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/osservice.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/shell.h>
@@ -236,9 +237,11 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
+        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
         auto connectionName = cloyster::utils::enums::toString(
             connection.getNetwork()->getProfile());
-        if (!cloyster::dryRun
+        if (!opts->dryRun
+
             && runner()->executeCommand(
                    fmt::format("nmcli connection show {}", connectionName))
                 == 0) {
@@ -421,19 +424,8 @@ void Shell::installDevelopmentComponents()
     LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
              "MPI stacks");
 
-    // @FIXME: Make this a configuration instead of hardcoded
-    auto ohpcPackages = std::vector {
-        "openmpi4-gnu12-ohpc",
-        "mpich-ofi-gnu12-ohpc",
-        "mpich-ucx-gnu12-ohpc",
-        "mvapich2-gnu12-ohpc",
-        "lmod-defaults-gnu12-openmpi4-ohpc",
-        "ohpc-autotools",
-        "hwloc-ohpc",
-        "spack-ohpc",
-        "valgrind-ohpc",
-    };
-
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto ohpcPackages = opts->ohpcPackages;
     osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
 

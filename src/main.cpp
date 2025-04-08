@@ -6,7 +6,6 @@
 #include <cctype>
 #include <cstdlib>
 
-#include <CLI/CLI.hpp>
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/dbus_client.h>
@@ -18,6 +17,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
@@ -33,15 +33,16 @@ namespace {
 void initializeSingletons(auto&& cluster)
 {
     using cloyster::models::Cluster;
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     cloyster::Singleton<Cluster>::init(
         std::forward<decltype(cluster)>(cluster));
 
-    cloyster::Singleton<cloyster::services::IRunner>::init([]() {
+    cloyster::Singleton<cloyster::services::IRunner>::init([&]() {
         using cloyster::services::IRunner;
         using cloyster::services::DryRunner;
         using cloyster::services::Runner;
 
-        if (cloyster::dryRun) {
+        if (opts->dryRun) {
             return cloyster::makeUniqueDerived<IRunner, DryRunner>();
         }
 
@@ -110,117 +111,51 @@ int runTestCommand(const std::string& testCommand,
 }
 }; // anonymous namespace
 
+
 /**
  * @brief The entrypoint.
  */
 int main(int argc, const char** argv)
 {
-    CLI::App app { productName };
+    using namespace cloyster;
+    using namespace cloyster::services;
+    Singleton<Options>::init(Options::factory(argc, argv));
+    auto opts = Singleton<Options>::get();
 
-    app.add_flag(
-        "-v, --version", cloyster::showVersion, "Show version information");
-
-    app.add_flag(
-        "-d, --dry", cloyster::dryRun, "Perform a dry run installation");
-
-    app.add_flag("-t, --tui", cloyster::enableTUI, "Enable TUI");
-
-    cloyster::logLevelInput
-        = fmt::format("{}", cloyster::utils::enums::toString(Log::Level::Info));
+    opts->logLevelInput = static_cast<std::size_t>(Log::Level::Info);
     constexpr std::size_t logLevels
         = cloyster::utils::enums::count<Log::Level>();
     const std::vector<std::string> logLevelVector
         = cloyster::utils::enums::toStrings<Log::Level>();
 
-    app.add_option("-l, --log-level", cloyster::logLevelInput,
-           [&logLevelVector]() {
-               std::string result { "Available log levels:" };
-
-               for (std::size_t i = 0; const auto& logLevel : logLevelVector) {
-                   result += fmt::format(" {} ({}),", logLevel, i++);
-               }
-
-               result.pop_back();
-               return result;
-           }())
-        ->check(CLI::IsMember(logLevelVector, CLI::ignore_case)
-            | CLI::Range(logLevels - 1))
-        // This is a hack to solve the autogen string:
-        // -l,--log-level TEXT:({Trace,Debug,Info,Warn,Error,Critical,Off})
-        // OR (INT in [0 - 6])
-        ->option_text(" ");
-
-    app.add_option(
-        "-a, --answerfile", cloyster::answerfile, "Full path to a answerfile");
-
-    std::string dumped_answerfile;
-    app.add_option("--dump-answerfile", dumped_answerfile,
-        "If you pass this parameter, the software will create an answefile "
-        "based on your input, and save it in the specified path");
-
-    app.add_option("--customrepo", cloyster::customRepofilePath,
-        "Full path to a custom repofile");
-
-    bool unattended = false;
-    app.add_flag(
-        "-u, --unattended", unattended, "Perform an unattended installation");
-
-    app.add_option("--skip", cloyster::skipSteps,
-        "Skip a specific step during the installation");
-    app.add_option("--force", cloyster::forceSteps,
-        "Force a specific step during the installation");
-
-#ifndef NDEBUG
-    std::string testCommand {};
-    app.add_option("--test", testCommand, "Run a command for testing purposes");
-
-    std::vector<std::string> testCommandArgs {};
-    app.add_option("--test-args", testCommandArgs,
-        "Run a command for testing purposes with arguments, can be specified "
-        "multiple times");
-#endif
-
-    CLI11_PARSE(app, argc, argv)
-
-    Log::init([]() {
-        if (std::regex_match(cloyster::logLevelInput, std::regex("^[0-9]+$"))) {
-            // @FIXME:
-            // - Convert cloyster::logLevelInput to int I
-            // - Initialize the enum from the int
-            // - Return it
-            return cloyster::utils::enums::ofStringOpt<Log::Level>(
-                cloyster::logLevelInput)
-                .value();
-        } else {
-            return cloyster::utils::enums::ofStringOpt<Log::Level>(
-                cloyster::logLevelInput,
-                cloyster::utils::enums::Case::Insensitive)
-                .value();
-        }
-    }());
-
-    if (cloyster::showVersion) {
+    Log::init(opts->logLevelInput);
+    if (opts->showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
+        return EXIT_SUCCESS;
+    }
+
+    if (opts->helpAndExit) {
+        fmt::print("Help:\n{}", opts->helpText);
         return EXIT_SUCCESS;
     }
 
     try {
 #ifndef NDEBUG
-        LOG_DEBUG("Log level set to: {}\n", cloyster::logLevelInput)
+        LOG_DEBUG("Log level set to: {}\n", opts->logLevelInput)
 #endif
         LOG_INFO("{} Started", productName)
 
         cloyster::checkEffectiveUserId();
 
         // --test implies --unattended
-        if (!testCommand.empty()) {
-            unattended = true;
+        if (!opts->testCommand.empty()) {
+            opts->unattended = true;
         }
 
-        if (cloyster::dryRun) {
+        if (opts->dryRun) {
             LOG_INFO("Dry run enabled.");
         } else {
-            while (!unattended) {
+            while (!opts->unattended) {
                 char response = 'N';
                 fmt::print("{} will now modify your system, do you want to "
                            "continue? [Y/N]\n",
@@ -238,17 +173,17 @@ int main(int argc, const char** argv)
         }
 
         //@TODO implement CLI feature
-        if (cloyster::enableCLI) {
-            fmt::print("CLI feature not implemented.\n");
+        if (opts->enableCLI) {
+            LOG_ERROR("CLI feature not implemented.\n");
             return EXIT_FAILURE;
         }
 
         auto model = std::make_unique<cloyster::models::Cluster>();
-        if (!cloyster::answerfile.empty()) {
-            LOG_TRACE("Answerfile: {}", cloyster::answerfile)
-            model->fillData(cloyster::answerfile);
+        if (!opts->answerfile.empty()) {
+            LOG_TRACE("Answerfile: {}", opts->answerfile)
+            model->fillData(opts->answerfile);
         } else {
-            cloyster::enableTUI = true;
+            opts->enableTUI = true;
         }
 
 #ifndef NDEBUG
@@ -256,7 +191,7 @@ int main(int argc, const char** argv)
         model->printData();
 #endif
 
-        if (cloyster::enableTUI && testCommand.empty()) {
+        if (opts->enableTUI && opts->testCommand.empty()) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
             auto presenter
@@ -266,8 +201,8 @@ int main(int argc, const char** argv)
 
         LOG_TRACE("Starting execution engine");
 
-        if (!dumped_answerfile.empty()) {
-            model->dumpData(dumped_answerfile);
+        if (!opts->dumpAnswerfile.empty()) {
+            model->dumpData(opts->dumpAnswerfile);
         }
 
         initializeSingletons(std::move(model));
@@ -276,8 +211,8 @@ int main(int argc, const char** argv)
             = std::make_unique<cloyster::services::Shell>();
 
 #ifndef NDEBUG
-        if (!testCommand.empty()) {
-            return runTestCommand(testCommand, testCommandArgs);
+        if (!opts->testCommand.empty()) {
+            return runTestCommand(opts->testCommand, opts->testCommandArgs);
         }
 #endif
         executionEngine->install();

@@ -10,6 +10,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <cstddef>
 #include <fmt/core.h>
 #include <iterator>
@@ -405,6 +406,7 @@ void AnswerFile::loadHostnameSettings()
 void AnswerFile::loadSystemSettings()
 {
     system.disk_image = m_keyfile.getString("system", "disk_image");
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
 
     // Verify supported distros
     auto afDistro = m_keyfile.getString("system", "distro");
@@ -413,7 +415,7 @@ void AnswerFile::loadSystemSettings()
             afDistro, cloyster::utils::enums::Case::Insensitive)) {
         system.distro = formatDistro.value();
     } else {
-        if (cloyster::dryRun) {
+        if (opts->dryRun) {
             return;
         }
         throw std::runtime_error(

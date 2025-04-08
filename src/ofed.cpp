@@ -7,6 +7,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/ofed.h>
 #include <cloysterhpc/services/osservice.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/repos.h>
 #include <utility>
 
@@ -36,12 +37,13 @@ OFED::Kind OFED::getKind() const { return m_kind; }
 
 bool OFED::installed() const
 {
-    if (cloyster::shouldForce("infiniband-install")) {
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->shouldForce("infiniband-install")) {
         return false;
     }
 
     // Return false so the installation runs on dry run
-    if (cloyster::dryRun) {
+    if (opts->dryRun) {
         return false;
     }
 
@@ -62,6 +64,7 @@ bool OFED::installed() const
 
 void OFED::install() const
 {
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     // Idempotency check
     if (installed()) {
         LOG_WARN("Inifiniband already installed, skipping, use `--force "
@@ -124,7 +127,7 @@ void OFED::install() const
             // drivers the headnode should be rebooted to reload the new kernel.
             // The driver may support weak updates modules and load without
             // need for reboot.
-            if (!cloyster::shouldSkip("compile-doca-driver")) {
+            if (!opts->shouldSkip("compile-doca-driver")) {
                 runner->checkCommand(
                     "bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k "
                     "$(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" "

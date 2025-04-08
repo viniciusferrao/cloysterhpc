@@ -26,6 +26,7 @@
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/xcat.h>
 
 #if __cpp_lib_starts_ends_with < 201711L
@@ -504,6 +505,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
 
 void Cluster::fillData(const std::filesystem::path& answerfilePath)
 {
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     AnswerFile answerfil(answerfilePath);
 
     LOG_TRACE("Configure Management Network")
@@ -598,7 +600,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
             throw std::runtime_error(fmt::format(
                 "Invalid OFED kind, expected one of {}, found {}. Edit the "
                 "anwerfile {} [ofed] sectino and try again.",
-                cloyster::answerfile,
+                opts->answerfile,
                 fmt::join(
                     cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
                 answerfil.ofed.kind));

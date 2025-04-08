@@ -13,6 +13,7 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/execution.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
@@ -356,7 +357,10 @@ void XCAT::generatePostinstallFile()
         cloyster::addStringToFile(filename, entries);
     }
 
-    if (cloyster::dryRun) {
+
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+
+    if (opts->dryRun) {
         LOG_INFO("Dry Run: Would change file {} permissions", filename)
         return;
     }

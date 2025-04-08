@@ -3,10 +3,10 @@
 set(COMMON_LIBS
         ${NEWT_LIBRARY}
         fmt::fmt
-        CLI11::CLI11
         Boost::headers
         Boost::system
         Boost::thread
+        Boost::program_options
         spdlog::spdlog
         gsl::gsl-lite
         ${GLIBMM_LIBRARIES}

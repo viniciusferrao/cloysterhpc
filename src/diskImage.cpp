@@ -9,6 +9,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/files.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/log.h>
 #include <unordered_map>
 
@@ -73,14 +74,16 @@ cloyster::models::OS::Distro DiskImage::getDistro() const
 // BUG: Consider removing/reimplement this method
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
-    if (cloyster::dryRun) {
+
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
         LOG_INFO("Dry Run: Would verify disk image checksum.")
         return true;
     }
 
     LOG_INFO("Verifying disk image checksum... This may take a while, use "
              "`--skip disk-checksum` to skip")
-    if (cloyster::shouldSkip("disk-checksum")) {
+    if (opts->shouldSkip("disk-checksum")) {
         LOG_WARN(
             "Skiping disk the image checksum because `--skip disk-checksum`");
         return true;

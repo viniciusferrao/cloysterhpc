@@ -5,6 +5,7 @@
 #include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/utils/enums.h>
 #include <filesystem>
 #include <list>
@@ -18,12 +19,6 @@
 namespace cloyster {
 
 // Globals, intialized by the command line parser
-extern bool dryRun;
-extern bool airGap;
-extern std::string airGapUrl;
-extern std::string mirrorBaseUrl;
-extern std::string beegfsVersion;
-
 template <typename B, typename T, typename... Args>
 constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
 {
@@ -160,7 +155,8 @@ template <typename T>
     requires std::is_default_constructible_v<T>
 inline T dryrun(const std::function<T()>& func, const std::string& msg)
 {
-    if (cloyster::dryRun) {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
         LOG_INFO("Dry Run: {}", msg);
         return T();
     }
