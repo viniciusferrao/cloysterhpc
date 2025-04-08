@@ -357,7 +357,6 @@ void XCAT::generatePostinstallFile()
         cloyster::addStringToFile(filename, entries);
     }
 
-
     auto opts = cloyster::Singleton<cloyster::services::Options>::get();
 
     if (opts->dryRun) {

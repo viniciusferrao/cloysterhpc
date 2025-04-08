@@ -25,8 +25,8 @@
 #include <cloysterhpc/models/pbs.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
 
 #if __cpp_lib_starts_ends_with < 201711L

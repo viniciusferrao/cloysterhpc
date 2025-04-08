@@ -1,8 +1,8 @@
-#include <cloysterhpc/functions.h>
 #include <cloysterhpc/cloyster.h>
-#include <cloysterhpc/services/options.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/IService.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <stdexcept>
 
 /* BUG: Refactor:

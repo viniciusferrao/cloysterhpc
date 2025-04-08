@@ -15,9 +15,9 @@
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
-#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
@@ -110,7 +110,6 @@ int runTestCommand(const std::string& testCommand,
     return EXIT_SUCCESS;
 }
 }; // anonymous namespace
-
 
 /**
  * @brief The entrypoint.

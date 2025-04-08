@@ -9,8 +9,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/files.h>
-#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <unordered_map>
 
 // @FIXME: This file need some work

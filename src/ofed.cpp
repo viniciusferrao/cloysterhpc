@@ -6,8 +6,8 @@
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/ofed.h>
-#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <utility>
 

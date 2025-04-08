@@ -4,8 +4,8 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/utils/enums.h>
 #include <filesystem>
 #include <list>

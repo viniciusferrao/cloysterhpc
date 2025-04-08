@@ -29,7 +29,6 @@ struct Options final {
     std::set<std::string> forceSteps;
     std::set<std::string> ohpcPackages;
 
-
 #ifndef NDEBUG
     std::string testCommand;
     std::vector<std::string> testCommandArgs;
@@ -46,6 +45,5 @@ private:
     Options() = default;
 };
 }
-
 
 #endif

@@ -80,7 +80,7 @@ public:
     void install(const std::filesystem::path& path);
     void install(const std::vector<std::filesystem::path>& paths);
     [[nodiscard]] std::vector<std::unique_ptr<const IRepository>>
-        listRepos() const;
+    listRepos() const;
     [[nodiscard]] std::unique_ptr<const IRepository> repo(
         const std::string& repo) const;
 };
