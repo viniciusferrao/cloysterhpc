@@ -49,12 +49,7 @@ static constexpr std::unique_ptr<IRunner> makeRunner(const bool option)
 namespace cloyster::models {
 
 Cluster::Cluster()
-    : m_systemdBus(std::make_shared<DBusClient>(
-          "org.freedesktop.systemd1", "/org/freedesktop/systemd1"))
-{
-}
-
-std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
+= default;
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
@@ -231,11 +226,13 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
     }
 }
 
+using cloyster::services::Postfix;
+
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
 void Cluster::setMailSystem(Postfix::Profile profile)
 {
-    m_mailSystem.emplace(m_systemdBus, profile);
+    m_mailSystem.emplace(profile);
 }
 
 const DiskImage& Cluster::getDiskImage() const { return m_diskImage; }

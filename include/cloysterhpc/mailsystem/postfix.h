@@ -13,7 +13,8 @@
 
 #include <cloysterhpc/messagebus.h>
 #include <cloysterhpc/services/IService.h>
-
+//
+namespace cloyster::services {
 // @TODO move this to its own namespace
 class Postfix : public IService {
 public:
@@ -73,7 +74,9 @@ public:
 
     void setup(const std::filesystem::path& basedir = "/etc/postfix");
 
-    explicit Postfix(std::shared_ptr<MessageBus> bus, Profile profile);
+    explicit Postfix(Profile profile);
 };
+
+}; // namespace cloyster::services
 
 #endif // CLOYSTERHPC_POSTFIX_H_

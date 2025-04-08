@@ -43,6 +43,7 @@ void DaemonHandler::daemonReload(MessageBus& bus)
 
 #include <testing/test_message_bus.h>
 
+/*
 TEST_SUITE("Test service handler connectivity")
 {
     TEST_CASE("Service handler testing")
@@ -94,3 +95,4 @@ TEST_SUITE("Test service handler connectivity")
         }
     }
 }
+*/

@@ -6,9 +6,12 @@
 #ifndef CLOYSTERHPC_NFS_H_
 #define CLOYSTERHPC_NFS_H_
 
-#include <boost/asio.hpp>
-#include <cloysterhpc/services/IService.h>
 #include <string>
+#include <boost/asio.hpp>
+#include <cloysterhpc/messagebus.h>
+#include <cloysterhpc/services/IService.h>
+
+using cloyster::services::IService;
 
 /**
  * @class NFS
@@ -34,7 +37,7 @@ public:
      * @param address The IP address of the NFS server.
      * @param permissions The permissions for the NFS share.
      */
-    NFS(std::shared_ptr<MessageBus> bus, const std::string& directoryName,
+    NFS(const std::string& directoryName,
         const std::string& directoryPath,
         const boost::asio::ip::address& address,
         const std::string& permissions);

@@ -10,10 +10,10 @@
 #include <cloysterhpc/services/osservice.h>
 #include <fmt/format.h>
 
-NFS::NFS(std::shared_ptr<MessageBus> bus, const std::string& directoryName,
+NFS::NFS(const std::string& directoryName,
     const std::string& directoryPath, const boost::asio::ip::address& address,
     const std::string& permissions)
-    : IService(bus, "nfs-server.service")
+    : IService("nfs-server.service")
     , m_directoryName(directoryName)
     , m_directoryPath(directoryPath)
     , m_permissions(permissions)

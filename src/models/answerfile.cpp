@@ -16,6 +16,8 @@
 #include <iterator>
 #include <ranges>
 
+using cloyster::services::Postfix;
+
 namespace cloyster::models {
 
 AnswerFile::AnswerFile(const std::filesystem::path& path)

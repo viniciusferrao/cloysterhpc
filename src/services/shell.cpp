@@ -447,8 +447,6 @@ void Shell::configureRepositories()
  */
 void Shell::install()
 {
-    auto systemdBus = cluster()->getDaemonBus();
-
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
@@ -467,7 +465,7 @@ void Shell::install()
     configureInfiniband();
 
     // BUG: Broken. Compute nodes does not mount anything.
-    NFS networkFileSystem = NFS(systemdBus, "pub", "/opt/ohpc",
+    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
             ->getHeadnode()
             .getConnection(Network::Profile::Management)

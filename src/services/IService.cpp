@@ -14,6 +14,8 @@
  * Warnings during compilation.
  */
 
+namespace cloyster::services {
+
 using EnableRType
     = std::vector<sdbus::Struct<std::string, std::string, std::string>>;
 
@@ -106,3 +108,5 @@ void IService::stop()
     LOG_TRACE("service: stopping {}", m_name);
     callObjectFunction("StopUnit", "replace");
 }
+
+}; // namespace cloyster::services

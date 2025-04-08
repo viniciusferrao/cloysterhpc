@@ -13,11 +13,13 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
 
+namespace cloyster::services {
+
 using cloyster::services::IRunner;
 using cloyster::services::files::KeyFile;
 
-Postfix::Postfix(std::shared_ptr<MessageBus> bus, Profile profile)
-    : IService(bus, "postfix.service")
+Postfix::Postfix(Profile profile)
+    : IService("postfix.service")
     , m_profile(profile)
 {
 }
@@ -285,3 +287,5 @@ void Postfix::configureRelay(const std::filesystem::path& basedir)
 
     ini.save();
 }
+
+}; // namespace cloyster::services

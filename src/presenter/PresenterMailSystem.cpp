@@ -6,6 +6,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/presenter/PresenterMailSystem.h>
 
+using cloyster::services::Postfix;
+
 namespace cloyster::presenter {
 PresenterMailSystem::PresenterMailSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
@@ -22,7 +24,7 @@ PresenterMailSystem::PresenterMailSystem(
                     Messages::Profile::help))
                   .value();
         m_model->setMailSystem(mailSystemProfile);
-        auto mailSystem = m_model->getMailSystem().value();
+        auto mailSystem = m_model->getMailSystem().value(); // copy here
 
         LOG_DEBUG("Enabled Postfix with profile: {}",
             cloyster::utils::enums::toString<Postfix::Profile>(

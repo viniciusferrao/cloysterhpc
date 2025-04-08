@@ -11,7 +11,6 @@
 #include <optional>
 #include <string>
 
-#include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/headnode.h>
@@ -62,9 +61,8 @@ private:
     Provisioner m_provisioner { Provisioner::xCAT };
     std::optional<OFED> m_ofed;
     std::optional<std::unique_ptr<QueueSystem>> m_queueSystem {};
-    std::optional<Postfix> m_mailSystem {};
+    std::optional<services::Postfix> m_mailSystem {};
     std::vector<Node> m_nodes;
-    std::shared_ptr<DBusClient> m_systemdBus;
 
     bool m_firewall { false };
     SELinuxMode m_selinux { SELinuxMode::Disabled };
@@ -101,8 +99,6 @@ public:
     void setDomainName(const std::string& domainName);
     std::list<std::unique_ptr<Network>>& getNetworks();
     Network& getNetwork(Network::Profile profile);
-
-    std::shared_ptr<DBusClient> getDaemonBus();
 
     /**
      * @brief Add a new network to the cluster.
@@ -184,8 +180,8 @@ public:
     std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
     void setQueueSystem(QueueSystem::Kind kind);
 
-    std::optional<Postfix>& getMailSystem();
-    void setMailSystem(Postfix::Profile profile);
+    std::optional<services::Postfix>& getMailSystem();
+    void setMailSystem(services::Postfix::Profile profile);
 
     const DiskImage& getDiskImage() const;
     void setDiskImage(const std::filesystem::path& diskImagePath);
