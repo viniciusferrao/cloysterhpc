@@ -750,6 +750,12 @@ struct RPMRepositoryGenerator {
 
 void RepoManager::initializeDefaultRepositories()
 {
+    auto opts =
+        cloyster::Singleton<Options>::get();
+    if (opts->dryRun) {
+        LOG_WARN("Dry Run: Skipping RepoManager initialization");
+        return;
+    }
     auto osinfo
         = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     switch (osinfo.getPackageType()) {

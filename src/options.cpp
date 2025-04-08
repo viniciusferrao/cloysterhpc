@@ -1,12 +1,13 @@
 #include <cloysterhpc/services/options.h>
 
 #include <boost/program_options.hpp>
-#include <iostream>
+#include <fstream>
 #include <memory>
 #include <set>
 #include <vector>
 
 namespace cloyster::services {
+using std::ifstream;
 
 std::unique_ptr<Options> Options::factory(int argc, const char** argv)
 {
@@ -28,6 +29,7 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
     opt.answerfile = ""; // Default to empty string
     opt.unattended = false; // Added from main.cpp
     opt.dumpAnswerfile = ""; // Added from main.cpp
+    opt.config = "";
 #ifndef NDEBUG
     opt.testCommand = ""; // Added from main.cpp (debug only)
     opt.testCommandArgs = {}; // Added from main.cpp (debug only)
@@ -76,6 +78,8 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
         "Perform an unattended installation") // Added from main.cpp
         ("dump-answerfile", po::value<std::string>(&opt.dumpAnswerfile),
             "Create an answerfile based on input and save to specified path") // Added from main.cpp
+        ("config", po::value<std::string>(&opt.config),
+            "Config file to pass options for the command line from a configuration file") // Added from main.cpp
 #ifndef NDEBUG
         ("test", po::value<std::string>(&opt.testCommand),
             "Run a command for testing purposes") // Added from main.cpp
@@ -91,6 +95,13 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
     po::variables_map vmap;
     po::store(po::parse_command_line(argc, argv, desc), vmap);
     po::notify(vmap);
+
+    if (vmap.contains("config")) {
+        auto config = vmap["config"].as<std::string>();
+        std::ifstream configFile(config);
+        po::store(po::parse_config_file(configFile, desc), vmap);
+        po::notify(vmap);
+    }
 
     // Handle help (print message but continue processing)
     if (vmap.contains("help")) {
@@ -126,6 +137,10 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
     int levelNum = 0;
     constexpr int levelMax = 6;
     constexpr int levelMin = 1;
+
+    if (vmap.contains("test")) {
+        opt.dryRun = true;
+    }
 
     return std::make_unique<Options>(std::move(opt));
 }

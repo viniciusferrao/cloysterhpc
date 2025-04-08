@@ -30,17 +30,24 @@
 
 namespace {
 
-void initializeSingletons(auto&& cluster)
-{
-    using cloyster::models::Cluster;
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    cloyster::Singleton<Cluster>::init(
-        std::forward<decltype(cluster)>(cluster));
 
+using namespace cloyster;
+using namespace cloyster::services;
+
+// Singletons that depends only in the options, the cluster model
+// depends on these
+void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
+{
+    Singleton<Options>::init(std::move(opts));
+    cloyster::Singleton<MessageBus>::init([]() {
+        return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
+            "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
+    });
     cloyster::Singleton<cloyster::services::IRunner>::init([&]() {
         using cloyster::services::IRunner;
         using cloyster::services::DryRunner;
         using cloyster::services::Runner;
+        auto opts = Singleton<Options>::get();
 
         if (opts->dryRun) {
             return cloyster::makeUniqueDerived<IRunner, DryRunner>();
@@ -49,6 +56,15 @@ void initializeSingletons(auto&& cluster)
         return cloyster::makeUniqueDerived<IRunner, Runner>();
     });
 
+}
+
+// Singletons that depends on the cluster model
+void initializeSingletonsModel(auto&& cluster)
+{
+    using cloyster::models::Cluster;
+    cloyster::Singleton<Cluster>::init(
+        std::forward<decltype(cluster)>(cluster));
+
     using cloyster::services::repos::RepoManager;
     cloyster::Singleton<RepoManager>::init([]() {
         auto clusterPtr = cloyster::Singleton<Cluster>::get();
@@ -56,11 +72,6 @@ void initializeSingletons(auto&& cluster)
         auto repoManager = std::make_unique<RepoManager>();
         repoManager->initializeDefaultRepositories();
         return repoManager;
-    });
-
-    cloyster::Singleton<MessageBus>::init([]() {
-        return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
-            "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
     });
 
     cloyster::Singleton<cloyster::services::IOSService>::init([]() {
@@ -116,12 +127,10 @@ int runTestCommand(const std::string& testCommand,
  */
 int main(int argc, const char** argv)
 {
-    using namespace cloyster;
-    using namespace cloyster::services;
-    Singleton<Options>::init(Options::factory(argc, argv));
+    auto options = Options::factory(argc, argv);
+    initializeSingletonsOptions(std::move(options));
     auto opts = Singleton<Options>::get();
 
-    opts->logLevelInput = static_cast<std::size_t>(Log::Level::Info);
     constexpr std::size_t logLevels
         = cloyster::utils::enums::count<Log::Level>();
     const std::vector<std::string> logLevelVector
@@ -144,7 +153,10 @@ int main(int argc, const char** argv)
 #endif
         LOG_INFO("{} Started", productName)
 
-        cloyster::checkEffectiveUserId();
+        if (opts->testCommand.empty()) { 
+            // skip during tests, we do not want to run tests as root
+            cloyster::checkEffectiveUserId();
+        }
 
         // --test implies --unattended
         if (!opts->testCommand.empty()) {
@@ -177,20 +189,22 @@ int main(int argc, const char** argv)
             return EXIT_FAILURE;
         }
 
+        LOG_INFO("Initializing the model");
         auto model = std::make_unique<cloyster::models::Cluster>();
         if (!opts->answerfile.empty()) {
-            LOG_TRACE("Answerfile: {}", opts->answerfile)
+            LOG_INFO("Loading the answerfile: {}", opts->answerfile)
             model->fillData(opts->answerfile);
-        } else {
-            opts->enableTUI = true;
-        }
+        } 
+        LOG_INFO("Model initialized");
+
+        opts->enableTUI = opts->answerfile.empty() && opts->testCommand.empty();
 
 #ifndef NDEBUG
         // model->fillTestData();
         model->printData();
 #endif
 
-        if (opts->enableTUI && opts->testCommand.empty()) {
+        if (opts->enableTUI) {
             // Entrypoint; if the view is constructed it will start the TUI.
             auto view = std::make_unique<Newt>();
             auto presenter
@@ -198,22 +212,22 @@ int main(int argc, const char** argv)
                     model, view);
         }
 
-        LOG_TRACE("Starting execution engine");
 
         if (!opts->dumpAnswerfile.empty()) {
             model->dumpData(opts->dumpAnswerfile);
         }
 
-        initializeSingletons(std::move(model));
-
-        std::unique_ptr<Execution> executionEngine
-            = std::make_unique<cloyster::services::Shell>();
+        initializeSingletonsModel(std::move(model));
 
 #ifndef NDEBUG
         if (!opts->testCommand.empty()) {
             return runTestCommand(opts->testCommand, opts->testCommandArgs);
         }
 #endif
+        LOG_TRACE("Starting execution engine");
+        std::unique_ptr<Execution> executionEngine
+            = std::make_unique<cloyster::services::Shell>();
+
         executionEngine->install();
 
     } catch (const std::exception& e) {

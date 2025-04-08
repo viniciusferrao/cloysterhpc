@@ -19,6 +19,7 @@ struct Options final {
     bool airGap;
     bool unattended;
     std::size_t logLevelInput;
+    std::string config;
     std::string helpText;
     std::string airGapUrl;
     std::string mirrorBaseUrl;

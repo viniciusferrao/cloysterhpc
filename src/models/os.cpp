@@ -27,6 +27,8 @@ namespace cloyster::models {
 OS::OS()
 {
     struct utsname system {};
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const bool isTest = !opts->testCommand.empty();
     uname(&system);
 
     setArch(system.machine);
@@ -53,28 +55,34 @@ OS::OS()
          */
         std::string line;
         while (std::getline(file, line)) {
-
-            /* TODO: Refactor the next three conditions */
             if (line.starts_with("PLATFORM_ID=")) {
-                LOG_DEBUG("Found platform (PLATFORM_ID=)");
-                auto value = getValueFromKey(line);
-                if (value.starts_with("platform:")) {
-                    // Skip the 'platform:' prefix
-                    constexpr auto platform = std::string_view("platform:");
-                    setPlatform(value.substr(platform.size()));
+                if (isTest) {
+                    setPlatform("el9");
                 } else {
-                    setPlatform(value);
+                    LOG_DEBUG("Found platform (PLATFORM_ID=)");
+                    auto value = getValueFromKey(line);
+                    if (value.starts_with("platform:")) {
+                        // Skip the 'platform:' prefix
+                        constexpr auto platform = std::string_view("platform:");
+                        setPlatform(value.substr(platform.size()));
+                    } else {
+                        setPlatform(value);
+                    }
                 }
             }
 
             if (line.starts_with("ID=")) {
                 LOG_DEBUG("Found distro (ID=)");
-                setDistro(getValueFromKey(line));
+                setDistro(!isTest
+                          ? getValueFromKey(line)
+                          : "rocky");
             }
 
             if (line.starts_with("VERSION=")) {
                 LOG_DEBUG("Found version (VERSION=)");
-                setVersion(getValueFromKey(line));
+                setVersion(!isTest 
+                           ? getValueFromKey(line)
+                           : "9.5");
             }
         }
 
@@ -182,10 +190,12 @@ void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
-    if (const auto& rval = cloyster::utils::enums::ofStringOpt<OS::Distro>(
-            std::string(distro))) {
+    using namespace cloyster::utils;
+    if (const auto& rval = enums::ofStringOpt<OS::Distro>(
+            std::string(distro), enums::Case::Insensitive)) {
         setDistro(rval.value());
     } else {
+
         throw std::runtime_error(
             fmt::format("Unsupported Distribution: {}", distro));
     }
@@ -199,9 +209,10 @@ unsigned int OS::getMajorVersion() const { return m_majorVersion; }
 
 void OS::setMajorVersion(unsigned int majorVersion)
 {
-    if (majorVersion < 8)
+    if (majorVersion < 8) {
         throw std::runtime_error(
             "Unsupported release: Major version must be 8 or greater.");
+    }
 
     m_majorVersion = majorVersion;
 }
@@ -266,8 +277,8 @@ void OS::printData() const
     LOG_DEBUG("Family: {}",
         cloyster::utils::enums::toString(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
-    LOG_DEBUG("Platform: {}",
-        cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
+    // LOG_DEBUG("Platform: {}",
+    //     cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
     LOG_DEBUG("Distribution: {}",
         cloyster::utils::enums::toString(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
