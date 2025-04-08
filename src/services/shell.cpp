@@ -42,13 +42,8 @@ auto getToEnableRepoNames(const OS& osinfo)
         case OS::Platform::el9:
         case OS::Platform::el10:
             return std::vector<std::string>(
-                       { "-beegfs", "-elrepo", "-epel", "-openhpc",
-                           "-openhpc-updates", "-rpmfusion-free-updates" })
-                | std::views::transform([](const std::string& repo) {
-                      return fmt::format("{}{}", cloyster::productName, repo);
-                  })
-                | std::ranges::to<std::vector<std::string>>();
-            break;
+                       { "beegfs", "elrepo", "epel", "openhpc",
+                           "openhpcupdates", "rpmfusionfreeupdates" });
         default:
             throw std::logic_error("Not implemented");
     }
@@ -201,7 +196,7 @@ void Shell::disableNetworkManagerDNSOverride()
         "[main]\n"
         "dns=none\n");
 
-    osservice()->restartService("systemctl restart NetworkManager");
+    osservice()->restartService("NetworkManager");
 }
 
 // BUG: Why this method exists? The name does not do what it says.
@@ -433,11 +428,13 @@ void Shell::configureRepositories()
 {
     const auto& osinfo = cluster()->getHeadnode().getOS();
     auto repos = cloyster::Singleton<repos::RepoManager>::get();
+    auto opts = cloyster::Singleton<Options>::get();
     // 1. Install files into /etc, these files are the templates
     //    at include/cloysterhpc/repos/el*/*.repo
     repos->initializeDefaultRepositories();
     // 2. Enable the repositories
-    repos->enable(getToEnableRepoNames(osinfo));
+    auto enabledRepos = std::vector<std::string>(opts->enabledRepos.begin(), opts->enabledRepos.end());
+    repos->enable(enabledRepos);
 }
 
 /* This method is the entrypoint of shell based cluster install
@@ -447,6 +444,7 @@ void Shell::configureRepositories()
  */
 void Shell::install()
 {
+    configureRepositories();
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
@@ -460,7 +458,6 @@ void Shell::install()
     runSystemUpdate();
     configureTimeService(cluster()->getHeadnode().getConnections());
     installRequiredPackages();
-    configureRepositories();
     installOpenHPCBase();
     configureInfiniband();
 

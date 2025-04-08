@@ -28,6 +28,11 @@ OS::OS()
 {
     struct utsname system {};
     auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    // @FIXME: Unfortunately this runs during the initialization of the
+    //  cluster instance. Which prevents us of running this during testing
+    //  in a machine that does not have /etc/os-release file.
+    //  The isTest flag below is used to fill up default values during tests
+    //  to make it possible to run outside of target machines
     const bool isTest = !opts->testCommand.empty();
     uname(&system);
 
@@ -124,23 +129,22 @@ OS::Platform OS::getPlatform() const
     return std::get<OS::Platform>(m_platform);
 }
 
-void OS::setPlatform(OS::Platform platform) { m_platform = platform; }
+void OS::setPlatform(OS::Platform platform) { 
+
+    LOG_DEBUG("Found platform ........ (PLATFORM_ID=)");
+    m_platform = platform; }
 
 void OS::setPlatform(std::string_view platform)
 {
-    std::string lowercasePlatform(platform);
-    std::transform(lowercasePlatform.begin(), lowercasePlatform.end(),
-        lowercasePlatform.begin(), ::tolower);
-
-    for (const auto& enumValue :
-        cloyster::utils::enums::toStrings<Platform>()) {
-        if (lowercasePlatform == enumValue) {
-            setPlatform(enumValue);
-            return;
-        }
+    using namespace cloyster::utils;
+    auto enumValue = enums::ofStringOpt<Platform>(
+        platform,
+        enums::Case::Insensitive);
+    if (!enumValue) {
+        throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
+    } else {
+        setPlatform(enumValue.value());
     }
-
-    throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
 OS::Distro OS::getDistro() const

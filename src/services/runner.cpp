@@ -132,6 +132,11 @@ int Runner::executeCommand(const std::string& cmd)
     return runCommand(cmd, true);
 }
 
+int Runner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+{
+    return runCommand(cmd, output, true);
+}
+
 CommandProxy Runner::executeCommandIter(const std::string& cmd, Stream /*out*/)
 {
     return CommandProxy {}; // Return an invalid CommandProxy
@@ -167,6 +172,11 @@ int DryRunner::executeCommand(const std::string& cmd)
     return OK;
 }
 
+int DryRunner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+{
+    return 0;
+}
+
 void DryRunner::checkCommand(const std::string& cmd)
 {
     LOG_WARN("Dry Run: Would execute command: {}", cmd);
@@ -174,8 +184,10 @@ void DryRunner::checkCommand(const std::string& cmd)
 
 std::vector<std::string> DryRunner::checkOutput(const std::string& cmd)
 {
-    LOG_WARN("Dry Run: Would check output of command: {}", cmd);
-    return {};
+    throw std::runtime_error(
+        fmt::format(
+            "Cannot capture the output of a command during dry-run mode: {}",
+            cmd));
 }
 
 CommandProxy DryRunner::executeCommandIter(
@@ -196,6 +208,13 @@ int MockRunner::executeCommand(const std::string& cmd)
     m_cmds.push_back(cmd);
     return OK;
 }
+
+int MockRunner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+{
+    m_cmds.push_back(cmd);
+    return 0;
+}
+
 
 void MockRunner::checkCommand(const std::string& cmd) { }
 

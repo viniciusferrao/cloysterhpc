@@ -18,6 +18,7 @@ struct Options final {
     bool runAsDaemon;
     bool airGap;
     bool unattended;
+    bool disableMirrors;
     std::size_t logLevelInput;
     std::string config;
     std::string helpText;
@@ -25,9 +26,11 @@ struct Options final {
     std::string mirrorBaseUrl;
     std::string answerfile;
     std::string beegfsVersion;
+    std::string zabbixVersion;
     std::string dumpAnswerfile;
     std::set<std::string> skipSteps;
     std::set<std::string> forceSteps;
+    std::set<std::string> enabledRepos;
     std::set<std::string> ohpcPackages;
 
 #ifndef NDEBUG

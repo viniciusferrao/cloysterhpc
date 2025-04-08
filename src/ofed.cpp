@@ -65,12 +65,19 @@ bool OFED::installed() const
 void OFED::install() const
 {
     const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+
+    if (opts->dryRun) {
+        LOG_WARN("Dry-Run: Skiping OFED installation");
+        return;
+    }
+
     // Idempotency check
     if (installed()) {
         LOG_WARN("Inifiniband already installed, skipping, use `--force "
                  "infiniband-install` to force");
         return;
     }
+
 
     switch (m_kind) {
         case OFED::Kind::Inbox:
@@ -135,17 +142,19 @@ void OFED::install() const
             }
 
             // Get the last rpm in /tmp/DOCA*/ folder
-            auto rpm = runner->checkOutput(
-                "bash -c \"find /tmp/DOCA*/ -name '*.rpm' -printf '%T@ %p\n' | "
-                "sort -nk1 | tail -1 | awk '{print $2}'\"");
-            assert(rpm.size() > 0); // at last one line
+                // On dry-run the below command will not run so we
+                // cannot get the output of it
+                auto rpm = runner->checkOutput(
+                    "bash -c \"find /tmp/DOCA*/ -name '*.rpm' -printf '%T@ %p\n' | "
+                    "sort -nk1 | tail -1 | awk '{print $2}'\"");
+                assert(rpm.size() > 0); // at last one line
 
-            // Install the (last) generated rpm
-            runner->executeCommand(fmt::format("dnf install -y {}", rpm[0]));
+                // Install the (last) generated rpm
+                runner->executeCommand(fmt::format("dnf install -y {}", rpm[0]));
 
             runner->checkCommand(R"(dnf makecache --repo=doca*)");
             runner->checkCommand("dnf install -y doca-ofed mlnx-fw-updater");
-            runner->checkCommand("systemctl restart openibd");
+            runner->executeCommand("systemctl restart openibd");
         } break;
 
         case OFED::Kind::Oracle:

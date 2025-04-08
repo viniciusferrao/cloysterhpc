@@ -4,13 +4,14 @@
  */
 
 #include <algorithm>
+#include <atomic>
 #include <filesystem>
 #include <functional>
 #include <memory>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -24,6 +25,7 @@
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 
@@ -163,9 +165,8 @@ namespace {
 class RPMRepositoryParser final {
 public:
     static void parse(const std::filesystem::path& path,
-        std::unordered_map<std::string, std::shared_ptr<RPMRepository>>& output)
+        std::map<std::string, std::shared_ptr<RPMRepository>>& output)
     {
-        LOG_DEBUG("Parsing file {}", path.string());
         auto file = KeyFile(path);
         auto reponames = file.getGroups();
         for (const auto& repogroup : reponames) {
@@ -199,7 +200,7 @@ public:
     }
 
     static void unparse(
-        const std::unordered_map<std::string, std::shared_ptr<RPMRepository>>&
+        const std::map<std::string, std::shared_ptr<RPMRepository>>&
             repos,
         const std::filesystem::path& path)
     {
@@ -217,13 +218,13 @@ public:
     }
 };
 static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
-    std::unordered_map<std::string, std::shared_ptr<RPMRepository>>>);
+    std::map<std::string, std::shared_ptr<RPMRepository>>>);
 
 // Represents a file inside /etc/yum.repos.d
 class RPMRepositoryFile final {
     static constexpr auto m_parser = RPMRepositoryParser();
     std::filesystem::path m_path;
-    std::unordered_map<std::string, std::shared_ptr<RPMRepository>> m_repos;
+    std::map<std::string, std::shared_ptr<RPMRepository>> m_repos;
 
 public:
     explicit RPMRepositoryFile(auto path)
@@ -233,7 +234,7 @@ public:
     }
 
     RPMRepositoryFile(std::filesystem::path path,
-        std::unordered_map<std::string, std::shared_ptr<RPMRepository>> repos)
+        std::map<std::string, std::shared_ptr<RPMRepository>> repos)
         : m_path(std::move(path))
         , m_repos(std::move(repos))
     {
@@ -256,7 +257,7 @@ public:
 class RPMRepoManager final {
     static constexpr auto m_parser = RPMRepositoryParser();
     // Maps repo id to files
-    std::unordered_map<std::string, std::shared_ptr<RPMRepositoryFile>>
+    std::map<std::string, std::shared_ptr<RPMRepositoryFile>>
         m_filesIdx;
 
 public:
@@ -280,7 +281,6 @@ public:
             return;
         }
 
-        LOG_DEBUG("Installing repository {}", dest.string());
         const auto& repofile
             = std::make_shared<RPMRepositoryFile>(RPMRepositoryFile(dest));
         LOG_ASSERT(repofile->repos().size() > 0, "BUG Loading file");
@@ -296,6 +296,7 @@ public:
         for (const auto& fil : std::move(dirIter)) {
             std::string fname = fil.path().filename().string();
             if (fname.ends_with(".repo")) {
+                LOG_DEBUG("Loading {}", fname);
                 install(fil);
             }
         }
@@ -328,10 +329,26 @@ public:
                 | std::views::transform(
                     [](const auto& pair) { return pair.first; });
             auto msg
-                = fmt::format("Cannot enable repository {}, no such repository "
+                = fmt::format("Cannot find repository {}, no such repository "
                               "loaded, repositories: available: {}",
                     repoName, fmt::join(repos, ","));
             throw std::runtime_error(msg);
+        }
+    }
+
+    static std::vector<std::unique_ptr<const IRepository>> repoFile(const std::string& repoFileName)
+    {
+        try {
+            auto path = fmt::format("{}/{}", basedir, repoFileName);
+            auto repos = RPMRepositoryFile(path).repos() 
+                // We copy to cons unique to express that these values cannot
+                // be changed through this API
+                | std::views::transform([](auto&& pair) { return std::make_unique<const RPMRepository>(*pair.second); })
+                | std::ranges::to<std::vector<std::unique_ptr<const IRepository>>>();
+            return repos;
+        } catch (const std::out_of_range& e) {
+            throw std::runtime_error(
+                fmt::format("No such repository file {}", repoFileName));
         }
     }
 
@@ -427,288 +444,467 @@ struct ELConfig {
     static std::vector<RPMRepositoryFile> getRepositories()
     {
         const auto& osinfo = cloyster::Singleton<models::Cluster>::get()
-                                 ->getHeadnode()
-                                 .getOS();
+            ->getHeadnode()
+            .getOS();
         std::string releasever
             = std::to_string(osinfo.getMajorVersion()); // e.g., "8"
         std::string arch = cloyster::utils::enums::toString(
             osinfo.getArch()); // e.g., "x86_64"
         const auto opts
             = cloyster::Singleton<cloyster::services::Options>::get();
+        auto distro = osinfo.getDistro(); // Adjust based on your actual API
 
-        // Local function for air-gap URL construction
-        auto makeAirGapUrl = [&](const std::string& repoName,
-                                 const std::string& path,
-                                 const std::string& originalUrl) {
-            return opts->airGap ? opts->airGapUrl + "/" + repoName + "/" + path
-                                : originalUrl;
-        };
+        using cloyster::makeAirGapUrl;
 
         std::vector<RPMRepositoryFile> repoFiles;
 
-        auto addRepo = [](std::unordered_map<std::string,
-                              std::shared_ptr<RPMRepository>>& repoMap,
-                           // NOLINTNEXTLINE
-                           const std::string& id, const std::string& name,
-                           const std::string& baseurl, bool enabled,
-                           const std::string& gpgkey) {
-            auto repo = std::make_shared<RPMRepository>();
-            repo->id(id);
-            repo->name(name);
-            repo->baseurl(baseurl);
-            repo->enabled(enabled);
-            repo->gpgcheck(true);
-            repo->gpgkey(gpgkey);
-            repoMap.emplace(id, repo);
+        auto addRepo = [](std::map<std::string,
+                          std::shared_ptr<RPMRepository>>& repoMap,
+                          // NOLINTNEXTLINE
+                          const std::string& id, const std::string& name,
+                          const std::string& baseurl, bool enabled,
+                          const std::string& gpgkey) {
+                auto repo = std::make_shared<RPMRepository>();
+                repo->group(id);
+                repo->id(id);
+                repo->name(name);
+                repo->baseurl(baseurl);
+                repo->enabled(enabled);
+                repo->gpgcheck(!gpgkey.empty());
+                repo->gpgkey(gpgkey);
+                repoMap.emplace(id, repo);
+            };
+
+        auto addRepoFile = [&repoFiles, &opts](const auto& path, auto&& repos) {
+            if (opts->shouldForce("generate-repos") || !cloyster::exists(path)) {
+                LOG_INFO("Generating {}", path.string());
+                cloyster::removeFile(path.string());
+                repoFiles.emplace_back(path, repos);
+            } else {
+                LOG_WARN("Skipping the  {}, file exists, use --force=generate-repos to force", path.string());
+            }
         };
 
+        // rhel.repo (Added for RHEL)
+        if (distro == OS::Distro::RHEL) {
+            std::map<std::string, std::shared_ptr<RPMRepository>> rhelRepos;
+            // Add RHEL CodeReady Linux Builder
+            // Upstream URL: https://cdn.redhat.com/content/dist/rhel8/x86_64/codeready-builder/os/
+            addRepo(rhelRepos, "rhel-" + releasever + "-codeready-builder",
+                    "Red Hat Enterprise Linux " + releasever + " - CodeReady Builder ($basearch)",
+                    makeAirGapUrl("RHELCodeReady",
+                                  "rhel/" + releasever + "/" + arch + "/codeready-builder/os/",
+                                  "https://cdn.redhat.com/content/dist/rhel/" + releasever + "/" + arch + "/codeready-builder/os/"),
+                    false,
+                    makeAirGapUrl("RHELCodeReady", "RPM-GPG-KEY-redhat-release",
+                                  "https://www.redhat.com/security/data/fd431d51.txt"));
+
+            // Upstream URL: https://cdn.redhat.com/content/dist/rhel8/x86_64/baseos/os/
+            addRepo(rhelRepos, "rhel-" + releasever + "-baseos",
+                    "Red Hat Enterprise Linux " + releasever + " - BaseOS ($basearch)",
+                    makeAirGapUrl("RHELBaseOS",
+                                  "rhel/" + releasever + "/" + arch + "/baseos/os/",
+                                  "https://cdn.redhat.com/content/dist/rhel/" + releasever + "/" + arch + "/baseos/os/"),
+                    true,
+                    makeAirGapUrl("RHELBaseOS", "RPM-GPG-KEY-redhat-release",
+                                  "https://www.redhat.com/security/data/fd431d51.txt"));
+
+            addRepoFile(baseDir / "rhel.repo", std::move(rhelRepos));
+        }
+
         // oracle.repo
-        {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                oracleRepos;
+        if (distro == OS::Distro::OL) {
+            std::map<std::string, std::shared_ptr<RPMRepository>> oracleRepos;
+            // Add Oracle Linux CodeReady Builder
+            // Upstream URL: https://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64/
+            addRepo(oracleRepos, "ol" + releasever + "_codeready_builder",
+                    "Oracle Linux " + releasever + " CodeReady Builder ($basearch)",
+                    makeAirGapUrl("OLCodeReady",
+                                  "repo/OracleLinux/OL" + releasever + "/codeready/builder/$basearch/",
+                                  "https://yum.oracle.com/repo/OracleLinux/OL" + releasever
+                                  + "/codeready/builder/$basearch/"),
+                    false,
+                    makeAirGapUrl("OLCodeReady", "RPM-GPG-KEY-oracle-ol" + releasever,
+                                  "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol" + releasever));
+
+            // Upstream URL: https://yum.$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64/
             addRepo(oracleRepos, "OLBaseOS",
-                "Oracle Linux " + releasever + " BaseOS Latest ($basearch)",
-                makeAirGapUrl("OLBaseOS",
-                    "repo/OracleLinux/OL" + releasever
-                        + "/baseos/latest/$basearch/",
-                    "https://yum$ociregion.oracle.com/repo/OracleLinux/OL"
-                        + releasever + "/baseos/latest/$basearch/"),
-                false,
-                makeAirGapUrl("OLBaseOS", "RPM-GPG-KEY-oracle-ol" + releasever,
-                    "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol"
-                        + releasever));
-            repoFiles.emplace_back(
-                baseDir / "oracle.repo", std::move(oracleRepos));
+                    "Oracle Linux " + releasever + " BaseOS Latest ($basearch)",
+                    makeAirGapUrl("OLBaseOS",
+                                  "repo/OracleLinux/OL" + releasever + "/baseos/latest/$basearch/",
+                                  "https://yum.$ociregion.oracle.com/repo/OracleLinux/OL"
+                                  + releasever + "/baseos/latest/$basearch/"),
+                    true,
+                    makeAirGapUrl("OLBaseOS", "RPM-GPG-KEY-oracle-ol" + releasever,
+                                  "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol" + releasever));
+
+            addRepoFile(baseDir / "oracle.repo", std::move(oracleRepos));
         }
 
         // rocky.repo
-        {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                rockyRepos;
+        if (distro == OS::Distro::Rocky) {
+            std::map<std::string, std::shared_ptr<RPMRepository>> rockyRepos;
+
+            bool useVault = services::RockyLinux::shouldUseVault(osinfo.getVersion());
+
+            const std::string& upstreamBaseUrl = (useVault || opts->shouldForce("use-vault"))
+                ? "https://dl.rockylinux.org/vault/rocky/" 
+                : "https://dl.rockylinux.org/pub/rocky/";
+
+            // Add Rocky Linux CRB/PowerTools based on version
+            std::string crbId = (releasever == "8") ? "powertools" : "crb";
+            std::string crbName = (releasever == "8") ? "PowerTools" : "CRB";
+
+            // Rocky BaseOS repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/BaseOS/x86_64/os/
             addRepo(rockyRepos, "RockyBaseOS",
-                "Rocky Linux $releasever - BaseOS",
-                makeAirGapUrl("RockyBaseOS",
-                    "$contentdir/" + releasever + "/BaseOS/$basearch/os/",
-                    "http://dl.rockylinux.org/$contentdir/" + releasever
-                        + "/BaseOS/$basearch/os/"),
-                false,
-                makeAirGapUrl("RockyBaseOS", "RPM-GPG-KEY-Rocky-" + releasever,
-                    opts->mirrorBaseUrl + "/rocky/linux/RPM-GPG-KEY-Rocky-"
-                        + releasever));
-            repoFiles.emplace_back(
-                baseDir / "rocky.repo", std::move(rockyRepos));
+                    "Rocky Linux $releasever - BaseOS",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/BaseOS/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/BaseOS/$basearch/os/"),
+                    true,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky AppStream repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/AppStream/x86_64/os/
+            addRepo(rockyRepos, "RockyAppStream",
+                    "Rocky Linux $releasever - AppStream",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/AppStream/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/AppStream/$basearch/os/"),
+                    true,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+            // Rocky Extras repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/extras/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/extras/x86_64/os/
+            addRepo(rockyRepos, "RockyExtras",
+                    "Rocky Linux $releasever - Extras",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/extras/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/extras/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky Devel repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/devel/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/devel/x86_64/os/
+            addRepo(rockyRepos, "RockyDevel",
+                    "Rocky Linux $releasever - Devel",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/devel/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/devel/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky Devel repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/devel/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/devel/x86_64/os/
+            addRepo(rockyRepos, "RockyDevel",
+                    "Rocky Linux $releasever - Devel",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/devel/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/devel/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+
+            // Rocky HighAvailability repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/HighAvailability/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/HighAvailability/x86_64/os/
+            addRepo(rockyRepos, "RockyHighAvailability",
+                    "Rocky Linux $releasever - HighAvailability",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/HighAvailability/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/HighAvailability/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky ResilientStorage repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/ResilientStorage/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/ResilientStorage/x86_64/os/
+            addRepo(rockyRepos, "RockyResilientStorage",
+                    "Rocky Linux $releasever - ResilientStorage",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/ResilientStorage/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/ResilientStorage/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky NFV repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/NFV/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/NFV/x86_64/os/
+            addRepo(rockyRepos, "RockyNFV",
+                    "Rocky Linux $releasever - NFV",
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/NFV/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/NFV/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Rocky CRB/PowerTools repo
+            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/
+            // or https://dl.rockylinux.org/vault/rocky/8/PowerTools/x86_64/os/
+            addRepo(rockyRepos, crbId,
+                    "Rocky Linux $releasever - " + crbName,
+                    makeAirGapUrl("rocky",
+                                  (useVault ? "vault/" : "linux/") + releasever + "/" + crbName + "/$basearch/os/",
+                                  upstreamBaseUrl + releasever + "/" + crbName + "/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
+                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
+
+            // Write the repo file
+            addRepoFile(baseDir / "rocky.repo", std::move(rockyRepos));
         }
 
         // almalinux.repo
-        {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                almaRepos;
+        if (distro == OS::Distro::AlmaLinux) {
+            std::map<std::string, std::shared_ptr<RPMRepository>> almaRepos;
+            // Add AlmaLinux CRB/PowerTools based on version
+            std::string crbId = (releasever == "8") ? "powertools" : "crb";
+            std::string crbName = (releasever == "8") ? "PowerTools" : "CRB";
+
+            // Upstream URL: https://repo.almalinux.org/almalinux/8/PowerTools/x86_64/os/
+            addRepo(almaRepos, crbId,
+                    "AlmaLinux $releasever - " + crbName,
+                    makeAirGapUrl("Alma" + crbName,
+                                  "almalinux/" + releasever + "/" + crbName + "/$basearch/os/",
+                                  "https://repo.almalinux.org/almalinux/" + releasever + "/" + crbName + "/$basearch/os/"),
+                    false,
+                    makeAirGapUrl("Alma" + crbName, "RPM-GPG-KEY-AlmaLinux-" + releasever,
+                                  "https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-" + releasever));
+
+            // Upstream URL: https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/
             addRepo(almaRepos, "AlmaLinuxBaseOS",
-                "AlmaLinux $releasever - BaseOS",
-                makeAirGapUrl("AlmaLinuxBaseOS",
-                    "almalinux/" + releasever + "/BaseOS/$basearch/os/",
-                    "https://repo.almalinux.org/almalinux/" + releasever
-                        + "/BaseOS/$basearch/os/"),
-                false,
-                makeAirGapUrl("AlmaLinuxBaseOS",
-                    "RPM-GPG-KEY-AlmaLinux-" + releasever,
-                    opts->mirrorBaseUrl
-                        + "/almalinux/almalinux/RPM-GPG-KEY-AlmaLinux-"
-                        + releasever));
-            repoFiles.emplace_back(
-                baseDir / "almalinux.repo", std::move(almaRepos));
+                    "AlmaLinux $releasever - BaseOS",
+                    makeAirGapUrl("AlmaLinuxBaseOS",
+                                  "almalinux/" + releasever + "/BaseOS/$basearch/os/",
+                                  "https://repo.almalinux.org/almalinux/" + releasever + "/BaseOS/$basearch/os/"),
+                    true,
+                    makeAirGapUrl("AlmaLinuxBaseOS", "RPM-GPG-KEY-AlmaLinux-" + releasever,
+                                  "https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-" + releasever));
+
+            addRepoFile(baseDir / "almalinux.repo", std::move(almaRepos));
         }
 
         // beegfs.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                beegfsRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            beegfsRepos;
+            auto path = opts->beegfsVersion + "/dists/rhel" + releasever + "/";
+            // Upstream URL: https://www.beegfs.io/release/beegfs_7_3/dists/rhel8/
             addRepo(beegfsRepos, "beegfs", "BeeGFS",
-                makeAirGapUrl("beegfs",
-                    opts->beegfsVersion + "/dists/rhel" + releasever + "/",
-                    opts->mirrorBaseUrl + "/" + opts->beegfsVersion
-                        + "/dists/rhel" + releasever + "/"),
-                false,
-                makeAirGapUrl("beegfs",
-                    opts->beegfsVersion + "/gpg/GPG-KEY-beegfs",
-                    opts->mirrorBaseUrl + "/" + opts->beegfsVersion
-                        + "/gpg/GPG-KEY-beegfs"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl("beegfs", path, "https://www.beegfs.io/release/" + opts->beegfsVersion + "/dists/rhel" + releasever + "/"),
+                    false,
+                    makeAirGapUrl("beegfs",
+                                  opts->beegfsVersion + "/gpg/GPG-KEY-beegfs",
+                                  "https://www.beegfs.io/release/beegfs_" + opts->beegfsVersion + "/gpg/GPG-KEY-beegfs"));
+            addRepoFile(
                 baseDir / "beegfs.repo", std::move(beegfsRepos));
         }
 
         // grafana.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                grafanaRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            grafanaRepos;
+            // Upstream URL: https://rpm.grafana.com
             addRepo(grafanaRepos, "grafana", "grafana",
-                makeAirGapUrl("grafana", "", opts->mirrorBaseUrl + "/grafana/"),
-                false,
-                makeAirGapUrl(
+                    makeAirGapUrl("grafana", "", "https://rpm.grafana.com"),
+                    false,
+                    makeAirGapUrl(
                     "grafana", "gpg.key", "https://rpm.grafana.com/gpg.key"));
-            repoFiles.emplace_back(
+            addRepoFile(
                 baseDir / "grafana.repo", std::move(grafanaRepos));
         }
 
         // influxdata.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                influxRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            influxRepos;
+            // Upstream URL: https://repos.influxdata.com/rhel/8/x86_64/stable/
             addRepo(influxRepos, "influxdata", "InfluxData Repository - Stable",
-                makeAirGapUrl(
-                    "influxdata", "", opts->mirrorBaseUrl + "/influxdata/"),
-                false,
-                makeAirGapUrl("influxdata", "influxdata-archive_compat.key",
-                    "https://repos.influxdata.com/"
-                    "influxdata-archive_compat.key"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl(
+                        "influxdata", "rhel/" + releasever + "/" + arch + "/stable/",
+                        "https://repos.influxdata.com/rhel/" + releasever + "/" + arch + "/stable/",
+                        // skip mirror for influxdata
+                        true),
+                    false,
+                    makeAirGapUrl("influxdata", "influxdata-archive_compat.key",
+                                  "https://repos.influxdata.com/influxdata-archive_compat.key", true));
+            addRepoFile(
                 baseDir / "influxdata.repo", std::move(influxRepos));
         }
 
         // intel.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                intelRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            intelRepos;
+            // Upstream URL: https://yum.repos.intel.com/oneAPI
             addRepo(intelRepos, "oneAPI", "Intel oneAPI repository",
-                makeAirGapUrl("oneAPI", "", opts->mirrorBaseUrl + "/oneAPI/"),
-                false,
-                makeAirGapUrl("oneAPI",
-                    "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB",
-                    "https://yum.repos.intel.com/intel-gpg-keys/"
-                    "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl("oneAPI", "", "https://yum.repos.intel.com/oneapi"),
+                    false,
+                    makeAirGapUrl("oneAPI",
+                                  "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB",
+                                  "https://yum.repos.intel.com/intel-gpg-keys/"
+                                  "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB"));
+            addRepoFile(
                 baseDir / "intel.repo", std::move(intelRepos));
         }
 
         // zabbix.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                zabbixRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>> zabbixRepos;
+            // Upstream URL: https://repo.zabbix.com/zabbix/6.4/rhel/8/x86_64/
             addRepo(zabbixRepos, "zabbix", "zabbix",
-                makeAirGapUrl("zabbix",
-                    "zabbix/6.4/rhel/" + releasever + "/" + arch + "/",
-                    opts->mirrorBaseUrl + "/zabbix/zabbix/6.4/rhel/"
-                        + releasever + "/" + arch + "/"),
-                false,
-                makeAirGapUrl("zabbix", "RPM-GPG-KEY-ZABBIX",
-                    opts->mirrorBaseUrl + "/zabbix/RPM-GPG-KEY-ZABBIX"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl("zabbix",
+                                  "zabbix/" + opts->zabbixVersion + "/rhel/" + releasever + "/" + arch + "/",
+                                  "https://repo.zabbix.com/zabbix/" + opts->zabbixVersion + "/rhel/"
+                                  + releasever + "/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("zabbix", "RPM-GPG-KEY-ZABBIX",
+                                  "https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX"));
+            addRepoFile(
                 baseDir / "zabbix.repo", std::move(zabbixRepos));
         }
 
         // elrepo.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                elrepoRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            elrepoRepos;
+            // Upstream URL: https://elrepo.org/linux/elrepo/el8/x86_64/
             addRepo(elrepoRepos, "elrepo", "elrepo",
-                makeAirGapUrl("elrepo",
-                    "elrepo/el" + releasever + "/" + arch + "/",
-                    opts->mirrorBaseUrl + "/elrepo/elrepo/el" + releasever + "/"
-                        + arch + "/"),
-                false,
-                makeAirGapUrl("elrepo", "RPM-GPG-KEY-elrepo.org",
-                    "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl("elrepo",
+                                  "elrepo/el" + releasever + "/" + arch + "/",
+                                  "https://elrepo.org/linux/elrepo/el" + releasever + "/"
+                                  + arch + "/"),
+                    false,
+                    makeAirGapUrl("elrepo", "RPM-GPG-KEY-elrepo.org",
+                                  "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"));
+            addRepoFile(
                 baseDir / "elrepo.repo", std::move(elrepoRepos));
         }
 
         // rpmfusion.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                rpmfusionRepos;
-            addRepo(rpmfusionRepos, "rpmfusion-free-updates",
-                "rpmfusion-free-updates",
-                makeAirGapUrl("rpmfusion-free-updates",
-                    "free/el/updates/" + releasever + "/" + arch + "/",
-                    opts->mirrorBaseUrl + "/rpmfusion/free/el/updates/"
-                        + releasever + "/" + arch + "/"),
-                false,
-                makeAirGapUrl("rpmfusion-free-updates",
-                    "RPM-GPG-KEY-rpmfusion-free-el-" + releasever,
-                    opts->mirrorBaseUrl
-                        + "/rpmfusion/free/el/RPM-GPG-KEY-rpmfusion-free-el-"
-                        + releasever));
-            repoFiles.emplace_back(
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            rpmfusionRepos;
+            // Upstream URL: https://download1.rpmfusion.org          /free/el/updates/8/x86_64/
+            // Mirror URL: https://mirror.versatushpc.com.br/rpmfusion/free/el/updates/9/x86_64/
+            addRepo(rpmfusionRepos, "rpmfusion",
+                    "rpmfusion",
+                    makeAirGapUrl("rpmfusion",
+                                                      "free/el/updates/" + releasever + "/" + arch + "/",
+                      "https://download1.rpmfusion.org/free/el/updates/" + releasever + "/" + arch + "/"),
+                    false,
+                    makeAirGapUrl("rpmfusion-free-updates",
+                                                              "RPM-GPG-KEY-rpmfusion-free-el-" + releasever,
+                      "https://download1.rpmfusion.org/free/el/RPM-GPG-KEY-rpmfusion-free-el-" + releasever));
+            addRepoFile(
                 baseDir / "rpmfusion.repo", std::move(rpmfusionRepos));
         }
 
         // epel.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                epelRepos;
-            addRepo(epelRepos, "epel",
-                "Extra Packages for Enterprise Linux " + releasever
-                    + " - $basearch",
-                makeAirGapUrl("epel", releasever + "/Everything/" + arch + "/",
-                    opts->mirrorBaseUrl + "/epel/" + releasever + "/Everything/"
-                        + arch + "/"),
-                false,
-                makeAirGapUrl("epel", "RPM-GPG-KEY-EPEL-" + releasever,
-                    opts->mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-"
-                        + releasever));
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            epelRepos;
+            // Upstream URLs:
+            // Debug: https://download.fedoraproject.org/pub/epel/8/Everything/x86_64/debug/
+            // Source: https://download.fedoraproject.org/pub/epel/8/Everything/source/tree/
+            // Main: https://download.fedoraproject.org/pub/epel/8/Everything/x86_64/
+            // Note: epel-source and epel-debuginfo has no mirror, the true argument in makeAirGapUrl
+            //   bypass the mirror url
             addRepo(epelRepos, "epel-debuginfo",
-                "Extra Packages for Enterprise Linux " + releasever
+                    "Extra Packages for Enterprise Linux " + releasever
                     + " - $basearch - Debug",
-                makeAirGapUrl("epel-debuginfo",
-                    releasever + "/Everything/" + arch + "/debug/",
-                    opts->mirrorBaseUrl + "/epel/" + releasever + "/Everything/"
-                        + arch + "/debug/"),
-                false,
-                makeAirGapUrl("epel-debuginfo",
-                    "RPM-GPG-KEY-EPEL-" + releasever,
-                    opts->mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-"
-                        + releasever));
+                    makeAirGapUrl("epel-debuginfo",
+                                  releasever + "/Everything/" + arch + "/debug/",
+                                  "https://download.fedoraproject.org/pub/epel/" + releasever + "/Everything/"
+                                  + arch + "/debug/", true),
+                    false,
+                    makeAirGapUrl("epel-debuginfo",
+                                  "RPM-GPG-KEY-EPEL-" + releasever,
+                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
+                                  + releasever, true));
             addRepo(epelRepos, "epel-source",
-                "Extra Packages for Enterprise Linux " + releasever
+                    "Extra Packages for Enterprise Linux " + releasever
                     + " - $basearch - Source",
-                makeAirGapUrl("epel-source",
-                    releasever + "/Everything/source/tree/",
-                    opts->mirrorBaseUrl + "/epel/" + releasever
-                        + "/Everything/source/tree/"),
-                false,
-                makeAirGapUrl("epel-source", "RPM-GPG-KEY-EPEL-" + releasever,
-                    opts->mirrorBaseUrl + "/epel/RPM-GPG-KEY-EPEL-"
-                        + releasever));
-            repoFiles.emplace_back(baseDir / "epel.repo", std::move(epelRepos));
+                    makeAirGapUrl("epel-source",
+                                  releasever + "/Everything/source/tree/",
+                                  "https://download.fedoraproject.org/pub/epel/" + releasever
+                                  + "/Everything/source/tree/", true),
+                    false,
+                    makeAirGapUrl("epel-source", "RPM-GPG-KEY-EPEL-" + releasever,
+                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
+                                  + releasever, true));
+            addRepo(epelRepos, "epel",
+                    "Extra Packages for Enterprise Linux " + releasever
+                    + " - $basearch",
+                    makeAirGapUrl("epel", releasever + "/Everything/" + arch + "/",
+                                  "https://download.fedoraproject.org/pub/epel/" + releasever + "/Everything/"
+                                  + arch + "/"),
+                    false,
+                    makeAirGapUrl("epel", "RPM-GPG-KEY-EPEL-" + releasever,
+                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
+                                  + releasever));
+            addRepoFile(
+                baseDir / "epel.repo", std::move(epelRepos));
         }
 
         // openhpc.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                openhpcRepos;
-            addRepo(openhpcRepos, "openhpc", "OpenHPC",
-                makeAirGapUrl("openhpc", "2/EL_" + releasever + "/",
-                    opts->mirrorBaseUrl + "/openhpc/2/EL_" + releasever + "/"),
-                false,
-                makeAirGapUrl("openhpc", "public_key",
-                    "https://obs.openhpc.community/projects/OpenHPC/"
-                    "public_key"));
-            addRepo(openhpcRepos, "openhpc-updates", "OpenHPC Updates",
-                makeAirGapUrl("openhpc-updates",
-                    "2/updates/EL_" + releasever + "/",
-                    opts->mirrorBaseUrl + "/openhpc/2/updates/EL_" + releasever
-                        + "/"),
-                false,
-                makeAirGapUrl("openhpc-updates", "public_key",
-                    "https://obs.openhpc.community/projects/OpenHPC/"
-                    "public_key"));
-            repoFiles.emplace_back(
-                baseDir / "openhpc.repo", std::move(openhpcRepos));
+            std::map<std::string, std::shared_ptr<RPMRepository>> openhpcRepos;
+
+
+            // https://mirror.versatushpc.com.br/openhpc/2/EL_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm
+            // https://mirror.versatushpc.com.br/openhpc/3/EL_9/x86_64/ohpc-release-3-1.el9.x86_64.rpm
+            // Determine the base URL based on platform
+            const std::string ohpcVersion = (releasever == "8") ? "2" : "3";
+            const std::string openhpcBaseurl = 
+                makeAirGapUrl("openhpc", ohpcVersion + "/EL_" + releasever + "/",
+                              "https://repos.openhpc.community/OpenHPC/" + ohpcVersion + "/EL_" + releasever + "/");
+            const std::string openhpcUpdatesBaseurl =
+                makeAirGapUrl("openhpc", ohpcVersion + "/updates/EL_" + releasever + "/",
+                              "https://repos.openhpc.community/OpenHPC/" + ohpcVersion + "/updates/EL_" + releasever + "/");
+
+            // Base repository
+            addRepo(openhpcRepos, "OpenHPC", "OpenHPC (" + ohpcVersion + ")",
+                    openhpcBaseurl,
+                    false,
+                    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OpenHPC-3");
+
+            // Updates repository
+            addRepo(openhpcRepos, "OpenHPC-Updates", "OpenHPC Updates (" + ohpcVersion + ")",
+                    openhpcUpdatesBaseurl,
+                    false,
+                    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OpenHPC-3");
+
+            addRepoFile(baseDir / "OpenHPC.repo", std::move(openhpcRepos));
         }
 
         // nvidia.repo
         {
-            std::unordered_map<std::string, std::shared_ptr<RPMRepository>>
-                nvidiaRepos;
+            std::map<std::string, std::shared_ptr<RPMRepository>>
+            nvidiaRepos;
+            // Upstream URL: https://developer.download.nvidia.com/hpc-sdk/rhel/x86_64/
             addRepo(nvidiaRepos, "nvhpc", "NVIDIA HPC SDK",
-                makeAirGapUrl("nvhpc", "hpc-sdk/rhel/$basearch",
-                    "https://developer.download.nvidia.com/hpc-sdk/rhel/"
-                    "$basearch"),
-                false,
-                makeAirGapUrl("nvhpc", "RPM-GPG-KEY-NVIDIA-HPC-SDK",
-                    "https://developer.download.nvidia.com/hpc-sdk/rhel/"
-                    "RPM-GPG-KEY-NVIDIA-HPC-SDK"));
-            repoFiles.emplace_back(
+                    makeAirGapUrl("nvhpc", "hpc-sdk/rhel/$basearch",
+                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/"
+                                  "$basearch", true),
+                    false,
+                    makeAirGapUrl("nvhpc", "RPM-GPG-KEY-NVIDIA-HPC-SDK",
+                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/"
+                                  "RPM-GPG-KEY-NVIDIA-HPC-SDK", true));
+            addRepoFile(
                 baseDir / "nvidia.repo", std::move(nvidiaRepos));
         }
 
@@ -741,9 +937,18 @@ struct RPMDependencyResolver {
 struct RPMRepositoryGenerator {
     static void generate()
     {
+        LOG_DEBUG("Generating the repository files");
         auto repoFiles = ELConfig::getRepositories();
         for (auto& repoFile : repoFiles) {
-            repoFile.save(); // Save each RPMRepositoryFile
+            try {
+                repoFile.save(); // Save each RPMRepositoryFile
+            } catch (const std::runtime_error& e) {
+                LOG_ERROR("Unexpected error while saving file {} {}", repoFile.path().string(), e.what());
+                std::terminate();
+            } catch (...) {
+                LOG_ERROR("Unexpected unknown error {}", repoFile.path().string());
+                std::terminate();
+            }
         }
     }
 };
@@ -756,6 +961,7 @@ void RepoManager::initializeDefaultRepositories()
         LOG_WARN("Dry Run: Skipping RepoManager initialization");
         return;
     }
+    LOG_INFO("RepoManager initialization");
     auto osinfo
         = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     switch (osinfo.getPackageType()) {
@@ -926,6 +1132,20 @@ std::unique_ptr<const IRepository> RepoManager::repo(
         case OS::PackageType::RPM:
             return static_cast<std::unique_ptr<const IRepository>>(
                 m_impl->rpm.repo(repo));
+            break;
+        default:
+            throw std::logic_error("Not implemented");
+    }
+}
+
+std::vector<std::unique_ptr<const IRepository>> RepoManager::repoFile(
+    const std::string& repo) const
+{
+    auto osinfo
+        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    switch (osinfo.getPackageType()) {
+        case OS::PackageType::RPM:
+            return m_impl->rpm.repoFile(repo);
             break;
         default:
             throw std::logic_error("Not implemented");

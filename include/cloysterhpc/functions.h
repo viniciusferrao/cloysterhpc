@@ -131,6 +131,12 @@ struct HTTPRepo {
 
 HTTPRepo createHTTPRepo(const std::string_view repoName);
 
+std::string makeAirGapUrl(const std::string& repoName,
+                   // NOLINTNEXTLINE
+                   const std::string& path,
+                   const std::string& upstreamUrl,
+                   const bool forceUpstream = false);
+
 } // namespace cloyster
 
 /**
@@ -173,6 +179,17 @@ std::filesystem::directory_iterator openDir(const Path& path)
             [&path]() { return std::filesystem::directory_iterator(path); }),
         fmt::format("Dry Run: Would open directory {}", path.string()));
 }
+
+std::string getHttpStatus(const auto& url)
+{
+    auto runner = cloyster::Singleton<IRunner>::get();
+    // @FIXME: Yes, curl works I know, but no.. fix this
+    auto output = runner->checkOutput(
+        fmt::format(R"(bash -c "curl -I {} | awk '/HTTP/ {{print $2}}'" )", url))[0];
+    LOG_DEBUG("HTTP status of {}: {}", url, output);
+    return output;
+};
+
 
 }
 

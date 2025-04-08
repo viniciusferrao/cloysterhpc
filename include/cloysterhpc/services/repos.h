@@ -83,6 +83,8 @@ public:
     listRepos() const;
     [[nodiscard]] std::unique_ptr<const IRepository> repo(
         const std::string& repo) const;
+    [[nodiscard]] std::vector<std::unique_ptr<const IRepository>> repoFile(
+        const std::string& repo) const;
 };
 
 };

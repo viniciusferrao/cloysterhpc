@@ -592,11 +592,12 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     if (answerfil.ofed.enabled) {
         // Install the cofigured OFED variant
         LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
-        auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind);
+        auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind, 
+                                                          utils::enums::Case::Insensitive);
         if (!kind) {
             throw std::runtime_error(fmt::format(
                 "Invalid OFED kind, expected one of {}, found {}. Edit the "
-                "anwerfile {} [ofed] sectino and try again.",
+                "anwerfile {} [ofed] section and try again.",
                 opts->answerfile,
                 fmt::join(
                     cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
@@ -613,14 +614,17 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     addNetwork(std::move(managementNetwork));
 
-    LOG_TRACE("Configure Management Connection")
+    LOG_DEBUG("Configure Management Connection")
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
+    LOG_DEBUG("Configure Management Connection interface")
     managementConnection.setInterface(
         answerfil.management.con_interface.value());
 
+    LOG_DEBUG("Configure Management Connection IP")
     managementConnection.setAddress(answerfil.management.con_ip_addr.value());
 
+    LOG_DEBUG("Configure Management Connection MAC")
     if (!answerfil.management.con_mac_addr->empty()) {
         managementConnection.setMAC(answerfil.management.con_mac_addr.value());
     }

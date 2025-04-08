@@ -39,35 +39,42 @@ public:
         return runner->checkOutput("locale -a");
     }
 
-    bool install(std::string_view package) const override
+    [[nodiscard]] bool install(std::string_view package) const override
     {
         return (cloyster::Singleton<IRunner>::get()->executeCommand(
                     fmt::format("dnf -y install {}", package))
             != 0);
     }
 
-    bool groupInstall(std::string_view package) const override
+    [[nodiscard]] bool reinstall(std::string_view package) const override
+    {
+        return (cloyster::Singleton<IRunner>::get()->executeCommand(
+                    fmt::format("dnf -y reinstall {}", package))
+            != 0);
+    }
+
+    [[nodiscard]] bool groupInstall(std::string_view package) const override
     {
         return (cloyster::Singleton<IRunner>::get()->executeCommand(
                     fmt::format("dnf -y groupinstall \"{}\"", package))
             != 0);
     }
 
-    bool remove(std::string_view package) const override
+    [[nodiscard]] bool remove(std::string_view package) const override
     {
         return (cloyster::Singleton<IRunner>::get()->executeCommand(
                     fmt::format("dnf -y remove {}", package))
             != 0);
     }
 
-    bool update(std::string_view package) const override
+    [[nodiscard]] bool update(std::string_view package) const override
     {
         return (cloyster::Singleton<IRunner>::get()->executeCommand(
                     fmt::format("dnf -y update {}", package))
             != 0);
     }
 
-    bool update() const override
+    [[nodiscard]] bool update() const override
     {
         return (
             cloyster::Singleton<IRunner>::get()->executeCommand("dnf -y update")
@@ -89,35 +96,35 @@ public:
         return Singleton<IRunner>::get()->checkOutput("dnf repolist");
     }
 
-    bool enableService(std::string_view service) const override
+    [[nodiscard]] bool enableService(std::string_view service) const override
     {
         return Singleton<IRunner>::get()->executeCommand(
                    fmt::format("systemctl enable --now {}", service))
             == 0;
     };
 
-    bool disableService(std::string_view service) const override
+    [[nodiscard]] bool disableService(std::string_view service) const override
     {
         return Singleton<IRunner>::get()->executeCommand(
                    fmt::format("systemctl disable --now {}", service))
             == 0;
     };
 
-    bool startService(std::string_view service) const override
+    [[nodiscard]] bool startService(std::string_view service) const override
     {
         return Singleton<IRunner>::get()->executeCommand(
                    fmt::format("systemctl start {}", service))
             == 0;
     };
 
-    bool stopService(std::string_view service) const override
+    [[nodiscard]] bool stopService(std::string_view service) const override
     {
         return Singleton<IRunner>::get()->executeCommand(
                    fmt::format("systemctl stop {}", service))
             == 0;
     };
 
-    bool restartService(std::string_view service) const override
+    [[nodiscard]] bool restartService(std::string_view service) const override
     {
         return Singleton<IRunner>::get()->executeCommand(
                    fmt::format("systemctl restart {}", service))
@@ -137,5 +144,13 @@ std::unique_ptr<IOSService> IOSService::factory(const OS& osinfo)
             throw std::logic_error("Not implemented");
     }
 }
+
+bool RockyLinux::shouldUseVault(const std::string& version)
+{
+    auto output = cloyster::utils::getHttpStatus(
+        fmt::format("https://dl.rockylinux.org/pub/rocky/{}/BaseOS/", version));
+    return output == "404";
+}
+
 
 }; // namespace cloyster::services {

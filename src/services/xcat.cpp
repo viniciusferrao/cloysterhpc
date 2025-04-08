@@ -140,15 +140,22 @@ namespace {
     {
         LOG_ASSERT(
             image.size() > 0, "Trying to generate an image with empty name");
+
+        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+        if (opts->dryRun) {
+            LOG_WARN("Dry-Run: skipping image check, assuming it doesn't exists");
+            return false;
+        }
+
         auto runner = cloyster::Singleton<services::IRunner>::get();
-        std::vector<std::string> output
-            = runner->checkOutput(fmt::format("lsdef -t osimage {}", image));
-        if (output.size() > 0
-            && output.front()
-                != "Could not find any object definitions to display") {
-            LOG_WARN("Skipping image generation {}, use `rmdef -t osimage -o "
-                     "{}` to remove "
-                     "the image if you want it to be regenerated.",
+        if (opts->shouldForce("genimage")) {
+            runner->executeCommand(fmt::format("rmdef -t osimage -o {}", image));
+        }
+
+        std::list<std::string> output;
+        auto exitCode = runner->executeCommand(fmt::format("lsdef -t osimage {}", image), output);
+        if (exitCode == 0) { // image exists
+            LOG_WARN("Skipping image generation {}, use --force=genimage to force",
                 image, image);
             LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
             return true;
@@ -233,6 +240,7 @@ void XCAT::configureInfiniband()
                 auto arch = cloyster::utils::enums::toString(
                     cluster()->getNodes()[0].getOS().getArch());
                 auto osService = cloyster::Singleton<IOSService>::get();
+                auto opts = cloyster::Singleton<Options>::get();
 
                 // Add the rpm to the image
                 m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
@@ -240,13 +248,14 @@ void XCAT::configureInfiniband()
 
                 // The kernel modules are build by the OFED.cpp module, see
                 // OFED.cpp
-                const auto kernelVersion = osService->getKernelInstalled();
+                const auto kernelVersion = opts->dryRun 
+                    ? "5.14.0-503.33.1.el9_5"
+                    // getKernelInstalled cannot run at dryRun
+                    : osService->getKernelInstalled();
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);
                 const auto localRepo = cloyster::createHTTPRepo(repoName);
-
-                // @FIXME: Copy only the rpms for the proper kernel version
 
                 // Create the RPM repository
                 runner->checkCommand(fmt::format(
@@ -256,10 +265,13 @@ void XCAT::configureInfiniband()
                 runner->checkCommand(
                     fmt::format("createrepo {}", localRepo.directory.string()));
 
-                auto docaUrl = repoManager->repo("doca")->uri().value();
-                runner->checkCommand(fmt::format(
-                    "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
-                    m_stateless.osimage, docaUrl));
+                // dryRun does not initialize the repositories
+                if (!opts->dryRun) {
+                    auto docaUrl = repoManager->repo("doca")->uri().value();
+                    runner->checkCommand(fmt::format(
+                        "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                        m_stateless.osimage, docaUrl));
+                }
 
                 // Add the local repository to the stateless image
                 runner->checkCommand(fmt::format(
@@ -708,104 +720,33 @@ void XCAT::installRepositories()
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
     const auto osinfo = cluster()->getHeadnode().getOS();
-    const auto osArch = cloyster::utils::enums::toString(osinfo.getArch());
-    const auto osMajorVersion = osinfo.getMajorVersion();
-    const auto osVersion = osinfo.getVersion();
-
+    const auto repoManager = cloyster::Singleton<RepoManager>::get();
     std::vector<std::string> repos;
-
-    /* FIXME: A LOT OF WORK TO BE DONE HERE BRUH */
-    /* BUG: This is a very bad implementation; it should find out the latest
-     * version and not be hardcoded. Also the directory formation does not work
-     * that way. We should support finding out the Repository paths by parsing
-     * /etc/yum.repos.d
-     */
-    std::vector<std::string> latestEL = { "8.10", "9.5" };
-
-    std::string crb = "CRB";
-    std::string rockyBranch
-        = "linux"; // To check if Rocky mirror directory points to 'linux'
-                   // (latest version) or 'vault'
-
-    // BUG: Really? A string?
-    std::string OpenHPCVersion = "3";
-
-    if (osMajorVersion < 9) {
-        crb = "PowerTools";
-        OpenHPCVersion = "2";
-    }
-
-    if (std::ranges::find(latestEL, osVersion) == latestEL.end()) {
-        rockyBranch = "vault";
-    }
+    const auto addReposFromFile = [&](const std::string& filename) {
+        for (auto& repo : repoManager->repoFile(filename)) {
+            if (repo->enabled()) {
+                repos.emplace_back(repo->uri().value());
+            }
+        }
+    };
 
     switch (osinfo.getDistro()) {
         case OS::Distro::RHEL:
-            repos.emplace_back(
-                "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/appstream/os");
-            repos.emplace_back("https://cdn.redhat.com/content/dist/rhel8/8/"
-                               "x86_64/codeready-builder/os");
+            addReposFromFile("rhel.repo");
             break;
         case OS::Distro::OL:
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/oracle/{}/"
-                            "baseos/latest/{}",
-                    osMajorVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/oracle/{}/appstream/{}",
-                osMajorVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
-                                           "oracle/{}/codeready/builder/{}",
-                osMajorVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/oracle/{}/UEKR7/{}",
-                osMajorVersion, osArch));
+            addReposFromFile("oracle.repo");
             break;
         case OS::Distro::Rocky:
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/BaseOS/{}/os",
-                rockyBranch, osVersion, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/{}/{}/os",
-                rockyBranch, osVersion, crb, osArch));
-            repos.emplace_back(fmt::format(
-                "https://mirror.versatushpc.com.br/rocky/{}/{}/AppStream/{}/os",
-                rockyBranch, osVersion, osArch));
+            addReposFromFile("rocky.repo");
             break;
         case OS::Distro::AlmaLinux:
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
-                            "almalinux/{}/BaseOS/{}/os",
-                    osVersion, osArch));
-            repos.emplace_back(fmt::format("https://mirror.versatushpc.com.br/"
-                                           "almalinux/almalinux/{}/{}/{}/os",
-                osVersion, crb, osArch));
-            repos.emplace_back(
-                fmt::format("https://mirror.versatushpc.com.br/almalinux/"
-                            "almalinux/{}/AppStream/{}/os",
-                    osVersion, osArch));
+            addReposFromFile("almalinux.repo");
             break;
     }
 
-    repos.emplace_back(
-        fmt::format("https://mirror.versatushpc.com.br/epel/{}/Everything/{}",
-            osMajorVersion, osArch));
-
-    // Modular repositories are only available on EL8
-    if (osMajorVersion == 8) {
-        repos.emplace_back(
-            fmt::format("https://mirror.versatushpc.com.br/epel/{}/Modular/{}",
-                osMajorVersion, osArch));
-    }
-
-    repos.emplace_back(
-        fmt::format("https://mirror.versatushpc.com.br/openhpc/{}/EL_{}",
-            OpenHPCVersion, osMajorVersion));
-    repos.emplace_back(fmt::format(
-        "https://mirror.versatushpc.com.br/openhpc/{}/updates/EL_{}",
-        OpenHPCVersion, osMajorVersion));
+    addReposFromFile("epel.repo");
+    addReposFromFile("OpenHPC.repo");
 
     return repos;
 }

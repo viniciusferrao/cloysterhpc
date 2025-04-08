@@ -111,9 +111,7 @@ void removeFile(std::string_view filename)
         return;
     }
 
-    LOG_DEBUG("Checking if file {} already exists on filesystem", filename)
     if (std::filesystem::exists(filename)) {
-        LOG_DEBUG("Already exists")
         std::filesystem::remove(filename);
         LOG_DEBUG("File {} deleted", filename)
     } else {
@@ -321,6 +319,22 @@ IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
     runner->checkCommand("apachectl configtest");
     runner->checkCommand("systemctl restart httpd");
     return repo;
+}
+
+std::string makeAirGapUrl(const std::string& repoName,
+                   // NOLINTNEXTLINE
+                   const std::string& path,
+                   const std::string& upstreamUrl,
+                   const bool forceUpstream)
+{
+    auto opts = cloyster::Singleton<services::Options>::get();
+    if (opts->airGap) {
+        return opts->airGapUrl + "/" + repoName + "/" + path;
+    } else if (!opts->disableMirrors && !forceUpstream) {
+        return opts->mirrorBaseUrl + "/" + repoName + "/" + path;
+    } else {
+        return upstreamUrl;
+    }
 }
 
 }; // namespace cloyster

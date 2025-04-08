@@ -70,7 +70,6 @@ void initializeSingletonsModel(auto&& cluster)
         auto clusterPtr = cloyster::Singleton<Cluster>::get();
         const auto& osinfo = clusterPtr->getHeadnode().getOS();
         auto repoManager = std::make_unique<RepoManager>();
-        repoManager->initializeDefaultRepositories();
         return repoManager;
     });
 
@@ -92,8 +91,12 @@ int runTestCommand(const std::string& testCommand,
         fmt::join(testCommandArgs, ","));
     auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
     auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
     if (testCommand == "execute-command") {
         runner->checkCommand(testCommandArgs[0]);
+    } else if (testCommand == "initialize-repos") {
+        repoManager->initializeDefaultRepositories();
+        runner->checkCommand(R"(bash -c "dnf config-manager --set-enabled '*' && dnf makecache -y" )");
     } else if (testCommand == "create-http-repo") {
         assert(testCommandArgs.size() > 0);
         cloyster::createHTTPRepo(testCommandArgs[0]);
@@ -127,16 +130,11 @@ int runTestCommand(const std::string& testCommand,
  */
 int main(int argc, const char** argv)
 {
-    auto options = Options::factory(argc, argv);
-    initializeSingletonsOptions(std::move(options));
+    initializeSingletonsOptions(Options::factory(argc, argv));
+
     auto opts = Singleton<Options>::get();
-
-    constexpr std::size_t logLevels
-        = cloyster::utils::enums::count<Log::Level>();
-    const std::vector<std::string> logLevelVector
-        = cloyster::utils::enums::toStrings<Log::Level>();
-
     Log::init(opts->logLevelInput);
+
     if (opts->showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
         return EXIT_SUCCESS;
@@ -191,11 +189,11 @@ int main(int argc, const char** argv)
 
         LOG_INFO("Initializing the model");
         auto model = std::make_unique<cloyster::models::Cluster>();
+        LOG_INFO("Model initialized");
         if (!opts->answerfile.empty()) {
             LOG_INFO("Loading the answerfile: {}", opts->answerfile)
             model->fillData(opts->answerfile);
         } 
-        LOG_INFO("Model initialized");
 
         opts->enableTUI = opts->answerfile.empty() && opts->testCommand.empty();
 

@@ -41,13 +41,13 @@ public:
     [[nodiscard]] virtual std::string getKernelRunning() const = 0;
 
     [[nodiscard]] virtual std::string getLocale() const = 0;
-    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const
-        = 0;
+    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const = 0;
 
     // These methods are const because the implementation is expected to be
     // stateless The implementation is expect to be stateless to avoid double
     // source of true. In-memory state should live in the OS model
     virtual bool install(std::string_view package) const = 0;
+    virtual bool reinstall(std::string_view package) const = 0;
     virtual bool groupInstall(std::string_view package) const = 0;
     virtual bool remove(std::string_view package) const = 0;
     virtual bool update(std::string_view package) const = 0;
@@ -63,6 +63,11 @@ public:
     virtual bool restartService(std::string_view service) const = 0;
 
     static std::unique_ptr<IOSService> factory(const OS& osinfo);
+};
+
+
+struct RockyLinux {
+    static bool shouldUseVault(const std::string& version);
 };
 
 };

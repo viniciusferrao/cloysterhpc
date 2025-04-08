@@ -6,6 +6,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/timezone.h>
+#include <cloysterhpc/services/options.h>
 #include <fmt/format.h>
 #include <map>
 #include <string>
@@ -39,13 +40,17 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
-    LOG_DEBUG("Fetching available system timezones")
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    std::multimap<std::string, std::string> timezones{};
+    if (opts->dryRun) {
+        LOG_DEBUG("Dry-Run skipping fetching available system timezones")
+        return timezones;
+    }
 
+    LOG_DEBUG("Fetching available system timezones")
     auto runner = cloyster::Singleton<cloyster::IRunner>::get();
     auto output = runner->checkOutput(
         fmt::format("timedatectl list-timezones --no-pager"));
-
-    std::multimap<std::string, std::string> timezones;
 
     for (const std::string& tz : output) {
         timezones.insert(std::make_pair(

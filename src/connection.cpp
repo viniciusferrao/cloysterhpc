@@ -30,7 +30,7 @@
 Connection::Connection(Network* network)
     : m_network(network)
 {
-
+    LOG_DEBUG("Initializing network")
     if (network->getType() == Network::Type::Infiniband)
         setMTU(2044);
 }
@@ -40,7 +40,7 @@ Connection::Connection(Network* network,
     std::optional<std::string_view> mac, const std::string& ip)
     : m_network(network)
 {
-
+    LOG_DEBUG("Initializing network {}", ip)
     if (interface.has_value())
         setInterface(interface.value());
 
@@ -75,7 +75,6 @@ std::optional<std::string_view> Connection::getInterface() const
 void Connection::setInterface(std::string_view interface)
 {
     LOG_DEBUG("Checking if interface {} exists", interface)
-
     if (interface == "lo")
         throw std::runtime_error("Cannot use the loopback interface");
 
@@ -186,6 +185,7 @@ void Connection::setAddress(const address& ip)
 
 void Connection::setAddress(const std::string& ip)
 {
+    LOG_DEBUG("Initializing network address {}", ip)
     try {
         setAddress(boost::asio::ip::make_address(ip));
     } catch (boost::system::system_error& e) {

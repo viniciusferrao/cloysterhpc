@@ -51,6 +51,7 @@ public:
     virtual ~IRunner() = default;
 
     virtual int executeCommand(const std::string&) = 0;
+    virtual int executeCommand(const std::string&, std::list<std::string>& output) = 0;
     virtual CommandProxy executeCommandIter(
         const std::string&, Stream out = Stream::Stdout)
         = 0;
@@ -63,6 +64,7 @@ public:
 class Runner final : public IRunner {
 public:
     int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
     CommandProxy executeCommandIter(
         const std::string& cmd, Stream out = Stream::Stdout) override;
     void checkCommand(const std::string& cmd) override;
@@ -75,6 +77,7 @@ public:
     CommandProxy executeCommandIter(
         const std::string& cmd, Stream out = Stream::Stdout) override;
     int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;
@@ -85,6 +88,7 @@ public:
     CommandProxy executeCommandIter(
         const std::string& cmd, Stream out = Stream::Stdout) override;
     int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;

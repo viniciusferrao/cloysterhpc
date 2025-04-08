@@ -9,18 +9,19 @@
 namespace cloyster::services {
 using std::ifstream;
 
-Options::Options() 
-  : helpAndExit{false}
-  , showVersion{false}
-  , runAsRoot{false}
-  , dryRun{false}
-  , enableTUI{false}
-  , enableCLI{false}
-  , runAsDaemon{false}
-  , airGap{false} // Explicitly set to false
-  , unattended{false} // Default log level
-  , logLevelInput{3} // Added from main.cpp
-{};
+Options::Options()
+    : helpAndExit { false }
+    , showVersion { false }
+    , runAsRoot { false }
+    , dryRun { false }
+    , enableTUI { false }
+    , enableCLI { false }
+    , runAsDaemon { false }
+    , airGap { false } // Explicitly set to false
+    , unattended { false } // Default log level
+    , disableMirrors { false }
+    , logLevelInput { 3 } // Added from main.cpp
+{ };
 
 std::unique_ptr<Options> Options::factory(int argc, const char** argv)
 {
@@ -57,9 +58,10 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
         po::bool_switch(&opt.dryRun), "Perform a dry run installation")("tui,t",
         po::bool_switch(&opt.enableTUI),
         "Enable TUI")("cli,c", po::bool_switch(&opt.enableCLI), "Enable CLI")(
-        "daemon,D", po::bool_switch(&opt.runAsDaemon), "Run as daemon")(
-        "airgap,g", po::bool_switch(&opt.airGap),
-        "Enable air-gapped installation")("airgap-url",
+        "daemon,D", po::bool_switch(&opt.runAsDaemon), "Run as daemon")
+        ("disable-mirrors,g", po::bool_switch(&opt.disableMirrors),"Disable mirrror URLs")
+        ("airgap,g", po::bool_switch(&opt.airGap),"Enable air-gapped installation")
+        ("airgap-url",
         po::value<std::string>(&opt.airGapUrl)
             ->default_value("file:///var/repos/"),
         "URL for air-gapped installation")("mirror-url",
@@ -68,7 +70,12 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
         "Base URL for mirror")("beegefs-version",
         po::value<std::string>(&opt.beegfsVersion)
             ->default_value("beegfs_7.3.3"),
-        "BeeGFS default version")("log-level,l",
+        "BeeGFS default version")
+        ("zabbix-version",
+         po::value<std::string>(&opt.zabbixVersion)
+         ->default_value("6.4"),
+         "Zabbix default version")
+        ("log-level,l",
         po::value<std::size_t>(&opt.logLevelInput)
             ->default_value(3)
             ->notifier([](int val) {
@@ -84,15 +91,21 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
         po::value<std::vector<std::string>>()->multitoken()->composing(),
         "Skip specific steps during installation")("force",
         po::value<std::vector<std::string>>()->multitoken()->composing(),
-        "Force specific steps during installation")("ohpc-packages",
-        po::value<std::vector<std::string>>()->multitoken()->composing(),
-        "Select OHPC packages")("unattended,u",
+        "Force specific steps during installation")
+        ("ohpc-packages",
+            po::value<std::vector<std::string>>()->multitoken()->composing(),
+            "Select OHPC packages")
+        ("repos",
+            po::value<std::vector<std::string>>()->multitoken()->composing(),
+            "Enabled repostiories")
+        ("unattended,u",
         po::bool_switch(&opt.unattended),
         "Perform an unattended installation") // Added from main.cpp
         ("dump-answerfile", po::value<std::string>(&opt.dumpAnswerfile),
             "Create an answerfile based on input and save to specified path") // Added from main.cpp
         ("config", po::value<std::string>(&opt.config),
-            "Config file to pass options for the command line from a configuration file") // Added from main.cpp
+            "Config file to pass options for the command line from a "
+            "configuration file") // Added from main.cpp
 #ifndef NDEBUG
         ("test", po::value<std::string>(&opt.testCommand),
             "Run a command for testing purposes") // Added from main.cpp
@@ -144,16 +157,16 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
         "spack-ohpc", "valgrind-ohpc" };
     initializeSetOption(
         "ohpc-packages", opt.ohpcPackages, vmap, ohpcPackagesDefault);
+    const auto reposEnabledDefault = { "beegfs", "elrepo", "epel", "OpenHPC",
+        "OpenHPC-Updates", "rpmfusion" };
+    initializeSetOption(
+        "repos", opt.enabledRepos, vmap, reposEnabledDefault);
 
     // Validate log-level input using std::from_chars (set to default "3" if
     // invalid)
     int levelNum = 0;
     constexpr int levelMax = 6;
     constexpr int levelMin = 1;
-
-    if (vmap.contains("test")) {
-        opt.dryRun = true;
-    }
 
     return std::make_unique<Options>(std::move(opt));
 }
