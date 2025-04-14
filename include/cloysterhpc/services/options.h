@@ -9,6 +9,7 @@
 namespace cloyster::services {
 
 struct Options final {
+    bool parsingError;
     bool helpAndExit;
     bool showVersion;
     bool runAsRoot;
@@ -20,6 +21,7 @@ struct Options final {
     bool unattended;
     bool disableMirrors;
     std::size_t logLevelInput;
+    std::string error;
     std::string config;
     std::string helpText;
     std::string airGapUrl;

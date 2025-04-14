@@ -2,16 +2,17 @@
 
 set(COMMON_LIBS
         ${NEWT_LIBRARY}
-        fmt::fmt
+        ${GLIBMM_LIBRARIES}
+        ${STDC++FS}
         Boost::headers
         Boost::system
         Boost::thread
-        Boost::program_options
-        spdlog::spdlog
+        CLI11::CLI11
+        doctest::doctest
+        fmt::fmt
         gsl::gsl-lite
-        ${GLIBMM_LIBRARIES}
         magic_enum::magic_enum
         resolv
-        ${STDC++FS}
-        doctest::doctest
-        SDBusCpp::sdbus-c++)
+        SDBusCpp::sdbus-c++
+        spdlog::spdlog
+)

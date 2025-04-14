@@ -133,7 +133,10 @@ int main(int argc, const char** argv)
     initializeSingletonsOptions(Options::factory(argc, argv));
 
     auto opts = Singleton<Options>::get();
-    Log::init(opts->logLevelInput);
+    if (opts->parsingError) {
+        fmt::print("Error: {}", opts->error);
+        return EXIT_FAILURE;
+    }
 
     if (opts->showVersion) {
         fmt::print("{}: Version {}\n", productName, productVersion);
@@ -144,6 +147,7 @@ int main(int argc, const char** argv)
         fmt::print("Help:\n{}", opts->helpText);
         return EXIT_SUCCESS;
     }
+    Log::init(opts->logLevelInput);
 
     try {
 #ifndef NDEBUG

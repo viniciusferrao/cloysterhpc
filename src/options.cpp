@@ -1,6 +1,7 @@
+#include "CLI/CLI.hpp"
 #include <cloysterhpc/services/options.h>
 
-#include <boost/program_options.hpp>
+#include <CLI/CLI.hpp>
 #include <fstream>
 #include <memory>
 #include <set>
@@ -10,23 +11,22 @@ namespace cloyster::services {
 using std::ifstream;
 
 Options::Options()
-    : helpAndExit { false }
+    : parsingError { false }
+    , helpAndExit { false }
     , showVersion { false }
     , runAsRoot { false }
     , dryRun { false }
     , enableTUI { false }
     , enableCLI { false }
     , runAsDaemon { false }
-    , airGap { false } // Explicitly set to false
-    , unattended { false } // Default log level
+    , airGap { false }
+    , unattended { false }
     , disableMirrors { false }
-    , logLevelInput { 3 } // Added from main.cpp
-{ };
+    , logLevelInput { 3 }
+{ }
 
 std::unique_ptr<Options> Options::factory(int argc, const char** argv)
 {
-    namespace po = boost::program_options;
-
     // Create an instance of Options with default values
     Options opt;
     opt.helpAndExit = false;
@@ -36,137 +36,102 @@ std::unique_ptr<Options> Options::factory(int argc, const char** argv)
     opt.enableTUI = false;
     opt.enableCLI = false;
     opt.runAsDaemon = false;
-    opt.airGap = false; // Explicitly set to false
-    opt.airGapUrl = ""; // Default to empty string
-    opt.mirrorBaseUrl = ""; // Default to empty string
-    opt.logLevelInput = 3; // Default log level
-    opt.answerfile = ""; // Default to empty string
-    opt.unattended = false; // Added from main.cpp
-    opt.dumpAnswerfile = ""; // Added from main.cpp
+    opt.airGap = false;
+    opt.airGapUrl = "file:///var/repos/";
+    opt.mirrorBaseUrl = "https://mirror.versatushpc.com.br";
+    opt.beegfsVersion = "beegfs_7.3.3";
+    opt.zabbixVersion = "6.4";
+    opt.logLevelInput = 3;
+    opt.answerfile = "";
+    opt.unattended = false;
+    opt.dumpAnswerfile = "";
     opt.config = "";
 #ifndef NDEBUG
-    opt.testCommand = ""; // Added from main.cpp (debug only)
-    opt.testCommandArgs = {}; // Added from main.cpp (debug only)
+    opt.testCommand = "";
+    opt.testCommandArgs = {};
 #endif
 
-    // Define the options description
-    po::options_description desc("CloysterHPC Options");
-    desc.add_options()("help,h", po::bool_switch(&opt.helpAndExit),
-        "Show help message")("version,v", po::bool_switch(&opt.showVersion),
-        "Show version information")(
-        "root,r", po::bool_switch(&opt.runAsRoot), "Run as root")("dry,d",
-        po::bool_switch(&opt.dryRun), "Perform a dry run installation")("tui,t",
-        po::bool_switch(&opt.enableTUI),
-        "Enable TUI")("cli,c", po::bool_switch(&opt.enableCLI), "Enable CLI")(
-        "daemon,D", po::bool_switch(&opt.runAsDaemon), "Run as daemon")
-        ("disable-mirrors,g", po::bool_switch(&opt.disableMirrors),"Disable mirrror URLs")
-        ("airgap,g", po::bool_switch(&opt.airGap),"Enable air-gapped installation")
-        ("airgap-url",
-        po::value<std::string>(&opt.airGapUrl)
-            ->default_value("file:///var/repos/"),
-        "URL for air-gapped installation")("mirror-url",
-        po::value<std::string>(&opt.mirrorBaseUrl)
-            ->default_value("https://mirror.versatushpc.com.br"),
-        "Base URL for mirror")("beegefs-version",
-        po::value<std::string>(&opt.beegfsVersion)
-            ->default_value("beegfs_7.3.3"),
-        "BeeGFS default version")
-        ("zabbix-version",
-         po::value<std::string>(&opt.zabbixVersion)
-         ->default_value("6.4"),
-         "Zabbix default version")
-        ("log-level,l",
-        po::value<std::size_t>(&opt.logLevelInput)
-            ->default_value(3)
-            ->notifier([](int val) {
-                if (val < 1 || val > 6) {
-                    throw po::validation_error(
-                        po::validation_error::invalid_option_value, "log-level",
-                        std::to_string(val));
-                }
-            }),
-        "Set log level (integer between 1 and 6)")("answerfile,a",
-        po::value<std::string>(&opt.answerfile),
-        "Full path to an answerfile")("skip",
-        po::value<std::vector<std::string>>()->multitoken()->composing(),
-        "Skip specific steps during installation")("force",
-        po::value<std::vector<std::string>>()->multitoken()->composing(),
-        "Force specific steps during installation")
-        ("ohpc-packages",
-            po::value<std::vector<std::string>>()->multitoken()->composing(),
-            "Select OHPC packages")
-        ("repos",
-            po::value<std::vector<std::string>>()->multitoken()->composing(),
-            "Enabled repostiories")
-        ("unattended,u",
-        po::bool_switch(&opt.unattended),
-        "Perform an unattended installation") // Added from main.cpp
-        ("dump-answerfile", po::value<std::string>(&opt.dumpAnswerfile),
-            "Create an answerfile based on input and save to specified path") // Added from main.cpp
-        ("config", po::value<std::string>(&opt.config),
-            "Config file to pass options for the command line from a "
-            "configuration file") // Added from main.cpp
+    // Define the CLI11 app
+    CLI::App app("CloysterHPC Options");
+
+    // Add options
+    app.add_flag("-v,--version", opt.showVersion, "Show version information");
+    app.add_flag("-r,--root", opt.runAsRoot, "Run as root");
+    app.add_flag("-d,--dry", opt.dryRun, "Perform a dry run installation");
+    app.add_flag("-t,--tui", opt.enableTUI, "Enable TUI");
+    app.add_flag("-c,--cli", opt.enableCLI, "Enable CLI");
+    app.add_flag("-D,--daemon", opt.runAsDaemon, "Run as daemon");
+    app.add_flag("--disable-mirrors", opt.disableMirrors, "Disable mirror URLs");
+    app.add_option("--mirror-url", opt.mirrorBaseUrl, "Base URL for mirror")
+        ->default_str("https://mirror.versatushpc.com.br");
+    app.add_option("--beegfs-version", opt.beegfsVersion, "BeeGFS default version")
+        ->default_str("beegfs_7.3.3");
+    app.add_option("--zabbix-version", opt.zabbixVersion, "Zabbix default version")
+        ->default_str("6.4");
+    app.add_option("-l,--log-level", opt.logLevelInput, "Set log level (integer between 1 and 6)")
+        ->default_val(3)
+        ->check(CLI::Range(1, 6));
+    app.add_option("-a,--answerfile", opt.answerfile, "Full path to an answerfile");
+    app.add_option("--skip", opt.skipSteps, "Skip specific steps during installation")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
+    app.add_option("--force", opt.forceSteps, "Force specific steps during installation")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
+    app.add_option("--ohpc-packages", opt.ohpcPackages, "Select OHPC packages")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
+    app.add_option("--repos", opt.enabledRepos, "Enabled repositories")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
+    app.add_flag("-u,--unattended", opt.unattended, "Perform an unattended installation");
+    app.add_option("--dump-answerfile", opt.dumpAnswerfile, "Create an answerfile based on input and save to specified path");
+    app.add_option("--config", opt.config, "Config file to pass options for the command line from a configuration file");
+
 #ifndef NDEBUG
-        ("test", po::value<std::string>(&opt.testCommand),
-            "Run a command for testing purposes") // Added from main.cpp
-        ("test-args",
-            po::value<std::vector<std::string>>(&opt.testCommandArgs)
-                ->multitoken()
-                ->composing(),
-            "Arguments for test command") // Added from main.cpp
+    app.add_option("--test", opt.testCommand, "Run a command for testing purposes");
+    app.add_option("--test-args", opt.testCommandArgs, "Arguments for test command")
+        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
 #endif
-        ;
 
-    // Parse the command-line arguments (Boost will handle errors by exiting)
-    po::variables_map vmap;
-    po::store(po::parse_command_line(argc, argv, desc), vmap);
-    po::notify(vmap);
-
-    if (vmap.contains("config")) {
-        auto config = vmap["config"].as<std::string>();
-        std::ifstream configFile(config);
-        po::store(po::parse_config_file(configFile, desc), vmap);
-        po::notify(vmap);
+    // Parse command-line arguments
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::CallForHelp& e) {
+        opt.helpText = app.help();
+        opt.helpAndExit = true;
+    } catch (const CLI::CallForVersion& e) {
+        opt.showVersion = true;
+    } catch (const CLI::ParseError& e) {
+        opt.parsingError = true;
+        opt.error = e.what();
     }
 
-    // Handle help (print message but continue processing)
-    if (vmap.contains("help")) {
-        std::ostringstream stream;
-        stream << desc;
-        opt.helpText = stream.str();
+    // Handle configuration file if specified
+    if (!opt.config.empty()) {
+        std::ifstream configFile(opt.config);
+        if (!configFile.is_open()) {
+            throw CLI::FileError::Missing(opt.config);
+        }
+        std::string configContent((std::istreambuf_iterator<char>(configFile)),
+                                  std::istreambuf_iterator<char>());
+        std::istringstream configStream(configContent);
+        try {
+            app.parse_from_stream(configStream);
+        } catch (const CLI::ParseError& e) {
+            opt.parsingError = true;
+            opt.error = e.what();
+        }
     }
 
-    constexpr auto initializeSetOption
-        = [](const auto key, auto& output, auto& vmap,
-              const std::initializer_list<const char*>& defaultValue = {}) {
-              if (vmap.contains(key)) {
-                  const auto& vec
-                      = vmap[key].template as<std::vector<std::string>>();
 
-                  output.insert(vec.begin(), vec.end());
-              } else {
-                  output.insert(defaultValue.begin(), defaultValue.end());
-              }
-          };
-
-    initializeSetOption("skip", opt.skipSteps, vmap);
-    initializeSetOption("force", opt.forceSteps, vmap);
-    const auto ohpcPackagesDefault = { "openmpi4-gnu12-ohpc",
-        "mpich-ofi-gnu12-ohpc", "mpich-ucx-gnu12-ohpc", "mvapich2-gnu12-ohpc",
-        "lmod-defaults-gnu12-openmpi4-ohpc", "ohpc-autotools", "hwloc-ohpc",
-        "spack-ohpc", "valgrind-ohpc" };
-    initializeSetOption(
-        "ohpc-packages", opt.ohpcPackages, vmap, ohpcPackagesDefault);
-    const auto reposEnabledDefault = { "beegfs", "elrepo", "epel", "OpenHPC",
-        "OpenHPC-Updates", "rpmfusion" };
-    initializeSetOption(
-        "repos", opt.enabledRepos, vmap, reposEnabledDefault);
-
-    // Validate log-level input using std::from_chars (set to default "3" if
-    // invalid)
-    int levelNum = 0;
-    constexpr int levelMax = 6;
-    constexpr int levelMin = 1;
+    // Initialize sets with default values if not provided
+    if (opt.ohpcPackages.empty()) {
+        opt.ohpcPackages = { "openmpi4-gnu12-ohpc", "mpich-ofi-gnu12-ohpc",
+                             "mpich-ucx-gnu12-ohpc", "mvapich2-gnu12-ohpc",
+                             "lmod-defaults-gnu12-openmpi4-ohpc", "ohpc-autotools",
+                             "hwloc-ohpc", "spack-ohpc", "valgrind-ohpc" };
+    }
+    if (opt.enabledRepos.empty()) {
+        opt.enabledRepos = { "beegfs", "elrepo", "epel", "OpenHPC",
+                             "OpenHPC-Updates", "rpmfusion" };
+    }
 
     return std::make_unique<Options>(std::move(opt));
 }
@@ -181,4 +146,4 @@ bool Options::shouldForce(const std::string& step) const
     return forceSteps.contains(step);
 }
 
-};
+} // namespace cloyster::services
