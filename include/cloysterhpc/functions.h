@@ -7,6 +7,7 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/utils/enums.h>
+#include <algorithm>
 #include <filesystem>
 #include <list>
 #include <optional>
@@ -131,11 +132,6 @@ struct HTTPRepo {
 
 HTTPRepo createHTTPRepo(const std::string_view repoName);
 
-std::string makeAirGapUrl(const std::string& repoName,
-                   // NOLINTNEXTLINE
-                   const std::string& path,
-                   const std::string& upstreamUrl,
-                   const bool forceUpstream = false);
 
 } // namespace cloyster
 
@@ -180,17 +176,39 @@ std::filesystem::directory_iterator openDir(const Path& path)
         fmt::format("Dry Run: Would open directory {}", path.string()));
 }
 
-std::string getHttpStatus(const auto& url)
+// @FIXME: Yes, curl works I know, but no.. fix this, use boost for
+//   requests and asynchronous I/O so we can run a bunch of these
+//   concurrently
+std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
 {
     auto runner = cloyster::Singleton<IRunner>::get();
-    // @FIXME: Yes, curl works I know, but no.. fix this
-    auto output = runner->checkOutput(
-        fmt::format(R"(bash -c "curl -I {} | awk '/HTTP/ {{print $2}}'" )", url))[0];
-    LOG_DEBUG("HTTP status of {}: {}", url, output);
-    return output;
+    auto opts = cloyster::Singleton<services::Options>::get();
+    if (opts->shouldSkip("http-status")) {
+        LOG_WARN("Skipping HTTP status check for {}, assuming 200 (reason: --skip=http-status in the command line)", url);
+        return "200";
+    }
+    constexpr auto getHttpStatusInner = [](const auto& url, const auto& runner) {
+        return runner->checkOutput(
+        fmt::format(R"(bash -c "curl -sLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )", url))[0];
+    };
+
+
+    std::string header;
+    for (std::size_t i = 0; i < maxRetries; ++i) {
+        header = getHttpStatusInner(url, runner);     
+        LOG_DEBUG("HTTP status of {}: {}", url, header);
+        if (header == "200") {
+            return header;
+        } else if (header.starts_with("5")) {
+            LOG_DEBUG("HTTP {} error, retry {}", header, i);
+            continue;
+        }
+    }
+    return header;
 };
 
 
-}
+} // namespace cloyster::utils
+
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

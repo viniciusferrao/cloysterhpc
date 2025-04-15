@@ -70,6 +70,14 @@ struct RockyLinux {
     static bool shouldUseVault(const std::string& version);
 };
 
+struct EnterpriseLinux {
+    static std::string repositoryURL(const std::string& repoName,
+                   // NOLINTNEXTLINE
+                   const std::string& path,
+                   const std::string& upstreamUrl,
+                   const bool forceUpstream = false);
+};
+
 };
 
 #endif

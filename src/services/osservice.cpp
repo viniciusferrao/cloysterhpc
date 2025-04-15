@@ -1,4 +1,5 @@
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/services/osservice.h>
 #include <stdexcept>
 
@@ -152,5 +153,56 @@ bool RockyLinux::shouldUseVault(const std::string& version)
     return output == "404";
 }
 
+
+std::string EnterpriseLinux::repositoryURL(const std::string& repoName,
+// NOLINTNEXTLINE
+                   const std::string& path,
+                   const std::string& upstreamUrl,
+                   const bool forceUpstream)
+{
+    const auto opts = cloyster::Singleton<services::Options>::get();
+    const auto useUpstreamUrl = opts->disableMirrors || forceUpstream;
+    const auto mirrorUrl = opts->mirrorBaseUrl + "/" + repoName + "/" + path;
+    // remove leading "/" if present
+    auto url = cloyster::utils::string::rstrip(useUpstreamUrl ? upstreamUrl : mirrorUrl, "/");
+
+    if (url.starts_with("file:///")) {
+        auto repoPath = std::filesystem::path(url.substr(std::string_view("file:///").length()));
+        if (!cloyster::exists(repoPath)) {
+        throw std::runtime_error(
+            fmt::format("Repository path {} does not exists, create the local repository and try again", repoPath.string()));
+        }
+    }
+
+    const auto urlUpcase = cloyster::utils::string::upper(url);
+    const auto isGPGKey = urlUpcase.contains("GPG") || urlUpcase.ends_with(".KEY");
+    const auto status = cloyster::utils::getHttpStatus(url + (isGPGKey ? "" : "/repodata/repomd.xml"));
+    const auto available = status  == "200";
+    if (!available) {
+        if (!useUpstreamUrl) {
+            if (cloyster::utils::getHttpStatus(upstreamUrl + (isGPGKey ? "" : "/repodata/repomd.xml")) != "200") {
+                // @FIXME: The execution path should only get here if the upstream URL
+                //   changed during releases. I left here a message to the user
+                //   about how to mitigate but it would be better if the
+                //   upstream url prefix are not hardcoded at all.
+                // @TODO Add an option to permit the user to override the upstream
+                //   repository from the command line if required.
+                throw std::runtime_error(fmt::format(
+                    "Upstream repository {} is not availalble, this is "
+                    "probably a bug. To mitigate copy the .repo file with the "
+                    "correct url to /etc/yum.repos.d/ and try again.",
+                    upstreamUrl, repoName));
+            }
+            LOG_WARN("Mirror {} is not available, falling back to upstream repository {}",
+                     mirrorUrl, upstreamUrl);
+            return upstreamUrl;
+        }
+
+        throw std::runtime_error(
+            fmt::format("Repository URL {} is not available, HTTP status: {}", url, status));
+    }
+
+    return url;
+}
 
 }; // namespace cloyster::services {
