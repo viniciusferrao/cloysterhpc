@@ -207,6 +207,10 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     return header;
 };
 
+[[noreturn]] void abort(const fmt::string_view& fmt, auto&&... args) {
+    throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+}
+
 
 } // namespace cloyster::utils
 

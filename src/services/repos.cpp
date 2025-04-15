@@ -21,6 +21,8 @@
 #include <gsl/gsl-lite.hpp>
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/patterns/wrapper.h>
+#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
@@ -34,6 +36,7 @@ using cloyster::concepts::IsParser;
 using cloyster::services::files::IsKeyFileReadable;
 using cloyster::services::files::KeyFile;
 using cloyster::services::repos::IRepository;
+using std::filesystem::path;
 
 namespace cloyster::services::repos {
 
@@ -173,8 +176,8 @@ public:
             auto name = file.getString(repogroup, "name");
 
             if (name.empty()) {
-                throw std::runtime_error(std::format(
-                    "Could not load repo name from repo '{}'", repogroup));
+                cloyster::utils::abort( 
+                    "Could not load repo name from repo '{}'", repogroup);
             }
 
             auto metalink = file.getStringOpt(repogroup, "metalink");
@@ -252,6 +255,135 @@ public:
         m_parser.unparse(m_repos, m_path);
     }
 };
+
+// WIP WIP WIP
+struct RepoPaths final {
+    std::string repoPath;
+    std::string gpgPath;
+};
+
+struct MirrorRepoConfig final {
+    std::string name;
+    RepoPaths paths;
+
+    [[nodiscard]] constexpr std::string baseurl() const {
+        const auto opts = cloyster::Singleton<Options>::get();
+        return fmt::format("{mirrorUrl}/{name}/{path}",
+                           fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
+                           fmt::arg("name", name),
+                           fmt::arg("path", paths.repoPath));
+    };
+
+    [[nodiscard]] constexpr std::string gpgurl() const {
+        const auto opts = cloyster::Singleton<Options>::get();
+        return fmt::format("{mirrorUrl}/{name}/{path}",
+                           fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
+                           fmt::arg("name", name),
+                           fmt::arg("path", paths.gpgPath));
+    };
+
+    [[nodiscard]] constexpr static bool isLocal() {
+        const auto opts = cloyster::Singleton<Options>::get();
+        return opts->mirrorBaseUrl.starts_with("file:///");
+    }
+    
+    [[nodiscard]] constexpr static std::filesystem::path localPath(const std::string& fileurl)
+    {
+        assert(isLocal());
+        constexpr auto len = std::string_view("file://").length();
+        return {fileurl.substr(len)};
+    }
+
+    [[nodiscard]] constexpr std::filesystem::path localRepoPath() const {
+        return localPath(baseurl());
+    };
+
+    [[nodiscard]] constexpr std::filesystem::path localGPGPath() const {
+        return localPath(gpgurl());
+    };
+
+    [[nodiscard]] constexpr bool exists() const {
+        if (isLocal()) {
+            return cloyster::exists(localRepoPath());
+        } else {
+            return utils::getHttpStatus(baseurl()) == "200";
+        }
+    };
+
+    [[nodiscard]] constexpr std::optional<std::string> gpgkey() const {
+        if (isLocal() && cloyster::exists(localGPGPath())) {
+            return localGPGPath();
+        } else if (utils::getHttpStatus(gpgurl()) == "200") {
+            return gpgurl();
+        } else {
+            LOG_WARN("GPG not found, assuming disabled GPG check {}", (isLocal() ? localGPGPath().string() : gpgurl()));
+            return std::nullopt;
+        }
+    }
+};
+
+struct UpstreamRepoConfig final {
+    std::string urlPrefix;
+    RepoPaths paths;
+
+    [[nodiscard]] std::string baseurl() const {
+        return fmt::format("{upstreamPrefix}/{path}",
+                           fmt::arg("upstreamPrefix", urlPrefix),
+                           fmt::arg("path", paths.repoPath));
+    };
+
+    [[nodiscard]] std::string gpgurl() const {
+        return fmt::format("{upstreamPrefix}{path}",
+                           fmt::arg("upstreamPrefix", urlPrefix),
+                           fmt::arg("path", paths.gpgPath));
+    };
+
+    [[nodiscard]] constexpr bool exists() const {
+        return utils::getHttpStatus(baseurl()) == "200" && utils::getHttpStatus(gpgurl()) == "200";
+    };
+
+    [[nodiscard]] constexpr std::optional<std::string> gpgkey() const {
+        if (utils::getHttpStatus(gpgurl()) == "200") {
+            return gpgurl();
+        } else {
+            LOG_WARN("GPG not found, assuming disabled GPG check {}",  gpgurl());
+            return std::nullopt;
+        }
+    }
+};
+
+struct RepoChooser final {
+    enum class Choice : bool {
+        UPSTREAM, MIRROR
+    };
+
+    static constexpr Choice choose(const MirrorRepoConfig& mirror, const UpstreamRepoConfig& upstream, const bool forceUpstream = false) {
+        if (forceUpstream) {
+            return Choice::UPSTREAM;
+        }
+
+        const auto opts = cloyster::Singleton<Options>::get();
+        if (opts->disableMirrors) {
+            return Choice::UPSTREAM;
+        }
+
+        if (!mirror.exists()) {
+            LOG_WARN("Mirror does not exists falling back to upstream {}", upstream.baseurl());
+            return Choice::UPSTREAM;
+        }
+
+        return Choice::MIRROR;
+    }
+};
+
+struct RepoAbsoluteUrls {
+    std::string repoUrl;
+    std::string gpgUrl;
+};
+
+
+// WIP WIP WIP
+
 
 // Installs and enable/disable RPM repositories
 class RPMRepoManager final {
@@ -412,6 +544,18 @@ public:
         }) | std::ranges::to<std::vector<std::unique_ptr<const IRepository>>>();
     }
 
+
+    void addDefaultRPMRepository(
+        // NOLINTNEXTLINE
+        const std::string& repoId,
+        const MirrorRepoConfig& mirrorConfig,
+        const UpstreamRepoConfig& upstreamConfig,
+        const std::filesystem::path& sourceFile,
+        const bool forceUpstream
+    )
+    {
+        // WIP WIP WIP
+    }
 };
 
 }; // namespace cloyster::services::repos {
@@ -442,8 +586,12 @@ inline void RPMRepository::valid() const
 struct ELConfig {
     static inline const std::filesystem::path baseDir = "/etc/yum.repos.d/";
 
-    // @TODO: Extract the upstream URLs prefixes to the command line options with 
-    //   the current values as defaults
+    // @FIXME: This was AI generated but it is not good at all:
+    //   - It will do a lot of HTTP requests in vain if the repositories already
+    //     exists and fixing requried a lot of refactoring because the code is huge
+    //  - The other modules cannot benefit from it, xCAT and OFED (possibly others)
+    //    need to add their own repositories, ideally not dealing with mirror and
+    //    upstream urls by themselves
     static std::vector<RPMRepositoryFile> getRepositories()
     {
         const auto& osinfo = cloyster::Singleton<models::Cluster>::get()
@@ -1157,5 +1305,22 @@ std::vector<std::unique_ptr<const IRepository>> RepoManager::repoFile(
             throw std::logic_error("Not implemented");
     }
 }
+
+/*
+void RepoManager::addDefaultRPMRepository(
+        // NOLINTNEXTLINE
+        const std::string& repoId,
+        const std::string& repoName,
+        const std::string& repoPath,
+        const std::string& upstreamUrlPrefix,
+        const std::string& upstreamGpg,
+        const std::filesystem::path& sourceFile,
+        const bool forceUpstream
+    )
+{
+        m_impl->rpm.addDefaultRPMRepository(repoId, repoName, repoPath, upstreamUrlPrefix, upstreamGpg, sourceFile, forceUpstream);
+};
+*/
+
 
 }; // namespace cloyster::services::repos

@@ -72,6 +72,22 @@ public:
     RepoManager(RepoManager&&) = delete;
     RepoManager& operator=(const RepoManager&) = delete;
     RepoManager& operator=(RepoManager&&) = delete;
+    /**
+     * @brief Install a new default repository handling custom mirror logic.
+     */
+    /*
+    void addDefaultRPMRepository(
+        const std::string& repoId,
+        const std::string& repoName,
+        const std::string& repoPath,
+        const std::string& upstreamUrlPrefix,
+        const std::string& upstreamGpg,
+        const std::filesystem::path& sourceFile,
+        const bool forceUpstream = false
+    );
+    */
+
+
     void initializeDefaultRepositories();
     void enable(const std::string& repo);
     void enable(const std::vector<std::string>& repos);
