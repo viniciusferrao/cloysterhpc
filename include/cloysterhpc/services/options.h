@@ -44,11 +44,11 @@ struct Options final {
     bool shouldSkip(const std::string& step) const;
     [[nodiscard]]
     bool shouldForce(const std::string& step) const;
+};
+static_assert(std::is_aggregate_v<Options>, "Options must be an aggregate type.");
 
-    static std::unique_ptr<Options> factory(int argc, const char** argv);
-
-private:
-    Options();
+namespace options {
+std::unique_ptr<Options> factory(int argc, const char** argv);
 };
 }
 

@@ -9,22 +9,7 @@
 namespace cloyster::services {
 using std::ifstream;
 
-Options::Options()
-    : parsingError { false }
-    , helpAndExit { false }
-    , showVersion { false }
-    , runAsRoot { false }
-    , dryRun { false }
-    , enableTUI { false }
-    , enableCLI { false }
-    , runAsDaemon { false }
-    , airGap { false }
-    , unattended { false }
-    , disableMirrors { false }
-    , logLevelInput { 3 }
-{ }
-
-std::unique_ptr<Options> Options::factory(int argc, const char** argv)
+std::unique_ptr<Options> options::factory(int argc, const char** argv)
 {
     // Create an instance of Options with default values
     Options opt;

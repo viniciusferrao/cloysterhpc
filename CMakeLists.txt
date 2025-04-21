@@ -111,8 +111,6 @@ endif ()
 # Adding the tests:
 include(CTest)
 
-# @FIXME: Rationale, Tests removed by now, there is major refactoring going on
-#  and this breaks basically all the existing tests
 if (BUILD_TESTING)
     add_subdirectory(test)
 endif ()

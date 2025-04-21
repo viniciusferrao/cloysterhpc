@@ -65,7 +65,7 @@ rocky() {
   esac
 
   dnf config-manager --set-enabled "$repo_name"
-	dnf -y install epel-release
+  dnf -y install epel-release
 }
 
 almalinux() {
@@ -79,7 +79,7 @@ almalinux() {
   esac
 
   dnf config-manager --set-enabled "$repo_name"
-	dnf -y install epel-release
+  dnf -y install epel-release
 }
 
 oracle() {

@@ -4,7 +4,6 @@
  */
 
 #include <algorithm>
-#include <atomic>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -30,6 +29,13 @@
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
 
 using cloyster::OS;
 using cloyster::concepts::IsParser;
@@ -376,11 +382,22 @@ struct RepoChooser final {
     }
 };
 
+TEST_CASE("RepoChooser") {
+    // NOLINTNEXTLINE
+    auto opts = Options{.mirrorBaseUrl="https://mirror.example.com"};
+    auto mirrorConfig = MirrorRepoConfig{.name="myrepo", .paths={.repoPath="/repo", .gpgPath="key.gpg"}};
+    auto upstreamConfig = UpstreamRepoConfig { 
+        .urlPrefix="https://upstream.example.com",
+        .paths = { .repoPath = "/upstream/repo", .gpgPath = "/key.gpg" } };
+
+    cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
+    CHECK(RepoChooser::choose(mirrorConfig, upstreamConfig) == RepoChooser::Choice::UPSTREAM);
+}
+
 struct RepoAbsoluteUrls {
     std::string repoUrl;
     std::string gpgUrl;
 };
-
 
 // WIP WIP WIP
 

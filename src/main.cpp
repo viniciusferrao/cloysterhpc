@@ -22,7 +22,6 @@
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 #include <internal_use_only/config.hpp>
-#include <regex>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -130,7 +129,7 @@ int runTestCommand(const std::string& testCommand,
  */
 int main(int argc, const char** argv)
 {
-    initializeSingletonsOptions(Options::factory(argc, argv));
+    initializeSingletonsOptions(options::factory(argc, argv));
 
     auto opts = Singleton<Options>::get();
     if (opts->parsingError) {
