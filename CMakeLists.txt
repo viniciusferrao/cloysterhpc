@@ -113,9 +113,9 @@ include(CTest)
 
 # @FIXME: Rationale, Tests removed by now, there is major refactoring going on
 #  and this breaks basically all the existing tests
-## if (BUILD_TESTING)
-##     add_subdirectory(test)
-## endif ()
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif ()
 
 
 if (cloysterhpc_BUILD_FUZZ_TESTS)
