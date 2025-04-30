@@ -14,6 +14,7 @@
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
+#include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
@@ -21,6 +22,7 @@
 #include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
+
 #include <internal_use_only/config.hpp>
 
 #ifdef _CLOYSTER_I18N
@@ -32,52 +34,6 @@ namespace {
 
 using namespace cloyster;
 using namespace cloyster::services;
-
-// Singletons that depends only in the options, the cluster model
-// depends on these
-void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
-{
-    Singleton<Options>::init(std::move(opts));
-    cloyster::Singleton<MessageBus>::init([]() {
-        return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
-            "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
-    });
-    cloyster::Singleton<cloyster::services::IRunner>::init([&]() {
-        using cloyster::services::IRunner;
-        using cloyster::services::DryRunner;
-        using cloyster::services::Runner;
-        auto opts = Singleton<Options>::get();
-
-        if (opts->dryRun) {
-            return cloyster::makeUniqueDerived<IRunner, DryRunner>();
-        }
-
-        return cloyster::makeUniqueDerived<IRunner, Runner>();
-    });
-
-}
-
-// Singletons that depends on the cluster model
-void initializeSingletonsModel(auto&& cluster)
-{
-    using cloyster::models::Cluster;
-    cloyster::Singleton<Cluster>::init(
-        std::forward<decltype(cluster)>(cluster));
-
-    using cloyster::services::repos::RepoManager;
-    cloyster::Singleton<RepoManager>::init([]() {
-        auto clusterPtr = cloyster::Singleton<Cluster>::get();
-        const auto& osinfo = clusterPtr->getHeadnode().getOS();
-        auto repoManager = std::make_unique<RepoManager>();
-        return repoManager;
-    });
-
-    cloyster::Singleton<cloyster::services::IOSService>::init([]() {
-        const auto& osinfo
-            = cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
-        return cloyster::services::IOSService::factory(osinfo);
-    });
-}
 
 // Run test commands and exit. This is to make easier to test
 // code during development and troubleshooting.  Use a combination of
@@ -103,11 +59,7 @@ int runTestCommand(const std::string& testCommand,
         assert(testCommandArgs.size() > 0);
         LOG_INFO("Loading file {}", testCommandArgs[0]);
         auto file = cloyster::services::files::KeyFile(testCommandArgs[0]);
-        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
-        LOG_INFO("Contents: {}", file.toData());
-    } else if (testCommand == "install-mellanox-ofed") {
-        OFED(OFED::Kind::Mellanox, "latest").install();
-    } else if (testCommand == "image-install-mellanox-ofed") {
+        LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ",")); LOG_INFO("Contents: {}", file.toData()); } else if (testCommand == "install-mellanox-ofed") { OFED(OFED::Kind::Mellanox, "latest").install(); } else if (testCommand == "image-install-mellanox-ofed") {
         auto provisioner = std::make_unique<cloyster::services::XCAT>();
         provisioner->configureInfiniband();
     } else if (testCommand == "dump-headnode-os") {
@@ -122,6 +74,7 @@ int runTestCommand(const std::string& testCommand,
 #endif
     return EXIT_SUCCESS;
 }
+
 }; // anonymous namespace
 
 /**
