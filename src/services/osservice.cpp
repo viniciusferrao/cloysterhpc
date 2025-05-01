@@ -146,11 +146,11 @@ std::unique_ptr<IOSService> IOSService::factory(const OS& osinfo)
     }
 }
 
-bool RockyLinux::shouldUseVault(const std::string& version)
+bool RockyLinux::shouldUseVault(const std::string& lastVersion)
 {
     auto output = cloyster::utils::getHttpStatus(
-        fmt::format("https://dl.rockylinux.org/pub/rocky/{}/BaseOS/", version));
-    return output == "404";
+        fmt::format("https://dl.rockylinux.org/vault/rocky/{}/BaseOS/x86_64/os/repodata/repomd.xml", lastVersion));
+    return output != "200";
 }
 
 

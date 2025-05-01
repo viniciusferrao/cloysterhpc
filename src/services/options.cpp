@@ -25,6 +25,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
     opt.mirrorBaseUrl = "https://mirror.versatushpc.com.br";
     opt.beegfsVersion = "beegfs_7.3.3";
     opt.zabbixVersion = "6.4";
+    opt.xcatVersion = "latest";
     opt.logLevelInput = 3;
     opt.answerfile = "";
     opt.unattended = false;
@@ -50,6 +51,8 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         ->default_str("https://mirror.versatushpc.com.br");
     app.add_option("--beegfs-version", opt.beegfsVersion, "BeeGFS default version")
         ->default_str("beegfs_7.3.3");
+    app.add_option("--xcat-version", opt.beegfsVersion, "xCAT default version")
+        ->default_str("latest");
     app.add_option("--zabbix-version", opt.zabbixVersion, "Zabbix default version")
         ->default_str("6.4");
     app.add_option("-l,--log-level", opt.logLevelInput, "Set log level (integer between 1 and 6)")

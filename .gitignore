@@ -317,3 +317,5 @@ tags
 .vagrant
 
 .cache/
+
+test/output/repos/*.repo

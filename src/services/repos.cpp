@@ -5,12 +5,16 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <fmt/core.h>
+#include <fstream>
 #include <functional>
+#include <map>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
-#include <map>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -20,10 +24,9 @@
 #include <gsl/gsl-lite.hpp>
 
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/patterns/wrapper.h>
-#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/files.h>
+#include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
@@ -182,7 +185,7 @@ public:
             auto name = file.getString(repogroup, "name");
 
             if (name.empty()) {
-                cloyster::utils::abort( 
+                cloyster::utils::abort(
                     "Could not load repo name from repo '{}'", repogroup);
             }
 
@@ -209,8 +212,7 @@ public:
     }
 
     static void unparse(
-        const std::map<std::string, std::shared_ptr<RPMRepository>>&
-            repos,
+        const std::map<std::string, std::shared_ptr<RPMRepository>>& repos,
         const std::filesystem::path& path)
     {
         auto file = cloyster::services::files::KeyFile(path);
@@ -231,15 +233,16 @@ static_assert(IsParser<RPMRepositoryParser, std::filesystem::path,
 
 // Represents a file inside /etc/yum.repos.d
 class RPMRepositoryFile final {
-    static constexpr auto m_parser = RPMRepositoryParser();
     std::filesystem::path m_path;
+
+    // @FIXME: Double check if this is required to be shared_ptr
     std::map<std::string, std::shared_ptr<RPMRepository>> m_repos;
 
 public:
     explicit RPMRepositoryFile(auto path)
         : m_path(std::move(path))
     {
-        m_parser.parse(m_path, m_repos);
+        RPMRepositoryParser::parse(m_path, m_repos);
     }
 
     RPMRepositoryFile(std::filesystem::path path,
@@ -255,134 +258,235 @@ public:
 
     auto repo(const std::string& name) { return m_repos.at(name); }
 
-    void save()
+    void save() const
     {
         LOG_DEBUG("Saving {}", m_path.string());
-        m_parser.unparse(m_repos, m_path);
+        RPMRepositoryParser::unparse(m_repos, m_path);
     }
 };
 
+TEST_SUITE_BEGIN("repos");
+
+TEST_CASE("RPMRespositoryFile")
+{
+    // @FIXME: Write a test for this, make it clear what m_repos maps to
+    //   Also double check if shared pointer is required
+    // CHECK(false);
+}
+
 // WIP WIP WIP
-struct RepoPaths final {
-    std::string repoPath;
-    std::string gpgPath;
-};
 
 /**
  * @brief Decouples filesystem and network I/O from the MirrorRepoConfig
  *   and UpstreamRepoConfig
  */
 struct DefaultMirrorExistenceChecker final {
-    [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
+    [[nodiscard]] static bool pathExists(const std::filesystem::path& path)
+    {
         return cloyster::exists(path);
     }
 
-    [[nodiscard]] static bool urlExists(const std::string& url) {
+    [[nodiscard]] static bool urlExists(const std::string& url)
+    {
         return cloyster::utils::getHttpStatus(url) == "200";
     }
 };
 
-template <typename MirrorExistenceChecker = DefaultMirrorExistenceChecker>
-struct MirrorRepoConfig final {
+// For testing
+struct FalseMirrorExistenceChecker final {
+    [[nodiscard]] static bool pathExists(const std::filesystem::path& path)
+    {
+        static_cast<void>(path);
+        return false;
+    }
+
+    [[nodiscard]] static bool urlExists(const std::string& url)
+    {
+        static_cast<void>(url);
+        return false;
+    }
+};
+
+// For testing
+struct TrueMirrorExistenceChecker final {
+    [[nodiscard]] static bool pathExists(const std::filesystem::path& path)
+    {
+        static_cast<void>(path);
+        return true;
+    }
+
+    [[nodiscard]] static bool urlExists(const std::string& url)
+    {
+        static_cast<void>(url);
+        return true;
+    }
+};
+
+// Represents repository path/url and gpg path/url
+struct RepoPaths final {
+    std::string repo;
+    std::optional<std::string> gpgkey = std::nullopt;
+};
+
+// Uniquely identify a remote repository
+struct RepoId final {
+    std::string id;
     std::string name;
+    std::string filename;
+};
+
+// Upstream and Mirror configuration for a single repository
+struct RepoConfig final {
+    RepoId repoId;
+    RepoPaths mirror;
+    RepoPaths upstream;
+};
+
+// Represent variables values present in repos.conf to be interpolated during
+// the parsing
+struct RepoConfigVars final {
+    std::string arch; // ex: x86_64
+    std::string beegfsVersion; // beegfs_<version>, ex: beegfs_7.3.3
+    std::string ohpcVersion; // major, ex: 3
+    std::string osversion; // major.minor, ex: 9.5
+    std::string releasever; // major, ex: 9
+    std::string xcatVersion; // major.minor, ex: 2.17 or latest
+    std::string zabbixVersion; // major.minor, ex: 6.4
+};
+
+// Represents a Mirror Repository
+template <typename MirrorExistenceChecker = DefaultMirrorExistenceChecker>
+struct MirrorRepo final {
     RepoPaths paths;
 
-    [[nodiscard]] constexpr std::string baseurl() const {
-        const auto opts = cloyster::Singleton<Options>::get();
-        return fmt::format("{mirrorUrl}/{name}/{path}",
-                           fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
-                           fmt::arg("name", name),
-                           fmt::arg("path", paths.repoPath));
-    };
-
-    [[nodiscard]] constexpr std::string gpgurl() const {
-        const auto opts = cloyster::Singleton<Options>::get();
-        return fmt::format("{mirrorUrl}/{name}/{path}",
-                           fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
-                           fmt::arg("name", name),
-                           fmt::arg("path", paths.gpgPath));
-    };
-
-    [[nodiscard]] constexpr static bool isLocal() {
-        const auto opts = cloyster::Singleton<Options>::get();
-        return opts->mirrorBaseUrl.starts_with("file:///");
-    }
-    
-    [[nodiscard]] constexpr static std::filesystem::path localPath(const std::string& fileurl)
+    [[nodiscard]] std::string baseurl() const
     {
-        assert(isLocal());
-        constexpr auto len = std::string_view("file://").length();
-        return {fileurl.substr(len)};
+        const auto opts = cloyster::Singleton<Options>::get();
+        return fmt::format("{mirrorUrl}/{path}",
+            fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
+            fmt::arg("path", paths.repo));
+    };
+
+    [[nodiscard]] std::optional<std::string> gpgkey() const
+    {
+        if (!paths.gpgkey) {
+            return std::nullopt;
+        }
+
+        const auto opts = cloyster::Singleton<Options>::get();
+        return fmt::format("{mirrorUrl}/{path}",
+            fmt::arg("mirrorUrl", opts->mirrorBaseUrl),
+            fmt::arg("path", paths.gpgkey.value()));
     }
 
-    [[nodiscard]] constexpr std::filesystem::path localRepoPath() const {
-        return localPath(baseurl());
-    };
+    [[nodiscard]] static bool isLocalUrl(const std::string_view url)
+    {
+        return url.starts_with("file://");
+    }
 
-    [[nodiscard]] constexpr std::filesystem::path localGPGPath() const {
-        return localPath(gpgurl());
-    };
+    [[nodiscard]] static std::string localPath(const std::string_view url)
+    {
+        assert(isLocalUrl(url));
+        return std::string(url.substr(std::string_view("file://").length()));
+    }
 
-    [[nodiscard]] bool exists() const {
-        if (isLocal()) {
-            return MirrorExistenceChecker::pathExists(localRepoPath());
+    [[nodiscard]] bool exists() const
+    {
+        const auto opts = cloyster::Singleton<Options>::get();
+        if (isLocalUrl(opts->mirrorBaseUrl)) {
+            return MirrorExistenceChecker::pathExists(localPath(baseurl()));
         } else {
             return MirrorExistenceChecker::urlExists(baseurl());
         }
-    };
-
-    [[nodiscard]] std::optional<std::string> gpgkey() const {
-        if (isLocal() && MirrorExistenceChecker::pathExists(localGPGPath())) {
-            return localGPGPath();
-        } else if (MirrorExistenceChecker::urlExists(gpgurl())) {
-            return gpgurl();
-        } else {
-            LOG_WARN("GPG not found, assuming disabled GPG check {}", (isLocal() ? localGPGPath().string() : gpgurl()));
-            return std::nullopt;
-        }
     }
 };
 
+TEST_CASE("MirrorRepo")
+{
+    // NOLINTNEXTLINE
+    auto opts = Options { .mirrorBaseUrl = "https://mirror.example.com" };
+    cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
+    // Log::init(5);
+
+    auto mirrorConfigOnline = MirrorRepo<TrueMirrorExistenceChecker> { .paths
+        = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    auto mirrorConfigOffline = MirrorRepo<FalseMirrorExistenceChecker> { .paths
+        = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    CHECK(mirrorConfigOnline.baseurl()
+        == "https://mirror.example.com/myrepo/repo");
+    CHECK(mirrorConfigOnline.gpgkey().value()
+        == "https://mirror.example.com/myrepo/key.gpg");
+
+    // Test local paths
+    cloyster::Singleton<Options>::get()->mirrorBaseUrl
+        = "file:///var/run/repos";
+    CHECK(mirrorConfigOnline.baseurl() == "file:///var/run/repos/myrepo/repo");
+    CHECK(mirrorConfigOnline.gpgkey().value()
+        == "file:///var/run/repos/myrepo/key.gpg");
+
+    // Test existence
+    CHECK(mirrorConfigOnline.exists());
+    CHECK(!mirrorConfigOffline.exists());
+}
+
+// Represents an upstream repository
 template <typename MirrorExistenceChecker = DefaultMirrorExistenceChecker>
-struct UpstreamRepoConfig final {
-    std::string urlPrefix;
+struct UpstreamRepo final {
     RepoPaths paths;
 
-    [[nodiscard]] std::string baseurl() const {
-        return fmt::format("{upstreamPrefix}/{path}",
-                           fmt::arg("upstreamPrefix", urlPrefix),
-                           fmt::arg("path", paths.repoPath));
+    [[nodiscard]] std::string baseurl() const { return paths.repo; };
+
+    [[nodiscard]] std::optional<std::string> gpgurl() const
+    {
+        if (!paths.gpgkey) {
+            return std::nullopt;
+        }
+
+        return paths.gpgkey;
     };
 
-    [[nodiscard]] std::string gpgurl() const {
-        return fmt::format("{upstreamPrefix}{path}",
-                           fmt::arg("upstreamPrefix", urlPrefix),
-                           fmt::arg("path", paths.gpgPath));
+    [[nodiscard]] constexpr bool exists() const
+    {
+        if (!paths.gpgkey) {
+            return false;
+        }
+
+        const auto url = gpgurl();
+        if (!url) {
+            return false;
+        }
+        return MirrorExistenceChecker::urlExists(baseurl())
+            && MirrorExistenceChecker::urlExists(url.value());
     };
 
-    [[nodiscard]] constexpr bool exists() const {
-        return MirrorExistenceChecker::urlExists(baseurl()) && MirrorExistenceChecker::urlExists(gpgurl());
-    };
+    [[nodiscard]] constexpr std::optional<std::string> gpgkey() const
+    {
+        if (!paths.gpgkey) {
+            return std::nullopt;
+        }
 
-    [[nodiscard]] constexpr std::optional<std::string> gpgkey() const {
-        if (utils::getHttpStatus(gpgurl()) == "200") {
+        const auto url = gpgurl();
+        if (!url) {
+            return std::nullopt;
+        }
+
+        if (MirrorExistenceChecker::urlExists(url.value())) {
             return gpgurl();
         } else {
-            LOG_WARN("GPG not found, assuming disabled GPG check {}",  gpgurl());
+            LOG_WARN(
+                "GPG not found, assuming disabled GPG check {}", url.value());
             return std::nullopt;
         }
     }
 };
 
+// Chose between upstream or mirror repository
 struct RepoChooser final {
-    enum class Choice : bool {
-        UPSTREAM, MIRROR
-    };
+    enum class Choice : bool { UPSTREAM, MIRROR };
 
     template <typename MirrorChecker, typename UpstreamChecker>
-    static constexpr Choice choose(
-        const MirrorRepoConfig<MirrorChecker>& mirror,
-        const UpstreamRepoConfig<UpstreamChecker>& upstream,
+    static constexpr Choice choose(const MirrorRepo<MirrorChecker>& mirror,
+        const UpstreamRepo<UpstreamChecker>& upstream,
         const bool forceUpstream = false)
     {
         if (forceUpstream) {
@@ -395,10 +499,12 @@ struct RepoChooser final {
         }
 
         if (!mirror.exists()) {
-            LOG_WARN("Mirror does not exists falling back to upstream {}", upstream.baseurl());
+            LOG_WARN("Mirror does not exists falling back to upstream {}",
+                upstream.baseurl());
 
             if (!upstream.exists()) {
-                LOG_WARN("Upstream URL error, is the URL correct? {}", upstream.baseurl());
+                LOG_WARN("Upstream URL error, is the URL correct? {}",
+                    upstream.baseurl());
             }
             return Choice::UPSTREAM;
         }
@@ -407,63 +513,307 @@ struct RepoChooser final {
     }
 };
 
-TEST_CASE("RepoChooser") {
-    struct FalseMirrorExistenceChecker final {
-        [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
-            static_cast<void>(path);
-            return false;
-        }
-
-        [[nodiscard]] static bool urlExists(const std::string& url) {
-            static_cast<void>(url);
-            return false;
-        }
-    };
-
-    struct TrueMirrorExistenceChecker final {
-        [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
-            static_cast<void>(path);
-            return true;
-        }
-
-        [[nodiscard]] static bool urlExists(const std::string& url) {
-            static_cast<void>(url);
-            return true;
-        }
-    };
-
+TEST_CASE("RepoChooser")
+{
     // NOLINTNEXTLINE
-    auto opts = Options{.mirrorBaseUrl="https://mirror.example.com"};
-    auto mirrorConfig = MirrorRepoConfig<FalseMirrorExistenceChecker> {
-            .name = "myrepo",
-            .paths = { .repoPath = "/repo", .gpgPath = "key.gpg" }
-    };
-    auto upstreamConfig = UpstreamRepoConfig<TrueMirrorExistenceChecker> { 
-        .urlPrefix="https://upstream.example.com",
-        .paths = { .repoPath = "/upstream/repo", .gpgPath = "/key.gpg" }
-    };
-
+    auto opts = Options { .mirrorBaseUrl = "https://mirror.example.com" };
     cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
-    CHECK(RepoChooser::choose(mirrorConfig, upstreamConfig) == RepoChooser::Choice::UPSTREAM);
+    // Log::init(5);
+
+    auto mirrorConfigOnline
+        = MirrorRepo<TrueMirrorExistenceChecker> { .paths
+              = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    auto mirrorConfigOffline
+        = MirrorRepo<FalseMirrorExistenceChecker> { .paths
+              = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    auto upstreamConfig = UpstreamRepo<TrueMirrorExistenceChecker> { .paths
+        = { .repo = "https://upstream.example.com/upstream/repo",
+            .gpgkey = "https://upstream.example.com/upstream/key.gpg" } };
+
+    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    auto choice1 = RepoChooser::choose(mirrorConfigOnline, upstreamConfig);
+    CHECK(choice1 == RepoChooser::Choice::MIRROR);
+    auto choice2
+        = RepoChooser::choose(mirrorConfigOffline, upstreamConfig);
+    CHECK(choice2 == RepoChooser::Choice::UPSTREAM);
 }
 
-struct RepoAbsoluteUrls {
-    std::string repoUrl;
-    std::string gpgUrl;
+// Converts RepoConfig to RPMRepository do HTTP requests to decide
+// between upstream or mirror
+struct RepoAssembler final {
+    template <typename MChecker, typename UChecker>
+    static constexpr RPMRepository assemble(const RepoId& repoid,
+        const MirrorRepo<MChecker>& mirror,
+        const UpstreamRepo<UChecker>& upstream, const bool enabled = false,
+        const bool forceUpstream = false)
+    {
+        auto repo = RPMRepository {};
+        repo.group(static_cast<std::string>(repoid.id));
+        repo.id(static_cast<std::string>(repoid.id));
+        repo.name(static_cast<std::string>(repoid.name));
+        repo.source(repoid.filename);
+        repo.enabled(enabled);
+
+        const auto choice
+            = RepoChooser::choose(mirror, upstream, forceUpstream);
+        switch (choice) {
+            case RepoChooser::Choice::UPSTREAM:
+                repo.baseurl(upstream.baseurl());
+                repo.gpgkey(upstream.gpgkey());
+                repo.gpgcheck(upstream.gpgkey().has_value());
+                break;
+            case RepoChooser::Choice::MIRROR:
+                repo.baseurl(mirror.baseurl());
+                repo.gpgkey(mirror.gpgkey());
+                repo.gpgcheck(mirror.gpgkey().has_value());
+                break;
+        }
+
+        return repo;
+    }
 };
 
-// WIP WIP WIP
+TEST_CASE("RepoAssembler")
+{
+    // NOLINTNEXTLINE
+    auto opts = Options { .mirrorBaseUrl = "https://mirror.example.com" };
+    cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
+    // Log::init(5);
 
+    auto mirrorConfigOffline
+        = MirrorRepo<FalseMirrorExistenceChecker> { .paths
+              = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    auto mirrorConfigOnline
+        = MirrorRepo<TrueMirrorExistenceChecker> { .paths
+              = { .repo = "myrepo/repo", .gpgkey = "myrepo/key.gpg" } };
+    auto upstreamConfig = UpstreamRepo<TrueMirrorExistenceChecker> { .paths
+        = { .repo = "https://upstream.example.com/upstream/repo",
+            .gpgkey = "https://upstream.example.com/upstream/key.gpg" } };
+
+    // If mirror is offline it should fallback to upstream
+    CHECK(RepoChooser::choose(mirrorConfigOffline, upstreamConfig)
+        == RepoChooser::Choice::UPSTREAM);
+    // If mirror is online it should chose the mirror
+    CHECK(RepoChooser::choose(mirrorConfigOnline, upstreamConfig)
+        == RepoChooser::Choice::MIRROR);
+
+    // Disable mirrors
+    cloyster::Singleton<Options>::get()->disableMirrors = true;
+
+    // If mirrors are disabled it should choose the upstream even if the
+    // mirror is online
+    CHECK(RepoChooser::choose(mirrorConfigOnline, upstreamConfig)
+        == RepoChooser::Choice::UPSTREAM);
+
+    auto repoId = RepoId {
+        .id = "myrepo",
+        .name = "My very cool repository full of packages",
+        .filename = "myrepo.repo",
+    };
+
+    auto repoUpstream = RepoAssembler::assemble(
+        repoId, mirrorConfigOffline, upstreamConfig);
+    CHECK(repoUpstream.baseurl().value() == upstreamConfig.baseurl());
+
+    // Enable mirrors again
+    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    auto repoMirror = RepoAssembler::assemble(
+        repoId, mirrorConfigOnline, upstreamConfig);
+    // CHECK(repoMirror.baseurl().value() == mirrorConfigOnline.baseurl());
+}
+
+// In-memory representation of repos.conf
+class RepoConfFile final {
+    // RepoConfigs grouped by file name
+    std::map<std::string, std::vector<RepoConfig>> m_files;
+
+public:
+    void insert(const std::string& filename, RepoConfig& value)
+    {
+        if (!m_files.contains(filename)) {
+            m_files.emplace(filename, std::vector<RepoConfig> {});
+        }
+        m_files.at(filename).push_back(value);
+    }
+
+    [[nodiscard]] const auto& at(const std::string& key) const
+    {
+        return m_files.at(key);
+    }
+
+    // RepoConfigs grouped by file name
+    [[nodiscard]] const auto& files() const { return m_files; }
+    //
+    // RepoConfigs grouped by file name
+    [[nodiscard]] std::vector<std::string> filesnames() const
+    {
+        return m_files
+            | std::views::transform([](const auto& pair) { return pair.first; })
+            | std::ranges::to<std::vector>();
+    }
+
+    // Find a RepoConfig by repository id, if it exists
+    [[nodiscard]] std::optional<RepoConfig> find(const auto& repoid) const
+    {
+        for (const auto& [_, configs] : m_files) {
+            for (const auto& config : configs) {
+                if (config.repoId.id == repoid) {
+                    return config;
+                }
+            }
+        };
+
+        return std::nullopt;
+    }
+};
+
+// Parser for repos.conf
+struct RepoConfigParser final {
+    static std::string interpolateVars(const auto& fmt, const auto& vars)
+    {
+        return fmt::format(fmt::runtime(fmt),
+            fmt::arg("releasever", vars.releasever),
+            fmt::arg("osversion", vars.osversion), fmt::arg("arch", vars.arch),
+            fmt::arg("beegfsVersion", vars.beegfsVersion),
+            fmt::arg("zabbixVersion", vars.zabbixVersion),
+            fmt::arg("xcatVersion", vars.xcatVersion),
+            fmt::arg("ohpcVersion", vars.ohpcVersion));
+    };
+
+    static void parse(const std::filesystem::path& path, RepoConfFile& output,
+        const RepoConfigVars& vars)
+    {
+        auto file = KeyFile(path);
+        auto repoNames = file.getGroups();
+
+        for (const auto& repoGroup : repoNames) {
+            RepoConfig repo;
+
+            // repoId.id (no placeholders)
+            repo.repoId.id = repoGroup;
+
+            // name
+            auto name = file.getString(repoGroup, "name");
+            if (name.empty()) {
+                cloyster::utils::abort(
+                    "Could not load name from repo '{}'", repoGroup);
+            }
+            try {
+                repo.repoId.name = interpolateVars(name, vars);
+            } catch (const fmt::format_error& e) {
+                cloyster::utils::abort(
+                    "Failed to format name for repo '{}': {}", repoGroup,
+                    e.what());
+            }
+
+            // filename (no placeholders)
+            repo.repoId.filename = file.getString(repoGroup, "filename");
+            if (repo.repoId.filename.empty()) {
+                cloyster::utils::abort(
+                    "Could not load filename from repo '{}'", repoGroup);
+            }
+
+            // mirror.repo
+            auto mirrorRepo = file.getString(repoGroup, "mirror.repo");
+            try {
+                repo.mirror.repo = interpolateVars(mirrorRepo, vars);
+            } catch (const fmt::format_error& e) {
+                cloyster::utils::abort(
+                    "Failed to format mirror.repo for repo '{}': {}", repoGroup,
+                    e.what());
+            }
+
+            // mirror.gpgkey (optional)
+            auto mirrorGpgkey = file.getStringOpt(repoGroup, "mirror.gpgkey");
+            if (mirrorGpgkey) {
+                try {
+                    repo.mirror.gpgkey
+                        = interpolateVars(mirrorGpgkey.value(), vars);
+                } catch (const fmt::format_error& e) {
+                    cloyster::utils::abort(
+                        "Failed to format mirror.gpgkey for repo '{}': {}",
+                        repoGroup, e.what());
+                }
+            } else {
+                repo.mirror.gpgkey = std::nullopt;
+            }
+
+            // upstream.repo
+            auto upstreamRepo = file.getString(repoGroup, "upstream.repo");
+            if (upstreamRepo.empty()) {
+                cloyster::utils::abort(
+                    "Could not load upstream.repo from repo '{}'", repoGroup);
+            }
+            try {
+                repo.upstream.repo = interpolateVars(upstreamRepo, vars);
+            } catch (const fmt::format_error& e) {
+                cloyster::utils::abort(
+                    "Failed to format upstream.repo for repo '{}': {}",
+                    repoGroup, e.what());
+            }
+
+            // upstream.gpgkey (optional)
+            auto upstreamGpgkey
+                = file.getStringOpt(repoGroup, "upstream.gpgkey");
+            if (upstreamGpgkey) {
+                try {
+                    repo.upstream.gpgkey
+                        = interpolateVars(upstreamGpgkey.value(), vars);
+                } catch (const fmt::format_error& e) {
+                    cloyster::utils::abort(
+                        "Failed to format upstream.gpgkey for repo '{}': {}",
+                        repoGroup, e.what());
+                }
+            } else {
+                repo.upstream.gpgkey = std::nullopt;
+            }
+
+            LOG_INFO("Loaded config {}", repo.repoId.id);
+            output.insert(repo.repoId.filename, repo);
+        }
+    };
+
+    static RepoConfFile parse(const auto& path,
+        const RepoConfigVars& vars = RepoConfigVars {
+            .arch = "x86_64",
+            .beegfsVersion = "beegfs_7.3.3",
+            .ohpcVersion = "3",
+            .osversion = "9.4",
+            .releasever = "9",
+            .xcatVersion = "latest",
+            .zabbixVersion = "6.4",
+        })
+    {
+        RepoConfFile conffile;
+        parse(path, conffile, vars);
+        return conffile;
+    };
+};
+
+TEST_CASE("RepoConfigParser")
+{
+    REQUIRE(cloyster::exists("repos/repos.conf"));
+    auto conffile = RepoConfigParser::parse("repos/repos.conf");
+    CHECK(conffile.files().size() > 0);
+    CHECK(conffile.files().contains("epel.repo"));
+
+    const auto epelOpt = conffile.find("epel");
+    CHECK(epelOpt.has_value() == true);
+    const auto& epel = epelOpt.value();
+    CHECK(epel.mirror.repo == "epel/9/Everything/x86_64/");
+    CHECK(epel.upstream.repo
+        == "https://download.fedoraproject.org/pub/epel/9/Everything/"
+           "x86_64/");
+}
 
 // Installs and enable/disable RPM repositories
 class RPMRepoManager final {
     static constexpr auto m_parser = RPMRepositoryParser();
     // Maps repo id to files
-    std::map<std::string, std::shared_ptr<RPMRepositoryFile>>
-        m_filesIdx;
+    std::map<std::string, std::shared_ptr<RPMRepositoryFile>> m_filesIdx;
 
 public:
-    static constexpr auto basedir = "/etc/yum.repos.d/";
+    static constexpr std::string_view basedir = "/etc/yum.repos.d/";
 
     // Installs a single .repo file
     void install(const std::filesystem::path& source)
@@ -538,15 +888,20 @@ public:
         }
     }
 
-    static std::vector<std::unique_ptr<const IRepository>> repoFile(const std::string& repoFileName)
+    static std::vector<std::unique_ptr<const IRepository>> repoFile(
+        const std::string& repoFileName)
     {
         try {
             auto path = fmt::format("{}/{}", basedir, repoFileName);
-            auto repos = RPMRepositoryFile(path).repos() 
+            auto repos = RPMRepositoryFile(path).repos()
                 // We copy to cons unique to express that these values cannot
                 // be changed through this API
-                | std::views::transform([](auto&& pair) { return std::make_unique<const RPMRepository>(*pair.second); })
-                | std::ranges::to<std::vector<std::unique_ptr<const IRepository>>>();
+                | std::views::transform([](auto&& pair) {
+                      return std::make_unique<const RPMRepository>(
+                          *pair.second);
+                  })
+                | std::ranges::to<
+                    std::vector<std::unique_ptr<const IRepository>>>();
             return repos;
         } catch (const std::out_of_range& e) {
             throw std::runtime_error(
@@ -613,21 +968,328 @@ public:
             return std::make_unique<const RPMRepository>(repo);
         }) | std::ranges::to<std::vector<std::unique_ptr<const IRepository>>>();
     }
+};
 
-
-    void addDefaultRPMRepository(
-        // NOLINTNEXTLINE
-        const std::string& repoId,
-        const MirrorRepoConfig<>& mirrorConfig,
-        const UpstreamRepoConfig<>& upstreamConfig,
-        const std::filesystem::path& sourceFile,
-        const bool forceUpstream
-    )
+// Adpater for simplifying the conversion from RepoConfig
+// to RPMRepository and RPMRepositoryFiles, may do HTTP requests
+//
+template <typename MChecker = DefaultMirrorExistenceChecker,
+    typename UChecker = DefaultMirrorExistenceChecker>
+struct RepoConfAdapter final {
+    static RPMRepository fromConfig(const RepoConfig& config)
     {
-        // WIP WIP WIP
+        const RepoId& repoid = config.repoId;
+        const MirrorRepo<MChecker> mirror {
+            .paths = config.mirror,
+        };
+        const UpstreamRepo<UChecker> upstream {
+            .paths = config.upstream,
+        };
+        return RepoAssembler::assemble<MChecker, UChecker>(
+            repoid, mirror, upstream);
+    };
+
+    static RPMRepositoryFile fromConfigs(const std::string& filename,
+        const std::vector<RepoConfig>& configs,
+        const std::filesystem::path& basedir = RPMRepoManager::basedir)
+    {
+        const auto path = basedir / filename;
+        std::map<std::string, std::shared_ptr<RPMRepository>> repos;
+        for (const auto& config : configs) {
+            repos.emplace(config.repoId.id,
+                std::make_shared<RPMRepository>(fromConfig(config)));
+        };
+        return { path, repos };
+    }
+
+    // Convert RepoConfFile to a list of RPMRepository files using
+    // the repoList
+    static std::vector<RPMRepositoryFile> fromConfFile(
+        const RepoConfFile& conffile, const std::vector<std::string>& repoList,
+        const std::filesystem::path& basedir = RPMRepoManager::basedir)
+    {
+        std::vector<RPMRepositoryFile> output;
+        for (const auto& [filename, configs] : conffile.files()) {
+            if (!cloyster::utils::isIn(repoList, filename)) {
+                continue;
+            }
+
+            auto&& repofile = fromConfigs(filename, configs, basedir);
+            output.push_back(std::move(repofile));
+        }
+        return output;
     }
 };
 
+TEST_CASE("RepoAdapter")
+{
+    Options opts {};
+    cloyster::services::initializeSingletonsOptions(
+        std::make_unique<Options>(opts));
+    // Log::init(5);
+
+    const auto conffile = RepoConfigParser::parse("repos/repos.conf");
+    const auto repofiles = RepoConfAdapter<TrueMirrorExistenceChecker,
+        TrueMirrorExistenceChecker>::fromConfFile(conffile,
+        conffile.filesnames());
+    CHECK(repofiles.size() == conffile.files().size());
+};
+
+// Filter repositories based on the distribution and non-distro repos
+class RepoFilter final {
+    std::vector<std::string> m_allRepoFilesNames;
+    OS::Distro m_distro;
+
+public:
+    static constexpr auto distroFilesNames = {
+        "rhel.repo",
+        "rocky.repo",
+        "rocky-vault.repo",
+        "oracle.repo",
+        "almalinux.repo",
+    };
+
+    RepoFilter(const RepoConfFile& conffile, OS::Distro distro)
+        : m_allRepoFilesNames(conffile.filesnames())
+        , m_distro(distro)
+    {
+    }
+
+    [[nodiscard]] std::vector<std::string> distroRepos() const
+    {
+        switch (m_distro) {
+            case OS::Distro::OL:
+                return filterOracleLinux();
+            case OS::Distro::RHEL:
+                return filterRHEL();
+            case OS::Distro::AlmaLinux:
+                return filterAlmaLinux();
+            case OS::Distro::Rocky:
+                return filterRockyLinux();
+        };
+
+        std::unreachable();
+    }
+
+    [[nodiscard]] std::vector<std::string> nonDistroRepos() const
+    {
+        return m_allRepoFilesNames
+            | std::views::filter([&](const auto& filename) {
+                  return !cloyster::utils::isIn(distroFilesNames, filename);
+              })
+            | std::ranges::to<std::vector>();
+    }
+
+    [[nodiscard]] std::vector<std::string> filterOracleLinux() const
+    {
+        return filterByFilename("oracle.repo");
+    };
+
+    [[nodiscard]] std::vector<std::string> filterRHEL() const
+    {
+        return filterByFilename("rhel.repo");
+    };
+
+    [[nodiscard]] std::vector<std::string> filterAlmaLinux() const
+    {
+        return filterByFilename("almalinux.repo");
+    };
+
+    [[nodiscard]] std::vector<std::string> filterRockyLinux() const
+    {
+        // We return both vault and non-vault, the decision to which
+        // one to enable done later. This way it is easier to enable
+        // the vault when the time arrives
+        return m_allRepoFilesNames
+            | std::views::filter([&](const std::string& filenameInConf) {
+                  return filenameInConf == "rocky.repo"
+                      || filenameInConf == "rocky-vault.repo";
+              })
+            | std::ranges::to<std::vector>();
+    };
+
+    [[nodiscard]] std::vector<std::string> filterByFilename(
+        const std::string_view& filename) const
+    {
+        return m_allRepoFilesNames
+            | std::views::filter([&](const std::string& filenameInConf) {
+                  return filenameInConf == filename;
+              })
+            | std::ranges::to<std::vector>();
+    };
+};
+
+TEST_CASE("RepoFilter")
+{
+    // Log::init(5);
+    struct TrueVaultPicker final {
+        static auto shouldUseVault(const std::string& /*unused*/)
+        {
+            return true;
+        }
+    };
+    const auto conffile = RepoConfigParser::parse("repos/repos.conf");
+    const auto filter = RepoFilter(conffile, OS::Distro::Rocky);
+    const auto rockyRepoFiles = filter.distroRepos();
+    const auto nonDistroRepoFiles = filter.nonDistroRepos();
+    CHECK(rockyRepoFiles.size() == 2);
+    CHECK(rockyRepoFiles[0] == "rocky-vault.repo");
+    CHECK(rockyRepoFiles[1] == "rocky.repo");
+    for (const auto& nonDistroRepoFilename : nonDistroRepoFiles) {
+        CHECK(!cloyster::utils::isIn(
+            filter.distroFilesNames, nonDistroRepoFilename));
+    }
+}
+
+// Generate the repositories in the disk, all repositories are generated
+// disabled by default, the decision on what to enable is delegated
+// to upper layers
+template <typename MChecker = DefaultMirrorExistenceChecker,
+    typename UChecker = DefaultMirrorExistenceChecker>
+struct RepoGenerator final {
+    static std::size_t generate(const RepoConfFile& conffile,
+        const OS::Distro& distro, const std::filesystem::path& path)
+    {
+        const auto existingRepoFiles
+            = cloyster::utils::getFilesByExtension(path, ".repo");
+        const auto filter = RepoFilter(conffile, distro);
+        std::vector<std::string> reposToGenerate;
+        for (const auto& repo : filter.distroRepos()) {
+            if (!cloyster::utils::isIn(existingRepoFiles, repo)) {
+                reposToGenerate.push_back(repo);
+            }
+        }
+        for (const auto& repo : filter.nonDistroRepos()) {
+            if (!cloyster::utils::isIn(existingRepoFiles, repo)) {
+                reposToGenerate.push_back(repo);
+            }
+        }
+        const std::vector<RPMRepositoryFile> repofiles
+            = RepoConfAdapter<MChecker, UChecker>::fromConfFile(
+                conffile, reposToGenerate, path);
+        for (const auto& repofile : repofiles) {
+            repofile.save();
+        }
+
+        return repofiles.size();
+    }
+
+    static std::size_t generate(
+        const OS::Distro& distro,
+        const RepoConfigVars& vars)
+    {
+        const auto conffile = RepoConfigParser::parse(
+            "/opt/cloysterhpc/conf/repos.conf", vars);
+        return generate(conffile, distro, RPMRepoManager::basedir);
+    }
+};
+
+TEST_CASE("RepoGenerator")
+{
+    auto opts = Options{
+        .disableMirrors = false,
+        .mirrorBaseUrl = "https://mirror.example.com",
+    };
+    cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
+    const auto upstreamPath = "test/output/repos/upstream";
+    const auto mirrorPath = "test/output/repos/mirror";
+    const auto airgapPath = "test/output/repos/airgap";
+    const auto conffile = RepoConfigParser::parse("repos/repos.conf");
+
+    // Clean up before start
+    for (const auto& path : {upstreamPath, mirrorPath, airgapPath}) {
+        cloyster::utils::removeFilesWithExtension(path, ".repo");
+    }
+
+    const auto generator = RepoGenerator<
+        FalseMirrorExistenceChecker, // mirror
+        TrueMirrorExistenceChecker  // upstream
+    >();
+    const auto generatedCount1
+        = generator.generate(conffile, OS::Distro::Rocky, upstreamPath);
+    CHECK(generatedCount1 == 15);
+
+    const auto generatedCount2
+        = generator.generate(conffile, OS::Distro::Rocky, upstreamPath);
+    // It does not re-generate the files in the second run
+    CHECK(generatedCount2 == 0);
+
+    // Generate the other files so we can look at them
+    const auto generatorMirror = RepoGenerator<
+        TrueMirrorExistenceChecker, // mirror
+        TrueMirrorExistenceChecker  // upstream
+    >();
+    generatorMirror.generate(conffile, OS::Distro::Rocky, mirrorPath);
+    cloyster::Singleton<Options>::get()->mirrorBaseUrl = "file:///var/run/repos";
+    generatorMirror.generate(conffile, OS::Distro::Rocky, airgapPath);
+};
+
+TEST_SUITE_END();
+
+TEST_SUITE("repos urls")
+{
+    // RH CDN requires a certificate that only exists in RHEL machines
+    // because of this the repostiories gives 403 and SSL errors. I'm skipping
+    // them for now.
+    constexpr auto blacklistedFiles = {
+        "rhel.repo",
+    };
+
+    constexpr auto blacklistedMirrorFiles = {
+        "almalinux.repo",
+        "nvidia.repo",
+        "influxdata.repo",
+        "mlx-doca.repo",
+    };
+
+    TEST_CASE("[slow] repo.conf urls")
+    {
+        using namespace cloyster::services;
+        Options opts {};
+        cloyster::services::initializeSingletonsOptions(
+            std::make_unique<Options>(opts));
+        // Log::init(5);
+        RepoConfFile output =  RepoConfigParser::parse("repos/repos.conf");
+        for (const auto& [repofile, configs] : output.files()) {
+            for (const auto& config : configs) {
+                if (cloyster::utils::isIn(
+                        blacklistedFiles, config.repoId.filename)) {
+
+                    continue;
+                }
+
+                LOG_INFO("Checking {}", config.repoId.id);
+
+                REQUIRE(cloyster::utils::getHttpStatus(
+                            config.upstream.repo + "repodata/repomd.xml")
+                    == "200");
+
+                if (config.upstream.gpgkey) {
+                    REQUIRE(cloyster::utils::getHttpStatus(
+                                config.upstream.gpgkey.value())
+                        == "200");
+                }
+
+                if (cloyster::utils::isIn(
+                        blacklistedMirrorFiles, config.repoId.filename)) {
+                    continue;
+                }
+
+                REQUIRE(cloyster::utils::getHttpStatus(
+                            "https://mirror.versatushpc.com.br/"
+                            + config.mirror.repo + "repodata/repomd.xml")
+                    == "200");
+
+                if (config.mirror.gpgkey) {
+                    REQUIRE(cloyster::utils::getHttpStatus(
+                                "https://mirror.versatushpc.com.br/"
+                                + config.mirror.gpgkey.value())
+                        == "200");
+                }
+            }
+        }
+    }
+}
 }; // namespace cloyster::services::repos {
 
 namespace cloyster::services::repos {
@@ -653,486 +1315,6 @@ inline void RPMRepository::valid() const
     LOG_ASSERT(isValid, "Invalid RPM Repository");
 }
 
-struct ELConfig {
-    static inline const std::filesystem::path baseDir = "/etc/yum.repos.d/";
-
-    // @FIXME: This was AI generated but it is not good at all:
-    //   - It will do a lot of HTTP requests in vain if the repositories already
-    //     exists and fixing requried a lot of refactoring because the code is huge
-    //  - The other modules cannot benefit from it, xCAT and OFED (possibly others)
-    //    need to add their own repositories, ideally not dealing with mirror and
-    //    upstream urls by themselves
-    static std::vector<RPMRepositoryFile> getRepositories()
-    {
-        const auto& osinfo = cloyster::Singleton<models::Cluster>::get()
-            ->getHeadnode()
-            .getOS();
-        std::string releasever
-            = std::to_string(osinfo.getMajorVersion()); // e.g., "8"
-        std::string arch = cloyster::utils::enums::toString(
-            osinfo.getArch()); // e.g., "x86_64"
-        const auto opts
-            = cloyster::Singleton<cloyster::services::Options>::get();
-        auto distro = osinfo.getDistro(); // Adjust based on your actual API
-
-        std::vector<RPMRepositoryFile> repoFiles;
-
-        auto addRepo = [](std::map<std::string,
-                          std::shared_ptr<RPMRepository>>& repoMap,
-                          // NOLINTNEXTLINE
-                          const std::string& id, const std::string& name,
-                          const std::string& baseurl, bool enabled,
-                          const std::string& gpgkey) {
-                auto repo = std::make_shared<RPMRepository>();
-                repo->group(id);
-                repo->id(id);
-                repo->name(name);
-                repo->baseurl(baseurl);
-                repo->enabled(enabled);
-                repo->gpgcheck(!gpgkey.empty());
-                repo->gpgkey(gpgkey);
-                repoMap.emplace(id, repo);
-            };
-
-        auto addRepoFile = [&repoFiles, &opts](const auto& path, auto&& repos) {
-            if (opts->shouldForce("generate-repos") || !cloyster::exists(path)) {
-                LOG_INFO("Generating {}", path.string());
-                cloyster::removeFile(path.string());
-                repoFiles.emplace_back(path, repos);
-            } else {
-                LOG_WARN("Skipping the  {}, file exists, use --force=generate-repos to force", path.string());
-            }
-        };
-
-        // rhel.repo (Added for RHEL)
-        if (distro == OS::Distro::RHEL) {
-            std::map<std::string, std::shared_ptr<RPMRepository>> rhelRepos;
-            // Add RHEL CodeReady Linux Builder
-            // Upstream URL: https://cdn.redhat.com/content/dist/rhel8/x86_64/codeready-builder/os/
-            addRepo(rhelRepos, "rhel-" + releasever + "-codeready-builder",
-                    "Red Hat Enterprise Linux " + releasever + " - CodeReady Builder (" + arch + ")",
-                    EnterpriseLinux::repositoryURL("RHELCodeReady",
-                                  "rhel/" + releasever + "/" + arch + "/codeready-builder/os/",
-                                  "https://cdn.redhat.com/content/dist/rhel/" + releasever + "/" + arch + "/codeready-builder/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("RHELCodeReady", "RPM-GPG-KEY-redhat-release",
-                                  "https://www.redhat.com/security/data/fd431d51.txt"));
-
-            // Upstream URL: https://cdn.redhat.com/content/dist/rhel8/x86_64/baseos/os/
-            addRepo(rhelRepos, "rhel-" + releasever + "-baseos",
-                    "Red Hat Enterprise Linux " + releasever + " - BaseOS (" + arch + ")",
-                    EnterpriseLinux::repositoryURL("RHELBaseOS",
-                                  "rhel/" + releasever + "/" + arch + "/baseos/os/",
-                                  "https://cdn.redhat.com/content/dist/rhel/" + releasever + "/" + arch + "/baseos/os/"),
-                    true,
-                    EnterpriseLinux::repositoryURL("RHELBaseOS", "RPM-GPG-KEY-redhat-release",
-                                  "https://www.redhat.com/security/data/fd431d51.txt"));
-
-            addRepoFile(baseDir / "rhel.repo", std::move(rhelRepos));
-        }
-
-        // oracle.repo
-        if (distro == OS::Distro::OL) {
-            std::map<std::string, std::shared_ptr<RPMRepository>> oracleRepos;
-            // Add Oracle Linux CodeReady Builder
-            // Upstream URL: https://yum.oracle.com/repo/OracleLinux/OL8/codeready/builder/x86_64/
-            addRepo(oracleRepos, "ol" + releasever + "_codeready_builder",
-                    "Oracle Linux " + releasever + " CodeReady Builder (" + arch + ")",
-                    EnterpriseLinux::repositoryURL("OLCodeReady",
-                                  "repo/OracleLinux/OL" + releasever + "/codeready/builder/" + arch + "/",
-                                  "https://yum.oracle.com/repo/OracleLinux/OL" + releasever
-                                  + "/codeready/builder/" + arch),
-                    false,
-                    EnterpriseLinux::repositoryURL("OLCodeReady", "RPM-GPG-KEY-oracle-ol" + releasever,
-                                  "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol" + releasever));
-
-            // Upstream URL: https://yum.$ociregion.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64/
-            addRepo(oracleRepos, "OLBaseOS",
-                    "Oracle Linux " + releasever + " BaseOS Latest (" + arch + ")",
-                    EnterpriseLinux::repositoryURL("OLBaseOS",
-                                  "repo/OracleLinux/OL" + releasever + "/baseos/latest/" + arch + "/",
-                                  "https://yum.$ociregion.oracle.com/repo/OracleLinux/OL"
-                                  + releasever + "/baseos/latest/" + arch + "/"),
-                    true,
-                    EnterpriseLinux::repositoryURL("OLBaseOS", "RPM-GPG-KEY-oracle-ol" + releasever,
-                                  "https://yum.oracle.com/RPM-GPG-KEY-oracle-ol" + releasever));
-
-            addRepoFile(baseDir / "oracle.repo", std::move(oracleRepos));
-        }
-
-        // rocky.repo
-        if (distro == OS::Distro::Rocky) {
-            std::map<std::string, std::shared_ptr<RPMRepository>> rockyRepos;
-
-            bool useVault = services::RockyLinux::shouldUseVault(osinfo.getVersion());
-
-            const std::string& upstreamBaseUrl = (useVault || opts->shouldForce("use-vault"))
-                ? "https://dl.rockylinux.org/vault/rocky/" 
-                : "https://dl.rockylinux.org/pub/rocky/";
-
-            // Add Rocky Linux CRB/PowerTools based on version
-            std::string crbId = (releasever == "8") ? "powertools" : "crb";
-            std::string crbName = (releasever == "8") ? "PowerTools" : "CRB";
-
-            // Rocky BaseOS repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/BaseOS/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/BaseOS/x86_64/os/
-            addRepo(rockyRepos, "RockyBaseOS",
-                    "Rocky Linux $releasever - BaseOS",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/BaseOS/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/BaseOS/" + arch + "/os/"),
-                    true,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky AppStream repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/AppStream/x86_64/os/
-            addRepo(rockyRepos, "RockyAppStream",
-                    "Rocky Linux $releasever - AppStream",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/AppStream/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/AppStream/" + arch + "/os/"),
-                    true,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-            // Rocky Extras repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/extras/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/extras/x86_64/os/
-            addRepo(rockyRepos, "RockyExtras",
-                    "Rocky Linux $releasever - Extras",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/extras/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/extras/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky Devel repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/devel/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/devel/x86_64/os/
-            addRepo(rockyRepos, "RockyDevel",
-                    "Rocky Linux $releasever - Devel",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/devel/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/devel/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky Devel repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/devel/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/devel/x86_64/os/
-            addRepo(rockyRepos, "RockyDevel",
-                    "Rocky Linux $releasever - Devel",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/devel/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/devel/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-
-            // Rocky HighAvailability repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/HighAvailability/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/HighAvailability/x86_64/os/
-            addRepo(rockyRepos, "RockyHighAvailability",
-                    "Rocky Linux $releasever - HighAvailability",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/HighAvailability/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/HighAvailability/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky ResilientStorage repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/ResilientStorage/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/ResilientStorage/x86_64/os/
-            addRepo(rockyRepos, "RockyResilientStorage",
-                    "Rocky Linux $releasever - ResilientStorage",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/ResilientStorage/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/ResilientStorage/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky NFV repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/NFV/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/NFV/x86_64/os/
-            addRepo(rockyRepos, "RockyNFV",
-                    "Rocky Linux $releasever - NFV",
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/NFV/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/NFV/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Rocky CRB/PowerTools repo
-            // Upstream URL: https://dl.rockylinux.org/pub/rocky/8/PowerTools/x86_64/os/
-            // or https://dl.rockylinux.org/vault/rocky/8/PowerTools/x86_64/os/
-            addRepo(rockyRepos, crbId,
-                    "Rocky Linux $releasever - " + crbName,
-                    EnterpriseLinux::repositoryURL("rocky",
-                                  (useVault ? "vault/" : "linux/") + releasever + "/" + crbName + "/" + arch + "/os/",
-                                  upstreamBaseUrl + releasever + "/" + crbName + "/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rocky", "linux/RPM-GPG-KEY-Rocky-" + releasever,
-                                  upstreamBaseUrl + "RPM-GPG-KEY-Rocky-" + releasever));
-
-            // Write the repo file
-            addRepoFile(baseDir / "rocky.repo", std::move(rockyRepos));
-        }
-
-        // almalinux.repo
-        if (distro == OS::Distro::AlmaLinux) {
-            std::map<std::string, std::shared_ptr<RPMRepository>> almaRepos;
-            // Add AlmaLinux CRB/PowerTools based on version
-            std::string crbId = (releasever == "8") ? "powertools" : "crb";
-            std::string crbName = (releasever == "8") ? "PowerTools" : "CRB";
-
-            // Upstream URL: https://repo.almalinux.org/almalinux/8/PowerTools/x86_64/os/
-            addRepo(almaRepos, crbId,
-                    "AlmaLinux $releasever - " + crbName,
-                    EnterpriseLinux::repositoryURL("Alma" + crbName,
-                                  "almalinux/" + releasever + "/" + crbName + "/" + arch + "/os/",
-                                  "https://repo.almalinux.org/almalinux/" + releasever + "/" + crbName + "/" + arch + "/os/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("Alma" + crbName, "RPM-GPG-KEY-AlmaLinux-" + releasever,
-                                  "https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-" + releasever));
-
-            // Upstream URL: https://repo.almalinux.org/almalinux/8/BaseOS/x86_64/os/
-            addRepo(almaRepos, "AlmaLinuxBaseOS",
-                    "AlmaLinux $releasever - BaseOS",
-                    EnterpriseLinux::repositoryURL("AlmaLinuxBaseOS",
-                                  "almalinux/" + releasever + "/BaseOS/" + arch + "/os/",
-                                  "https://repo.almalinux.org/almalinux/" + releasever + "/BaseOS/" + arch + "/os/"),
-                    true,
-                    EnterpriseLinux::repositoryURL("AlmaLinuxBaseOS", "RPM-GPG-KEY-AlmaLinux-" + releasever,
-                                  "https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux-" + releasever));
-
-            addRepoFile(baseDir / "almalinux.repo", std::move(almaRepos));
-        }
-
-        // beegfs.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            beegfsRepos;
-            auto path = opts->beegfsVersion + "/dists/rhel" + releasever + "/";
-            // Upstream URL: https://www.beegfs.io/release/beegfs_7_3/dists/rhel8/
-            addRepo(beegfsRepos, "beegfs", "BeeGFS",
-                    EnterpriseLinux::repositoryURL("beegfs", path, "https://www.beegfs.io/release/" + opts->beegfsVersion + "/dists/rhel" + releasever + "/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("beegfs",
-                                  opts->beegfsVersion + "/gpg/GPG-KEY-beegfs",
-                                  "https://www.beegfs.io/release/" + opts->beegfsVersion + "/gpg/GPG-KEY-beegfs"));
-            addRepoFile(
-                baseDir / "beegfs.repo", std::move(beegfsRepos));
-        }
-
-        // grafana.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            grafanaRepos;
-            // Upstream URL: https://rpm.grafana.com
-            addRepo(grafanaRepos, "grafana", "grafana",
-                    EnterpriseLinux::repositoryURL("grafana", "", "https://rpm.grafana.com"),
-                    false,
-                    // There is no GPG key in the mirror, force the upstream key
-                    EnterpriseLinux::repositoryURL(
-                    "grafana", "gpg.key", "https://rpm.grafana.com/gpg.key", true));
-            addRepoFile(
-                baseDir / "grafana.repo", std::move(grafanaRepos));
-        }
-
-        // influxdata.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            influxRepos;
-            // Upstream URL: https://repos.influxdata.com/rhel/8/x86_64/stable/
-            addRepo(influxRepos, "influxdata", "InfluxData Repository - Stable",
-                    EnterpriseLinux::repositoryURL(
-                        "influxdata", "rhel/" + releasever + "/" + arch + "/stable/",
-                        "https://repos.influxdata.com/rhel/" + releasever + "/" + arch + "/stable",
-                        // skip mirror for influxdata
-                        true),
-                    false,
-                    EnterpriseLinux::repositoryURL("influxdata", "influxdata-archive_compat.key",
-                                  "https://repos.influxdata.com/influxdata-archive_compat.key", true));
-            addRepoFile(
-                baseDir / "influxdata.repo", std::move(influxRepos));
-        }
-
-        // intel.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            intelRepos;
-            // Upstream URL: https://yum.repos.intel.com/oneAPI
-            addRepo(intelRepos, "oneAPI", "Intel oneAPI repository",
-                    EnterpriseLinux::repositoryURL("oneAPI", "", "https://yum.repos.intel.com/oneapi"),
-                    false,
-                    EnterpriseLinux::repositoryURL("oneAPI",
-                                  "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB",
-                                  "https://yum.repos.intel.com/intel-gpg-keys/"
-                                  "GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB"));
-            addRepoFile(
-                baseDir / "intel.repo", std::move(intelRepos));
-        }
-
-        // zabbix.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>> zabbixRepos;
-            // Upstream URL: https://repo.zabbix.com/zabbix/6.4/rhel/8/x86_64/
-            addRepo(zabbixRepos, "zabbix", "zabbix",
-                    EnterpriseLinux::repositoryURL("zabbix",
-                                  "zabbix/" + opts->zabbixVersion + "/rhel/" + releasever + "/" + arch + "/",
-                                  "https://repo.zabbix.com/zabbix/" + opts->zabbixVersion + "/rhel/"
-                                  + releasever + "/" + arch),
-                    false,
-                    EnterpriseLinux::repositoryURL("zabbix", "RPM-GPG-KEY-ZABBIX",
-                                  "https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX"));
-            addRepoFile(
-                baseDir / "zabbix.repo", std::move(zabbixRepos));
-        }
-
-        // elrepo.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            elrepoRepos;
-            // Upstream URL: https://elrepo.org/linux/elrepo/el8/x86_64/
-            addRepo(elrepoRepos, "elrepo", "elrepo",
-                    EnterpriseLinux::repositoryURL("elrepo",
-                                  "elrepo/el" + releasever + "/" + arch + "/",
-                                  "https://elrepo.org/linux/elrepo/el" + releasever + "/"
-                                  + arch),
-                    false,
-                    EnterpriseLinux::repositoryURL("elrepo", "RPM-GPG-KEY-elrepo.org",
-                                  "https://www.elrepo.org/RPM-GPG-KEY-elrepo.org"));
-            addRepoFile(
-                baseDir / "elrepo.repo", std::move(elrepoRepos));
-        }
-
-        // rpmfusion.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            rpmfusionRepos;
-            // Upstream URL: https://download1.rpmfusion.org          /free/el/updates/8/x86_64/
-            // Mirror URL: https://mirror.versatushpc.com.br/rpmfusion/free/el/updates/9/x86_64/
-            // Upstream KEY: https://download1.rpmfusion.org/free/el//RPM-GPG-KEY-rpmfusion-free-el-9
-            // Mirror URL: https://mirror.versatushpc.com.br/rpmfusion/free/el/RPM-GPG-KEY-rpmfusion-free-el-9
-            addRepo(rpmfusionRepos, "rpmfusion",
-                    "rpmfusion",
-                    EnterpriseLinux::repositoryURL("rpmfusion",
-                                                   "free/el/updates/" + releasever + "/" + arch + "/",
-                                                   "https://download1.rpmfusion.org/free/el/updates/" + releasever + "/" + arch + "/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("rpmfusion",
-                                                   "free/el/RPM-GPG-KEY-rpmfusion-free-el-" + releasever,
-                                                   "https://download1.rpmfusion.org/"));
-            addRepoFile(
-                baseDir / "rpmfusion.repo", std::move(rpmfusionRepos));
-        }
-
-        // epel.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            epelRepos;
-            // Upstream URLs:
-            // Debug: https://download.fedoraproject.org/pub/epel/8/Everything/x86_64/debug/
-            // Source: https://download.fedoraproject.org/pub/epel/8/Everything/source/tree/
-            // Main: https://download.fedoraproject.org/pub/epel/8/Everything/x86_64/
-            // Note: epel-source and epel-debuginfo has no mirror, the true argument in EnterpriseLinux::repositoryURL
-            //   bypass the mirror url
-            addRepo(epelRepos, "epel-debuginfo",
-                    "Extra Packages for Enterprise Linux " + releasever
-                    + " - " + arch + " - Debug",
-                    EnterpriseLinux::repositoryURL("epel-debuginfo",
-                                  releasever + "/Everything/" + arch + "/debug/",
-                                  "https://download.fedoraproject.org/pub/epel/" + releasever + "/Everything/"
-                                  + arch + "/debug/", true),
-                    false,
-                    EnterpriseLinux::repositoryURL("epel-debuginfo",
-                                  "RPM-GPG-KEY-EPEL-" + releasever,
-                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
-                                  + releasever, true));
-            addRepo(epelRepos, "epel-source",
-                    "Extra Packages for Enterprise Linux " + releasever
-                    + " - " + arch + " - Source",
-                    EnterpriseLinux::repositoryURL("epel-source",
-                                  releasever + "/Everything/source/tree/",
-                                  "https://download.fedoraproject.org/pub/epel/" + releasever
-                                  + "/Everything/source/tree/", true),
-                    false,
-                    EnterpriseLinux::repositoryURL("epel-source", "RPM-GPG-KEY-EPEL-" + releasever,
-                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
-                                  + releasever, true));
-            addRepo(epelRepos, "epel",
-                    "Extra Packages for Enterprise Linux " + releasever
-                    + " - " + arch,
-                    EnterpriseLinux::repositoryURL("epel", releasever + "/Everything/" + arch + "/",
-                                  "https://download.fedoraproject.org/pub/epel/" + releasever + "/Everything/"
-                                  + arch + "/"),
-                    false,
-                    EnterpriseLinux::repositoryURL("epel", "RPM-GPG-KEY-EPEL-" + releasever,
-                                  "https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-"
-                                  + releasever));
-            addRepoFile(
-                baseDir / "epel.repo", std::move(epelRepos));
-        }
-
-        // openhpc.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>> openhpcRepos;
-
-
-            // https://mirror.versatushpc.com.br/openhpc/2/EL_8/x86_64/ohpc-release-2-1.el8.x86_64.rpm
-            // https://mirror.versatushpc.com.br/openhpc/3/EL_9/x86_64/ohpc-release-3-1.el9.x86_64.rpm
-            // Determine the base URL based on platform
-            const std::string ohpcVersion = (releasever == "8") ? "2" : "3";
-            const std::string openhpcBaseurl = 
-                EnterpriseLinux::repositoryURL("openhpc", ohpcVersion + "/EL_" + releasever + "/",
-                              "https://repos.openhpc.community/OpenHPC/" + ohpcVersion + "/EL_" + releasever + "/");
-            const std::string openhpcUpdatesBaseurl =
-                EnterpriseLinux::repositoryURL("openhpc", ohpcVersion + "/updates/EL_" + releasever + "/",
-                              "https://repos.openhpc.community/OpenHPC/" + ohpcVersion + "/updates/EL_" + releasever + "/");
-
-            // Base repository
-            addRepo(openhpcRepos, "OpenHPC", "OpenHPC (" + ohpcVersion + ")",
-                    openhpcBaseurl,
-                    false,
-                    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OpenHPC-3");
-
-            // Updates repository
-            addRepo(openhpcRepos, "OpenHPC-Updates", "OpenHPC Updates (" + ohpcVersion + ")",
-                    openhpcUpdatesBaseurl,
-                    false,
-                    "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-OpenHPC-3");
-
-            addRepoFile(baseDir / "OpenHPC.repo", std::move(openhpcRepos));
-        }
-
-        // nvidia.repo
-        {
-            std::map<std::string, std::shared_ptr<RPMRepository>>
-            nvidiaRepos;
-            // Upstream URL: https://developer.download.nvidia.com/hpc-sdk/rhel/x86_64/
-            addRepo(nvidiaRepos, "nvhpc", "NVIDIA HPC SDK",
-                    EnterpriseLinux::repositoryURL("nvhpc", "hpc-sdk/rhel/" + arch,
-                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/" + arch, true),
-                    false,
-                    EnterpriseLinux::repositoryURL("nvhpc", "RPM-GPG-KEY-NVIDIA-HPC-SDK",
-                                  "https://developer.download.nvidia.com/hpc-sdk/rhel/"
-                                  "RPM-GPG-KEY-NVIDIA-HPC-SDK", true));
-            addRepoFile(
-                baseDir / "nvidia.repo", std::move(nvidiaRepos));
-        }
-
-        return repoFiles;
-    }
-};
-
 struct RPMDependencyResolver {
     static std::string resolveCodeReadyBuilderName(const OS& osinfo)
     {
@@ -1156,31 +1338,28 @@ struct RPMDependencyResolver {
 };
 
 struct RPMRepositoryGenerator {
-    // @FIXME: This will do a lot of HTTP in vain when executed
-    //   for the second time. I need a better way to generate these
-    //   repositories
     static void generate()
     {
         LOG_DEBUG("Generating the repository files");
-        auto repoFiles = ELConfig::getRepositories();
-        for (auto& repoFile : repoFiles) {
-            try {
-                repoFile.save(); // Save each RPMRepositoryFile
-            } catch (const std::runtime_error& e) {
-                LOG_ERROR("Unexpected error while saving file {} {}", repoFile.path().string(), e.what());
-                std::terminate();
-            } catch (...) {
-                LOG_ERROR("Unexpected unknown error while saving file {}", repoFile.path().string());
-                std::terminate();
-            }
-        }
+        const auto cluster = cloyster::Singleton<models::Cluster>::get();
+        const auto opts = cloyster::Singleton<Options>::get();
+        const auto osinfo = cluster->getHeadnode().getOS();
+        const auto vars = RepoConfigVars {
+            .arch = cloyster::utils::enums::toString(osinfo.getArch()),
+            .beegfsVersion = opts->beegfsVersion,
+            .ohpcVersion = osinfo.getMajorVersion() == 8 ? "2" : "3",
+            .osversion = osinfo.getVersion(),
+            .releasever = fmt::format("{}", osinfo.getMajorVersion()),
+            .xcatVersion = opts->xcatVersion,
+            .zabbixVersion = opts->zabbixVersion,
+        };
+        RepoGenerator<>::generate(osinfo.getDistro(), vars);
     }
 };
 
 void RepoManager::initializeDefaultRepositories()
 {
-    auto opts =
-        cloyster::Singleton<Options>::get();
+    auto opts = cloyster::Singleton<Options>::get();
     if (opts->dryRun) {
         LOG_WARN("Dry Run: Skipping RepoManager initialization");
         return;
@@ -1375,22 +1554,5 @@ std::vector<std::unique_ptr<const IRepository>> RepoManager::repoFile(
             throw std::logic_error("Not implemented");
     }
 }
-
-/*
-void RepoManager::addDefaultRPMRepository(
-        // NOLINTNEXTLINE
-        const std::string& repoId,
-        const std::string& repoName,
-        const std::string& repoPath,
-        const std::string& upstreamUrlPrefix,
-        const std::string& upstreamGpg,
-        const std::filesystem::path& sourceFile,
-        const bool forceUpstream
-    )
-{
-        m_impl->rpm.addDefaultRPMRepository(repoId, repoName, repoPath, upstreamUrlPrefix, upstreamGpg, sourceFile, forceUpstream);
-};
-*/
-
 
 }; // namespace cloyster::services::repos

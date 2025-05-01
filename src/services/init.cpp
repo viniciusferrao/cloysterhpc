@@ -33,7 +33,6 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
 
         return cloyster::makeUniqueDerived<IRunner, Runner>();
     });
-
 }
 
 // Singletons that depends on the cluster model

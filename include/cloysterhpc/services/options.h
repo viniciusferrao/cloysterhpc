@@ -29,6 +29,7 @@ struct Options final {
     std::string answerfile;
     std::string beegfsVersion;
     std::string zabbixVersion;
+    std::string xcatVersion;
     std::string dumpAnswerfile;
     std::set<std::string> skipSteps;
     std::set<std::string> forceSteps;

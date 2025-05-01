@@ -7,11 +7,17 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/utils/enums.h>
+#include <cloysterhpc/utils/string.h>
 #include <algorithm>
 #include <filesystem>
-#include <list>
-#include <optional>
 #include <string>
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
 
 #include <boost/asio.hpp>
 #include <cloysterhpc/services/runner.h>
@@ -147,8 +153,16 @@ namespace cloyster::utils {
 inline bool isIn(const auto& container, const auto& val)
 {
     return std::find(container.begin(), container.end(), val)
-        == container.end();
+        != container.end();
 }
+
+TEST_SUITE_BEGIN("cloyster::utils");
+
+TEST_CASE("isIn") {
+    const auto container = {1,2,3};
+    CHECK(isIn(container, 3) == true);
+    CHECK(isIn(container, 4) == false);
+};
 
 /**
  * @brief Run [func] if cloyster::dryRun is false
@@ -176,6 +190,57 @@ std::filesystem::directory_iterator openDir(const Path& path)
         fmt::format("Dry Run: Would open directory {}", path.string()));
 }
 
+std::vector<std::string> getFilesByExtension(
+    const auto& path,
+    const auto& extension
+) {
+    std::vector<std::string> result;
+    namespace fs = std::filesystem;
+
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (entry.is_regular_file() &&
+            entry.path().extension() == extension) {
+            result.push_back(entry.path().filename().string());
+        }
+    }
+
+    return result;
+}
+
+TEST_CASE("getFilesByExtension") {
+    const auto files = getFilesByExtension("repos/", ".conf");
+    CHECK(files.size() == 1);
+    CHECK(files[0] == "repos.conf");
+}
+
+void removeFilesWithExtension(
+    const auto& path,
+    const auto& extension
+) {
+    namespace fs = std::filesystem;
+
+    std::string extensionLower = string::lower(std::string(extension));
+
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (entry.is_regular_file()) {
+            std::string ext = string::lower(entry.path().extension().string());
+
+            if (ext == extensionLower) {
+                fs::remove(entry.path());
+            }
+        }
+    }
+}
+
+TEST_CASE("removeFilesWithExtension") {
+    const std::filesystem::path path = "test/output/utils";
+    touchFile(path / "test.txt");
+    CHECK(getFilesByExtension(path, ".txt").size() == 1);
+    removeFilesWithExtension(path, ".txt");
+    CHECK(getFilesByExtension(path, ".txt").size() == 0);
+}
+
+
 // @FIXME: Yes, curl works I know, but no.. fix this, use boost for
 //   requests and asynchronous I/O so we can run a bunch of these
 //   concurrently
@@ -188,8 +253,11 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
         return "200";
     }
     constexpr auto getHttpStatusInner = [](const auto& url, const auto& runner) {
-        return runner->checkOutput(
-        fmt::format(R"(bash -c "curl -sLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )", url))[0];
+        auto lines = runner->checkOutput(fmt::format(R"(bash -c "curl -sSLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )", url));
+        if (lines.size() > 0) {
+            return lines[0];
+        }
+        return std::string("CURL ERROR");
     };
 
 
@@ -211,6 +279,7 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
 }
 
+TEST_SUITE_END();
 
 } // namespace cloyster::utils
 
