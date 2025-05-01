@@ -97,12 +97,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET libbacktrace)
-    if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME libbacktrace)
-    endif()
-  endif()
-
   # Standalone packages
   include(FindPackageHandleStandardArgs)
 

@@ -5,8 +5,6 @@
 
 #include <cctype>
 #include <cstdlib>
-#include <exception>
-#include <stacktrace>
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
@@ -26,7 +24,6 @@
 #include <cloysterhpc/view/newt.h>
 
 #include <internal_use_only/config.hpp>
-#include <stdexcept>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -78,11 +75,12 @@ int runTestCommand(const std::string& testCommand,
     return EXIT_SUCCESS;
 }
 
+}; // anonymous namespace
 
 /**
  * @brief The entrypoint.
  */
-int run(int argc, const char** argv)
+int main(int argc, const char** argv)
 {
     initializeSingletonsOptions(options::factory(argc, argv));
 
@@ -189,23 +187,4 @@ int run(int argc, const char** argv)
     Log::shutdown();
 
     return EXIT_SUCCESS;
-}
-
-}; // anonymous namespace
-
-int main(int argc, const char** argv)
-{
-#ifndef NDEBUG
-    try {
-#endif
-        return run(argc, argv);
-#ifndef NDEBUG
-    } catch (...) { // NOLINT
-        // @FIXME: this obviously does not help, I need to capture
-        //  the stack trace at throw time, not catch time
-        auto trace = std::stacktrace::current();
-        LOG_ERROR("Unexpected error\nStacktrace:\n{}\n", to_string(trace));
-        throw;
-    }
-#endif
 }
