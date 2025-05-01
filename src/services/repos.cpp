@@ -268,6 +268,21 @@ struct RepoPaths final {
     std::string gpgPath;
 };
 
+/**
+ * @brief Decouples filesystem and network I/O from the MirrorRepoConfig
+ *   and UpstreamRepoConfig
+ */
+struct DefaultMirrorExistenceChecker final {
+    [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
+        return cloyster::exists(path);
+    }
+
+    [[nodiscard]] static bool urlExists(const std::string& url) {
+        return cloyster::utils::getHttpStatus(url) == "200";
+    }
+};
+
+template <typename MirrorExistenceChecker = DefaultMirrorExistenceChecker>
 struct MirrorRepoConfig final {
     std::string name;
     RepoPaths paths;
@@ -308,18 +323,18 @@ struct MirrorRepoConfig final {
         return localPath(gpgurl());
     };
 
-    [[nodiscard]] constexpr bool exists() const {
+    [[nodiscard]] bool exists() const {
         if (isLocal()) {
-            return cloyster::exists(localRepoPath());
+            return MirrorExistenceChecker::pathExists(localRepoPath());
         } else {
-            return utils::getHttpStatus(baseurl()) == "200";
+            return MirrorExistenceChecker::urlExists(baseurl());
         }
     };
 
-    [[nodiscard]] constexpr std::optional<std::string> gpgkey() const {
-        if (isLocal() && cloyster::exists(localGPGPath())) {
+    [[nodiscard]] std::optional<std::string> gpgkey() const {
+        if (isLocal() && MirrorExistenceChecker::pathExists(localGPGPath())) {
             return localGPGPath();
-        } else if (utils::getHttpStatus(gpgurl()) == "200") {
+        } else if (MirrorExistenceChecker::urlExists(gpgurl())) {
             return gpgurl();
         } else {
             LOG_WARN("GPG not found, assuming disabled GPG check {}", (isLocal() ? localGPGPath().string() : gpgurl()));
@@ -328,6 +343,7 @@ struct MirrorRepoConfig final {
     }
 };
 
+template <typename MirrorExistenceChecker = DefaultMirrorExistenceChecker>
 struct UpstreamRepoConfig final {
     std::string urlPrefix;
     RepoPaths paths;
@@ -345,7 +361,7 @@ struct UpstreamRepoConfig final {
     };
 
     [[nodiscard]] constexpr bool exists() const {
-        return utils::getHttpStatus(baseurl()) == "200" && utils::getHttpStatus(gpgurl()) == "200";
+        return MirrorExistenceChecker::urlExists(baseurl()) && MirrorExistenceChecker::urlExists(gpgurl());
     };
 
     [[nodiscard]] constexpr std::optional<std::string> gpgkey() const {
@@ -363,7 +379,12 @@ struct RepoChooser final {
         UPSTREAM, MIRROR
     };
 
-    static constexpr Choice choose(const MirrorRepoConfig& mirror, const UpstreamRepoConfig& upstream, const bool forceUpstream = false) {
+    template <typename MirrorChecker, typename UpstreamChecker>
+    static constexpr Choice choose(
+        const MirrorRepoConfig<MirrorChecker>& mirror,
+        const UpstreamRepoConfig<UpstreamChecker>& upstream,
+        const bool forceUpstream = false)
+    {
         if (forceUpstream) {
             return Choice::UPSTREAM;
         }
@@ -375,6 +396,10 @@ struct RepoChooser final {
 
         if (!mirror.exists()) {
             LOG_WARN("Mirror does not exists falling back to upstream {}", upstream.baseurl());
+
+            if (!upstream.exists()) {
+                LOG_WARN("Upstream URL error, is the URL correct? {}", upstream.baseurl());
+            }
             return Choice::UPSTREAM;
         }
 
@@ -383,12 +408,40 @@ struct RepoChooser final {
 };
 
 TEST_CASE("RepoChooser") {
+    struct FalseMirrorExistenceChecker final {
+        [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
+            static_cast<void>(path);
+            return false;
+        }
+
+        [[nodiscard]] static bool urlExists(const std::string& url) {
+            static_cast<void>(url);
+            return false;
+        }
+    };
+
+    struct TrueMirrorExistenceChecker final {
+        [[nodiscard]] static bool pathExists(const std::filesystem::path& path) {
+            static_cast<void>(path);
+            return true;
+        }
+
+        [[nodiscard]] static bool urlExists(const std::string& url) {
+            static_cast<void>(url);
+            return true;
+        }
+    };
+
     // NOLINTNEXTLINE
     auto opts = Options{.mirrorBaseUrl="https://mirror.example.com"};
-    auto mirrorConfig = MirrorRepoConfig{.name="myrepo", .paths={.repoPath="/repo", .gpgPath="key.gpg"}};
-    auto upstreamConfig = UpstreamRepoConfig { 
+    auto mirrorConfig = MirrorRepoConfig<FalseMirrorExistenceChecker> {
+            .name = "myrepo",
+            .paths = { .repoPath = "/repo", .gpgPath = "key.gpg" }
+    };
+    auto upstreamConfig = UpstreamRepoConfig<TrueMirrorExistenceChecker> { 
         .urlPrefix="https://upstream.example.com",
-        .paths = { .repoPath = "/upstream/repo", .gpgPath = "/key.gpg" } };
+        .paths = { .repoPath = "/upstream/repo", .gpgPath = "/key.gpg" }
+    };
 
     cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
     CHECK(RepoChooser::choose(mirrorConfig, upstreamConfig) == RepoChooser::Choice::UPSTREAM);
@@ -565,8 +618,8 @@ public:
     void addDefaultRPMRepository(
         // NOLINTNEXTLINE
         const std::string& repoId,
-        const MirrorRepoConfig& mirrorConfig,
-        const UpstreamRepoConfig& upstreamConfig,
+        const MirrorRepoConfig<>& mirrorConfig,
+        const UpstreamRepoConfig<>& upstreamConfig,
         const std::filesystem::path& sourceFile,
         const bool forceUpstream
     )
