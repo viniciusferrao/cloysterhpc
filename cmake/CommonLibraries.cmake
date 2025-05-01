@@ -4,6 +4,7 @@ set(COMMON_LIBS
         ${NEWT_LIBRARY}
         ${GLIBMM_LIBRARIES}
         ${STDC++FS}
+        stdc++exp
         Boost::headers
         Boost::system
         Boost::thread
@@ -15,4 +16,5 @@ set(COMMON_LIBS
         resolv
         SDBusCpp::sdbus-c++
         spdlog::spdlog
+        libbacktrace::libbacktrace
 )

@@ -5,6 +5,8 @@
 
 #include <cctype>
 #include <cstdlib>
+#include <exception>
+#include <stacktrace>
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/const.h>
@@ -24,6 +26,7 @@
 #include <cloysterhpc/view/newt.h>
 
 #include <internal_use_only/config.hpp>
+#include <stdexcept>
 
 #ifdef _CLOYSTER_I18N
 #include "include/i18n-cpp.hpp"
@@ -75,12 +78,11 @@ int runTestCommand(const std::string& testCommand,
     return EXIT_SUCCESS;
 }
 
-}; // anonymous namespace
 
 /**
  * @brief The entrypoint.
  */
-int main(int argc, const char** argv)
+int run(int argc, const char** argv)
 {
     initializeSingletonsOptions(options::factory(argc, argv));
 
@@ -101,96 +103,109 @@ int main(int argc, const char** argv)
     }
     Log::init(opts->logLevelInput);
 
-    try {
 #ifndef NDEBUG
-        LOG_DEBUG("Log level set to: {}\n", opts->logLevelInput)
+    LOG_DEBUG("Log level set to: {}\n", opts->logLevelInput)
 #endif
-        LOG_INFO("{} Started", productName)
+    LOG_INFO("{} Started", productName)
 
-        if (opts->testCommand.empty()) { 
-            // skip during tests, we do not want to run tests as root
-            cloyster::checkEffectiveUserId();
-        }
+    if (opts->testCommand.empty()) { 
+        // skip during tests, we do not want to run tests as root
+        cloyster::checkEffectiveUserId();
+    }
 
-        // --test implies --unattended
-        if (!opts->testCommand.empty()) {
-            opts->unattended = true;
-        }
+    // --test implies --unattended
+    if (!opts->testCommand.empty()) {
+        opts->unattended = true;
+    }
 
-        if (opts->dryRun) {
-            LOG_INFO("Dry run enabled.");
-        } else {
-            while (!opts->unattended) {
-                char response = 'N';
-                fmt::print("{} will now modify your system, do you want to "
-                           "continue? [Y/N]\n",
-                    cloyster::productName);
-                std::cin >> response;
+    if (opts->dryRun) {
+        LOG_INFO("Dry run enabled.");
+    } else {
+        while (!opts->unattended) {
+            char response = 'N';
+            fmt::print("{} will now modify your system, do you want to "
+                       "continue? [Y/N]\n",
+                cloyster::productName);
+            std::cin >> response;
 
-                if (std::toupper(response) == 'Y') {
-                    LOG_INFO("Running {}.\n", cloyster::productName)
-                    break;
-                } else if (std::toupper(response) == 'N') {
-                    LOG_INFO("Stopping {}.\n", cloyster::productName)
-                    return EXIT_SUCCESS;
-                }
+            if (std::toupper(response) == 'Y') {
+                LOG_INFO("Running {}.\n", cloyster::productName)
+                break;
+            } else if (std::toupper(response) == 'N') {
+                LOG_INFO("Stopping {}.\n", cloyster::productName)
+                return EXIT_SUCCESS;
             }
         }
+    }
 
-        //@TODO implement CLI feature
-        if (opts->enableCLI) {
-            LOG_ERROR("CLI feature not implemented.\n");
-            return EXIT_FAILURE;
-        }
-
-        LOG_INFO("Initializing the model");
-        auto model = std::make_unique<cloyster::models::Cluster>();
-        LOG_INFO("Model initialized");
-        if (!opts->answerfile.empty()) {
-            LOG_INFO("Loading the answerfile: {}", opts->answerfile)
-            model->fillData(opts->answerfile);
-        } 
-
-        opts->enableTUI = opts->answerfile.empty() && opts->testCommand.empty();
-
-#ifndef NDEBUG
-        // model->fillTestData();
-        model->printData();
-#endif
-
-        if (opts->enableTUI) {
-            // Entrypoint; if the view is constructed it will start the TUI.
-            auto view = std::make_unique<Newt>();
-            auto presenter
-                = std::make_unique<cloyster::presenter::PresenterInstall>(
-                    model, view);
-        }
-
-
-        if (!opts->dumpAnswerfile.empty()) {
-            model->dumpData(opts->dumpAnswerfile);
-        }
-
-        initializeSingletonsModel(std::move(model));
-
-#ifndef NDEBUG
-        if (!opts->testCommand.empty()) {
-            return runTestCommand(opts->testCommand, opts->testCommandArgs);
-        }
-#endif
-        LOG_TRACE("Starting execution engine");
-        std::unique_ptr<Execution> executionEngine
-            = std::make_unique<cloyster::services::Shell>();
-
-        executionEngine->install();
-
-    } catch (const std::exception& e) {
-        LOG_ERROR("ERROR: {}", e.what());
+    //@TODO implement CLI feature
+    if (opts->enableCLI) {
+        LOG_ERROR("CLI feature not implemented.\n");
         return EXIT_FAILURE;
     }
+
+    LOG_INFO("Initializing the model");
+    auto model = std::make_unique<cloyster::models::Cluster>();
+    LOG_INFO("Model initialized");
+    if (!opts->answerfile.empty()) {
+        LOG_INFO("Loading the answerfile: {}", opts->answerfile)
+        model->fillData(opts->answerfile);
+    } 
+
+    opts->enableTUI = opts->answerfile.empty() && opts->testCommand.empty();
+
+#ifndef NDEBUG
+    // model->fillTestData();
+    model->printData();
+#endif
+
+    if (opts->enableTUI) {
+        // Entrypoint; if the view is constructed it will start the TUI.
+        auto view = std::make_unique<Newt>();
+        auto presenter
+            = std::make_unique<cloyster::presenter::PresenterInstall>(
+                model, view);
+    }
+
+
+    if (!opts->dumpAnswerfile.empty()) {
+        model->dumpData(opts->dumpAnswerfile);
+    }
+
+    initializeSingletonsModel(std::move(model));
+
+#ifndef NDEBUG
+    if (!opts->testCommand.empty()) {
+        return runTestCommand(opts->testCommand, opts->testCommandArgs);
+    }
+#endif
+    LOG_TRACE("Starting execution engine");
+    std::unique_ptr<Execution> executionEngine
+        = std::make_unique<cloyster::services::Shell>();
+
+    executionEngine->install();
 
     LOG_INFO("{} has successfully ended", productName)
     Log::shutdown();
 
     return EXIT_SUCCESS;
+}
+
+}; // anonymous namespace
+
+int main(int argc, const char** argv)
+{
+#ifndef NDEBUG
+    try {
+#endif
+        return run(argc, argv);
+#ifndef NDEBUG
+    } catch (...) { // NOLINT
+        // @FIXME: this obviously does not help, I need to capture
+        //  the stack trace at throw time, not catch time
+        auto trace = std::stacktrace::current();
+        LOG_ERROR("Unexpected error\nStacktrace:\n{}\n", to_string(trace));
+        throw;
+    }
+#endif
 }

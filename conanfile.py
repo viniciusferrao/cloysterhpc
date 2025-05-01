@@ -25,6 +25,10 @@ class MyProjectConan(ConanFile):
         # Override libsystemd to fix compilation on RHEL 10.
         self.requires("libsystemd/[>=255.10 <256.0]", override=True)
 
+        # libbacktrace 2021 is required by boost
+        # self.requires("libbacktrace/cci.20210118") # the same version boost depends on 
+        self.requires("libbacktrace/cci.20240730", override=True)
+
     def layout(self):
         cmake_layout(self)
 

@@ -97,6 +97,12 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
+  if(NOT TARGET libbacktrace)
+    if (cloysterhpc_ENABLE_CONAN)
+      CPMFindPackage(NAME libbacktrace)
+    endif()
+  endif()
+
   # Standalone packages
   include(FindPackageHandleStandardArgs)
 
@@ -108,6 +114,8 @@ function(cloysterhpc_setup_dependencies)
   endif()
 
   if(NOT TARGET glibmm)
+    # Using pkg_check_modules to link against the host glibmm
+    # instead of using conan
     pkg_check_modules(GLIBMM REQUIRED glibmm-2.4)
 
     message(STATUS "GLIBMM_LIBRARIES=${GLIBMM_LIBRARIES}")
@@ -118,7 +126,6 @@ function(cloysterhpc_setup_dependencies)
       GLIBMM_INCLUDE_DIRS)
 
     mark_as_advanced(GLIBMM_INCLUDE_DIRS GLIBMM_LIBRARIES)
-    # include_directories(${GLIBMM_INCLUDE_DIRS})
   endif()
 
   # Set the variable ${STDC++FS} to the correct library
