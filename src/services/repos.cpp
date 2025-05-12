@@ -1122,12 +1122,6 @@ public:
 TEST_CASE("RepoFilter")
 {
     // Log::init(5);
-    struct TrueVaultPicker final {
-        static auto shouldUseVault(const std::string& /*unused*/)
-        {
-            return true;
-        }
-    };
     const auto conffile = RepoConfigParser::parse("repos/repos.conf");
     const auto filter = RepoFilter(conffile, OS::Distro::Rocky);
     const auto rockyRepoFiles = filter.distroRepos();

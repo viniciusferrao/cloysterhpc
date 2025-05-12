@@ -676,47 +676,6 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     m_stateless.chroot = chroot;
 }
 
-void XCAT::installRepositories()
-{
-    const std::filesystem::path& repofileDest
-        = std::filesystem::temp_directory_path();
-    LOG_INFO("Setting up XCAT repositories");
-    auto runner = cloyster::Singleton<IRunner>::get();
-
-    runner->downloadFile("https://xcat.org/files/xcat/repos/yum/devel/"
-                         "core-snap/xcat-core.repo",
-        repofileDest.string());
-
-    switch (cluster()->getHeadnode().getOS().getPlatform()) {
-        case OS::Platform::el8:
-            runner->downloadFile(
-                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                "rh8/x86_64/xcat-dep.repo",
-                repofileDest.string());
-            break;
-        case OS::Platform::el9:
-#ifndef NDEBUG
-        // Hack to test EL10 only in debug mode
-        case OS::Platform::el10:
-#endif
-            runner->downloadFile(
-                "https://xcat.org/files/xcat/repos/yum/devel/xcat-dep/"
-                "rh9/x86_64/xcat-dep.repo",
-                repofileDest.string());
-            break;
-        default:
-            throw std::runtime_error("Unsupported platform for xCAT");
-    }
-    const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
-    for (auto const& dir_entry :
-        std::filesystem::directory_iterator { repofileDest }) {
-        const auto& path = dir_entry.path();
-        if (path.extension() == ".repo") {
-            repoManager->install(path);
-        }
-    }
-}
-
 std::vector<std::string> XCAT::getxCATOSImageRepos() const
 {
     const auto osinfo = cluster()->getHeadnode().getOS();

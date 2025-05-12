@@ -13,78 +13,6 @@
 
 using cloyster::IRunner;
 
-namespace {
-
-auto docaRepoTemplate(std::string version, std::string distro, std::string arch)
-{
-    // @FIXME: 1 There is no mirror for mellanox now, I'm adding this
-    //  so the user can support airgap and local mirrors if we wants.
-    //  When we create the mirror the repository must follow the same
-    //  format (as execpted from any mirror)
-    // @FIXME: 2 all this logic to deal wil the mirrors should be elsewhere
-    // @FIXME: 3 the upstream URL must be extracted to a configuration that
-    //   the enduser can change at runtime
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    static constexpr std::string_view template_ = R"(
-[doca]
-name=NVIDIA DOCA Repository - RHEL {2}
-baseurl={0}
-enabled=1
-gpgcheck=1
-gpgkey={1}
-)";
-
-    // Assemble the urls for mirror an upstream
-    const std::string repoName = "mellanox";
-    const std::string path = "/public/repo/doca";
-    const std::string mirrorUrl = fmt::format(
-        "{}/{}/{}/{}/{}/{}", opts->mirrorBaseUrl, repoName, path, version, distro, arch);
-    const std::string upstreamUrl = fmt::format(
-        "https://linux.mellanox.com/{}/{}/{}/{}/", path, version, distro, arch);
-    const std::string upstreamGPG = fmt::format(
-        "https://linux.mellanox.com/public/repo/doca/{}/{}/{}/GPG-KEY-Mellanox.pub",
-         version, distro, arch);
-    const std::string mirrorGPG = fmt::format(
-        "{}/{}/{}/{}/{}/{}/GPG-KEY-Mellanox.pub",
-        opts->mirrorBaseUrl, repoName, path, version, distro, arch);
-
-    if (opts->disableMirrors) {
-        auto upstreamStatus = cloyster::utils::getHttpStatus(upstreamUrl);
-        if (upstreamStatus != "200") {
-            throw std::runtime_error(
-                fmt::format("BUG: Upstream {} offline. This may be a BUG, to "
-                            "mitigate create the file "
-                            "/etc/yum.repos.d/mlx-doca.repo and try again",
-                            upstreamUrl));
-        }
-        std::istringstream data(fmt::format(template_, upstreamUrl, upstreamGPG, version));
-        return data;
-    } else {
-        const auto mirrorStatus = cloyster::utils::getHttpStatus(mirrorUrl);
-        if (mirrorStatus == "200") {
-            std::istringstream data(fmt::format(template_, mirrorUrl, mirrorGPG, version));
-            return data;
-        } else {
-            // The mirror is down, falling back to upstream
-            LOG_WARN("Mirror {} unavailable HTTP {}, falling back to upstream {}",
-                     mirrorUrl, mirrorStatus, upstreamUrl);
-
-            auto upstreamStatus = cloyster::utils::getHttpStatus(upstreamUrl);
-            if (upstreamStatus != "200") {
-                throw std::runtime_error(
-                    fmt::format("BUG: Upstream {} offline. This may be a BUG, to "
-                                "mitigate create the file "
-                                "/etc/yum.repos.d/mlx-doca.repo and try again",
-                                upstreamUrl));
-            }
-            std::istringstream data(fmt::format(template_, upstreamUrl, upstreamGPG, version));
-            return data;
-        }
-    }
-}
-
-};
-
 void OFED::setKind(Kind kind) { m_kind = kind; }
 
 OFED::Kind OFED::getKind() const { return m_kind; }
@@ -140,33 +68,13 @@ void OFED::install() const
             break;
 
         case OFED::Kind::Mellanox: {
-            auto cluster
-                = cloyster::Singleton<cloyster::models::Cluster>::get();
-            auto hnOs = cluster->getHeadnode().getOS();
             auto runner
                 = cloyster::Singleton<cloyster::services::IRunner>::get();
             auto repoManager = cloyster::Singleton<
                 cloyster::services::repos::RepoManager>::get();
             auto osService
                 = cloyster::Singleton<cloyster::services::IOSService>::get();
-            // distroName denotes a folder in the remote repository:
-            // https://linux.mellanox.com/public/repo/doca/latest/. All
-            // distributions except Oracle Linux use rhelX.Y folder. Oracle
-            // Linux does not uses rhelX.Y package because it uses a distinct
-            // kernel
-            auto distroName = fmt::format("{}{}",
-                (hnOs.getDistro() == cloyster::OS::Distro::OL ? "ol" : "rhel"),
-                hnOs.getVersion());
-
-            auto repoData = docaRepoTemplate(getVersion(), distroName,
-                cloyster::utils::enums::toString(hnOs.getArch()));
-            std::filesystem::path path = "/etc/yum.repos.d/mlx-doca.repo";
-
-            // Install the repository and enable it
-            cloyster::installFile(path, repoData);
-            repoManager->install(path);
             repoManager->enable("doca");
-
             // Install the required packages
             runner->checkCommand("dnf makecache --repo=doca");
             runner->checkCommand(

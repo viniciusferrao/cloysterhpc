@@ -318,4 +318,7 @@ tags
 
 .cache/
 
-test/output/repos/*.repo
+test/output/**
+.clangd
+CMakePresets.json
+CMakeUserPresets.json

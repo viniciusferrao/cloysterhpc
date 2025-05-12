@@ -494,9 +494,6 @@ void Shell::install()
 
     LOG_INFO("Setting up compute node images... This may take a while")
 
-    LOG_INFO("[{}] Installing provisioner repositories", provisionerName)
-    provisioner->installRepositories();
-
     LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
 

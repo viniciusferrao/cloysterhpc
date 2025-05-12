@@ -186,11 +186,6 @@ public:
     XCAT();
 
     /**
-     * @brief Download the repositories
-     */
-    void installRepositories();
-
-    /**
      * @brief Return a list of repos for xCAT image
      */
     [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;

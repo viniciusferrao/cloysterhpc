@@ -29,6 +29,7 @@ void NFS::setFullPath()
 
 void NFS::configure()
 {
+    using namespace cloyster;
     LOG_INFO("Configuring NFS");
     cloyster::Singleton<cloyster::services::IOSService>::get()->install(
         "nfs-utils");
