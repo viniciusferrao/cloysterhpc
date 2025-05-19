@@ -84,7 +84,16 @@ private:
     static std::string getValueFromKey(const std::string& line);
 
 public:
+    // Detect features automatically by probing the running OS
     OS();
+
+    // Construct a OS instance without probing the running OS
+    OS(const Distro& distro,
+       const Platform& platform,
+       const unsigned minorVersion,
+       const Arch& arch = OS::Arch::x86_64, 
+       const Family& family = OS::Family::Linux);
+
 
     [[nodiscard]] Arch getArch() const;
     void setArch(Arch arch);
@@ -123,15 +132,5 @@ public:
 
 }; // namespace cloyster::models
 
-template <>
-struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
-    template <typename FormatContext>
-    auto format(const cloyster::models::OS& osinfo, FormatContext& ctx) const
-        -> decltype(ctx.out())
-    {
-        return fmt::format_to(ctx.out(), "OS(distro={}, kernel={})",
-            osinfo.getDistroString(), osinfo.getKernel());
-    }
-};
 
 #endif // CLOYSTERHPC_OS_H_

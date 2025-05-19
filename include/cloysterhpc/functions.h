@@ -279,9 +279,9 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
 }
 
+
 TEST_SUITE_END();
 
 } // namespace cloyster::utils
-
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

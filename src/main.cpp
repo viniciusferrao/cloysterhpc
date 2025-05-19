@@ -12,6 +12,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
+#include <cloysterhpc/utils/formatters.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/init.h>

@@ -98,6 +98,18 @@ OS::OS()
     }
 }
 
+OS::OS(const Distro& distro,
+   const Platform& platform,
+   const unsigned minorVersion,
+   const Arch& arch,
+   const Family& family)
+    : m_arch(arch)
+    , m_family(family)
+    , m_platform(platform)
+    , m_distro(distro)
+    , m_minorVersion(minorVersion)
+{}
+
 OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
 
 void OS::setArch(Arch arch) { m_arch = arch; }
@@ -290,3 +302,4 @@ void OS::printData() const
 #endif
 }
 };
+
