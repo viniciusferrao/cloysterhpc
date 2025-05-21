@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include <cloysterhpc/services/scriptbuilder.h>
+
 namespace cloyster::services {
 
 /**
@@ -59,6 +61,8 @@ public:
     virtual std::vector<std::string> checkOutput(const std::string&) = 0;
     virtual int downloadFile(const std::string& url, const std::string& file)
         = 0;
+
+    virtual int run(const ScriptBuilder& script) = 0;
 };
 
 class Runner final : public IRunner {
@@ -70,6 +74,7 @@ public:
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 };
 
 class DryRunner final : public IRunner {
@@ -81,6 +86,7 @@ public:
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 };
 
 class MockRunner final : public IRunner {
@@ -92,6 +98,7 @@ public:
     void checkCommand(const std::string& cmd) override;
     std::vector<std::string> checkOutput(const std::string& cmd) override;
     int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 
     [[nodiscard]] const std::vector<std::string>& listCommands() const;
 

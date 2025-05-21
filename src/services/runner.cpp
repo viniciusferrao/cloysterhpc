@@ -3,6 +3,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/files.h>
 
 #include <fmt/format.h>
 #include <ranges>
@@ -137,6 +138,17 @@ int Runner::executeCommand(const std::string& cmd, std::list<std::string>& outpu
     return runCommand(cmd, output, true);
 }
 
+int Runner::run(const ScriptBuilder& script)
+{
+    std::string&& content = script.toString();
+    const auto hash = cloyster::services::files::checksum(content);
+    const std::filesystem::path path = fmt::format("/tmp/{}.sh", hash);
+    cloyster::installFile(path, std::move(content));
+    executeCommand(fmt::format("chmod +x {}", path));
+    executeCommand(path);
+    return 0;
+}
+
 CommandProxy Runner::executeCommandIter(const std::string& cmd, Stream /*out*/)
 {
     return CommandProxy {}; // Return an invalid CommandProxy
@@ -180,6 +192,11 @@ int DryRunner::executeCommand(const std::string& cmd, std::list<std::string>& ou
 void DryRunner::checkCommand(const std::string& cmd)
 {
     LOG_WARN("Dry Run: Would execute command: {}", cmd);
+}
+
+int DryRunner::run(const ScriptBuilder& script)
+{
+    return 0;
 }
 
 std::vector<std::string> DryRunner::checkOutput(const std::string& cmd)
@@ -240,6 +257,11 @@ int MockRunner::downloadFile(const std::string& url, const std::string& file)
     auto cmd = fmt::format("wget -NP {} {}", file, url);
     m_cmds.push_back(cmd);
     return OK;
+}
+
+int MockRunner::run(const ScriptBuilder& script)
+{
+    return 0;
 }
 
 } // namespace cloyster::services

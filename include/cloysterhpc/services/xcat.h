@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_XCAT_H_
 #define CLOYSTERHPC_XCAT_H_
 
+#include "scriptbuilder.h"
 #include <filesystem>
 #include <string>
 
@@ -39,16 +40,19 @@ public:
         std::vector<std::string> synclists;
     };
 
-private:
-    Image m_stateless;
-
+    struct ImageInstallArgs final {
+        std::string imageName;
+        std::filesystem::path rootfs;
+        std::filesystem::path postinstall;
+        std::filesystem::path pkglist;
+    };
     /**
      * @enum ImageType
      * @brief Defines the types of OS images.
      *
      * This enum specifies the types of OS images that can be created.
      */
-    enum class ImageType { Install, Netboot };
+    enum class ImageType : bool { Install, Netboot };
 
     /**
      * @enum NodeType
@@ -56,7 +60,16 @@ private:
      *
      * This enum specifies the types of nodes in the cluster.
      */
-    enum class NodeType { Compute, Service };
+    enum class NodeType : bool { Compute, Service };
+
+    [[nodiscard]] ImageInstallArgs getImageInstallArgs(
+        ImageType imageType, NodeType nodeType
+    );
+
+
+private:
+    Image m_stateless;
+
 
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
@@ -150,7 +163,7 @@ private:
      *
      * This function applies customizations to the OS image.
      */
-    void customizeImage();
+    void customizeImage(const std::vector<ScriptBuilder>& customizations);
 
     /**
      * @brief Adds a node to the cluster.
@@ -224,7 +237,9 @@ public:
      * Compute).
      */
     void createImage(
-        ImageType = ImageType::Netboot, NodeType = NodeType::Compute);
+        ImageType = ImageType::Netboot, NodeType = NodeType::Compute,
+        const std::vector<ScriptBuilder>& customizations = {}
+    );
 
     /**
      * @brief Adds nodes to the provisioning system.

@@ -25,8 +25,7 @@ using cloyster::OS;
 
 NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
     const boost::asio::ip::address& address, const std::string& permissions)
-    : IService("nfs-server.service")
-    , m_directoryName(directoryName)
+    : m_directoryName(directoryName)
     , m_directoryPath(directoryPath)
     , m_permissions(permissions)
     , m_address(address)
@@ -38,41 +37,6 @@ void NFS::setFullPath()
 {
     m_fullPath = fmt::format("{}/{}", m_directoryPath, m_directoryName);
 }
-
-void NFS::configure()
-{
-    using namespace cloyster;
-    LOG_INFO("Configuring NFS");
-
-    // TODO: detect nfs existence before proceeding
-    // might check if nfs-utils package is installed.
-
-    const std::string_view filename = CHROOT "/etc/exports";
-    backupFile(filename);
-    addStringToFile(filename,
-        // @TODO make fsid dynamic
-        fmt::format("/home *(rw,no_subtree_check,fsid=10,no_root_squash)\n"
-                    "{} *({},fsid={})\n",
-            m_fullPath, m_permissions, 11));
-
-    Singleton<IRunner>::get()->executeCommand(
-        "exportfs -a");
-
-    touchFile(fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs",
-        installPath, m_directoryName));
-    addStringToFile(
-        fmt::format("{}/conf/node/etc/auto.master.d/{}.autofs", installPath,
-            m_directoryName),
-        fmt::format("{} /etc/auto.{}", m_fullPath, m_directoryName));
-
-    touchFile(
-        fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName));
-    addStringToFile(
-        fmt::format("{}/conf/node/etc/auto.{}", installPath, m_directoryName),
-        fmt::format("* {}:{}/&", m_address.to_string(), m_fullPath));
-}
-
-
 
 cloyster::services::ScriptBuilder
 NFS::installScript(const OS& osinfo) 
@@ -133,8 +97,9 @@ fi)");
     return builder;
 }
 
-cloyster::services::ScriptBuilder
-NFS::imageInstallScript(const OS& osinfo, const ImageInstallArgs& args) 
+cloyster::services::ScriptBuilder NFS::imageInstallScript(
+    const OS& osinfo,
+    const cloyster::services::XCAT::ImageInstallArgs& args)
 {
     using namespace cloyster;
     services::ScriptBuilder builder(osinfo);
@@ -250,14 +215,6 @@ TEST_CASE("installImageScript") {
         .pkglist = "/install/custom/netboot/compute.otherpkglist"
     });
     
-    // @TODO, this test check for string equality, while simple
-    // it is very sensitive to changes, make this test more propositional
-    // like:
-    //
-    // - Check if the packages are being installed
-    // - Check if the files are being updated
-    // - Check if packages are being installed
-    // - etc...
     CHECK(builder.toString() == 
 R"del(#!/bin/bash -xeu
 

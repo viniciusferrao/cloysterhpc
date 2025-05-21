@@ -461,26 +461,15 @@ void Shell::install()
     installOpenHPCBase();
     configureInfiniband();
 
-    // BUG: Broken. Compute nodes does not mount anything.
     NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
             ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
-    // const auto nfsInstallScript =
-    //     networkFileSystem.installScript(cluster()->getHeadnode().getOS());
-    // const auto nfsImageInstallScrit = 
-    //     networkFileSystem.imageInstallScript(cluster()->getHeadnode().getOS(), {
-    //     .imageName = "rocky9.5-x86_64-netboot-compute",
-    //     .rootfs = "/install/netboot/rocky9.5/x86_64/compute/rootimg",
-    //     .postinstall = "/install/custom/netboot/compute.postinstall",
-    //     .pkglist = "/install/custom/netboot/compute.otherpkglist"
-    // });
-    networkFileSystem.configure();
-    networkFileSystem.enable();
-    networkFileSystem.start();
-
+    const auto nfsInstallScript =
+        networkFileSystem.installScript(cluster()->getHeadnode().getOS());
+    runner()->run(nfsInstallScript);
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
         configureMailSystem();
@@ -512,8 +501,22 @@ void Shell::install()
     LOG_INFO("[{}] Setting up the provisioner", provisionerName)
     provisioner->setup();
 
-    LOG_INFO("[{}] Creating node images", provisionerName)
-    provisioner->createImage();
+    const auto imageType = XCAT::ImageType::Netboot;
+    const auto nodeType = XCAT::NodeType::Compute;
+    const auto imageInstallArgs = provisioner->getImageInstallArgs(imageType, nodeType);
+    const auto osinfo = cluster()->getHeadnode().getOS();
+
+    // Customizations to the image
+    const auto nfsImageInstallScript =
+        networkFileSystem.imageInstallScript(
+            osinfo,
+            imageInstallArgs);
+
+    LOG_INFO("[{}] Creating node images", provisionerName);
+    provisioner->createImage(imageType, nodeType, {
+        // Customizations to the image
+        nfsImageInstallScript
+    });
 
     LOG_INFO("[{}] Adding compute nodes", provisionerName)
     provisioner->addNodes();

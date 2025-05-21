@@ -9,12 +9,11 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <cloysterhpc/messagebus.h>
-#include <cloysterhpc/services/IService.h>
-
 #include <cloysterhpc/services/scriptbuilder.h>
+#include <cloysterhpc/services/xcat.h>
 
-using cloyster::services::IService;
 using cloyster::models::OS;
+
 
 /**
  * @class NFS
@@ -23,7 +22,7 @@ using cloyster::models::OS;
  * This class provides methods for configuring, enabling, disabling, starting,
  * and stopping the NFS service.
  */
-class NFS : public IService {
+class NFS {
 private:
     std::string m_directoryName;
     std::string m_directoryPath;
@@ -45,21 +44,11 @@ public:
         const boost::asio::ip::address& address,
         const std::string& permissions);
 
-    /**
-     * @brief Configures the NFS service with the specified settings.
-     */
-    void configure();
+    [[nodiscard]] static cloyster::services::ScriptBuilder installScript(
+        const OS& osinfo);
+    [[nodiscard]] static cloyster::services::ScriptBuilder imageInstallScript(
+        const OS& osinfo, const cloyster::services::XCAT::ImageInstallArgs& args);
 
-
-    struct ImageInstallArgs final {
-        std::string imageName;
-        std::filesystem::path rootfs;
-        std::filesystem::path postinstall;
-        std::filesystem::path pkglist;
-    };
-
-    [[nodiscard]] static cloyster::services::ScriptBuilder installScript(const OS& osinfo);
-    [[nodiscard]] static cloyster::services::ScriptBuilder imageInstallScript(const OS& osinfo, const ImageInstallArgs& args);
 private:
     /**
      * @brief Sets the full path of the NFS share.

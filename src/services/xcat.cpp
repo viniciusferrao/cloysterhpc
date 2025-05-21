@@ -421,12 +421,13 @@ void XCAT::configureOSImageDefinition()
             m_stateless.osimage, fmt::join(repos, ",")));
 }
 
-void XCAT::customizeImage()
+void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations)
 {
+    auto runner = cloyster::Singleton<IRunner>::get();
+    // @TODO: Extract the munge fixes to its own customization script
     // Permission fixes for munge
     if (cluster()->getQueueSystem().value()->getKind()
         == models::QueueSystem::Kind::SLURM) {
-        auto runner = cloyster::Singleton<IRunner>::get();
         runner->executeCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));
@@ -443,6 +444,10 @@ void XCAT::customizeImage()
         runner->executeCommand(fmt::format(
             "chown munge:munge {}/run/munge", m_stateless.chroot.string()));
     }
+
+    for (const auto& script : customizations) {
+        runner->run(script);
+    };
 }
 
 /* This is necessary to avoid problems with EL9-based distros.
@@ -510,10 +515,22 @@ void XCAT::configureEL9()
     }
 }
 
+cloyster::services::XCAT::ImageInstallArgs
+XCAT::getImageInstallArgs(ImageType imageType, NodeType nodeType)
+{
+    generateOSImageName(imageType, nodeType);
+    return ImageInstallArgs {
+        .imageName = m_stateless.osimage,
+        .rootfs = m_stateless.chroot,
+        .postinstall = m_stateless.chroot / "install/custom/netboot/compute.postinstall",
+        .pkglist = m_stateless.chroot / "install/custom/netboot/compute.otherpkglist"
+    };
+}
+
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
-void XCAT::createImage(ImageType imageType, NodeType nodeType)
+void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector<ScriptBuilder>& customizations)
 {
     configureEL9();
 
@@ -537,7 +554,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType)
         configureOSImageDefinition();
 
         genimage();
-        customizeImage();
+        customizeImage(customizations);
         packimage();
     }
 }
