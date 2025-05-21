@@ -11,7 +11,10 @@
 #include <cloysterhpc/messagebus.h>
 #include <cloysterhpc/services/IService.h>
 
+#include <cloysterhpc/services/scriptbuilder.h>
+
 using cloyster::services::IService;
+using cloyster::models::OS;
 
 /**
  * @class NFS
@@ -47,6 +50,16 @@ public:
      */
     void configure();
 
+
+    struct ImageInstallArgs final {
+        std::string imageName;
+        std::filesystem::path rootfs;
+        std::filesystem::path postinstall;
+        std::filesystem::path pkglist;
+    };
+
+    [[nodiscard]] static cloyster::services::ScriptBuilder installScript(const OS& osinfo);
+    [[nodiscard]] static cloyster::services::ScriptBuilder imageInstallScript(const OS& osinfo, const ImageInstallArgs& args);
 private:
     /**
      * @brief Sets the full path of the NFS share.

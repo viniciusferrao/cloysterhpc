@@ -11,6 +11,7 @@
 #include <cloysterhpc/utils/formatters.h>
 
 namespace cloyster::services {
+
 class ScriptBuilder final
 {
     std::vector<std::string> m_commands;
@@ -33,7 +34,7 @@ public:
         Args&&... args)
     {
         auto line = fmt::format(fmt, std::forward<decltype(args)>(args)...);
-        return addCommand("grep -q {} || \\\n  echo {} >> {}", key, line, path);
+        return addCommand("grep -q \"{}\" || \\\n  echo \"{}\" >> \"{}\"", key, line, path);
     };
 
     ScriptBuilder& addNewLine();
@@ -47,6 +48,7 @@ public:
     [[nodiscard]] std::string toString() const;
     [[nodiscard]] const std::vector<std::string>& commands() const;
 };
+
 };
 
 #endif

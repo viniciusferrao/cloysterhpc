@@ -468,6 +468,15 @@ void Shell::install()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
+    // const auto nfsInstallScript =
+    //     networkFileSystem.installScript(cluster()->getHeadnode().getOS());
+    // const auto nfsImageInstallScrit = 
+    //     networkFileSystem.imageInstallScript(cluster()->getHeadnode().getOS(), {
+    //     .imageName = "rocky9.5-x86_64-netboot-compute",
+    //     .rootfs = "/install/netboot/rocky9.5/x86_64/compute/rootimg",
+    //     .postinstall = "/install/custom/netboot/compute.postinstall",
+    //     .pkglist = "/install/custom/netboot/compute.otherpkglist"
+    // });
     networkFileSystem.configure();
     networkFileSystem.enable();
     networkFileSystem.start();

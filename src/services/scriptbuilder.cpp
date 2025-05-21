@@ -92,6 +92,7 @@ TEST_CASE("Basic") {
 
     builder
         .addNewLine()
+        .addCommand("# Variables")
         .addCommand("HEADNODE=$(hostname -s)")
         .addNewLine()
         .addCommand("# install packages")
@@ -101,19 +102,86 @@ TEST_CASE("Basic") {
         .addLineToFile(
             "/etc/exports", 
             "/home",
-            "/home *(rw,no_subtree_check,fsid={},no_root_squash)", 10);
+            "/home *(rw,no_subtree_check,fsid={},no_root_squash)", 10)
+        .addLineToFile(
+            "/etc/exports", 
+            "/opt/ohpc/pub",
+            "/opt/ohpc/pub *(ro,no_subtree_check,fsid={})", 11)
+        .addLineToFile(
+            "/etc/exports", 
+            "/tftpboot",
+            "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)")
+        .addLineToFile(
+            "/etc/exports", 
+            "/install",
+            "/install *(rw,no_root_squash,sync,no_subtree_check)")
+        .addNewLine()
+        .addCommand("# Configure autofs maps")
+        .addLineToFile(
+            "/etc/auto.home", 
+            "/home",
+            "/home   /etc/auto.home")
+        .addLineToFile(
+            "/etc/auto.home", 
+            "/opt/ohpc/pub",
+            "/opt/ohpc/pub   /etc/auto.home")
+        .addLineToFile(
+            "/etc/auto.home",
+            ":/home/&",
+            "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${{HEADNODE}}:/home/&")
+        .addLineToFile(
+            "/etc/auto.home",
+            ":/opt/ohpc/pub/&",
+            "* -fstype=nfs,ro,no_subtree_check ${{HEADNODE}}:/opt/ohpc/pub/&")
+        .enableService("rpcbind nfs-server autofs")
+        .addCommand("exports -a")
+        .addNewLine()
+        .addCommand(R"(# Update firewall rules
+if systemctl is-enabled --quiet firewalld.service; then
+    firewall-cmd --permanent --add-service={{nfs,mountd,rpc-bind}}
+    firewall-cmd --reload
+fi)")
+        ;
     CHECK(builder.toString() == 
-R"(#!/bin/bash -xeu
+R"del(#!/bin/bash -xeu
 
+# Variables
 HEADNODE=$(hostname -s)
 
 # install packages
 dnf install -y nfs-utils autofs
 
 # Add exports to /etc/exports
-grep -q /home || \
-  echo /home *(rw,no_subtree_check,fsid=10,no_root_squash) >> /etc/exports)");
+grep -q "/home" || \
+  echo "/home *(rw,no_subtree_check,fsid=10,no_root_squash)" >> "/etc/exports"
+grep -q "/opt/ohpc/pub" || \
+  echo "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)" >> "/etc/exports"
+grep -q "/tftpboot" || \
+  echo "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)" >> "/etc/exports"
+grep -q "/install" || \
+  echo "/install *(rw,no_root_squash,sync,no_subtree_check)" >> "/etc/exports"
+
+# Configure autofs maps
+grep -q "/home" || \
+  echo "/home   /etc/auto.home" >> "/etc/auto.home"
+grep -q "/opt/ohpc/pub" || \
+  echo "/opt/ohpc/pub   /etc/auto.home" >> "/etc/auto.home"
+grep -q ":/home/&" || \
+  echo "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${HEADNODE}:/home/&" >> "/etc/auto.home"
+grep -q ":/opt/ohpc/pub/&" || \
+  echo "* -fstype=nfs,ro,no_subtree_check ${HEADNODE}:/opt/ohpc/pub/&" >> "/etc/auto.home"
+systemctl enable --now rpcbind nfs-server autofs
+exports -a
+
+# Update firewall rules
+if systemctl is-enabled --quiet firewalld.service; then
+    firewall-cmd --permanent --add-service={nfs,mountd,rpc-bind}
+    firewall-cmd --reload
+fi)del");
 }
+// windsurf https://aider.chat/
+// codex (ai) codex-cli
+// e como adicionar um CI
 
 TEST_SUITE_END();
 
