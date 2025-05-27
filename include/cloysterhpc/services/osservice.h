@@ -1,6 +1,7 @@
 #ifndef CLOYSTER_OSSERVICE_H_
 #define CLOYSTER_OSSERVICE_H_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -66,16 +67,10 @@ public:
 };
 
 
-struct RockyLinux {
-    static bool shouldUseVault(const std::string& version);
-};
-
-struct EnterpriseLinux {
-    static std::string repositoryURL(const std::string& repoName,
-                   // NOLINTNEXTLINE
-                   const std::string& path,
-                   const std::string& upstreamUrl,
-                   const bool forceUpstream = false);
+class RockyLinux final {
+    static std::optional<bool> m_shouldUseVault;
+public:
+    static bool shouldUseVault(const OS& osinfo);
 };
 
 };

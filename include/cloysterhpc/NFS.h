@@ -14,7 +14,7 @@
 
 using cloyster::models::OS;
 
-
+namespace cloyster::services {
 /**
  * @class NFS
  * @brief A class representing the NFS service configuration.
@@ -54,6 +54,8 @@ private:
      * @brief Sets the full path of the NFS share.
      */
     void setFullPath();
+};
+
 };
 
 #endif // CLOYSTERHPC_NFS_H_

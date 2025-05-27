@@ -31,6 +31,7 @@ cmake --build build
 echo "INSTALL: $PWD"
 mkdir -p %{buildroot}/usr/bin
 install -m 755 build/src/cloysterhpc %{buildroot}/usr/bin/cloysterhpc
+install -m 755 repos/repos.conf %{buildroot}/opt/cloysterhpc/conf/repos.conf
 
 %files
 /usr/bin/cloysterhpc

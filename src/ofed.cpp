@@ -11,7 +11,7 @@
 #include <cloysterhpc/services/repos.h>
 #include <utility>
 
-using cloyster::IRunner;
+using cloyster::functions::IRunner;
 
 void OFED::setKind(Kind kind) { m_kind = kind; }
 

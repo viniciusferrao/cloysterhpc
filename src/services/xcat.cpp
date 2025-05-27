@@ -12,12 +12,10 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/services/execution.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 
 namespace {
@@ -192,7 +190,7 @@ void XCAT::nodeset(std::string_view nodes)
 
 void XCAT::createDirectoryTree()
 {
-    cloyster::createDirectory(CHROOT "/install/custom/netboot");
+    functions::createDirectory(CHROOT "/install/custom/netboot");
 }
 
 void XCAT::configureOpenHPC()
@@ -255,7 +253,7 @@ void XCAT::configureInfiniband()
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);
-                const auto localRepo = cloyster::createHTTPRepo(repoName);
+                const auto localRepo = functions::createHTTPRepo(repoName);
 
                 // Create the RPM repository
                 runner->checkCommand(fmt::format(
@@ -332,8 +330,8 @@ void XCAT::generateOtherPkgListFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.otherpkglist";
 
-    cloyster::removeFile(filename);
-    cloyster::addStringToFile(
+    functions::removeFile(filename);
+    functions::addStringToFile(
         filename, fmt::format("{}\n", fmt::join(m_stateless.otherpkgs, "\n")));
 }
 
@@ -342,7 +340,7 @@ void XCAT::generatePostinstallFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.postinstall";
 
-    cloyster::removeFile(filename);
+    functions::removeFile(filename);
 
     // TODO: Should be replaced with autofs
     m_stateless.postinstall.emplace_back(
@@ -366,7 +364,7 @@ void XCAT::generatePostinstallFile()
     m_stateless.postinstall.emplace_back("systemctl disable firewalld\n");
 
     for (const auto& entries : std::as_const(m_stateless.postinstall)) {
-        cloyster::addStringToFile(filename, entries);
+        functions::addStringToFile(filename, entries);
     }
 
     auto opts = cloyster::Singleton<cloyster::services::Options>::get();
@@ -386,8 +384,8 @@ void XCAT::generateSynclistsFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.synclists";
 
-    cloyster::removeFile(filename);
-    cloyster::addStringToFile(filename,
+    functions::removeFile(filename);
+    functions::addStringToFile(filename,
         "/etc/passwd -> /etc/passwd\n"
         "/etc/group -> /etc/group\n"
         "/etc/shadow -> /etc/shadow\n"
@@ -397,6 +395,7 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     auto runner = cloyster::Singleton<IRunner>::get();
     runner->executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkglist="
@@ -414,11 +413,12 @@ void XCAT::configureOSImageDefinition()
             m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-    std::vector<std::string> repos = getxCATOSImageRepos();
-
-    runner->executeCommand(
-        fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
-            m_stateless.osimage, fmt::join(repos, ",")));
+    if (!opts->dryRun) {
+        std::vector<std::string> repos = getxCATOSImageRepos();
+        runner->executeCommand(
+            fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
+                m_stateless.osimage, fmt::join(repos, ",")));
+    }
 }
 
 void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations)
@@ -519,11 +519,13 @@ cloyster::services::XCAT::ImageInstallArgs
 XCAT::getImageInstallArgs(ImageType imageType, NodeType nodeType)
 {
     generateOSImageName(imageType, nodeType);
+    generateOSImagePath(imageType, nodeType);
+    LOG_ASSERT(!m_stateless.osimage.empty(), "Empty osimage name");
     return ImageInstallArgs {
         .imageName = m_stateless.osimage,
         .rootfs = m_stateless.chroot,
-        .postinstall = m_stateless.chroot / "install/custom/netboot/compute.postinstall",
-        .pkglist = m_stateless.chroot / "install/custom/netboot/compute.otherpkglist"
+        .postinstall = "/install/custom/netboot/compute.postinstall",
+        .pkglist = "/install/custom/netboot/compute.otherpkglist"
     };
 }
 
@@ -714,7 +716,9 @@ std::vector<std::string> XCAT::getxCATOSImageRepos() const
             addReposFromFile("oracle.repo");
             break;
         case OS::Distro::Rocky:
-            addReposFromFile("rocky.repo");
+            RockyLinux::shouldUseVault(osinfo) ?
+                addReposFromFile("rocky-vault.repo") :
+                addReposFromFile("rocky.repo");
             break;
         case OS::Distro::AlmaLinux:
             addReposFromFile("almalinux.repo");

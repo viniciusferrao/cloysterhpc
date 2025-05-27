@@ -18,7 +18,7 @@
 
 namespace cloyster::services {
 
-TEST_SUITE_BEGIN("ScriptBuilder");
+TEST_SUITE_BEGIN("cloyster::services::ScriptBuilder");
 
 using namespace cloyster::models;
 

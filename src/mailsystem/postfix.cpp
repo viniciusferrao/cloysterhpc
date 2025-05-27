@@ -220,7 +220,7 @@ void Postfix::createFiles(const std::filesystem::path& basedir)
     }
 
     if (!std::filesystem::exists(basedir / "aliases")) {
-        cloyster::touchFile(basedir / "aliases");
+        cloyster::functions::touchFile(basedir / "aliases");
     }
 }
 
@@ -255,7 +255,7 @@ void Postfix::configureSASL(const std::filesystem::path& basedir)
         return;
     }
 
-    cloyster::addStringToFile(filename.string(),
+    cloyster::functions::addStringToFile(filename.string(),
         fmt::format("[{}]:{} {}:{}", m_smtp_server.value(), m_port.value(),
             m_username.value(), m_password.value()));
 

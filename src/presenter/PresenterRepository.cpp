@@ -35,7 +35,7 @@ PresenterRepository::PresenterRepository(
         auto toDisable = allReposUIAdapter
             | std::views::filter([&toEnable](auto& tuple) {
                   auto& [id, _name, _state] = tuple;
-                  return !cloyster::utils::isIn(toEnable, id);
+                  return !cloyster::functions::isIn(toEnable, id);
               })
             | std::views::transform([](auto& tuple) {
                   auto& [id, _name, _state] = tuple;

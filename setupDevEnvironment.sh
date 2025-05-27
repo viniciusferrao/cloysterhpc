@@ -119,16 +119,20 @@ dnf -y install rsync git gcc-c++ gdb cmake ccache ninja-build llvm-toolset \
 case "$os_version" in
   8)
     dnf -y install python3 python3-pip\* gcc-toolset-14 \
-      gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck
+      gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck \
+      perl-File-Copy perl-File-Compare perl-Thread-Queue
     ;;
   9)
     dnf -y install python pip libasan libubsan gcc-toolset-14 \
       gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck \
-      glibmm24 glibmm24-devel
+      glibmm24 glibmm24-devel \
+      perl-File-Copy perl-File-Compare perl-Thread-Queue
+
     ;;
   10)
     dnf -y install python pip libubsan libasan liblsan libtsan libhwasan \
-      glibmm-2.68 glibmm-2.68-devel
+      glibmm-2.68 glibmm-2.68-devel \
+      perl-File-Copy perl-File-Compare perl-Thread-Queue
     ;;
 esac
 

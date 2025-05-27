@@ -3,9 +3,9 @@
 
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/patterns/wrapper.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
-#include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/utils/string.h>
 #include <algorithm>
@@ -23,8 +23,9 @@
 #include <cloysterhpc/services/runner.h>
 #include <type_traits>
 
-namespace cloyster {
-
+// @TODO Split these functions into multiple utils subnamespaces like strings
+//   and enums
+namespace cloyster::functions {
 // Globals, intialized by the command line parser
 template <typename B, typename T, typename... Args>
 constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
@@ -32,8 +33,8 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
-using cloyster::models::OS;
-using cloyster::services::IRunner;
+using models::OS;
+using services::IRunner;
 
 /* shell execution */
 
@@ -138,14 +139,11 @@ struct HTTPRepo {
 
 HTTPRepo createHTTPRepo(const std::string_view repoName);
 
+void backupFilesByExtension(
+    const wrappers::DestinationPath& backupPath,
+    const wrappers::SourcePath& sourcePath,
+    const wrappers::Extension& extension);
 
-} // namespace cloyster
-
-/**
- * @brief Generic functions. Be very judicious on what you put here. Is it
- * really generic?
- */
-namespace cloyster::utils {
 
 /**
  * @brief Returns true if [val] is in [container]
@@ -201,7 +199,7 @@ std::vector<std::string> getFilesByExtension(
         if (entry.is_regular_file() &&
             entry.path().extension() == extension) {
             result.push_back(entry.path().filename().string());
-        }
+            }
     }
 
     return result;
@@ -219,13 +217,14 @@ void removeFilesWithExtension(
 ) {
     namespace fs = std::filesystem;
 
-    std::string extensionLower = string::lower(std::string(extension));
+    std::string extensionLower = utils::string::lower(std::string(extension));
 
     for (const auto& entry : fs::directory_iterator(path)) {
         if (entry.is_regular_file()) {
-            std::string ext = string::lower(entry.path().extension().string());
+            std::string ext = utils::string::lower(entry.path().extension().string());
 
             if (ext == extensionLower) {
+                LOG_DEBUG("Removing file {}", entry.path());
                 fs::remove(entry.path());
             }
         }
@@ -233,13 +232,53 @@ void removeFilesWithExtension(
 }
 
 TEST_CASE("removeFilesWithExtension") {
-    const std::filesystem::path path = "test/output/utils";
+    const std::filesystem::path path = "test/output/utils/removeFilesWithExtension";
+    createDirectory(path);
     touchFile(path / "test.txt");
     CHECK(getFilesByExtension(path, ".txt").size() == 1);
     removeFilesWithExtension(path, ".txt");
     CHECK(getFilesByExtension(path, ".txt").size() == 0);
 }
 
+void copyFilesWithExtension(
+    const auto& source,
+    const auto& destination,
+    const auto& extension
+)
+{
+    namespace fs = std::filesystem;
+
+    for (const auto& entry : fs::directory_iterator(source)) {
+        if (entry.is_regular_file() &&
+            entry.path().extension() == extension) {
+            copyFile(entry.path(), destination / entry.path().filename());
+            }
+    }
+}
+
+TEST_CASE("copyFileWithExtension") {
+    const std::filesystem::path source = "test/output/utils/copyFilesWithExtension/src";
+    const std::filesystem::path destination = "test/output/utils/copyFilesWithExtension/dst";
+    createDirectory(source);
+    createDirectory(destination);
+    touchFile(source / "test.txt");
+    touchFile(source / "test2.txt");
+    touchFile(source / "test3.txt");
+    CHECK(getFilesByExtension(source, ".txt").size() == 3);
+    removeFilesWithExtension(destination, ".txt");
+    CHECK(getFilesByExtension(destination, ".txt").size() == 0);
+    copyFilesWithExtension(source, destination, ".txt");
+    CHECK(getFilesByExtension(destination, ".txt").size() == 3);
+}
+
+void moveFilesWithExtension(
+    const auto& source,
+    const auto& destination,
+    const auto& extension
+) {
+    copyFilesWithExtension(source, destination, extension);
+    removeFilesWithExtension(source, extension);
+}
 
 // @FIXME: Yes, curl works I know, but no.. fix this, use boost for
 //   requests and asynchronous I/O so we can run a bunch of these
@@ -265,11 +304,9 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     for (std::size_t i = 0; i < maxRetries; ++i) {
         header = getHttpStatusInner(url, runner);     
         LOG_DEBUG("HTTP status of {}: {}", url, header);
-        if (header == "200") {
-            return header;
-        } else if (header.starts_with("5")) {
+        if (!header.starts_with("5")) {
             LOG_DEBUG("HTTP {} error, retry {}", header, i);
-            continue;
+            return header;
         }
     }
     return header;
@@ -279,9 +316,7 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
 }
 
-
 TEST_SUITE_END();
-
-} // namespace cloyster::utils
+};
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

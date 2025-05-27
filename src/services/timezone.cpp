@@ -11,6 +11,8 @@
 #include <map>
 #include <string>
 
+using namespace cloyster;
+
 Timezone::Timezone()
     : m_availableTimezones { fetchAvailableTimezones() }
 {
@@ -28,7 +30,7 @@ std::string_view Timezone::getTimezoneArea() const { return m_timezoneArea; }
 void Timezone::setSystemTimezone()
 {
     LOG_DEBUG("Setting system timezone to {}\n", m_timezone)
-    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    auto runner = cloyster::Singleton<functions::IRunner>::get();
     runner->executeCommand(
         fmt::format("timedatectl set timezone {}", m_timezone));
 }
@@ -48,7 +50,7 @@ std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
     }
 
     LOG_DEBUG("Fetching available system timezones")
-    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    auto runner = cloyster::Singleton<functions::IRunner>::get();
     auto output = runner->checkOutput(
         fmt::format("timedatectl list-timezones --no-pager"));
 

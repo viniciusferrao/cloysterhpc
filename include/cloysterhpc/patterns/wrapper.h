@@ -2,8 +2,6 @@
 #define CLOYSTERHPC_PATTERNS_WRAPPER_H_
 
 namespace cloyster {
-
-
 /**
  * @class Wrapper
  * @brief Type-safe wrapper for primitive types, providing strong typedef semantics.
@@ -17,27 +15,58 @@ namespace cloyster {
  *
  * Example usage:
  * @code
- * struct UserIdTag; // Incomplete type
+ * struct UserTag; // Incomplete type
  * struct EmailTag;  // Incomplete type
- * using UserId = cloyster::Wrapper<int, UserIdTag>;
- * using Email = cloyster::Wrapper<std::string, EmailTag>;
+ * using User = Wrapper<std::string, UserIdTag>;
+ * using Email = Wrapper<std::string, EmailTag>;
  * 
- * UserId id(42);
+ * User user("alice");
  * Email email("alice@example.com");
  * 
  * // Type safety: cannot pass Email to function expecting UserId
- * void processUser(UserId user) { int raw = static_cast<int>(user); }
- * processUser(id);        // OK
- * // processUser(email);  // Error: Email is not UserId
+ * void processUser(User user) {}
+ * processUser(user);  // OK
+ * processUser(email); // Error: Email is not User
  * @endcode
  */
 template <typename T, typename Tag>
-struct Wrapper {
+class Wrapper final {
     T value;
-    explicit constexpr Wrapper(const T& val) : value(val) {}
-    explicit constexpr operator T() const { return value; }
+public:
+    constexpr explicit Wrapper(T val) noexcept : value(std::move(val)) {}
+    Wrapper() = delete;
+    Wrapper(const Wrapper&) = delete;
+    Wrapper(const Wrapper&&) = delete;
+    Wrapper& operator=(const Wrapper&) = delete;
+    Wrapper& operator=(Wrapper&&) = delete;
+    ~Wrapper() = default;
+
+    // Implicit conversion to T is desired in this case, so I disabled the linter
+    // in the next line
+    constexpr operator T() const { return value; } // NOLINT
+    const T& get() const { return value; }
 };
 
-};
+/** @namespace wrappers
+ * @brief Namespace for wrapper types.
+ * @details This namespace contains wrapper types for common types, such as `std::string`,
+ *   `std::filesystem::path`, and `int`. These wrappers provide strong typedef semantics
+ *   to avoid swapping parameters of the same type in functions calls, (among other problems)
+ *   making the code more readable and maintainable.
+ */
+namespace wrappers {
+    namespace fs = std::filesystem;
+
+    struct DestinationPathTag;
+    using DestinationPath = Wrapper<fs::path, DestinationPathTag>;
+
+    struct SourcePathTag;
+    using SourcePath = Wrapper<fs::path, SourcePathTag>;
+
+    struct ExtensionTag;
+    using Extension = Wrapper<std::string, ExtensionTag>;
+}
+
+} // namespace cloyster
 
 #endif

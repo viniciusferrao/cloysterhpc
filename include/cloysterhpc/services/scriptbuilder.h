@@ -34,7 +34,7 @@ public:
         Args&&... args)
     {
         auto line = fmt::format(fmt, std::forward<decltype(args)>(args)...);
-        return addCommand("grep -q \"{}\" || \\\n  echo \"{}\" >> \"{}\"", key, line, path);
+        return addCommand("grep -q \"{}\" \"{}\" || \\\n  echo \"{}\" >> \"{}\"", key, path, line, path);
     };
 
     ScriptBuilder& addNewLine();

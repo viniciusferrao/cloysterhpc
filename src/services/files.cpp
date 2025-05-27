@@ -30,7 +30,7 @@ KeyFile::KeyFile(const std::filesystem::path& path)
     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
 {
     m_impl->m_path = path;
-    if (cloyster::exists(path)) {
+    if (cloyster::functions::exists(path)) {
         m_impl->m_keyfile->load_from_file(path);
     }
 }

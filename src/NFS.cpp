@@ -13,7 +13,7 @@
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 
-using cloyster::OS;
+using cloyster::models::OS;
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -22,7 +22,7 @@ using cloyster::OS;
 #include <doctest/doctest.h>
 #endif
 
-
+namespace cloyster::services {
 NFS::NFS(const std::string& directoryName, const std::string& directoryPath,
     const boost::asio::ip::address& address, const std::string& permissions)
     : m_directoryName(directoryName)
@@ -69,25 +69,8 @@ NFS::installScript(const OS& osinfo)
             "/install",
             "/install *(rw,no_root_squash,sync,no_subtree_check)")
         .addNewLine()
-        .addCommand("# Configure autofs maps")
-        .addLineToFile(
-            "/etc/auto.home", 
-            "/home",
-            "/home   /etc/auto.home")
-        .addLineToFile(
-            "/etc/auto.home", 
-            "/opt/ohpc/pub",
-            "/opt/ohpc/pub   /etc/auto.home")
-        .addLineToFile(
-            "/etc/auto.home",
-            ":/home/&",
-            "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${{HEADNODE}}:/home/&")
-        .addLineToFile(
-            "/etc/auto.home",
-            ":/opt/ohpc/pub/&",
-            "* -fstype=nfs,ro,no_subtree_check ${{HEADNODE}}:/opt/ohpc/pub/&")
         .enableService("rpcbind nfs-server autofs")
-        .addCommand("exports -a")
+        .addCommand("exportfs -a")
         .addNewLine()
         .addCommand(R"(# Update firewall rules
 if systemctl is-enabled --quiet firewalld.service; then
@@ -152,7 +135,7 @@ cloyster::services::ScriptBuilder NFS::imageInstallScript(
     return builder;
 }
 
-TEST_SUITE_BEGIN("NFS");
+TEST_SUITE_BEGIN("cloyster::services::NFS");
 
 TEST_CASE("installScript") {
     const OS osinfo
@@ -186,17 +169,8 @@ grep -q "/tftpboot" || \
 grep -q "/install" || \
   echo "/install *(rw,no_root_squash,sync,no_subtree_check)" >> "/etc/exports"
 
-# Configure autofs maps
-grep -q "/home" || \
-  echo "/home   /etc/auto.home" >> "/etc/auto.home"
-grep -q "/opt/ohpc/pub" || \
-  echo "/opt/ohpc/pub   /etc/auto.home" >> "/etc/auto.home"
-grep -q ":/home/&" || \
-  echo "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${HEADNODE}:/home/&" >> "/etc/auto.home"
-grep -q ":/opt/ohpc/pub/&" || \
-  echo "* -fstype=nfs,ro,no_subtree_check ${HEADNODE}:/opt/ohpc/pub/&" >> "/etc/auto.home"
 systemctl enable --now rpcbind nfs-server autofs
-exports -a
+exportfs -a
 
 # Update firewall rules
 if systemctl is-enabled --quiet firewalld.service; then
@@ -253,5 +227,6 @@ mkdir -p ${ROOTFS}/home ${ROOTFS}/opt/ohpc/pub || :
 chdef -t osimage ${IMAGE} postinstall="${POSTINSTALL}"
 )del");
 }
+};
 
 TEST_SUITE_END();

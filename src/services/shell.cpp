@@ -60,9 +60,8 @@ namespace cloyster::services {
 Shell::Shell()
 {
     // Initialize directory tree
-    cloyster::createDirectory(installPath);
-    cloyster::createDirectory(std::string { installPath } + "/backup");
-    cloyster::createDirectory(
+    functions::createDirectory(std::string { installPath } + "/backup");
+    functions::createDirectory(
         std::string { installPath } + "/conf/node/etc/auto.master.d");
 }
 
@@ -72,8 +71,8 @@ void Shell::disableSELinux()
 
     const auto filename = CHROOT "/etc/sysconfig/selinux";
 
-    cloyster::backupFile(filename);
-    cloyster::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
+    functions::backupFile(filename);
+    functions::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
 
     LOG_WARN("SELinux has been disabled")
 }
@@ -160,8 +159,8 @@ void Shell::configureHostsFile()
 
     std::string_view filename = CHROOT "/etc/hosts";
 
-    cloyster::backupFile(filename);
-    cloyster::addStringToFile(
+    functions::backupFile(filename);
+    functions::addStringToFile(
         filename, fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
@@ -190,9 +189,9 @@ void Shell::disableNetworkManagerDNSOverride()
 
     // TODO: We should not violently remove the file, we may need to backup if
     //  the file exists, and remove after the copy
-    cloyster::removeFile(filename);
+    functions::removeFile(filename);
     // TODO: Would be better handled with a .conf function
-    cloyster::addStringToFile(filename,
+    functions::addStringToFile(filename,
         "[main]\n"
         "dns=none\n");
 
@@ -232,8 +231,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             formattedNameservers.emplace_back(nameservers[i].to_string());
         }
 
-        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-        auto connectionName = cloyster::utils::enums::toString(
+        auto opts = Singleton<Options>::get();
+        auto connectionName = utils::enums::toString(
             connection.getNetwork()->getProfile());
         if (!opts->dryRun
 
@@ -293,7 +292,7 @@ void Shell::installRequiredPackages()
 {
     LOG_INFO("Installing required system packages")
 
-    osservice()->install("wget dnf-plugins-core chkconfig");
+    osservice()->install("wget dnf-plugins-core chkconfig jq tar");
 }
 
 void Shell::disallowSSHRootPasswordLogin()
@@ -320,7 +319,7 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
 
     std::string_view filename = CHROOT "/etc/chrony.conf";
 
-    cloyster::backupFile(filename);
+    functions::backupFile(filename);
 
     for (const auto& connection : std::as_const(connections)) {
         if ((connection.getNetwork()->getProfile()
@@ -329,9 +328,9 @@ void Shell::configureTimeService(const std::list<Connection>& connections)
                 == Network::Profile::Service)) {
 
             // Configure server as local stratum (serve time without sync)
-            cloyster::addStringToFile(filename, "local stratum 10\n");
+            functions::addStringToFile(filename, "local stratum 10\n");
 
-            cloyster::addStringToFile(filename,
+            functions::addStringToFile(filename,
                 fmt::format("allow {}/{}\n",
                     connection.getAddress().to_string(),
                     connection.getNetwork()->cidr.at(
@@ -405,8 +404,8 @@ void Shell::removeMemlockLimits()
 
     std::string_view filename = CHROOT "/etc/security/limits.conf";
 
-    cloyster::backupFile(filename);
-    cloyster::addStringToFile(filename,
+    functions::backupFile(filename);
+    functions::addStringToFile(filename,
         "* soft memlock unlimited\n"
         "* hard memlock unlimited\n");
 }
@@ -428,13 +427,7 @@ void Shell::configureRepositories()
 {
     const auto& osinfo = cluster()->getHeadnode().getOS();
     auto repos = cloyster::Singleton<repos::RepoManager>::get();
-    auto opts = cloyster::Singleton<Options>::get();
-    // 1. Install files into /etc, these files are the templates
-    //    at include/cloysterhpc/repos/el*/*.repo
     repos->initializeDefaultRepositories();
-    // 2. Enable the repositories
-    auto enabledRepos = std::vector<std::string>(opts->enabledRepos.begin(), opts->enabledRepos.end());
-    repos->enable(enabledRepos);
 }
 
 /* This method is the entrypoint of shell based cluster install
@@ -482,10 +475,14 @@ void Shell::install()
         cluster()->getProvisioner()) };
 
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
+    const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
+
     // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (cluster()->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
+            repoManager->enable("xcat-core");
+            repoManager->enable("xcat-dep");
             provisioner = std::make_unique<XCAT>();
             break;
     }
@@ -500,9 +497,9 @@ void Shell::install()
 
     LOG_INFO("[{}] Setting up the provisioner", provisionerName)
     provisioner->setup();
-
     const auto imageType = XCAT::ImageType::Netboot;
     const auto nodeType = XCAT::NodeType::Compute;
+
     const auto imageInstallArgs = provisioner->getImageInstallArgs(imageType, nodeType);
     const auto osinfo = cluster()->getHeadnode().getOS();
 
@@ -513,7 +510,8 @@ void Shell::install()
             imageInstallArgs);
 
     LOG_INFO("[{}] Creating node images", provisionerName);
-    provisioner->createImage(imageType, nodeType, {
+    provisioner->createImage(
+        imageType, nodeType, {
         // Customizations to the image
         nfsImageInstallScript
     });

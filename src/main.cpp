@@ -11,14 +11,11 @@
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/models/os.h>
-#include <cloysterhpc/utils/formatters.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
-#include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/verification.h>
@@ -46,7 +43,7 @@ int runTestCommand(const std::string& testCommand,
     LOG_INFO("Running test command {} {} ", testCommand,
         fmt::join(testCommandArgs, ","));
     auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
-    auto runner = cloyster::Singleton<cloyster::IRunner>::get();
+    auto runner = cloyster::Singleton<cloyster::functions::IRunner>::get();
     auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
     if (testCommand == "execute-command") {
         runner->checkCommand(testCommandArgs[0]);
@@ -55,7 +52,7 @@ int runTestCommand(const std::string& testCommand,
         runner->checkCommand(R"(bash -c "dnf config-manager --set-enabled '*' && dnf makecache -y" )");
     } else if (testCommand == "create-http-repo") {
         assert(testCommandArgs.size() > 0);
-        cloyster::createHTTPRepo(testCommandArgs[0]);
+        cloyster::functions::createHTTPRepo(testCommandArgs[0]);
     } else if (testCommand == "parse-key-file") {
         assert(testCommandArgs.size() > 0);
         LOG_INFO("Loading file {}", testCommandArgs[0]);
@@ -87,7 +84,7 @@ int main(int argc, const char** argv)
 
     auto opts = Singleton<Options>::get();
     if (opts->parsingError) {
-        fmt::print("Error: {}", opts->error);
+        fmt::print("Parsing error: {}", opts->error);
         return EXIT_FAILURE;
     }
 

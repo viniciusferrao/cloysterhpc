@@ -1,4 +1,5 @@
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/log.h>
 
 #include <CLI/CLI.hpp>
 #include <fstream>
@@ -12,30 +13,30 @@ using std::ifstream;
 std::unique_ptr<Options> options::factory(int argc, const char** argv)
 {
     // Create an instance of Options with default values
-    Options opt;
-    opt.helpAndExit = false;
-    opt.showVersion = false;
-    opt.runAsRoot = false;
-    opt.dryRun = false;
-    opt.enableTUI = false;
-    opt.enableCLI = false;
-    opt.runAsDaemon = false;
-    opt.airGap = false;
-    opt.airGapUrl = "file:///var/repos/";
-    opt.mirrorBaseUrl = "https://mirror.versatushpc.com.br";
-    opt.beegfsVersion = "beegfs_7.3.3";
-    opt.zabbixVersion = "6.4";
-    opt.xcatVersion = "latest";
-    opt.logLevelInput = 3;
-    opt.answerfile = "";
-    opt.unattended = false;
-    opt.dumpAnswerfile = "";
-    opt.config = "";
-#ifndef NDEBUG
-    opt.testCommand = "";
-    opt.testCommandArgs = {};
-#endif
-
+    Options opt {
+        .parsingError = false,
+        .helpAndExit = false,
+        .showVersion = false,
+        .runAsRoot = false,
+        .dryRun = false,
+        .enableTUI = false,
+        .enableCLI = false,
+        .runAsDaemon = false,
+        .airGap = false,
+        .unattended = false,
+        .disableMirrors = false,
+        .logLevelInput = 3,
+        .error = "NO ERROR",
+        .config = "",
+        .helpText = "",
+        .airGapUrl = "file:///var/repos/",
+        .mirrorBaseUrl = "https://mirror.versatushpc.com.br",
+        .answerfile = "",
+        .beegfsVersion = "beegfs_7.3.3",
+        .zabbixVersion = "6.4",
+        .xcatVersion = "latest",
+        .dumpAnswerfile = "",
+    };
     // Define the CLI11 app
     CLI::App app("CloysterHPC Options");
 
@@ -65,8 +66,6 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
     app.add_option("--ohpc-packages", opt.ohpcPackages, "Select OHPC packages")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
-    app.add_option("--repos", opt.enabledRepos, "Enabled repositories")
-        ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
     app.add_flag("-u,--unattended", opt.unattended, "Perform an unattended installation");
     app.add_option("--dump-answerfile", opt.dumpAnswerfile, "Create an answerfile based on input and save to specified path");
     app.add_option("--config", opt.config, "Config file to pass options for the command line from a configuration file");
@@ -86,6 +85,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
     } catch (const CLI::CallForVersion& e) {
         opt.showVersion = true;
     } catch (const CLI::ParseError& e) {
+        LOG_ERROR("Parsing error: {}", e.what());
         opt.parsingError = true;
         opt.error = e.what();
     }
@@ -102,6 +102,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         try {
             app.parse_from_stream(configStream);
         } catch (const CLI::ParseError& e) {
+            LOG_ERROR("Parsing error from config: {}", e.what());
             opt.parsingError = true;
             opt.error = e.what();
         }
@@ -114,10 +115,6 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
                              "mpich-ucx-gnu12-ohpc", "mvapich2-gnu12-ohpc",
                              "lmod-defaults-gnu12-openmpi4-ohpc", "ohpc-autotools",
                              "hwloc-ohpc", "spack-ohpc", "valgrind-ohpc" };
-    }
-    if (opt.enabledRepos.empty()) {
-        opt.enabledRepos = { "beegfs", "elrepo", "epel", "OpenHPC",
-                             "OpenHPC-Updates", "rpmfusion" };
     }
 
     return std::make_unique<Options>(std::move(opt));

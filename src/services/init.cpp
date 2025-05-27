@@ -18,7 +18,7 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
 {
     Singleton<Options>::init(std::move(opts));
     cloyster::Singleton<MessageBus>::init([]() {
-        return cloyster::makeUniqueDerived<MessageBus, DBusClient>(
+        return cloyster::functions::makeUniqueDerived<MessageBus, DBusClient>(
             "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
     });
     cloyster::Singleton<cloyster::services::IRunner>::init([&]() {
@@ -28,10 +28,10 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
         auto opts = Singleton<Options>::get();
 
         if (opts->dryRun) {
-            return cloyster::makeUniqueDerived<IRunner, DryRunner>();
+            return cloyster::functions::makeUniqueDerived<IRunner, DryRunner>();
         }
 
-        return cloyster::makeUniqueDerived<IRunner, Runner>();
+        return cloyster::functions::makeUniqueDerived<IRunner, Runner>();
     });
 }
 

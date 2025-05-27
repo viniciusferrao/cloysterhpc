@@ -6,6 +6,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/patterns/wrapper.h>
 
 #include <chrono>
 #include <cstdio> /* FILE*, fopen, fclose */
@@ -25,8 +26,9 @@
 #include <stdexcept>
 #include <tuple>
 
-namespace cloyster {
+TEST_SUITE_BEGIN("cloyster");
 
+namespace cloyster::functions {
 using cloyster::services::repos::RepoManager;
 
 /* Returns a specific environment variable when requested.
@@ -80,7 +82,7 @@ void touchFile(const std::filesystem::path& path)
         return;
     }
 
-    if (cloyster::exists(path)) {
+    if (cloyster::functions::exists(path)) {
         LOG_WARN("File already exists, skiping {}", path.string())
         return;
     }
@@ -100,6 +102,36 @@ void createDirectory(const std::filesystem::path& path)
 
     std::filesystem::create_directories(path);
     LOG_DEBUG("Created directory: {}", path.string())
+}
+
+TEST_CASE("createDirectory - recursive creation and idempotency")
+{
+    using cloyster::services::Options;
+    cloyster::Singleton<Options>::init(
+        std::make_unique<Options>(Options{}));
+    const std::filesystem::path testBaseDir = "test/output/functions";
+    const std::filesystem::path targetDir = testBaseDir / "foo" / "bar" / "tar";
+
+    // Clean up testBaseDir before the test to ensure a known state.
+    if (std::filesystem::exists(testBaseDir)) {
+        std::filesystem::remove_all(testBaseDir);
+    }
+    // After cleanup, testBaseDir should not exist.
+    // createDirectory will create it and its children.
+    CHECK_FALSE(std::filesystem::exists(testBaseDir));
+
+    // --- Part 1: Test recursive creation ---
+    cloyster::functions::createDirectory(targetDir);
+
+    // Check if the target directory and its parents were created
+    CHECK(std::filesystem::exists(targetDir));
+    CHECK(std::filesystem::is_directory(targetDir));
+    CHECK(std::filesystem::exists(testBaseDir / "foo" / "bar"));
+    CHECK(std::filesystem::is_directory(testBaseDir / "foo" / "bar"));
+    CHECK(std::filesystem::exists(testBaseDir / "foo"));
+    CHECK(std::filesystem::is_directory(testBaseDir / "foo"));
+    CHECK(std::filesystem::exists(testBaseDir));
+    CHECK(std::filesystem::is_directory(testBaseDir));
 }
 
 /* Remove file */
@@ -248,10 +280,11 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 
     try {
+        LOG_DEBUG("Copying file {} to {}", source, destination);
         std::filesystem::copy(source, destination);
     } catch (const std::filesystem::filesystem_error& ex) {
         if (ex.code().default_error_condition() == std::errc::file_exists) {
-            LOG_WARN("File {} already exists, skip copying", source.string());
+            LOG_WARN("File {} already exists, skip copying", source);
             return;
         }
 
@@ -272,7 +305,7 @@ void installFile(const std::filesystem::path& path, std::istream& data)
         return;
     }
 
-    if (cloyster::exists(path)) {
+    if (cloyster::functions::exists(path)) {
         LOG_WARN("File already exists: {}, skipping", path.string());
         return;
     }
@@ -295,17 +328,17 @@ HTTPRepo createHTTPRepo(const std::string_view repoName)
     // nodes
     HTTPRepo repo(repoFolder, std::string(repoName),
         fmt::format("http://localhost/repos/{}", repoName));
-    if (cloyster::exists(confPath)) {
+    if (cloyster::functions::exists(confPath)) {
         LOG_WARN("Skipping the creation of HTTP repository, {} already exists",
             confPath);
         return repo;
     }
 
-    cloyster::createDirectory("/var/www/html/repos/");
+    cloyster::functions::createDirectory("/var/www/html/repos/");
     LOG_INFO("Creating HTTP repository {} at {}", confPath, repoFolder);
     auto runner = cloyster::Singleton<IRunner>::get();
-    cloyster::createDirectory(repoFolder);
-    cloyster::installFile(confPath,
+    cloyster::functions::createDirectory(repoFolder);
+    cloyster::functions::installFile(confPath,
         fmt::format(
             R"(<Directory "{0}">
 Options +Indexes +FollowSymLinks
@@ -320,5 +353,25 @@ IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
     runner->checkCommand("systemctl restart httpd");
     return repo;
 }
+
+void backupFilesByExtension(
+    const wrappers::DestinationPath& backupPath,
+    const wrappers::SourcePath& sourcePath,
+    const wrappers::Extension& extension)
+{
+    const auto opts = cloyster::Singleton<services::Options>::get();
+    if (opts->shouldForce("backups")) {
+        std::filesystem::remove_all(backupPath);
+    }
+
+    if (!cloyster::functions::exists(backupPath)) {
+        LOG_INFO("Backing up {} files from {} to {}", extension, sourcePath, backupPath);
+        cloyster::functions::createDirectory(backupPath.get());
+        cloyster::functions::moveFilesWithExtension(sourcePath.get(), backupPath.get(), extension.get());
+    } else {
+        LOG_INFO("Backup path {} already exists, skipping", backupPath);
+    }
+}
+TEST_SUITE_END();
 
 }; // namespace cloyster

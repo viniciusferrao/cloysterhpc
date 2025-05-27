@@ -8,6 +8,8 @@
 
 namespace cloyster::services {
 
+// @TODO Make this an aggregate type to avoid the warnings
+// about partial initialization
 struct Options final {
     bool parsingError;
     bool helpAndExit;
@@ -33,7 +35,6 @@ struct Options final {
     std::string dumpAnswerfile;
     std::set<std::string> skipSteps;
     std::set<std::string> forceSteps;
-    std::set<std::string> enabledRepos;
     std::set<std::string> ohpcPackages;
 
 #ifndef NDEBUG

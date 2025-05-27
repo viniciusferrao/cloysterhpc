@@ -26,11 +26,11 @@ void SLURM::installServer()
 void SLURM::configureServer()
 {
     const std::string configurationFile { "/etc/slurm/slurm.conf" };
-    cloyster::removeFile(configurationFile);
+    cloyster::functions::removeFile(configurationFile);
 
     // Ensure that the directory exists
     // TODO: This may be made on cloyster::addStringToFile?
-    cloyster::createDirectory("/etc/slurm");
+    cloyster::functions::createDirectory("/etc/slurm");
 
     std::vector<std::string> nodes;
     nodes.reserve(m_cluster.getNodes().size());
@@ -50,7 +50,7 @@ void SLURM::configureServer()
         fmt::arg("partitionName", getDefaultQueue()),
         fmt::arg("nodesDeclaration", fmt::join(nodes, "\n"))) };
 
-    cloyster::addStringToFile(configurationFile, conf);
+    cloyster::functions::addStringToFile(configurationFile, conf);
 }
 
 void SLURM::enableServer()

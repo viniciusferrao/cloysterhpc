@@ -73,13 +73,8 @@ function(
         -Wno-unused-function
         -Wno-unused-parameter
         -Wno-shadow
+        -Wno-missing-field-initializers
     )
-
-    if (BUILD_TESTING)
-        list(APPEND GCC_WARNINGS
-          -Wno-missing-field-initializers
-        )
-    endif()
   endif()
 
   if("${CUDA_WARNINGS}" STREQUAL "")

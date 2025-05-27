@@ -143,7 +143,7 @@ int Runner::run(const ScriptBuilder& script)
     std::string&& content = script.toString();
     const auto hash = cloyster::services::files::checksum(content);
     const std::filesystem::path path = fmt::format("/tmp/{}.sh", hash);
-    cloyster::installFile(path, std::move(content));
+    functions::installFile(path, std::move(content));
     executeCommand(fmt::format("chmod +x {}", path));
     executeCommand(path);
     return 0;
