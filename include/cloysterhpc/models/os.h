@@ -9,7 +9,6 @@
 #include <cloysterhpc/const.h>
 #include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
-#include <memory>
 #include <string>
 #include <variant>
 

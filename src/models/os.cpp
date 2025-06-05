@@ -27,12 +27,12 @@ namespace cloyster::models {
 OS::OS()
 {
     struct utsname system {};
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     // @FIXME: Unfortunately this runs during the initialization of the
     //  cluster instance. Which prevents us of running this during testing
     //  in a machine that does not have /etc/os-release file.
     //  The isTest flag below is used to fill up default values during tests
     //  to make it possible to run outside of target machines
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     const bool isTest = !opts->testCommand.empty();
     uname(&system);
 

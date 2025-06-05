@@ -64,6 +64,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
     app.add_option("--force", opt.forceSteps, "Force specific steps during installation")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
+    app.add_option("--stop-after", opt.stopAfterStep, "Stop after specific steps during installation");
     app.add_option("--ohpc-packages", opt.ohpcPackages, "Select OHPC packages")
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
     app.add_flag("-u,--unattended", opt.unattended, "Perform an unattended installation");
@@ -128,6 +129,14 @@ bool Options::shouldSkip(const std::string& step) const
 bool Options::shouldForce(const std::string& step) const
 {
     return forceSteps.contains(step);
+}
+
+void Options::maybeStopAfterStep(const std::string& step) const
+{
+    if (stopAfterStep == step) {
+        LOG_INFO("Exiting after {}", step);
+        std::exit(0);
+    }
 }
 
 } // namespace cloyster::services

@@ -120,6 +120,13 @@ private:
     void configureRepositories();
 
     /**
+     * @brief pin OS Version if required
+     *
+     * This function configure the required repos
+     */
+    static void pinOSVersion();
+
+    /**
      * @brief Configures the time service.
      *
      * This function sets up the time synchronization service using the provided

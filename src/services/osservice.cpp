@@ -9,14 +9,17 @@ using cloyster::Singleton;
 using cloyster::services::IOSService;
 
 class ELOSService final : public IOSService {
+    OS m_osinfo;
 public:
+    explicit ELOSService(const OS& osinfo) : m_osinfo(osinfo) {};
+
     [[nodiscard]] std::string getKernelInstalled() const override
     {
         auto runner = Singleton<IRunner>::get();
         // Get the kernel version from the kernel package, order by BUILDTIME
         // since there may be multiple kernels installed (previous kernels)
         return runner->checkOutput(
-            "bash -c \"rpm -q kernel --qf '%{VERSION}-%{RELEASE} "
+            "bash -c \"rpm -q kernel --qf '%{VERSION}-%{RELEASE}.%{ARCH} "
             "%{BUILDTIME}\n' | sort -nrk 2 | head -1 | awk '{print $1}'\"")[0];
     }
 
@@ -87,6 +90,27 @@ public:
         cloyster::Singleton<IRunner>::get()->executeCommand("dnf check");
     }
 
+    void pinOSVersion() const override
+    {
+        const auto runner = cloyster::Singleton<IRunner>::get();
+        switch (m_osinfo.getDistro()) {
+                // Rocky Linux is pinned by using Vault, this is done
+                // during the repository generation
+                case OS::Distro::Rocky:
+                // For Oracle Linux and Alma Linux I assume that we'll
+                // need to do the same trick with the repositories
+                case OS::Distro::AlmaLinux:
+                case OS::Distro::OL:
+                    break;
+                case OS::Distro::RHEL:
+                    runner->executeCommand(
+                        fmt::format("subscription-manager release --set={}", m_osinfo.getVersion()));
+                    break;
+                default:
+                    std::unreachable();
+            }
+    }
+
     void clean() const override
     {
         cloyster::Singleton<IRunner>::get()->executeCommand("dnf clean all");
@@ -140,21 +164,20 @@ std::unique_ptr<IOSService> IOSService::factory(const OS& osinfo)
         case OS::Distro::Rocky:
         case OS::Distro::AlmaLinux:
         case OS::Distro::OL:
-            return makeUniqueDerived<IOSService, ELOSService>();
+            return makeUniqueDerived<IOSService, ELOSService>(osinfo);
         default:
             throw std::logic_error("Not implemented");
     }
 }
-std::optional<bool> RockyLinux::m_shouldUseVault = std::nullopt;
 
+std::optional<bool> RockyLinux::m_shouldUseVault = std::nullopt;
 bool RockyLinux::shouldUseVault(const OS& osinfo)
 {
-    const auto lastVersion = osinfo.getVersion();
     if (m_shouldUseVault) {
         return m_shouldUseVault.value();
     }
+    const auto lastVersion = osinfo.getVersion();
     LOG_INFO("Checking if Rocky {} should use vault", lastVersion);
-
     auto output = cloyster::functions::getHttpStatus(
         fmt::format("https://dl.rockylinux.org/vault/rocky/{}/BaseOS/x86_64/os/repodata/repomd.xml", lastVersion));
     const auto should = output == "200";

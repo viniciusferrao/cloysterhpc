@@ -49,7 +49,7 @@ NFS::installScript(const OS& osinfo)
         .addCommand("HEADNODE=$(hostname -s)")
         .addNewLine()
         .addCommand("# install packages")
-        .addPackage("nfs-utils autofs")
+        .addPackage("nfs-utils")
         .addNewLine()
         .addCommand("# Add exports to /etc/exports")
         .addLineToFile(
@@ -69,7 +69,7 @@ NFS::installScript(const OS& osinfo)
             "/install",
             "/install *(rw,no_root_squash,sync,no_subtree_check)")
         .addNewLine()
-        .enableService("rpcbind nfs-server autofs")
+        .enableService("rpcbind nfs-server")
         .addCommand("exportfs -a")
         .addNewLine()
         .addCommand(R"(# Update firewall rules
@@ -96,33 +96,24 @@ cloyster::services::ScriptBuilder NFS::imageInstallScript(
         .addCommand("HEADNODE=$(hostname -s)")
         .addNewLine()
         .addCommand("# Add autofs commands to postinstall")
-        .addLineToFile("${POSTINSTALL}", "autofs", "systemctl enable --now autofs")
+        .addLineToFile("${POSTINSTALL}", "autofs", "chroot \\${{IMG_ROOTIMGDIR}} systemctl enable autofs")
         .addCommand("chmod +x \"${{POSTINSTALL}}\"")
         .addNewLine()
         .addCommand("# Add required packages to the image")
-        .addLineToFile(
-            "${PKGLIST}",
-            "nfs-utils",
-            "nfs-utils")
+        .addLineToFile("${PKGLIST}", "nfs-utils", "nfs-utils")
+        .addLineToFile("${PKGLIST}", "autofs", "autofs")
         .addNewLine()
         .addCommand("# Configure autofs")
         .addLineToFile(
-            "${ROOTFS}/etc/auto.master",
-            "/home",
-            "/home   /etc/auto.home")
-        .addLineToFile(
-            "${ROOTFS}/etc/auto.master",
-            "/opt/ohpc/pub",
+            "${ROOTFS}/etc/auto.master", "/home", "/home   /etc/auto.home")
+        .addLineToFile("${ROOTFS}/etc/auto.master", "/opt/ohpc/pub",
             "/opt/ohpc/pub   /etc/auto.ohpc")
         .addNewLine()
-        .addLineToFile(
-            "${ROOTFS}/etc/auto.master",
-            ":/home/&",
-            "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${{HEADNODE}}:/home/&")
+        .addLineToFile("${ROOTFS}/etc/auto.home", "home-map",
+            "* -fstype=nfs,rw,no_subtree_check,no_root_squash "
+            "${{HEADNODE}}:/home/&")
         .addNewLine()
-        .addLineToFile(
-            "${ROOTFS}/etc/auto.master",
-            "/opt/ohpc/pub/&",
+        .addLineToFile("${ROOTFS}/etc/auto.ohpc", "ohpc-map",
             "* -fstype=nfs,ro,no_subtree_check ${{HEADNODE}}:/opt/ohpc/pub/&")
         .addNewLine()
         .addCommand("# Create mount points")
@@ -201,7 +192,7 @@ HEADNODE=$(hostname -s)
 
 # Add autofs commands to postinstall
 grep -q "autofs" || \
-  echo "systemctl enable --now autofs" >> "${POSTINSTALL}"
+  echo 'chroot ${IMG_ROOTIMGDIR} systemctl enable --now autofs' >> "${POSTINSTALL}"
 chmod +x "${POSTINSTALL}"
 
 # Add required packages to the image

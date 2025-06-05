@@ -126,7 +126,7 @@ case "$os_version" in
     dnf -y install python pip libasan libubsan gcc-toolset-14 \
       gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck \
       glibmm24 glibmm24-devel \
-      perl-File-Copy perl-File-Compare perl-Thread-Queue
+      perl-File-Copy perl-File-Compare perl-Thread-Queue perl-FindBin
 
     ;;
   10)

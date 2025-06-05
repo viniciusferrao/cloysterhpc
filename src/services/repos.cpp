@@ -8,6 +8,7 @@
 #include <fmt/core.h>
 #include <fstream>
 #include <functional>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>
@@ -611,7 +612,7 @@ TEST_CASE("RepoAssembler")
     // CHECK(repoMirror.baseurl().value() == mirrorConfigOnline.baseurl());
 }
 
-// In-memory representation of repos.conf
+// In-memory representation of a repos.conf
 class RepoConfFile final {
     // RepoConfigs grouped by file name
     std::map<std::string, std::vector<RepoConfig>> m_files;
@@ -622,7 +623,7 @@ public:
         if (!m_files.contains(filename)) {
             m_files.emplace(filename, std::vector<RepoConfig> {});
         }
-        m_files.at(filename).push_back(value);
+        m_files.at(filename).emplace_back(value);
     }
 
     [[nodiscard]] const auto& at(const std::string& key) const
@@ -656,7 +657,25 @@ public:
     }
 };
 
+struct RepoConfFiles {
+    RepoConfFile distroRepos;
+    RepoConfFile nonDistroRepos;
+};
+
+// WIPWIPWIP
+// @FIXME: Now we have multiple .conf files and need to decide dynamically
+//  which of them to parse. In the end we'll have the same RepoConfig file
+//  but we need to check the distribution and chose what repository to load.
+//  This change may make RepoFilter obsolete because the repositories will
+//  be loaded correctly from the .conf files. But now the RepoConfig file does
+//  not represent the state of the disk anymore. The configuration lives
+//  inside repos/ folder in the source tree. For RHEL, OL and Alma we have
+//  rhel.conf, oracle.conf and alma.conf respectively for Rocky we have
+//  rocky-upstream.conf or rocky-vault.conf depending if using vault repos
+//  are required or not.
+//
 // Parser for repos.conf
+//
 class RepoConfigParser final {
     static std::string interpolateVars(const auto& fmt, const auto& vars)
     {
@@ -670,10 +689,12 @@ class RepoConfigParser final {
     };
 
 public:
-    static constexpr std::string_view defaultPath = "/opt/cloysterhpc/conf/repos.conf";
+    // Base path used during production, tests use another path
+    static constexpr std::string_view defaultPath = "/opt/cloysterhpc/conf/repos/";
     static void parse(const std::filesystem::path& path, RepoConfFile& output,
         const RepoConfigVars& vars)
     {
+        LOG_DEBUG("Loading repo config: {}", path);
         if (!cloyster::functions::exists(path)) {
             cloyster::functions::abort("Trying to parse {} but it does not exists at {}", path);
         }
@@ -799,6 +820,39 @@ public:
         parse(defaultPath, conffile, vars);
         return conffile;
     };
+
+    template <typename UseVaultService = RockyLinux>
+    static constexpr RepoConfFiles load(
+        const std::filesystem::path& basePath,
+        const OS& osinfo,
+        const RepoConfigVars& vars)
+    {
+        RepoConfFiles conffile;
+        const auto commonReposPath = basePath / "repos.conf";
+        const auto distroReposPath =
+            [&osinfo, &basePath]() 
+            -> std::filesystem::path {
+            switch (osinfo.getDistro()) {
+                case OS::Distro::RHEL:
+                    return basePath / "rhel.conf";
+                case OS::Distro::OL:
+                    return basePath / "oracle.conf";
+                case OS::Distro::AlmaLinux:
+                    return basePath / "alma.conf";
+                case OS::Distro::Rocky:
+                    if (UseVaultService::shouldUseVault(osinfo)) {
+                        return basePath / "rocky-vault.conf";
+                    } else {
+                        return basePath / "rocky-upstream.conf";
+                    }
+                default:
+                    std::unreachable();
+            }
+        }();
+        parse(commonReposPath, conffile.nonDistroRepos, vars);
+        parse(distroReposPath, conffile.distroRepos, vars);
+        return conffile;
+    }
 };
 
 TEST_CASE("RepoConfigParser")
@@ -815,6 +869,7 @@ TEST_CASE("RepoConfigParser")
     CHECK(epel.upstream.repo
         == "https://download.fedoraproject.org/pub/epel/9/Everything/"
            "x86_64/");
+
 }
 
 // Installs and enable/disable RPM repositories
@@ -989,7 +1044,6 @@ public:
 
 // Adpater for simplifying the conversion from RepoConfig
 // to RPMRepository and RPMRepositoryFiles, may do HTTP requests
-//
 template <typename MChecker = DefaultMirrorExistenceChecker,
     typename UChecker = DefaultMirrorExistenceChecker>
 struct RepoConfAdapter final {
@@ -1034,7 +1088,7 @@ struct RepoConfAdapter final {
             LOG_INFO("Generating {}", filename);
 
             auto&& repofile = fromConfigs(filename, configs, basedir);
-            output.push_back(std::move(repofile));
+            output.emplace_back(repofile);
         }
         return output;
     }
@@ -1064,7 +1118,9 @@ public:
     static constexpr auto distroFilesNames = {
         "rhel.repo",
         "rocky.repo",
-        "rocky-vault.repo",
+        "rocky-addons.repo",
+        "rocky-devel.repo",
+        "rocky-extras.repo",
         "oracle.repo",
         "almalinux.repo",
     };
@@ -1119,11 +1175,7 @@ public:
         const auto shouldUseVault = ShouldUseVaultService::shouldUseVault(m_osinfo);
         return m_allRepoFilesNames
             | std::views::filter([&](const std::string& filenameInConf) {
-                if (shouldUseVault) {
-                  return  filenameInConf == "rocky-vault.repo";
-                } else {
-                  return filenameInConf == "rocky.repo";
-                }
+                return filenameInConf.starts_with("rocky");
               })
             | std::ranges::to<std::vector>();
     };
@@ -1163,7 +1215,7 @@ TEST_CASE("RepoFilter")
 }
 
 // Return the repository names to enable based on the osinfo
-template <typename ShouldUseVaultService = RockyLinux>
+template <typename UseVaultService = RockyLinux>
 struct RepoNames {
     static std::string resolveCodeReadyBuilderName(const OS& osinfo)
     {
@@ -1185,15 +1237,14 @@ struct RepoNames {
         }
     }
 
-    static std::vector<std::string> resolveReposNames(const OS& osinfo, const RepoConfFile& conffile)
+    static std::vector<std::string> resolveReposNames(const OS& osinfo, const RepoConfFiles& conffiles)
     {
         auto distro = osinfo.getDistro();
         auto majorVersion = osinfo.getMajorVersion();
         auto output = std::vector<std::string>();
-        const auto filter = RepoFilter<ShouldUseVaultService>(conffile, osinfo);
-        const auto distroRepos = filter.distroRepos();
-        const auto nonDistroRepos = filter.nonDistroRepos();
-        const auto addToOutput = [&output]<typename ...T>(fmt::format_string<T...> fmt, T... args)
+        const auto& distroRepos = conffiles.distroRepos;
+        const auto& nonDistroRepos = conffiles.nonDistroRepos;
+        const auto& addToOutput = [&output]<typename ...T>(fmt::format_string<T...> fmt, T... args)
         {
             output.emplace_back(fmt::format(fmt::runtime(fmt), args...));
         };
@@ -1206,15 +1257,9 @@ struct RepoNames {
                 break;
             case OS::Distro::Rocky:
             {
-                if (ShouldUseVaultService::shouldUseVault(osinfo)) {
-                    addToOutput("RockyAppStream-vault");
-                    addToOutput("RockyBaseOS-vault");
-                    addToOutput("{}-vault", resolveCodeReadyBuilderName(osinfo));
-                } else {
-                    addToOutput("RockyAppStream");
-                    addToOutput("RockyBaseOS");
-                    addToOutput("{}", resolveCodeReadyBuilderName(osinfo));
-                }
+                addToOutput("appstream");
+                addToOutput("baseos");
+                addToOutput("{}", resolveCodeReadyBuilderName(osinfo));
                 break;
             }
             case OS::Distro::RHEL:
@@ -1242,7 +1287,9 @@ struct RepoNames {
 
     static std::vector<std::string> resolveReposNames(const OS& osinfo, const RepoConfigVars& vars)
     {
-        return resolveReposNames(osinfo, RepoConfigParser::parse(vars));
+        const auto& conffiles = RepoConfigParser::load<UseVaultService>(
+            RepoConfigParser::defaultPath, osinfo, vars);
+        return resolveReposNames(osinfo, conffiles);
     }
 };
 
@@ -1252,7 +1299,15 @@ TEST_CASE("RepoNames")
         static bool shouldUseVault(const OS& osinfo) { return false; }
     };
     const auto enabler = RepoNames<ShouldUseVaultService>{};
-    const auto conffile = RepoConfigParser::parseTest("repos/repos.conf");
+    const RepoConfigVars& vars = RepoConfigVars {
+        .arch = "x86_64",
+        .beegfsVersion = "beegfs_7.3.3",
+        .ohpcVersion = "3",
+        .osversion = "9.4",
+        .releasever = "9",
+        .xcatVersion = "latest",
+        .zabbixVersion = "6.4",
+    };
 
     // RHEL
     {
@@ -1261,7 +1316,8 @@ TEST_CASE("RepoNames")
             OS::Platform::el9,
             5
         );
-        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffile);
+        const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>("repos/", osinfo, vars);
+        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffiles);
         // fmt::print("Repos: {}\n", fmt::join(enabledRepos, ","));
         CHECK(enabledRepos == std::vector<std::string> {
             "rhel-9-baseos",
@@ -1282,7 +1338,8 @@ TEST_CASE("RepoNames")
             OS::Platform::el9,
             5
         );
-        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffile);
+        const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>("repos/", osinfo, vars);
+        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffiles);
         CHECK(enabledRepos == std::vector<std::string> {
             "AlmaLinuxBaseOS",
             "\"AlmaLinux 9 - CRB\"",
@@ -1302,7 +1359,8 @@ TEST_CASE("RepoNames")
             OS::Platform::el9,
             5
         );
-        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffile);
+        const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>("repos/", osinfo, vars);
+        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffiles);
         // fmt::print("Repos: {}", fmt::join(enabledRepos, ","));
         CHECK(enabledRepos == std::vector<std::string> {
             "RockyAppStream",
@@ -1324,7 +1382,8 @@ TEST_CASE("RepoNames")
             OS::Platform::el9,
             5
         );
-        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffile);
+        const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>("repos/", osinfo, vars);
+        const auto enabledRepos = enabler.resolveReposNames(osinfo, conffiles);
         // fmt::print("Repos: {}", fmt::join(enabledRepos, ","));
         CHECK(enabledRepos == std::vector<std::string> {
             "OLBaseOS",
@@ -1345,14 +1404,13 @@ template <typename MChecker = DefaultMirrorExistenceChecker,
     typename ShouldUseVaultService = RockyLinux
 >
 struct RepoGenerator final {
-    static std::size_t generate(const RepoConfFile& conffile,
+    static std::size_t generate(const RepoConfFiles& conffiles,
         const OS& osinfo, const std::filesystem::path& path)
     {
         const auto existingRepoFiles
             = cloyster::functions::getFilesByExtension(path, ".repo");
-        const auto filter = RepoFilter<ShouldUseVaultService>(conffile, osinfo);
-        const auto distroRepos = filter.distroRepos();
-        const auto nonDistroRepos = filter.nonDistroRepos();
+        const auto &distroRepos = conffiles.distroRepos.filesnames();
+        const auto &nonDistroRepos = conffiles.nonDistroRepos.filesnames();
         std::vector<std::string> reposToGenerate;
         for (const auto& repo : distroRepos) {
             if (!cloyster::functions::isIn(existingRepoFiles, repo)) {
@@ -1364,9 +1422,17 @@ struct RepoGenerator final {
                 reposToGenerate.push_back(repo);
             }
         }
-        const std::vector<RPMRepositoryFile> repofiles
-            = RepoConfAdapter<MChecker, UChecker>::fromConfFile(
-                conffile, reposToGenerate, path);
+
+        std::vector<RPMRepositoryFile> repofiles = RepoConfAdapter<MChecker, UChecker>::fromConfFile(
+                conffiles.distroRepos, reposToGenerate, path);
+        auto&& nonDistroRepositories = RepoConfAdapter<MChecker, UChecker>::fromConfFile(
+                conffiles.nonDistroRepos, reposToGenerate, path);
+        repofiles.reserve(repofiles.size() +
+                          conffiles.nonDistroRepos.filesnames().size());
+        repofiles.insert(repofiles.end(),
+                         std::make_move_iterator(nonDistroRepositories.begin()),
+                         std::make_move_iterator(nonDistroRepositories.end()));
+
         for (const auto& repofile : repofiles) {
             repofile.save();
         }
@@ -1378,8 +1444,9 @@ struct RepoGenerator final {
         const OS& osinfo,
         const RepoConfigVars& vars)
     {
-        const auto conffile = RepoConfigParser::parse(vars);
-        return generate(conffile, osinfo, RPMRepoManager::basedir);
+        const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>(
+            RepoConfigParser::defaultPath, osinfo, vars);
+        return generate(conffiles, osinfo, RPMRepoManager::basedir);
     }
 };
 
@@ -1389,33 +1456,44 @@ TEST_CASE("RepoGenerator")
         .disableMirrors = false,
         .mirrorBaseUrl = "https://mirror.example.com",
     };
+    const auto osinfo = OS(
+        models::OS::Distro::Rocky,
+        OS::Platform::el9,
+        5
+    );
+    struct ShouldUseVaultService final {
+        static bool shouldUseVault(const OS& osinfo) { return false; }
+    };
+    const RepoConfigVars& vars = RepoConfigVars {
+        .arch = "x86_64",
+        .beegfsVersion = "beegfs_7.3.3",
+        .ohpcVersion = "3",
+        .osversion = "9.4",
+        .releasever = "9",
+        .xcatVersion = "latest",
+        .zabbixVersion = "6.4",
+    };
     cloyster::Singleton<Options>::init(std::make_unique<Options>(opts));
-    const auto upstreamPath = "test/output/repos/upstream";
-    const auto mirrorPath = "test/output/repos/mirror";
-    const auto airgapPath = "test/output/repos/airgap";
-    const auto conffile = RepoConfigParser::parseTest("repos/repos.conf");
+    const std::string_view upstreamPath = "test/output/repos/upstream";
+    const std::string_view mirrorPath = "test/output/repos/mirror";
+    const std::string_view airgapPath = "test/output/repos/airgap";
+    const auto conffiles = RepoConfigParser::load<ShouldUseVaultService>("repos/", osinfo, vars);
 
     // Clean up before start
     for (const auto& path : {upstreamPath, mirrorPath, airgapPath}) {
         cloyster::functions::removeFilesWithExtension(path, ".repo");
     }
 
-    const auto osinfo = OS(
-        models::OS::Distro::Rocky,
-        OS::Platform::el9,
-        5
-    );
-
     const auto generator = RepoGenerator<
         FalseMirrorExistenceChecker, // mirror
         TrueMirrorExistenceChecker  // upstream
     >();
     const auto generatedCount1
-        = generator.generate(conffile, osinfo, upstreamPath);
+        = generator.generate(conffiles, osinfo, upstreamPath);
     CHECK(generatedCount1 == 14);
 
     const auto generatedCount2
-        = generator.generate(conffile, osinfo, upstreamPath);
+        = generator.generate(conffiles, osinfo, upstreamPath);
     // It does not re-generate the files in the second run
     CHECK(generatedCount2 == 0);
 
@@ -1424,9 +1502,9 @@ TEST_CASE("RepoGenerator")
         TrueMirrorExistenceChecker, // mirror
         TrueMirrorExistenceChecker  // upstream
     >();
-    generatorMirror.generate(conffile, osinfo, mirrorPath);
+    generatorMirror.generate(conffiles, osinfo, mirrorPath);
     cloyster::Singleton<Options>::get()->mirrorBaseUrl = "file:///var/run/repos";
-    generatorMirror.generate(conffile, osinfo, airgapPath);
+    generatorMirror.generate(conffiles, osinfo, airgapPath);
 };
 
 TEST_SUITE("repos urls")

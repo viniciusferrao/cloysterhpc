@@ -193,6 +193,12 @@ void XCAT::createDirectoryTree()
     functions::createDirectory(CHROOT "/install/custom/netboot");
 }
 
+void XCAT::configureSELinux()
+{
+    m_stateless.postinstall.emplace_back(fmt::format(
+        "echo \"SELINUX=disabled\nSELINUXTYPE=targeted\" > $IMG_ROOTIMGDIR/etc/selinux/config\n\n"));
+}
+
 void XCAT::configureOpenHPC()
 {
     const auto packages = { "ohpc-base-compute", "lmod-ohpc", "lua" };
@@ -258,8 +264,8 @@ void XCAT::configureInfiniband()
                 // Create the RPM repository
                 runner->checkCommand(fmt::format(
                     "bash -c \"cp -v "
-                    "/usr/share/doca-host-*/Modules/{}.{}/*.rpm {}\"",
-                    kernelVersion, arch, localRepo.directory.string()));
+                    "/usr/share/doca-host-*/Modules/{}/*.rpm {}\"",
+                    kernelVersion, localRepo.directory.string()));
                 runner->checkCommand(
                     fmt::format("createrepo {}", localRepo.directory.string()));
 
@@ -342,18 +348,6 @@ void XCAT::generatePostinstallFile()
 
     functions::removeFile(filename);
 
-    // TODO: Should be replaced with autofs
-    m_stateless.postinstall.emplace_back(
-        fmt::format("cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
-                    "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
-                    "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
-                    "END\n\n",
-            cluster()
-                ->getHeadnode()
-                .getConnection(Network::Profile::Management)
-                .getAddress()
-                .to_string()));
-
     m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
         "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
@@ -421,13 +415,14 @@ void XCAT::configureOSImageDefinition()
     }
 }
 
-void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations)
+void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations) const
 {
     auto runner = cloyster::Singleton<IRunner>::get();
     // @TODO: Extract the munge fixes to its own customization script
     // Permission fixes for munge
     if (cluster()->getQueueSystem().value()->getKind()
         == models::QueueSystem::Kind::SLURM) {
+        cloyster::functions::createDirectory(m_stateless.chroot / "etc");
         runner->executeCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));
@@ -538,12 +533,24 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector
 
     generateOSImageName(imageType, nodeType);
 
+    const auto opts = cloyster::Singleton<Options>::get();
     const auto imageExists_ = imageExists(m_stateless.osimage);
-    if (!imageExists_) {
-        copycds(cluster()->getDiskImage().getPath());
+    const auto runner = cloyster::Singleton<IRunner>::get();
+    if (!imageExists_ || opts->shouldSkip("copycds")) {
+        if (opts->shouldSkip("copycds")) {
+            // Remove rootfs and cleanup otherpkgs and postinstall scripts
+            runner->executeCommand(fmt::format(
+                "bash -c \"rm -rf {} && echo > {} && echo > {}\"", 
+                m_stateless.chroot,
+                "/install/custom/netboot/compute.otherpkglist", 
+                "/install/custom/netboot/compute.postinstall"));
+        } else {
+            copycds(cluster()->getDiskImage().getPath());
+        }
         generateOSImagePath(imageType, nodeType);
 
         createDirectoryTree();
+        configureSELinux();
         configureOpenHPC();
         configureTimeService();
         configureInfiniband();
@@ -555,8 +562,8 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector
 
         configureOSImageDefinition();
 
-        genimage();
         customizeImage(customizations);
+        genimage();
         packimage();
     }
 }

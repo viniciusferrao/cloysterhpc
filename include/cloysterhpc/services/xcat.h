@@ -110,6 +110,13 @@ private:
     static void createDirectoryTree();
 
     /**
+     * @brief Configures SELinux settings.
+     *
+     * This function sets up SELinux configurations in the image
+     */
+    void configureSELinux();
+
+    /**
      * @brief Configures OpenHPC settings.
      *
      * This function sets up OpenHPC configurations.
@@ -163,7 +170,7 @@ private:
      *
      * This function applies customizations to the OS image.
      */
-    void customizeImage(const std::vector<ScriptBuilder>& customizations);
+    void customizeImage(const std::vector<ScriptBuilder>& customizations) const;
 
     /**
      * @brief Adds a node to the cluster.

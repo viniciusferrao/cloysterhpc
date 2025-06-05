@@ -33,19 +33,21 @@ struct Options final {
     std::string zabbixVersion;
     std::string xcatVersion;
     std::string dumpAnswerfile;
+    std::string stopAfterStep;
     std::set<std::string> skipSteps;
     std::set<std::string> forceSteps;
     std::set<std::string> ohpcPackages;
 
-#ifndef NDEBUG
     std::string testCommand;
     std::vector<std::string> testCommandArgs;
-#endif
 
     [[nodiscard]]
     bool shouldSkip(const std::string& step) const;
     [[nodiscard]]
     bool shouldForce(const std::string& step) const;
+
+    void maybeStopAfterStep(const std::string& step) const;
+
 };
 static_assert(std::is_aggregate_v<Options>, "Options must be an aggregate type.");
 

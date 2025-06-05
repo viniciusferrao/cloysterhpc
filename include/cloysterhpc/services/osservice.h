@@ -55,6 +55,8 @@ public:
     virtual bool update() const = 0;
     virtual void check() const = 0;
     virtual void clean() const = 0;
+    // Pin the OS version. The version comes from OS& osinfo
+    virtual void pinOSVersion() const = 0;
     virtual std::vector<std::string> repolist() const = 0;
 
     virtual bool enableService(std::string_view service) const = 0;
@@ -67,9 +69,17 @@ public:
 };
 
 
+/**
+ * @brief Utility class for RockyLinux idiosyncrasies
+ */
 class RockyLinux final {
     static std::optional<bool> m_shouldUseVault;
 public:
+    /**
+     * @brief Returns true if the Rocky Linux Vault should be used
+     * @description This may do a HTTP request the first
+     *   time is executed and cache the result.
+     */
     static bool shouldUseVault(const OS& osinfo);
 };
 

@@ -49,9 +49,9 @@ auto getToEnableRepoNames(const OS& osinfo)
     }
 }
 
-auto cluster() { return cloyster::Singleton<Cluster>::get(); }
-auto runner() { return cloyster::Singleton<IRunner>::get(); }
-auto osservice() { return cloyster::Singleton<IOSService>::get(); }
+constexpr auto cluster() { return cloyster::Singleton<Cluster>::get(); }
+constexpr auto runner() { return cloyster::Singleton<IRunner>::get(); }
+constexpr auto osservice() { return cloyster::Singleton<IOSService>::get(); }
 
 }
 
@@ -285,6 +285,10 @@ void Shell::runSystemUpdate()
     if (cluster()->isUpdateSystem()) {
         LOG_INFO("Checking if system updates are available")
         osservice()->update();
+
+        // Network manager issues warnings if it gets updated
+        // and not restarted
+        osservice()->restartService("NetworkManager");
     }
 }
 
@@ -292,7 +296,7 @@ void Shell::installRequiredPackages()
 {
     LOG_INFO("Installing required system packages")
 
-    osservice()->install("wget dnf-plugins-core chkconfig jq tar");
+    osservice()->install("wget curl dnf-plugins-core chkconfig jq tar python3-dnf-plugin-versionlock");
 }
 
 void Shell::disallowSSHRootPasswordLogin()
@@ -430,6 +434,16 @@ void Shell::configureRepositories()
     repos->initializeDefaultRepositories();
 }
 
+void Shell::pinOSVersion()
+{
+    if (cloyster::Singleton<Options>::get()->shouldSkip("pin-os-version")) {
+        return;
+    }
+    LOG_INFO("Pinning OS Version, use `--skip pin-os-version`, to skip");
+    // Delegate to IOSService implementation
+    cloyster::Singleton<IOSService>::get()->pinOSVersion();
+}
+
 /* This method is the entrypoint of shell based cluster install
  * The first session of the method will configure and install services on the
  * headnode. The last part will do provisioner related settings and image
@@ -437,7 +451,15 @@ void Shell::configureRepositories()
  */
 void Shell::install()
 {
+    const auto opts = cloyster::Singleton<Options>::get();
     configureRepositories();
+    pinOSVersion();
+    opts->maybeStopAfterStep("configure-repositories");
+    installRequiredPackages();
+    opts->maybeStopAfterStep("install-required-packages");
+
+    runSystemUpdate();
+    opts->maybeStopAfterStep("run-system-update");
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
@@ -448,11 +470,11 @@ void Shell::install()
     configureLocale();
 
     configureNetworks(cluster()->getHeadnode().getConnections());
-    runSystemUpdate();
     configureTimeService(cluster()->getHeadnode().getConnections());
-    installRequiredPackages();
+    opts->maybeStopAfterStep("configure-time-service");
     installOpenHPCBase();
     configureInfiniband();
+    opts->maybeStopAfterStep("install-infiniband");
 
     NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
@@ -463,6 +485,7 @@ void Shell::install()
     const auto nfsInstallScript =
         networkFileSystem.installScript(cluster()->getHeadnode().getOS());
     runner()->run(nfsInstallScript);
+    opts->maybeStopAfterStep("nfs-setup");
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
         configureMailSystem();
@@ -470,6 +493,7 @@ void Shell::install()
     removeMemlockLimits();
 
     installDevelopmentComponents();
+    opts->maybeStopAfterStep("install-development-components");
 
     const auto& provisionerName { cloyster::utils::enums::toString(
         cluster()->getProvisioner()) };
@@ -500,6 +524,7 @@ void Shell::install()
     const auto imageType = XCAT::ImageType::Netboot;
     const auto nodeType = XCAT::NodeType::Compute;
 
+    opts->maybeStopAfterStep("provisioner-setup");
     const auto imageInstallArgs = provisioner->getImageInstallArgs(imageType, nodeType);
     const auto osinfo = cluster()->getHeadnode().getOS();
 
@@ -515,6 +540,7 @@ void Shell::install()
         // Customizations to the image
         nfsImageInstallScript
     });
+    opts->maybeStopAfterStep("provisioner-create-image");
 
     LOG_INFO("[{}] Adding compute nodes", provisionerName)
     provisioner->addNodes();
