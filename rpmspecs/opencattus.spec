@@ -32,16 +32,21 @@ echo "INSTALL: $PWD"
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/opt/cloysterhpc/conf/repos/
 install -m 755 build/src/cloysterhpc %{buildroot}/usr/bin/cloysterhpc
-install -m 755 repos/repos.conf %{buildroot}/opt/cloysterhpc/conf/repos/repos.conf
-install -m 755 repos/alma.conf %{buildroot}/opt/cloysterhpc/conf/repos/alma.conf
-install -m 755 repos/rhel.conf %{buildroot}/opt/cloysterhpc/conf/repos/rhel.conf
-install -m 755 repos/oracle.conf %{buildroot}/opt/cloysterhpc/conf/repos/oracle.conf
-install -m 755 repos/rocky-upstream.conf %{buildroot}/opt/cloysterhpc/conf/repos/rocky-upstream.conf
-install -m 755 repos/rocky-vault.conf %{buildroot}/opt/cloysterhpc/conf/repos/rocky-vault.conf
+install -m 644 repos/repos.conf %{buildroot}/opt/cloysterhpc/conf/repos/repos.conf
+install -m 644 repos/alma.conf %{buildroot}/opt/cloysterhpc/conf/repos/alma.conf
+install -m 644 repos/rhel.conf %{buildroot}/opt/cloysterhpc/conf/repos/rhel.conf
+install -m 644 repos/oracle.conf %{buildroot}/opt/cloysterhpc/conf/repos/oracle.conf
+install -m 644 repos/rocky-upstream.conf %{buildroot}/opt/cloysterhpc/conf/repos/rocky-upstream.conf
+install -m 644 repos/rocky-vault.conf %{buildroot}/opt/cloysterhpc/conf/repos/rocky-vault.conf
 
 %files
 /usr/bin/cloysterhpc
-/opt/cloysterhpc/conf/repos.conf
+/opt/cloysterhpc/conf/repos/repos.conf
+/opt/cloysterhpc/conf/repos/alma.conf
+/opt/cloysterhpc/conf/repos/rhel.conf
+/opt/cloysterhpc/conf/repos/oracle.conf
+/opt/cloysterhpc/conf/repos/rocky-upstream.conf
+/opt/cloysterhpc/conf/repos/rocky-vault.conf
 
 %changelog
 * Tue Jun 10 2025 Daniel Hilst <daniel@versatushpc.com.br> - 1.0-2

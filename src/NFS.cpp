@@ -121,8 +121,7 @@ cloyster::services::ScriptBuilder NFS::imageInstallScript(
         .addNewLine()
         .addCommand("# Update xCAT configuration")
         .addCommand(
-            "chdef -t osimage ${{IMAGE}} postinstall=\"${{POSTINSTALL}}\"")
-        .addNewLine();
+            "chdef -t osimage ${{IMAGE}} postinstall=\"${{POSTINSTALL}}\"");
     return builder;
 }
 
@@ -148,19 +147,19 @@ R"del(#!/bin/bash -xeu
 HEADNODE=$(hostname -s)
 
 # install packages
-dnf install -y nfs-utils autofs
+dnf install -y nfs-utils
 
 # Add exports to /etc/exports
-grep -q "/home" || \
+grep -q "/home" "/etc/exports" || \
   echo "/home *(rw,no_subtree_check,fsid=10,no_root_squash)" >> "/etc/exports"
-grep -q "/opt/ohpc/pub" || \
+grep -q "/opt/ohpc/pub" "/etc/exports" || \
   echo "/opt/ohpc/pub *(ro,no_subtree_check,fsid=11)" >> "/etc/exports"
-grep -q "/tftpboot" || \
+grep -q "/tftpboot" "/etc/exports" || \
   echo "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)" >> "/etc/exports"
-grep -q "/install" || \
+grep -q "/install" "/etc/exports" || \
   echo "/install *(rw,no_root_squash,sync,no_subtree_check)" >> "/etc/exports"
 
-systemctl enable --now rpcbind nfs-server autofs
+systemctl enable --now rpcbind nfs-server
 exportfs -a
 
 # Update firewall rules
@@ -191,32 +190,33 @@ PKGLIST="/install/custom/netboot/compute.otherpkglist"
 HEADNODE=$(hostname -s)
 
 # Add autofs commands to postinstall
-grep -q "autofs" || \
-  echo 'chroot ${IMG_ROOTIMGDIR} systemctl enable --now autofs' >> "${POSTINSTALL}"
+grep -q "autofs" "${POSTINSTALL}" || \
+  echo "chroot \${IMG_ROOTIMGDIR} systemctl enable autofs" >> "${POSTINSTALL}"
 chmod +x "${POSTINSTALL}"
 
 # Add required packages to the image
-grep -q "nfs-utils" || \
+grep -q "nfs-utils" "${PKGLIST}" || \
   echo "nfs-utils" >> "${PKGLIST}"
+grep -q "autofs" "${PKGLIST}" || \
+  echo "autofs" >> "${PKGLIST}"
 
 # Configure autofs
-grep -q "/home" || \
+grep -q "/home" "${ROOTFS}/etc/auto.master" || \
   echo "/home   /etc/auto.home" >> "${ROOTFS}/etc/auto.master"
-grep -q "/opt/ohpc/pub" || \
+grep -q "/opt/ohpc/pub" "${ROOTFS}/etc/auto.master" || \
   echo "/opt/ohpc/pub   /etc/auto.ohpc" >> "${ROOTFS}/etc/auto.master"
 
-grep -q ":/home/&" || \
-  echo "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${HEADNODE}:/home/&" >> "${ROOTFS}/etc/auto.master"
+grep -q "home-map" "${ROOTFS}/etc/auto.home" || \
+  echo "* -fstype=nfs,rw,no_subtree_check,no_root_squash ${HEADNODE}:/home/&" >> "${ROOTFS}/etc/auto.home"
 
-grep -q "/opt/ohpc/pub/&" || \
-  echo "* -fstype=nfs,ro,no_subtree_check ${HEADNODE}:/opt/ohpc/pub/&" >> "${ROOTFS}/etc/auto.master"
+grep -q "ohpc-map" "${ROOTFS}/etc/auto.ohpc" || \
+  echo "* -fstype=nfs,ro,no_subtree_check ${HEADNODE}:/opt/ohpc/pub/&" >> "${ROOTFS}/etc/auto.ohpc"
 
 # Create mount points
 mkdir -p ${ROOTFS}/home ${ROOTFS}/opt/ohpc/pub || :
 
 # Update xCAT configuration
-chdef -t osimage ${IMAGE} postinstall="${POSTINSTALL}"
-)del");
+chdef -t osimage ${IMAGE} postinstall="${POSTINSTALL}")del");
 }
 };
 

@@ -800,7 +800,7 @@ public:
             .arch = "x86_64",
             .beegfsVersion = "beegfs_7.3.3",
             .ohpcVersion = "3",
-            .osversion = "9.4",
+            .osversion = "9.5",
             .releasever = "9",
             .xcatVersion = "latest",
             .zabbixVersion = "6.4",
@@ -1108,112 +1108,6 @@ TEST_CASE("RepoAdapter")
     CHECK(repofiles.size() == conffile.files().size());
 };
 
-// Filter repositories based on the distribution and non-distro repos
-template <typename ShouldUseVaultService = RockyLinux>
-class RepoFilter final {
-    std::vector<std::string> m_allRepoFilesNames;
-    OS m_osinfo;
-
-public:
-    static constexpr auto distroFilesNames = {
-        "rhel.repo",
-        "rocky.repo",
-        "rocky-addons.repo",
-        "rocky-devel.repo",
-        "rocky-extras.repo",
-        "oracle.repo",
-        "almalinux.repo",
-    };
-
-    RepoFilter(const RepoConfFile& conffile, const OS& osinfo)
-        : m_allRepoFilesNames(conffile.filesnames())
-        , m_osinfo(osinfo)
-    {}
-
-    [[nodiscard]] std::vector<std::string> distroRepos() const
-    {
-        switch (m_osinfo.getDistro()) {
-            case OS::Distro::OL:
-                return filterOracleLinux();
-            case OS::Distro::RHEL:
-                return filterRHEL();
-            case OS::Distro::AlmaLinux:
-                return filterAlmaLinux();
-            case OS::Distro::Rocky:
-                return filterRockyLinux();
-        };
-
-        std::unreachable();
-    }
-
-    [[nodiscard]] std::vector<std::string> nonDistroRepos() const
-    {
-        return m_allRepoFilesNames
-            | std::views::filter([&](const auto& filename) {
-                  return !cloyster::functions::isIn(distroFilesNames, filename);
-              })
-            | std::ranges::to<std::vector>();
-    }
-
-    [[nodiscard]] std::vector<std::string> filterOracleLinux() const
-    {
-        return filterByFilename("oracle.repo");
-    };
-
-    [[nodiscard]] std::vector<std::string> filterRHEL() const
-    {
-        return filterByFilename("rhel.repo");
-    };
-
-    [[nodiscard]] std::vector<std::string> filterAlmaLinux() const
-    {
-        return filterByFilename("almalinux.repo");
-    };
-
-    [[nodiscard]] std::vector<std::string> filterRockyLinux() const
-    {
-        const auto shouldUseVault = ShouldUseVaultService::shouldUseVault(m_osinfo);
-        return m_allRepoFilesNames
-            | std::views::filter([&](const std::string& filenameInConf) {
-                return filenameInConf.starts_with("rocky");
-              })
-            | std::ranges::to<std::vector>();
-    };
-
-    [[nodiscard]] std::vector<std::string> filterByFilename(
-        const std::string_view& filename) const
-    {
-        return m_allRepoFilesNames
-            | std::views::filter([&](const std::string& filenameInConf) {
-                  return filenameInConf == filename;
-              })
-            | std::ranges::to<std::vector>();
-    };
-};
-
-TEST_CASE("RepoFilter")
-{
-    // Log::init(5);
-    const auto conffile = RepoConfigParser::parseTest("repos/repos.conf");
-    const auto osinfo = OS(
-        OS::Distro::Rocky,
-        OS::Platform::el9,
-        5
-     );
-    struct ShouldUseVaultService final {
-        static bool shouldUseVault(const OS& /* osinfo */) { return false; }
-    };
-    const auto filter = RepoFilter<ShouldUseVaultService>(conffile, osinfo);
-    const auto rockyRepoFiles = filter.distroRepos();
-    const auto nonDistroRepoFiles = filter.nonDistroRepos();
-    CHECK(rockyRepoFiles.size() == 1);
-    CHECK(rockyRepoFiles[0] == "rocky.repo");
-    for (const auto& nonDistroRepoFilename : nonDistroRepoFiles) {
-        CHECK(!cloyster::functions::isIn(
-            filter.distroFilesNames, nonDistroRepoFilename));
-    }
-}
-
 // Return the repository names to enable based on the osinfo
 template <typename UseVaultService = RockyLinux>
 struct RepoNames {
@@ -1363,8 +1257,8 @@ TEST_CASE("RepoNames")
         const auto enabledRepos = enabler.resolveReposNames(osinfo, conffiles);
         // fmt::print("Repos: {}", fmt::join(enabledRepos, ","));
         CHECK(enabledRepos == std::vector<std::string> {
-            "RockyAppStream",
-            "RockyBaseOS",
+            "appstream",
+            "baseos",
             "crb",
             "epel",
             "OpenHPC",
@@ -1490,7 +1384,7 @@ TEST_CASE("RepoGenerator")
     >();
     const auto generatedCount1
         = generator.generate(conffiles, osinfo, upstreamPath);
-    CHECK(generatedCount1 == 14);
+    CHECK(generatedCount1 == 17);
 
     const auto generatedCount2
         = generator.generate(conffiles, osinfo, upstreamPath);
@@ -1516,56 +1410,70 @@ TEST_SUITE("repos urls")
         "rhel.repo",
     };
 
+    // Repositories from these files are not checked against Versatus Mirrors
     constexpr auto blacklistedMirrorFiles = {
         "almalinux.repo",
         "nvidia.repo",
         "influxdata.repo",
         "mlx-doca.repo",
+        "rocky.repo",
+        "rocky-addons.repo",
+        "rocky-extras.repo",
+        "rocky-devel.repo",
     };
 
     TEST_CASE("[slow] repo.conf urls")
     {
         using namespace cloyster::services;
-        Options opts{};
         cloyster::services::initializeSingletonsOptions(
-            std::make_unique<Options>(opts));
-        // Log::init(5);
-        RepoConfFile output =  RepoConfigParser::parseTest("repos/repos.conf");
-        for (const auto& [repofile, configs] : output.files()) {
-            for (const auto& config : configs) {
-                if (cloyster::functions::isIn(
+            std::make_unique<Options>(Options{}));
+        const auto repos = std::filesystem::path("./repos");
+        REQUIRE(cloyster::functions::exists(repos / "repos.conf"));
+        const auto confs = cloyster::functions::getFilesByExtension(repos, ".conf");
+        REQUIRE(confs.size() > 0);
+        using fmt::print;
+        for (const auto& configStr : confs) {
+            RepoConfFile output = RepoConfigParser::parseTest(repos / configStr);
+            for (const auto& [repofile, configs] : output.files()) {
+                for (const auto& config : configs) {
+                    if (cloyster::functions::isIn(
                         blacklistedFiles, config.repoId.filename)) {
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                LOG_INFO("Checking {}", config.repoId.id);
+                    print("Checking {} {} {}\n", config.repoId.filename, config.repoId.id, config.upstream.repo);
 
-                REQUIRE(cloyster::functions::getHttpStatus(
-                            config.upstream.repo + "repodata/repomd.xml")
-                    == "200");
-
-                if (config.upstream.gpgkey) {
                     REQUIRE(cloyster::functions::getHttpStatus(
-                                config.upstream.gpgkey.value())
-                        == "200");
-                }
+                        config.upstream.repo + "repodata/repomd.xml")
+                            == "200");
 
-                if (cloyster::functions::isIn(
-                        blacklistedMirrorFiles, config.repoId.filename)) {
-                    continue;
-                }
+                    if (config.upstream.gpgkey) {
+                        REQUIRE(cloyster::functions::getHttpStatus(
+                            config.upstream.gpgkey.value())
+                                == "200");
+                    }
 
-                REQUIRE(cloyster::functions::getHttpStatus(
+                    if (cloyster::functions::isIn(
+                        blacklistedMirrorFiles, config.repoId.filename) ||
+                        config.mirror.repo.empty()) {
+                        continue;
+                    }
+
+                    print("Checking {} {} {}\n", config.repoId.filename, config.repoId.id, "https://mirror.versatushpc.com.br/"
+                        + config.mirror.repo + "repodata/repomd.xml");
+
+                    REQUIRE(cloyster::functions::getHttpStatus(
+                        "https://mirror.versatushpc.com.br/"
+                        + config.mirror.repo + "repodata/repomd.xml")
+                            == "200");
+
+                    if (config.mirror.gpgkey) {
+                        REQUIRE(cloyster::functions::getHttpStatus(
                             "https://mirror.versatushpc.com.br/"
-                            + config.mirror.repo + "repodata/repomd.xml")
-                    == "200");
-
-                if (config.mirror.gpgkey) {
-                    REQUIRE(cloyster::functions::getHttpStatus(
-                                "https://mirror.versatushpc.com.br/"
-                                + config.mirror.gpgkey.value())
-                        == "200");
+                            + config.mirror.gpgkey.value())
+                                == "200");
+                    }
                 }
             }
         }

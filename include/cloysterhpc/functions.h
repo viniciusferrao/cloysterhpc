@@ -207,8 +207,8 @@ std::vector<std::string> getFilesByExtension(
 
 TEST_CASE("getFilesByExtension") {
     const auto files = getFilesByExtension("repos/", ".conf");
-    CHECK(files.size() == 1);
-    CHECK(files[0] == "repos.conf");
+    CHECK(files.size() > 0);
+    CHECK(isIn(files, "repos.conf"));
 }
 
 void removeFilesWithExtension(
