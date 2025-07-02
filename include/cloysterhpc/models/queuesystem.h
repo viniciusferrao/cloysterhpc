@@ -9,8 +9,6 @@
 #include <fmt/format.h>
 #include <string>
 
-#include <cloysterhpc/functions.h>
-
 // Forward declaration of Cluster
 namespace cloyster::models {
 

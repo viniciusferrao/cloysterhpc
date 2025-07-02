@@ -1,94 +1,42 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
-#include "services/log.h"
-#include <boost/process/child.hpp>
-#include <boost/process/pipe.hpp>
-#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/patterns/wrapper.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
+#include <cloysterhpc/utils/enums.h>
+#include <cloysterhpc/utils/string.h>
+#include <algorithm>
 #include <filesystem>
-#include <list>
-#include <optional>
 #include <string>
+
+#ifdef BUILD_TESTING
+#include <doctest/doctest.h>
+#else
+#define DOCTEST_CONFIG_DISABLE
+#include <doctest/doctest.h>
+#endif
 
 #include <boost/asio.hpp>
 #include <cloysterhpc/services/runner.h>
 #include <type_traits>
 
-namespace cloyster {
-// Globals
-extern bool dryRun;
+// @TODO Split these functions into multiple utils subnamespaces like strings
+//   and enums
+namespace cloyster::functions {
+// Globals, intialized by the command line parser
+template <typename B, typename T, typename... Args>
+constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
+{
+    return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
+}
 
-using OS = cloyster::models::OS;
-std::shared_ptr<cloyster::services::BaseRunner> getRunner();
-std::shared_ptr<cloyster::services::repos::RepoManager> getRepoManager(
-    const OS& osinfo);
-
-/**
- * A command proxy, to us to be able to get the
- * command output while the command is running
- *
- * We will use this in the progress dialog
- */
-/**
- * @struct CommandProxy
- * @brief A command proxy to capture the command output while the command is
- * running.
- *
- * This structure is used to capture the output of a command in real-time,
- * useful for displaying progress in a dialog.
- */
-struct CommandProxy {
-    bool valid = false;
-    boost::process::child child;
-    boost::process::ipstream pipe_stream;
-
-    /**
-     * @brief Gets a line of output from the command.
-     *
-     * @return An optional string containing a line of output if available,
-     * otherwise std::nullopt.
-     */
-    std::optional<std::string> getline();
-
-    std::optional<std::string> getUntil(char c);
-};
-
-enum class Stream { Stdout, Stderr };
+using models::OS;
+using services::IRunner;
 
 /* shell execution */
-
-/**
- * @brief Executes a command and captures its output.
- *
- * @param command The command to execute.
- * @param output A list to store the output lines of the command.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return The exit code of the command.
- */
-int runCommand(const std::string& command, std::list<std::string>& output,
-    bool overrideDryRun = false);
-
-/**
- * @brief Executes a command.
- *
- * @param command The command to execute.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return The exit code of the command.
- */
-int runCommand(const std::string& command, bool overrideDryRun = false);
-
-/**
- * @brief Executes a command and provides a proxy to capture its output
- * iteratively.
- *
- * @param command The command to execute.
- * @param overrideDryRun A flag to override the dryRun setting.
- * @return A CommandProxy to capture the command's output.
- */
-CommandProxy runCommandIter(const std::string& command,
-    Stream out = Stream::Stdout, bool overrideDryRun = false);
-
-/* environment variables helper functions */
 
 /**
  * @brief Retrieves the value of an environment variable.
@@ -179,14 +127,23 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination);
  * @param data The contents of the file to install
  */
 void installFile(const std::filesystem::path& path, std::istream& data);
+void installFile(const std::filesystem::path& path, std::string&& data);
 
-} // namespace cloyster
+bool exists(const std::filesystem::path& path);
 
-/**
- * @brief Generic functions. Be very judicious on what you put here. Is it
- * really generic?
- */
-namespace cloyster::utils {
+struct HTTPRepo {
+    std::filesystem::path directory;
+    std::string name;
+    std::string url;
+};
+
+HTTPRepo createHTTPRepo(const std::string_view repoName);
+
+void backupFilesByExtension(
+    const wrappers::DestinationPath& backupPath,
+    const wrappers::SourcePath& sourcePath,
+    const wrappers::Extension& extension);
+
 
 /**
  * @brief Returns true if [val] is in [container]
@@ -194,8 +151,16 @@ namespace cloyster::utils {
 inline bool isIn(const auto& container, const auto& val)
 {
     return std::find(container.begin(), container.end(), val)
-        == container.end();
+        != container.end();
 }
+
+TEST_SUITE_BEGIN("cloyster::utils");
+
+TEST_CASE("isIn") {
+    const auto container = {1,2,3};
+    CHECK(isIn(container, 3) == true);
+    CHECK(isIn(container, 4) == false);
+};
 
 /**
  * @brief Run [func] if cloyster::dryRun is false
@@ -204,8 +169,9 @@ template <typename T>
     requires std::is_default_constructible_v<T>
 inline T dryrun(const std::function<T()>& func, const std::string& msg)
 {
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: {}", msg);
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: {}", msg);
         return T();
     }
 
@@ -222,6 +188,135 @@ std::filesystem::directory_iterator openDir(const Path& path)
         fmt::format("Dry Run: Would open directory {}", path.string()));
 }
 
+std::vector<std::string> getFilesByExtension(
+    const auto& path,
+    const auto& extension
+) {
+    std::vector<std::string> result;
+    namespace fs = std::filesystem;
+
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (entry.is_regular_file() &&
+            entry.path().extension() == extension) {
+            result.push_back(entry.path().filename().string());
+            }
+    }
+
+    return result;
 }
+
+TEST_CASE("getFilesByExtension") {
+    const auto files = getFilesByExtension("repos/", ".conf");
+    CHECK(files.size() > 0);
+    CHECK(isIn(files, "repos.conf"));
+}
+
+void removeFilesWithExtension(
+    const auto& path,
+    const auto& extension
+) {
+    namespace fs = std::filesystem;
+
+    std::string extensionLower = utils::string::lower(std::string(extension));
+
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (entry.is_regular_file()) {
+            std::string ext = utils::string::lower(entry.path().extension().string());
+
+            if (ext == extensionLower) {
+                LOG_DEBUG("Removing file {}", entry.path());
+                fs::remove(entry.path());
+            }
+        }
+    }
+}
+
+TEST_CASE("removeFilesWithExtension") {
+    const std::filesystem::path path = "test/output/utils/removeFilesWithExtension";
+    createDirectory(path);
+    touchFile(path / "test.txt");
+    CHECK(getFilesByExtension(path, ".txt").size() == 1);
+    removeFilesWithExtension(path, ".txt");
+    CHECK(getFilesByExtension(path, ".txt").size() == 0);
+}
+
+void copyFilesWithExtension(
+    const auto& source,
+    const auto& destination,
+    const auto& extension
+)
+{
+    namespace fs = std::filesystem;
+
+    for (const auto& entry : fs::directory_iterator(source)) {
+        if (entry.is_regular_file() &&
+            entry.path().extension() == extension) {
+            copyFile(entry.path(), destination / entry.path().filename());
+            }
+    }
+}
+
+TEST_CASE("copyFileWithExtension") {
+    const std::filesystem::path source = "test/output/utils/copyFilesWithExtension/src";
+    const std::filesystem::path destination = "test/output/utils/copyFilesWithExtension/dst";
+    createDirectory(source);
+    createDirectory(destination);
+    touchFile(source / "test.txt");
+    touchFile(source / "test2.txt");
+    touchFile(source / "test3.txt");
+    CHECK(getFilesByExtension(source, ".txt").size() == 3);
+    removeFilesWithExtension(destination, ".txt");
+    CHECK(getFilesByExtension(destination, ".txt").size() == 0);
+    copyFilesWithExtension(source, destination, ".txt");
+    CHECK(getFilesByExtension(destination, ".txt").size() == 3);
+}
+
+void moveFilesWithExtension(
+    const auto& source,
+    const auto& destination,
+    const auto& extension
+) {
+    copyFilesWithExtension(source, destination, extension);
+    removeFilesWithExtension(source, extension);
+}
+
+// @FIXME: Yes, curl works I know, but no.. fix this, use boost for
+//   requests and asynchronous I/O so we can run a bunch of these
+//   concurrently
+std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
+{
+    auto runner = cloyster::Singleton<IRunner>::get();
+    auto opts = cloyster::Singleton<services::Options>::get();
+    if (opts->shouldSkip("http-status")) {
+        LOG_WARN("Skipping HTTP status check for {}, assuming 200 (reason: --skip=http-status in the command line)", url);
+        return "200";
+    }
+    constexpr auto getHttpStatusInner = [](const auto& url, const auto& runner) {
+        auto lines = runner->checkOutput(fmt::format(R"(bash -c "curl -sSLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )", url));
+        if (lines.size() > 0) {
+            return lines[0];
+        }
+        return std::string("CURL ERROR");
+    };
+
+
+    std::string header;
+    for (std::size_t i = 0; i < maxRetries; ++i) {
+        header = getHttpStatusInner(url, runner);     
+        LOG_DEBUG("HTTP status of {}: {}", url, header);
+        if (!header.starts_with("5")) {
+            LOG_DEBUG("HTTP {} error, retry {}", header, i);
+            return header;
+        }
+    }
+    return header;
+};
+
+[[noreturn]] void abort(const fmt::string_view& fmt, auto&&... args) {
+    throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+}
+
+TEST_SUITE_END();
+};
 
 #endif // CLOYSTERHPC_FUNCTIONS_H_

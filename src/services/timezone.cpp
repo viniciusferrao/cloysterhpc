@@ -6,9 +6,12 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/timezone.h>
+#include <cloysterhpc/services/options.h>
 #include <fmt/format.h>
 #include <map>
 #include <string>
+
+using namespace cloyster;
 
 Timezone::Timezone()
     : m_availableTimezones { fetchAvailableTimezones() }
@@ -27,7 +30,8 @@ std::string_view Timezone::getTimezoneArea() const { return m_timezoneArea; }
 void Timezone::setSystemTimezone()
 {
     LOG_DEBUG("Setting system timezone to {}\n", m_timezone)
-    cloyster::runCommand(
+    auto runner = cloyster::Singleton<functions::IRunner>::get();
+    runner->executeCommand(
         fmt::format("timedatectl set timezone {}", m_timezone));
 }
 
@@ -38,18 +42,17 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    std::multimap<std::string, std::string> timezones{};
+    if (opts->dryRun) {
+        LOG_DEBUG("Dry-Run skipping fetching available system timezones")
+        return timezones;
+    }
+
     LOG_DEBUG("Fetching available system timezones")
-    std::list<std::string> output;
-
-// TODO: Remove this hack
-#if __APPLE__
-    output.insert(output.end(), { "UTC-3", "GMT", "America/Sao_Paolo" });
-#else // Linux or others Unixes
-    cloyster::runCommand(
-        fmt::format("timedatectl list-timezones --no-pager"), output, true);
-#endif
-
-    std::multimap<std::string, std::string> timezones;
+    auto runner = cloyster::Singleton<functions::IRunner>::get();
+    auto output = runner->checkOutput(
+        fmt::format("timedatectl list-timezones --no-pager"));
 
     for (const std::string& tz : output) {
         timezones.insert(std::make_pair(

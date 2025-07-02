@@ -73,6 +73,7 @@ function(
         -Wno-unused-function
         -Wno-unused-parameter
         -Wno-shadow
+        -Wno-missing-field-initializers
     )
   endif()
 

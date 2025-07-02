@@ -1,10 +1,10 @@
-#include <ranges>
-#include <stdexcept>
-#include <utility>
 #include <cstddef>
 #include <fstream>
 #include <ios>
 #include <istream>
+#include <ranges>
+#include <stdexcept>
+#include <utility>
 
 #include <glibmm/checksum.h>
 #include <glibmm/fileutils.h>
@@ -12,6 +12,7 @@
 
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/functions.h>
 
 namespace cloyster::services::files {
 
@@ -23,50 +24,15 @@ struct KeyFile::Impl {
         : m_path(std::move(path))
         , m_keyfile(std::make_unique<Glib::KeyFile>(std::move(keyfile))) { };
 
-    void safeToFile(const std::filesystem::path& path)
-    {
-        try {
-            m_keyfile->save_to_file(path);
-        } catch (std::runtime_error& e) {
-            LOG_ERROR(
-                "Error while loading key file {}: {}", path.string(), e.what());
-            throw FileException(e.what());
-        }
-    }
-
-    void loadFromFile(const std::filesystem::path& path)
-    {
-        try {
-            m_keyfile->load_from_file(path);
-        } catch (std::runtime_error& e) {
-            LOG_ERROR(
-                "Error while loading key file {}: {}", path.string(), e.what());
-            throw FileException(e.what());
-        }
-    }
-
-    void loadFromData(const std::string& data)
-    {
-        try {
-            m_keyfile->load_from_data(data);
-        } catch (std::runtime_error& e) {
-            LOG_ERROR(
-                "Error while loading key from data '{}': {}", data, e.what());
-            throw FileException(e.what());
-        }
-    }
 };
-
-KeyFile::KeyFile(KeyFile::Impl&& impl)
-    : m_impl(std::make_unique<KeyFile::Impl>(std::move(impl)))
-{
-}
 
 KeyFile::KeyFile(const std::filesystem::path& path)
     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
 {
     m_impl->m_path = path;
-    m_impl->loadFromFile(path);
+    if (cloyster::functions::exists(path)) {
+        m_impl->m_keyfile->load_from_file(path);
+    }
 }
 
 KeyFile::~KeyFile() = default;
@@ -80,29 +46,73 @@ namespace {
     }
 }
 
+std::vector<std::string> KeyFile::listAllPrefixedEntries(
+    const std::string_view prefix) const
+{
+    auto groups = getGroups();
+
+    return groups | std::views::filter([&](const auto& group) {
+        return group.starts_with(prefix);
+    }) | std::ranges::to<std::vector>();
+}
+
 std::vector<std::string> KeyFile::getGroups() const
 {
     return toStrings(m_impl->m_keyfile->get_groups());
 }
 
+bool KeyFile::hasGroup(std::string_view group) const
+{
+    return m_impl->m_keyfile->has_group(std::string(group));
+}
+
 std::string KeyFile::getString(
     const std::string& group, const std::string& key) const
 {
-    return m_impl->m_keyfile->get_string(group, key).raw();
+    try {
+        return m_impl->m_keyfile->get_string(group, key).raw();
+    } catch (Glib::KeyFileError& e) {
+        throw std::runtime_error(
+            fmt::format("Keyfile Error, no such entry {} {}", group, key));
+    }
+}
+
+std::string KeyFile::getString(
+    const std::string& group, const std::string& key, std::string&& defaultValue) const
+{
+    try {
+        if (!m_impl->m_keyfile->has_key(group, key)) {
+            return std::move(defaultValue);
+        }
+        return m_impl->m_keyfile->get_string(group, key).raw();
+    } catch (Glib::KeyFileError& e) {
+        throw std::runtime_error(
+            fmt::format("Keyfile Error, no such entry {} {}", group, key));
+    }
 }
 
 std::optional<std::string> KeyFile::getStringOpt(
     const std::string& group, const std::string& key) const
 {
     if (m_impl->m_keyfile->has_key(group, key)) {
-        return m_impl->m_keyfile->get_string(group, key).raw();
+        try {
+            return m_impl->m_keyfile->get_string(group, key).raw();
+        } catch (Glib::KeyFileError& e) {
+            throw std::runtime_error(
+                fmt::format("Keyfile Error, no such entry {} {}", group, key));
+        }
     }
     return std::nullopt;
 }
 
 bool KeyFile::getBoolean(const std::string& group, const std::string& key) const
 {
-    return m_impl->m_keyfile->get_boolean(group, key);
+    try {
+        return m_impl->m_keyfile->get_boolean(group, key);
+    } catch (Glib::KeyFileError& e) {
+        throw std::runtime_error(
+            fmt::format("Keyfile Error, no such entry {} {}", group, key));
+    }
 }
 
 std::string KeyFile::toData() const { return m_impl->m_keyfile->to_data(); }
@@ -110,26 +120,45 @@ std::string KeyFile::toData() const { return m_impl->m_keyfile->to_data(); }
 void KeyFile::setString(
     const std::string& group, const std::string& key, const std::string& value)
 {
-    m_impl->m_keyfile->set_string(group, key, value);
+    LOG_ASSERT(group.size() > 0, "Trying to write to file with empty group");
+    try {
+        m_impl->m_keyfile->set_string(group, key, value);
+    } catch (const Glib::Error& e) {
+        LOG_ERROR("KeyFile::setString error {}", e.what().raw());
+        throw FileException(e.what());
+    }
 }
 
 void KeyFile::setString(const std::string& group, const std::string& key,
     const std::optional<std::string>& value)
 {
+    LOG_ASSERT(group.size() > 0, "Trying to write to file with empty group");
     if (value) {
-        m_impl->m_keyfile->set_string(group, key, value.value());
+        try {
+            m_impl->m_keyfile->set_string(group, key, value.value());
+        } catch (const Glib::Error& e) {
+            LOG_ERROR("KeyFile::setString error {}", e.what().raw());
+            throw FileException(e.what().raw());
+        }
     }
 }
 
 void KeyFile::setBoolean(
     const std::string& group, const std::string& key, const bool value)
 {
-    m_impl->m_keyfile->set_boolean(group, key, value);
+    try {
+        m_impl->m_keyfile->set_boolean(group, key, value);
+    } catch (const Glib::Error& e) {
+        LOG_ERROR("KeyFile::setString error {}", e.what().raw());
+        throw FileException(e.what());
+    }
 }
 
-void KeyFile::save() { m_impl->safeToFile(m_impl->m_path); }
+void KeyFile::save() { m_impl->m_keyfile->save_to_file(m_impl->m_path); }
 
-void KeyFile::load() { m_impl->loadFromFile(m_impl->m_path); }
+void KeyFile::load() { m_impl->m_keyfile->load_from_file(m_impl->m_path); }
+
+void KeyFile::loadData(const std::string& data) { m_impl->m_keyfile->load_from_data(data); }
 
 std::string checksum(const std::string& data)
 {
@@ -138,7 +167,8 @@ std::string checksum(const std::string& data)
     return checksum.get_string();
 }
 
-std::string checksum(const std::filesystem::path& path, const std::size_t chunkSize)
+std::string checksum(
+    const std::filesystem::path& path, const std::size_t chunkSize)
 {
     Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
     std::ifstream file(path, std::ios::in | std::ios::binary);

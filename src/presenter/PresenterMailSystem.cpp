@@ -6,6 +6,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/presenter/PresenterMailSystem.h>
 
+using cloyster::services::Postfix;
+
 namespace cloyster::presenter {
 PresenterMailSystem::PresenterMailSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
@@ -16,16 +18,17 @@ PresenterMailSystem::PresenterMailSystem(
             Messages::title, Messages::question, Messages::help)) {
 
         Postfix::Profile mailSystemProfile
-            = magic_enum::enum_cast<Postfix::Profile>(
+            = cloyster::utils::enums::ofStringOpt<Postfix::Profile>(
                 m_view->listMenu(Messages::title, Messages::Profile::question,
-                    magic_enum::enum_names<Postfix::Profile>(),
+                    cloyster::utils::enums::toStrings<Postfix::Profile>(),
                     Messages::Profile::help))
                   .value();
-        m_model->setMailSystem(mailSystemProfile, cloyster::getRunner());
-        auto mailSystem = m_model->getMailSystem().value();
+        m_model->setMailSystem(mailSystemProfile);
+        auto mailSystem = m_model->getMailSystem().value(); // copy here
 
         LOG_DEBUG("Enabled Postfix with profile: {}",
-            magic_enum::enum_name<Postfix::Profile>(mailSystemProfile));
+            cloyster::utils::enums::toString<Postfix::Profile>(
+                mailSystemProfile));
 
         switch (mailSystemProfile) {
             case Postfix::Profile::Local: {

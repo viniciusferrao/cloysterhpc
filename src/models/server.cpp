@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/server.h>
 #include <cloysterhpc/services/log.h>
 #include <regex>
@@ -120,7 +121,7 @@ const Connection& Server::getConnection(Network::Profile profile) const
 
     throw std::runtime_error(
         fmt::format("Cannot get any connection with profile {}",
-            magic_enum::enum_name(profile)));
+            cloyster::utils::enums::toString(profile)));
 }
 
 void Server::setConnection(const std::list<Connection>& connection)
@@ -136,45 +137,4 @@ const CPU& Server::getCPU() const noexcept { return m_cpu; }
 
 void Server::setCPU(const CPU& cpu) { m_cpu = cpu; }
 
-#ifdef BUILD_TESTING
-#include <doctest/doctest.h>
-#else
-#define DOCTEST_CONFIG_DISABLE
-#include <doctest/doctest.h>
-#endif
-
-TEST_SUITE("Test FQDN")
-{
-    TEST_CASE("FQDN Validation with Server::setFQDN" * doctest::skip())
-    {
-        Server server;
-
-        SUBCASE("Valid FQDNs")
-        {
-            CHECK_NOTHROW(server.setFQDN("example.com"));
-            CHECK(server.validateFQDN().has_value());
-            CHECK_NOTHROW(server.setFQDN("subdomain.example.com"));
-            CHECK(server.validateFQDN().has_value());
-            CHECK_NOTHROW(server.setFQDN("sub-domain.example.co.uk"));
-        }
-
-        SUBCASE("Invalid FQDNs")
-        {
-            CHECK_THROWS(server.setFQDN("example")); // Missing TLD
-            CHECK(!server.validateFQDN().has_value());
-            CHECK_THROWS(server.setFQDN(".example.com")); // Leading dot
-            CHECK(!server.validateFQDN().has_value());
-            CHECK_THROWS(server.setFQDN("example.com.")); // Trailing dot
-            CHECK(!server.validateFQDN().has_value());
-            CHECK_THROWS(server.setFQDN("example..com")); // Double dot
-            CHECK(!server.validateFQDN().has_value());
-            CHECK_THROWS(server.setFQDN("example@com")); // Invalid character
-            CHECK(!server.validateFQDN().has_value());
-            CHECK_THROWS(
-                server.setFQDN(std::string(256, 'a'))); // FQDN too long
-            CHECK(!server.validateFQDN().has_value());
-        }
-    }
-}
-
-}
+} // namespace cloyster::models {

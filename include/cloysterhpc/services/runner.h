@@ -6,42 +6,99 @@
 #ifndef CLOYSTERHPC_RUNNER_H_
 #define CLOYSTERHPC_RUNNER_H_
 
+#include <boost/process.hpp>
+
 #include <string>
 #include <vector>
+
+#include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services {
 
 /**
+ * @struct CommandProxy
+ * @brief A command proxy to capture the command output while the command is
+ * running.
+ *
+ * This structure is used to capture the output of a command in real-time,
+ * useful for displaying progress in a dialog.
+ */
+struct CommandProxy {
+    bool valid = false;
+    boost::process::child child;
+    boost::process::ipstream pipe_stream;
+
+    /**
+     * @brief Gets a line of output from the command.
+     *
+     * @return An optional string containing a line of output if available,
+     * otherwise std::nullopt.
+     */
+    std::optional<std::string> getline();
+    std::optional<std::string> getUntil(char chr);
+};
+
+enum class Stream : std::uint8_t { Stdout, Stderr };
+
+/**
  * Works as an abstraction for command execution.
  */
-class BaseRunner {
+class IRunner {
 public:
+    IRunner() = default;
+    IRunner(const IRunner&) = default;
+    IRunner(IRunner&&) = delete;
+    IRunner& operator=(const IRunner&) = default;
+    IRunner& operator=(IRunner&&) = delete;
+    virtual ~IRunner() = default;
+
     virtual int executeCommand(const std::string&) = 0;
+    virtual int executeCommand(const std::string&, std::list<std::string>& output) = 0;
+    virtual CommandProxy executeCommandIter(
+        const std::string&, Stream out = Stream::Stdout)
+        = 0;
+    virtual void checkCommand(const std::string&) = 0;
+    virtual std::vector<std::string> checkOutput(const std::string&) = 0;
+    virtual int downloadFile(const std::string& url, const std::string& file)
+        = 0;
 
-    virtual int downloadFile(const std::string& url, const std::string& file);
-
-    virtual ~BaseRunner() = default;
+    virtual int run(const ScriptBuilder& script) = 0;
 };
 
-class Runner : public BaseRunner {
+class Runner final : public IRunner {
 public:
-    int executeCommand(const std::string&) override;
-
-    virtual ~Runner() = default;
+    int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
+    void checkCommand(const std::string& cmd) override;
+    std::vector<std::string> checkOutput(const std::string& cmd) override;
+    int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 };
 
-class DryRunner : public BaseRunner {
+class DryRunner final : public IRunner {
 public:
-    int executeCommand(const std::string&) override;
-
-    virtual ~DryRunner() = default;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
+    int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
+    void checkCommand(const std::string& cmd) override;
+    std::vector<std::string> checkOutput(const std::string& cmd) override;
+    int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 };
 
-class MockRunner : public BaseRunner {
+class MockRunner final : public IRunner {
 public:
-    int executeCommand(const std::string&) override;
-
-    virtual ~MockRunner() = default;
+    CommandProxy executeCommandIter(
+        const std::string& cmd, Stream out = Stream::Stdout) override;
+    int executeCommand(const std::string& cmd) override;
+    int executeCommand(const std::string&, std::list<std::string>& output) override;
+    void checkCommand(const std::string& cmd) override;
+    std::vector<std::string> checkOutput(const std::string& cmd) override;
+    int downloadFile(const std::string& url, const std::string& file) override;
+    int run(const ScriptBuilder& script) override;
 
     [[nodiscard]] const std::vector<std::string>& listCommands() const;
 

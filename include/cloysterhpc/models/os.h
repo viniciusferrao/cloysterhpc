@@ -7,11 +7,8 @@
 #define CLOYSTERHPC_OS_H_
 
 #include <cloysterhpc/const.h>
-#include <cloysterhpc/services/package_manager.h>
 #include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
-#include <magic_enum/magic_enum.hpp>
-#include <memory>
 #include <string>
 #include <variant>
 
@@ -73,8 +70,6 @@ private:
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
 
-    std::shared_ptr<package_manager> m_packageManager;
-
     void setMajorVersion(unsigned int majorVersion);
 
     void setMinorVersion(unsigned int minorVersion);
@@ -87,11 +82,17 @@ private:
      */
     static std::string getValueFromKey(const std::string& line);
 
-    std::shared_ptr<package_manager> factoryPackageManager(
-        OS::Platform platform);
-
 public:
+    // Detect features automatically by probing the running OS
     OS();
+
+    // Construct a OS instance without probing the running OS
+    OS(const Distro& distro,
+       const Platform& platform,
+       const unsigned minorVersion,
+       const Arch& arch = OS::Arch::x86_64, 
+       const Family& family = OS::Family::Linux);
+
 
     [[nodiscard]] Arch getArch() const;
     void setArch(Arch arch);
@@ -106,6 +107,7 @@ public:
     void setPlatform(std::string_view platform);
 
     [[nodiscard]] Distro getDistro() const;
+    [[nodiscard]] std::string getDistroString() const;
     void setDistro(Distro distro);
     void setDistro(std::string_view distro);
 
@@ -117,9 +119,6 @@ public:
 
     [[nodiscard]] unsigned int getMajorVersion() const;
     [[nodiscard]] unsigned int getMinorVersion() const;
-
-    gsl::not_null<package_manager*> packageManager() const;
-
     [[nodiscard]] PackageType getPackageType() const;
 
     /**
@@ -131,4 +130,6 @@ public:
 };
 
 }; // namespace cloyster::models
+
+
 #endif // CLOYSTERHPC_OS_H_

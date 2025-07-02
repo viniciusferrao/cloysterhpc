@@ -6,8 +6,6 @@
 #ifndef CLOYSTERHPC_SHELL_H_
 #define CLOYSTERHPC_SHELL_H_
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/execution.h>
 
@@ -23,8 +21,6 @@ using cloyster::models::Cluster;
  */
 class Shell final : public Execution {
 private:
-    const std::unique_ptr<Cluster> m_cluster;
-
     /**
      * @brief Configures SELinux mode.
      *
@@ -124,6 +120,13 @@ private:
     void configureRepositories();
 
     /**
+     * @brief pin OS Version if required
+     *
+     * This function configure the required repos
+     */
+    static void pinOSVersion();
+
+    /**
      * @brief Configures the time service.
      *
      * This function sets up the time synchronization service using the provided
@@ -146,8 +149,8 @@ private:
      *
      * This function sets up the InfiniBand interconnect settings.
      */
-    void configureInfiniband();
-    void configureMailSystem();
+    static void configureInfiniband();
+    static void configureMailSystem();
 
     /**
      * @brief Removes memory lock limits.
@@ -172,19 +175,13 @@ private:
 
 public:
     /**
-     * @brief Constructs a Shell object.
-     *
-     * Initializes the Shell object with a reference to a Cluster object.
-     *
-     * @param cluster A reference to a unique pointer managing a Cluster object.
-     */
-    explicit Shell(const std::unique_ptr<Cluster> cluster);
-    /**
      * @brief Installs and configures the system.
      *
      * This function performs the installation and configuration processes.
      */
     void install() override;
+
+    Shell();
 };
 
 };

@@ -7,8 +7,11 @@
 #define CLOYSTERHPC_ISERVICE_H_
 
 #include <cloysterhpc/messagebus.h>
+#include <cloysterhpc/patterns/singleton.h>
 #include <stdexcept>
 #include <string_view>
+
+namespace cloyster::services {
 
 class daemon_exception : public std::runtime_error {
 public:
@@ -25,48 +28,54 @@ public:
 
 class IService {
 private:
-    std::shared_ptr<MessageBus> m_bus;
     std::string m_name;
 
     bool handleException(const sdbus::Error& e, const std::string_view fn);
 
     template <typename... Ts>
     std::optional<sdbus::ObjectPath> callObjectFunction(
-        const std::string function, Ts... params)
+        const std::string& function, Ts... params)
     {
+        auto bus = cloyster::Singleton<cloyster::services::MessageBus>::get();
         try {
             MessageReply reply
-                = m_bus->method("org.freedesktop.systemd1.Manager", function)
+                = bus->method("org.freedesktop.systemd1.Manager", function)
                       ->call(m_name, params...);
             return reply.get<sdbus::ObjectPath>();
         } catch (sdbus::Error& e) {
-            if (!handleException(e, function))
+            if (!handleException(e, function)) {
                 throw;
+            }
             return {};
         }
     }
 
     template <typename... Ts>
     std::optional<MessageReply> callObjectFunctionArray(
-        const std::string function, Ts... params)
+        const std::string& function, Ts... params)
     {
+        auto bus = cloyster::Singleton<cloyster::services::MessageBus>::get();
         try {
             std::vector<std::string> names = { m_name };
             MessageReply reply
-                = m_bus->method("org.freedesktop.systemd1.Manager", function)
+                = bus->method("org.freedesktop.systemd1.Manager", function)
                       ->call(names, params...);
             return reply;
         } catch (sdbus::Error& e) {
-            if (!handleException(e, function))
+            if (!handleException(e, function)) {
                 throw;
+            }
             return {};
         }
     }
 
 public:
-    IService(std::shared_ptr<MessageBus> bus, const std::string_view name)
-        : m_bus(bus)
-        , m_name(name)
+    IService(const IService&) = default;
+    IService(IService&&) = delete;
+    IService& operator=(const IService&) = default;
+    IService& operator=(IService&&) = delete;
+    explicit IService(const std::string_view name)
+        : m_name(name)
     {
     }
 
@@ -78,5 +87,7 @@ public:
     void restart();
     void stop();
 };
+
+}; // namespace cloyster::services
 
 #endif // CLOYSTERHPC_ISERVICE_H_

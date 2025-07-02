@@ -12,8 +12,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <magic_enum/magic_enum.hpp>
-
 using boost::asio::ip::address;
 
 /* TODO: Refactoring is necessary

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/services/dnf.h>
-#include <cloysterhpc/services/package_manager.h>
 #include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
 #include <variant>
@@ -27,6 +27,13 @@ namespace cloyster::models {
 OS::OS()
 {
     struct utsname system {};
+    // @FIXME: Unfortunately this runs during the initialization of the
+    //  cluster instance. Which prevents us of running this during testing
+    //  in a machine that does not have /etc/os-release file.
+    //  The isTest flag below is used to fill up default values during tests
+    //  to make it possible to run outside of target machines
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const bool isTest = !opts->testCommand.empty();
     uname(&system);
 
     setArch(system.machine);
@@ -53,39 +60,68 @@ OS::OS()
          */
         std::string line;
         while (std::getline(file, line)) {
-
-            /* TODO: Refactor the next three conditions */
             if (line.starts_with("PLATFORM_ID=")) {
-                LOG_DEBUG("Found platform (PLATFORM_ID=)");
-                auto value = getValueFromKey(line);
-                if (value.starts_with("platform:")) {
-                    // Skip the 'platform:' prefix
-                    constexpr auto platform = std::string_view("platform:");
-                    setPlatform(value.substr(platform.size()));
+                if (isTest) {
+                    setPlatform("el9");
                 } else {
-                    setPlatform(value);
+                    LOG_DEBUG("Found platform (PLATFORM_ID=)");
+                    auto value = getValueFromKey(line);
+                    if (value.starts_with("platform:")) {
+                        // Skip the 'platform:' prefix
+                        constexpr auto platform = std::string_view("platform:");
+                        setPlatform(value.substr(platform.size()));
+                    } else {
+                        setPlatform(value);
+                    }
                 }
             }
 
             if (line.starts_with("ID=")) {
                 LOG_DEBUG("Found distro (ID=)");
-                setDistro(getValueFromKey(line));
+                setDistro(!isTest
+                          ? getValueFromKey(line)
+                          : "rocky");
             }
 
             if (line.starts_with("VERSION=")) {
                 LOG_DEBUG("Found version (VERSION=)");
-                setVersion(getValueFromKey(line));
+                setVersion(!isTest 
+                           ? getValueFromKey(line)
+                           : "9.5");
             }
         }
 
         if (file.bad()) {
-            LOG_ERROR("Error while reading file {}", filename);
             throw std::runtime_error(
                 fmt::format("Error while reading file: {}", filename));
         }
     }
+}
 
-    factoryPackageManager(getPlatform());
+OS::OS(const Distro& distro,
+   const Platform& platform,
+   const unsigned minorVersion,
+   const Arch& arch,
+   const Family& family)
+    : m_arch(arch)
+    , m_family(family)
+    , m_platform(platform)
+    , m_distro(distro)
+    , m_minorVersion(minorVersion)
+{
+    switch (platform) {
+        case OS::Platform::el10:
+            m_majorVersion = 10;
+            break;
+        case OS::Platform::el9:
+            m_majorVersion = 9;
+            break;
+        case OS::Platform::el8:
+            m_majorVersion = 8;
+            break;
+        default:
+            cloyster::functions::abort("Invalid platform: {}", cloyster::utils::enums::toString(platform));
+    }
 }
 
 OS::Arch OS::getArch() const { return std::get<OS::Arch>(m_arch); }
@@ -108,7 +144,7 @@ void OS::setFamily(Family family) { m_family = family; }
 
 void OS::setFamily(std::string_view family)
 {
-    if (const auto& rv = magic_enum::enum_cast<Family>(family))
+    if (const auto& rv = cloyster::utils::enums::ofStringOpt<Family>(family))
         setFamily(rv.value());
     else
         throw std::runtime_error(fmt::format("Unsupported OS: {}", family));
@@ -119,22 +155,23 @@ OS::Platform OS::getPlatform() const
     return std::get<OS::Platform>(m_platform);
 }
 
-void OS::setPlatform(OS::Platform platform) { m_platform = platform; }
+void OS::setPlatform(OS::Platform platform) { 
+
+    LOG_DEBUG("Found platform ........ (PLATFORM_ID=)");
+    m_platform = platform;
+}
 
 void OS::setPlatform(std::string_view platform)
 {
-    std::string lowercasePlatform(platform);
-    std::transform(lowercasePlatform.begin(), lowercasePlatform.end(),
-        lowercasePlatform.begin(), ::tolower);
-
-    for (const auto& enumValue : magic_enum::enum_values<Platform>()) {
-        if (lowercasePlatform == magic_enum::enum_name(enumValue)) {
-            setPlatform(enumValue);
-            return;
-        }
+    using namespace cloyster::utils;
+    auto enumValue = enums::ofStringOpt<Platform>(
+        platform,
+        enums::Case::Insensitive);
+    if (!enumValue) {
+        cloyster::functions::abort("Unsupported Platform: {}", platform);
+    } else {
+        setPlatform(enumValue.value());
     }
-
-    throw std::runtime_error(fmt::format("Unsupported Platform: {}", platform));
 }
 
 OS::Distro OS::getDistro() const
@@ -142,6 +179,29 @@ OS::Distro OS::getDistro() const
     LOG_ASSERT(!std::holds_alternative<std::monostate>(m_distro),
         "m_distro is uninitialized");
     return std::get<OS::Distro>(m_distro);
+}
+
+std::string OS::getDistroString() const
+{
+    std::string distro;
+    switch (getDistro()) {
+        case OS::Distro::RHEL:
+            distro = "rhel";
+            break;
+        case OS::Distro::AlmaLinux:
+            distro = "almalinux";
+            break;
+        case OS::Distro::Rocky:
+            distro = "rockylinux";
+            break;
+        case OS::Distro::OL:
+            distro = "ol";
+            break;
+        default:
+            std::unreachable();
+    }
+
+    return fmt::format("{}{}.{}", distro, m_minorVersion, m_majorVersion);
 }
 
 OS::PackageType OS::getPackageType() const
@@ -161,36 +221,32 @@ void OS::setDistro(OS::Distro distro) { m_distro = distro; }
 
 void OS::setDistro(std::string_view distro)
 {
-    // This code block is left for future reference, if an insensitive
-    // comparison in magic_enum would be implemented it may easily replace the
-    // lambda block. Reference: https://github.com/Neargye/magic_enum/pull/139
+    using namespace cloyster::utils;
+    if (const auto& rval = enums::ofStringOpt<OS::Distro>(
+            std::string(distro), enums::Case::Insensitive)) {
+        setDistro(rval.value());
+    } else {
 
-#if 1
-    if (const auto& rv
-        = magic_enum::enum_cast<Distro>(distro, magic_enum::case_insensitive))
-#else
-    if (const auto &rv
-        = magic_enum::enum_cast<Distro>(distro, [](char lhs, char rhs) {
-              return std::tolower(lhs) == std::tolower(rhs);
-          }))
-#endif
-        setDistro(rv.value());
-    else
         throw std::runtime_error(
             fmt::format("Unsupported Distribution: {}", distro));
+    }
 }
 
 std::string_view OS::getKernel() const { return m_kernel; }
 
 void OS::setKernel(std::string_view kernel) { m_kernel = kernel; }
 
-unsigned int OS::getMajorVersion() const { return m_majorVersion; }
+unsigned int OS::getMajorVersion() const
+{
+    return m_majorVersion;
+}
 
 void OS::setMajorVersion(unsigned int majorVersion)
 {
-    if (majorVersion < 8)
+    if (majorVersion < 8) {
         throw std::runtime_error(
             "Unsupported release: Major version must be 8 or greater.");
+    }
 
     m_majorVersion = majorVersion;
 }
@@ -247,37 +303,21 @@ std::string OS::getValueFromKey(const std::string& line)
     return value;
 }
 
-std::shared_ptr<package_manager> OS::factoryPackageManager(
-    OS::Platform platform)
-{
-    for (const auto& supportedPlatform : magic_enum::enum_values<Platform>()) {
-        if (platform == supportedPlatform) {
-            m_packageManager = std::make_shared<dnf>();
-            return m_packageManager;
-        }
-    }
-
-    throw std::runtime_error(fmt::format(
-        "Unsupported OS platform: {}", magic_enum::enum_name(platform)));
-}
-
-gsl::not_null<package_manager*> OS::packageManager() const
-{
-    return m_packageManager.get();
-}
-
 void OS::printData() const
 {
 #ifndef NDEBUG
-    LOG_DEBUG("Architecture: {}", magic_enum::enum_name(std::get<Arch>(m_arch)))
-    LOG_DEBUG("Family: {}", magic_enum::enum_name(std::get<Family>(m_family)))
+    LOG_DEBUG("Architecture: {}",
+        cloyster::utils::enums::toString(std::get<Arch>(m_arch)))
+    LOG_DEBUG("Family: {}",
+        cloyster::utils::enums::toString(std::get<Family>(m_family)))
     LOG_DEBUG("Kernel Release: {}", m_kernel)
-    LOG_DEBUG(
-        "Platform: {}", magic_enum::enum_name(std::get<Platform>(m_platform)))
-    LOG_DEBUG(
-        "Distribution: {}", magic_enum::enum_name(std::get<Distro>(m_distro)))
+    // LOG_DEBUG("Platform: {}",
+    //     cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
+    LOG_DEBUG("Distribution: {}",
+        cloyster::utils::enums::toString(std::get<Distro>(m_distro)))
     LOG_DEBUG("Major Version: {}", m_majorVersion)
     LOG_DEBUG("Minor Version: {}", m_minorVersion)
 #endif
 }
 };
+

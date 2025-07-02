@@ -97,23 +97,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET hwinfo)
-    CPMAddPackage(
-      NAME hwinfo
-      GITHUB_REPOSITORY lfreist/hwinfo
-      GIT_TAG main
-	  OPTIONS "HWINFO_STATIC ON" "HWINFO_SHARED OFF")
-  endif()
-
-  # Packages only available with CPM
-  #if(NOT TARGET tools::tools)
-  #  CPMAddPackage("gh:lefticus/tools#update_build_system")
-  #endif()
-
-  if(NOT TARGET SimpleIni::SimpleIni)
-    CPMAddPackage("gh:brofield/simpleini@4.20")
-  endif()
-
   # Standalone packages
   include(FindPackageHandleStandardArgs)
 
@@ -125,6 +108,8 @@ function(cloysterhpc_setup_dependencies)
   endif()
 
   if(NOT TARGET glibmm)
+    # Using pkg_check_modules to link against the host glibmm
+    # instead of using conan
     pkg_check_modules(GLIBMM REQUIRED glibmm-2.4)
 
     message(STATUS "GLIBMM_LIBRARIES=${GLIBMM_LIBRARIES}")
@@ -135,7 +120,6 @@ function(cloysterhpc_setup_dependencies)
       GLIBMM_INCLUDE_DIRS)
 
     mark_as_advanced(GLIBMM_INCLUDE_DIRS GLIBMM_LIBRARIES)
-    # include_directories(${GLIBMM_INCLUDE_DIRS})
   endif()
 
   # Set the variable ${STDC++FS} to the correct library

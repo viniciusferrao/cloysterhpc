@@ -7,13 +7,16 @@
 #define CLOYSTERHPC_ANSWERFILE_H_
 
 #include <boost/asio.hpp>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/mailsystem/postfix.h>
 #include <cloysterhpc/models/os.h>
-#include <cloysterhpc/tools/ITool.h>
+#include <cloysterhpc/ofed.h>
+#include <cloysterhpc/services/files.h>
+#include <cloysterhpc/utils/enums.h>
 #include <optional>
+#include <utility>
 #include <vector>
 
+using cloyster::services::Postfix;
 using boost::asio::ip::address;
 
 namespace cloyster::models {
@@ -134,8 +137,6 @@ private:
         std::vector<AFNode> nodes;
     };
 
-    std::vector<std::shared_ptr<ITool>> m_tools;
-
     struct AFPostfix {
         struct SASL {
             std::string username;
@@ -156,8 +157,14 @@ private:
         std::filesystem::path key_file;
     };
 
+    struct AFOFED {
+        std::string kind = cloyster::utils::enums::toString(OFED::Kind::Inbox);
+        std::optional<std::string> version = "latest";
+        bool enabled = false;
+    };
+
     std::filesystem::path m_path;
-    inifile m_ini;
+    cloyster::services::files::KeyFile m_keyfile;
 
     /**
      * Do the inverse of `loadOptions`, i.e, move the stored settings
@@ -268,6 +275,7 @@ private:
     void loadNodes();
     void loadTools();
     void loadNVHPC();
+    void loadOFED();
 
     void dumpNodes();
 
@@ -326,8 +334,7 @@ private:
      * @param network The network configuration to load.
      * @param optionalNameservers Indicates if the nameservers are optional.
      */
-    void loadNetwork(const std::string& networkSection, AFNetwork& network,
-        bool optionalNameservers = true);
+    void loadNetwork(const std::string& networkSection, AFNetwork& network);
 
     void dumpNetwork(
         const AFNetwork& network, const std::string& networkSection);
@@ -343,6 +350,7 @@ public:
     AFSystem system;
     AFNodes nodes;
     AFPostfix postfix;
+    AFOFED ofed;
 
     /**
      * @brief Loads the answer file from the specified path.
@@ -351,30 +359,41 @@ public:
      */
     void loadFile(const std::filesystem::path& path);
     void dumpFile(const std::filesystem::path& path);
-    std::vector<std::shared_ptr<ITool>> getTools();
 
     AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);
 };
 
-class answerfile_validation_exception : public std::exception {
+class AnswerfileValidationException : public std::exception {
 private:
     std::string message;
 
 public:
-    explicit answerfile_validation_exception(const char* msg)
+    AnswerfileValidationException(const AnswerfileValidationException&)
+        = default;
+    AnswerfileValidationException(AnswerfileValidationException&&) = delete;
+    AnswerfileValidationException& operator=(
+        const AnswerfileValidationException&)
+        = default;
+    AnswerfileValidationException& operator=(AnswerfileValidationException&&)
+        = delete;
+
+    explicit AnswerfileValidationException(const char* msg)
         : message(msg)
     {
     }
 
-    explicit answerfile_validation_exception(const std::string& msg)
-        : message(msg)
+    explicit AnswerfileValidationException(std::string msg)
+        : message(std::move(msg))
     {
     }
 
-    ~answerfile_validation_exception() override = default;
+    ~AnswerfileValidationException() override = default;
 
-    const char* what() const noexcept override { return message.c_str(); }
+    [[nodiscard]] const char* what() const noexcept override
+    {
+        return message.c_str();
+    }
 };
 
 };

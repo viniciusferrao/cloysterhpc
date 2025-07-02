@@ -1,0 +1,73 @@
+name: Test Workflow
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # Or another standard runner
+
+    container:
+      image: rockylinux:9
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install git
+      run: |
+        dnf install -y git
+
+    - name: Get CMake Dependencies Hash
+      id: cmake-hash
+      run: |
+        CMAKE_FILE_PATH="cmake/CommonLibraries.cmake"
+        if [ -f "$CMAKE_FILE_PATH" ]; then
+          CMAKE_HASH=$(git hash-object "$CMAKE_FILE_PATH")
+          echo "cmake_hash=$CMAKE_HASH" >> "$GITHUB_OUTPUT"
+        else
+          echo "cmake_hash=no-cmake-file" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Cache Dependencies
+      uses: actions/cache@v4
+      id: dependency-cache
+      with:
+        path: |
+          build
+          ~/.conan
+        key: ${{ runner.os }}-deps-${{ steps.cmake-hash.outputs.cmake_hash }}
+        restore-keys: |
+          ${{ runner.os }}-deps-
+
+    - name: Set up dependencies
+      working-directory: ${{ github.workspace }}
+      run: |
+        dnf install -y dnf-plugins-core epel-release
+        dnf config-manager --set-enabled crb
+        dnf install -y cmake ninja-build ccache gcc-c++ python pip libasan libubsan gcc-toolset-14 \
+          gcc-toolset-14-libubsan-devel gcc-toolset-14-libasan-devel cppcheck \
+          glibmm24 glibmm24-devel newt-devel rpmdevtools perl-File-\* perl-threads \
+          perl-Thread perl-Thread-Queue perl-FindBin
+
+        python3 -m venv .venv 
+        source .venv/bin/activate
+        pip3 install conan
+        source ./rhel-gcc-toolset-14.sh
+        cmake -S . -DCMAKE_BUILD_TYPE=Debug -G Ninja -B build/Debug
+
+    - name: CMake build
+      working-directory: ${{ github.workspace }}
+      run: |
+        source .venv/bin/activate
+        cmake --build build/Debug # Or Debug
+
+    - name: CTest
+      working-directory: ${{ github.workspace }}/build/Debug
+      run: test/CloysterHPC-tests
+
+
+    - name: RPM Build
+      working-directory: ${{ github.workspace }}
+      run: |
+        source .venv/bin/activate
+        ./buildrpm.sh

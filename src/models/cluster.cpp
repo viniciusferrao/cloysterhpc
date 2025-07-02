@@ -5,6 +5,7 @@
 
 #include <expected>
 #include <memory>
+#include <stdexcept>
 
 #ifndef NDEBUG
 #include <fmt/format.h>
@@ -14,16 +15,17 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <utility>
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/headnode.h>
 #include <cloysterhpc/models/pbs.h>
 #include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
 
@@ -31,11 +33,11 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
-using cloyster::services::BaseRunner;
 using cloyster::services::DryRunner;
+using cloyster::services::IRunner;
 using cloyster::services::Runner;
 
-static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
+static constexpr std::unique_ptr<IRunner> makeRunner(const bool option)
 {
     if (option) {
         return std::make_unique<DryRunner>();
@@ -47,21 +49,11 @@ static constexpr std::unique_ptr<BaseRunner> makeRunner(const bool option)
 namespace cloyster::models {
 
 Cluster::Cluster()
-    : m_systemdBus(std::make_shared<DBusClient>(
-          "org.freedesktop.systemd1", "/org/freedesktop/systemd1"))
-{
-}
-
-std::shared_ptr<DBusClient> Cluster::getDaemonBus() { return m_systemdBus; }
+= default;
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
 const Headnode& Cluster::getHeadnode() const { return m_headnode; }
-// template <typename Runner>
-// std::unique_ptr<Runner> Cluster<Runner>::getRunner() const
-//{
-//     return m_runner;
-// }
 
 std::string_view Cluster::getName() const { return m_name; }
 
@@ -93,14 +85,9 @@ Timezone& Cluster::getTimezone() { return m_timezone; }
 
 void Cluster::setTimezone(const std::string& tz) { m_timezone.setTimezone(tz); }
 
-const Locale& Cluster::getLocale() const { return m_locale; }
+const std::string& Cluster::getLocale() const { return m_locale; }
 
-void Cluster::setLocale(const Locale& locale) { m_locale = locale; }
-
-void Cluster::setLocale(const std::string& locale)
-{
-    m_locale.setLocale(locale);
-}
+void Cluster::setLocale(const std::string& locale) { m_locale = locale; }
 
 const std::string Cluster::getDomainName() const
 {
@@ -130,7 +117,7 @@ Network& Cluster::getNetwork(Network::Profile profile)
 
     throw std::runtime_error(
         fmt::format("Cannot get any network with the profile {}",
-            magic_enum::enum_name(profile)));
+            cloyster::utils::enums::toString(profile)));
 }
 
 #if 0
@@ -210,7 +197,10 @@ void Cluster::setProvisioner(Cluster::Provisioner provisioner)
 
 std::optional<OFED> Cluster::getOFED() const { return m_ofed; }
 
-void Cluster::setOFED(OFED::Kind kind) { m_ofed = OFED(kind); }
+void Cluster::setOFED(OFED::Kind kind, std::string version)
+{
+    m_ofed = OFED(kind, std::move(version));
+}
 
 std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
 {
@@ -236,12 +226,13 @@ void Cluster::setQueueSystem(QueueSystem::Kind kind)
     }
 }
 
+using cloyster::services::Postfix;
+
 std::optional<Postfix>& Cluster::getMailSystem() { return m_mailSystem; }
 
-void Cluster::setMailSystem(
-    Postfix::Profile profile, std::shared_ptr<BaseRunner> runner)
+void Cluster::setMailSystem(Postfix::Profile profile)
 {
-    m_mailSystem.emplace(m_systemdBus, *runner, profile);
+    m_mailSystem.emplace(profile);
 }
 
 const DiskImage& Cluster::getDiskImage() const { return m_diskImage; }
@@ -290,7 +281,8 @@ void Cluster::printNetworks(
     for (size_t i = 0; const auto& network : networks) {
 #endif
         LOG_DEBUG("Network [{}]", i++)
-        LOG_DEBUG("Profile: {}", magic_enum::enum_name(network->getProfile()))
+        LOG_DEBUG("Profile: {}",
+            cloyster::utils::enums::toString(network->getProfile()))
         LOG_DEBUG("Address: {}", network->getAddress().to_string())
         LOG_DEBUG("Subnet Mask: {}", network->getSubnetMask().to_string())
         LOG_DEBUG("Gateway: {}", network->getGateway().to_string())
@@ -315,15 +307,19 @@ void Cluster::printConnections()
 
 void Cluster::printData()
 {
-    LOG_DEBUG("Dump cluster data:")
-    LOG_DEBUG("Cluster attributes defined:")
-    LOG_DEBUG("OS Data:")
+    LOG_DEBUG("Dump cluster data:");
+    LOG_DEBUG("Cluster attributes defined:");
+    LOG_DEBUG("OS Data:");
     m_headnode.getOS().printData();
-    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone())
-    LOG_DEBUG("Locale: {}", getLocale().getLocale())
-    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname())
-    LOG_DEBUG("DomainName: {}", getDomainName())
-    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN())
+    LOG_DEBUG("Timezone: {}", getTimezone().getTimezone());
+    LOG_DEBUG("Locale: {}", getLocale());
+    LOG_DEBUG("Hostname: {}", this->m_headnode.getHostname());
+    LOG_DEBUG("DomainName: {}", getDomainName());
+    LOG_DEBUG("FQDN: {}", this->m_headnode.getFQDN());
+    if (m_ofed) {
+        LOG_DEBUG("OFED: {} {}", utils::enums::toString(m_ofed->getKind()),
+            m_ofed->getVersion());
+    }
 
     printNetworks(m_network);
     printConnections();
@@ -470,7 +466,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
     answerfil.information.administrator_email = getAdminMail();
 
     answerfil.time.timezone = getTimezone().getTimezone();
-    answerfil.time.locale = getLocale().getLocale();
+    answerfil.time.locale = getLocale();
 
     for (const auto& node : this->m_nodes) {
         AFNode afNode;
@@ -506,6 +502,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
 
 void Cluster::fillData(const std::filesystem::path& answerfilePath)
 {
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     AnswerFile answerfil(answerfilePath);
 
     LOG_TRACE("Configure Management Network")
@@ -565,7 +562,8 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     // OS and Information
 
-    LOG_INFO("Distro: {}", magic_enum::enum_name(answerfil.system.distro));
+    LOG_INFO("Distro: {}",
+        cloyster::utils::enums::toString(answerfil.system.distro));
     LOG_INFO("Kernel: {}", answerfil.system.kernel);
     LOG_INFO("Version: {}", answerfil.system.version);
 
@@ -591,20 +589,42 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     this->m_headnode.setFQDN(fmt::format(
         "{0}.{1}", this->m_headnode.getHostname(), getDomainName()));
 
-    setOFED(OFED::Kind::Inbox);
+    if (answerfil.ofed.enabled) {
+        // Install the cofigured OFED variant
+        LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
+        auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind, 
+                                                          utils::enums::Case::Insensitive);
+        if (!kind) {
+            throw std::runtime_error(fmt::format(
+                "Invalid OFED kind, expected one of {}, found {}. Edit the "
+                "anwerfile {} [ofed] section and try again.",
+                opts->answerfile,
+                fmt::join(
+                    cloyster::utils::enums::toStrings<OFED::Kind>(), ", "),
+                answerfil.ofed.kind));
+        }
+        setOFED(kind.value(), answerfil.ofed.version.value());
+    } else {
+        // Install Inbox OFED by default
+        setOFED(OFED::Kind::Inbox);
+    }
+
     setQueueSystem(QueueSystem::Kind::SLURM);
     m_queueSystem.value()->setDefaultQueue("execution");
 
     addNetwork(std::move(managementNetwork));
 
-    LOG_TRACE("Configure Management Connection")
+    LOG_DEBUG("Configure Management Connection")
     auto managementConnection
         = Connection(&getNetwork(Network::Profile::Management));
+    LOG_DEBUG("Configure Management Connection interface")
     managementConnection.setInterface(
         answerfil.management.con_interface.value());
 
+    LOG_DEBUG("Configure Management Connection IP")
     managementConnection.setAddress(answerfil.management.con_ip_addr.value());
 
+    LOG_DEBUG("Configure Management Connection MAC")
     if (!answerfil.management.con_mac_addr->empty()) {
         managementConnection.setMAC(answerfil.management.con_mac_addr.value());
     }
@@ -710,7 +730,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         auto throwIfEmpty = [](bool optional_cast_value,
                                 const char* fieldname) {
             if (!optional_cast_value) {
-                throw answerfile_validation_exception(fmt::format(
+                throw AnswerfileValidationException(fmt::format(
                     "Field {} of application network is empty", fieldname));
             }
         };
@@ -757,10 +777,6 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     // FIXME: This should come from /etc/os-release
     m_headnode.setOS(nodeOS);
 
-    for (const auto& tool : answerfil.getTools()) {
-        tool->install();
-    }
-
     LOG_INFO("Configure Nodes")
     for (const auto& node : answerfil.nodes.nodes) {
         LOG_TRACE("Configure node {}", node.hostname.value())
@@ -785,14 +801,14 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
         if (mac_address) {
             if (auto err = Connection::validateMAC(mac_address.value());
                 !err.has_value()) {
-                throw answerfile_validation_exception { fmt::format(
+                throw AnswerfileValidationException { fmt::format(
                     "Error decoding MAC address (read {}) of node {}: {}",
                     mac_address.value(), nodename, err.error()) };
             } else {
                 newNode.setMACAddress(mac_address.value());
             }
         } else {
-            throw answerfile_validation_exception { fmt::format(
+            throw AnswerfileValidationException { fmt::format(
                 "Missing MAC address on node {}", nodename) };
         }
         LOG_TRACE("{} MAC address: {}", newNode.getHostname(),
@@ -808,7 +824,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
                   try {
                       return std::stoul(value);
                   } catch (std::invalid_argument& e) {
-                      throw answerfile_validation_exception { fmt::format(
+                      throw AnswerfileValidationException { fmt::format(
                           "Conversion error on node {}: field {} is not a "
                           "number (value is {})",
                           nodename, field_name, value) };
@@ -871,13 +887,13 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     }
 
     if (answerfil.postfix.enabled) {
-        setMailSystem(answerfil.postfix.profile, cloyster::getRunner());
+        setMailSystem(answerfil.postfix.profile);
         m_mailSystem->setHostname(this->m_headnode.getHostname());
         m_mailSystem->setDomain(getDomainName());
         m_mailSystem->setDestination(answerfil.postfix.destination);
 
         if (!m_mailSystem->getDomain()) {
-            throw answerfile_validation_exception(
+            throw AnswerfileValidationException(
                 "A domain is needed for e-mail configuration");
         }
 

@@ -4,6 +4,9 @@
  */
 
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/services/options.h>
+#include <cloysterhpc/patterns/wrapper.h>
 
 #include <chrono>
 #include <cstdio> /* FILE*, fopen, fclose */
@@ -23,163 +26,10 @@
 #include <stdexcept>
 #include <tuple>
 
-namespace cloyster {
+TEST_SUITE_BEGIN("cloyster");
 
-using cloyster::services::BaseRunner;
-using cloyster::services::DryRunner;
-using cloyster::services::Runner;
-
-namespace {
-    std::tuple<bool, std::optional<std::string>> retrieveLine(
-        boost::process::ipstream& pipe_stream,
-        const std::function<std::string(boost::process::ipstream&)>& linecheck)
-    {
-        if (pipe_stream.good()) {
-            return make_tuple(true, make_optional(linecheck(pipe_stream)));
-        }
-
-        return make_tuple(pipe_stream.good(), std::nullopt);
-    }
-
-    std::shared_ptr<BaseRunner> makeRunner(const bool dryRun)
-    {
-        if (dryRun) {
-            return std::make_shared<DryRunner>();
-        }
-
-        return std::make_shared<Runner>();
-    }
-
-} // anonymous namespace
-
-std::shared_ptr<BaseRunner> getRunner()
-{
-    static std::optional<std::shared_ptr<BaseRunner>> runner = std::nullopt;
-    if (!runner) {
-        runner = makeRunner(cloyster::dryRun);
-    }
-
-    return runner.value();
-}
-
+namespace cloyster::functions {
 using cloyster::services::repos::RepoManager;
-
-std::shared_ptr<RepoManager> getRepoManager(const OS& osinfo)
-{
-    static std::optional<std::shared_ptr<RepoManager>> repoManager
-        = std::nullopt;
-    if (!repoManager) {
-        LOG_DEBUG("Initializing RepoManager");
-        switch (osinfo.getPackageType()) {
-            case OS::PackageType::RPM:
-                repoManager = std::make_shared<RepoManager>(osinfo);
-                break;
-            case OS::PackageType::DEB:
-                // @TODO Implement
-                throw std::logic_error("Not implemented");
-                break;
-        }
-    }
-
-    return repoManager.value();
-}
-
-std::optional<std::string> CommandProxy::getline()
-{
-
-    if (!valid)
-        return std::nullopt;
-
-    auto [new_valid, out_line]
-        = retrieveLine(pipe_stream, [this](boost::process::ipstream& pipe) {
-              if (std::string line = ""; std::getline(pipe, line)) {
-                  return line;
-              }
-
-              valid = false;
-              return std::string {};
-          });
-
-    valid = new_valid;
-    return out_line;
-}
-
-std::optional<std::string> CommandProxy::getUntil(char c)
-{
-    if (!valid)
-        return std::nullopt;
-
-    auto [new_valid, out_line]
-        = retrieveLine(pipe_stream, [this, c](boost::process::ipstream& pipe) {
-              if (std::string line = ""; std::getline(pipe, line, c)) {
-                  return line;
-              }
-
-              valid = false;
-              return std::string {};
-          });
-
-    valid = new_valid;
-    return out_line;
-}
-
-CommandProxy runCommandIter(
-    const std::string& command, Stream out, bool overrideDryRun)
-{
-    if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running interative command: {}", command)
-        boost::process::ipstream pipe_stream;
-
-        if (out == Stream::Stderr) {
-            boost::process::child child(
-                command, boost::process::std_err > pipe_stream);
-            return CommandProxy { .valid = true,
-                .child = std::move(child),
-                .pipe_stream = std::move(pipe_stream) };
-
-        } else {
-            boost::process::child child(
-                command, boost::process::std_out > pipe_stream);
-            return CommandProxy { .valid = true,
-                .child = std::move(child),
-                .pipe_stream = std::move(pipe_stream) };
-        }
-    }
-
-    return CommandProxy {};
-}
-
-int runCommand(const std::string& command, std::list<std::string>& output,
-    bool overrideDryRun)
-{
-
-    if (!cloyster::dryRun || overrideDryRun) {
-        LOG_DEBUG("Running command: {}", command)
-        boost::process::ipstream pipe_stream;
-        boost::process::child child(
-            command, boost::process::std_out > pipe_stream);
-
-        std::string line;
-
-        while (pipe_stream && std::getline(pipe_stream, line)) {
-            LOG_TRACE("{}", line)
-            output.emplace_back(line);
-        }
-
-        child.wait();
-        LOG_DEBUG("Exit code: {}", child.exit_code())
-        return child.exit_code();
-    } else {
-        LOG_WARN("Dry Run: {}", command)
-        return 0;
-    }
-}
-
-int runCommand(const std::string& command, bool overrideDryRun)
-{
-    std::list<std::string> discard;
-    return runCommand(command, discard, overrideDryRun);
-}
 
 /* Returns a specific environment variable when requested.
  * If the variable is not set it will return as an empty string. That's by
@@ -192,6 +42,7 @@ std::string getEnvironmentVariable(const std::string& key)
 }
 
 /* Read .conf file */
+[[deprecated]]
 std::string readConfig(const std::string& filename)
 {
     boost::property_tree::ptree tree;
@@ -213,6 +64,7 @@ std::string readConfig(const std::string& filename)
 }
 
 /* Write .conf file function */
+[[deprecated]]
 void writeConfig(const std::string& filename)
 {
     boost::property_tree::ptree tree;
@@ -224,21 +76,27 @@ void writeConfig(const std::string& filename)
 
 void touchFile(const std::filesystem::path& path)
 {
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would touch the file {}", path.string())
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would touch the file {}", path.string())
         return;
     }
 
-    // BUG: I don't have to comment why this is a BUG, right?
-    FILE* f = fopen(path.c_str(), "ab");
-    (void)fflush(f);
-    (void)fclose(f);
+    if (cloyster::functions::exists(path)) {
+        LOG_WARN("File already exists, skiping {}", path.string())
+        return;
+    }
+    std::ofstream file(path, std::ios::app);
+    if (!file) {
+        throw std::runtime_error("Failed to touch file: " + path.string());
+    }
 }
 
 void createDirectory(const std::filesystem::path& path)
 {
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would create directory {}", path.string())
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would create directory {}", path.string())
         return;
     }
 
@@ -246,17 +104,46 @@ void createDirectory(const std::filesystem::path& path)
     LOG_DEBUG("Created directory: {}", path.string())
 }
 
+TEST_CASE("createDirectory - recursive creation and idempotency")
+{
+    using cloyster::services::Options;
+    cloyster::Singleton<Options>::init(
+        std::make_unique<Options>(Options{}));
+    const std::filesystem::path testBaseDir = "test/output/functions";
+    const std::filesystem::path targetDir = testBaseDir / "foo" / "bar" / "tar";
+
+    // Clean up testBaseDir before the test to ensure a known state.
+    if (std::filesystem::exists(testBaseDir)) {
+        std::filesystem::remove_all(testBaseDir);
+    }
+    // After cleanup, testBaseDir should not exist.
+    // createDirectory will create it and its children.
+    CHECK_FALSE(std::filesystem::exists(testBaseDir));
+
+    // --- Part 1: Test recursive creation ---
+    cloyster::functions::createDirectory(targetDir);
+
+    // Check if the target directory and its parents were created
+    CHECK(std::filesystem::exists(targetDir));
+    CHECK(std::filesystem::is_directory(targetDir));
+    CHECK(std::filesystem::exists(testBaseDir / "foo" / "bar"));
+    CHECK(std::filesystem::is_directory(testBaseDir / "foo" / "bar"));
+    CHECK(std::filesystem::exists(testBaseDir / "foo"));
+    CHECK(std::filesystem::is_directory(testBaseDir / "foo"));
+    CHECK(std::filesystem::exists(testBaseDir));
+    CHECK(std::filesystem::is_directory(testBaseDir));
+}
+
 /* Remove file */
 void removeFile(std::string_view filename)
 {
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would remove file {}, if exists", filename)
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would remove file {}, if exists", filename)
         return;
     }
 
-    LOG_DEBUG("Checking if file {} already exists on filesystem", filename)
     if (std::filesystem::exists(filename)) {
-        LOG_DEBUG("Already exists")
         std::filesystem::remove(filename);
         LOG_DEBUG("File {} deleted", filename)
     } else {
@@ -290,7 +177,8 @@ void backupFile(std::string_view filename)
     const auto& backupFile = fmt::format(
         "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
-    if (cloyster::dryRun) {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
         LOG_WARN("Dryn Run: Would create a backup copy of {} on {}", filename,
             backupFile);
         return;
@@ -318,8 +206,9 @@ void changeValueInConfigurationFile(
 {
     boost::property_tree::ptree tree;
 
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would change the {} on {} in configuration file {}",
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would change the {} on {} in configuration file {}",
             value, key, filename);
         return;
     }
@@ -351,8 +240,8 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #else
     std::ofstream file(std::string { filename }, std::ios_base::app);
 #endif
-
-    if (cloyster::dryRun) {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
         LOG_WARN(
             "Dry Run: Would add a string in file {}:\n{}", filename, string);
         return;
@@ -383,17 +272,19 @@ std::string findAndReplace(const std::string_view& source,
 /// Copy a file, ignore if file exists
 void copyFile(std::filesystem::path source, std::filesystem::path destination)
 {
-    if (cloyster::dryRun) {
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
         LOG_INFO(
             "Would copy file {} to {}", source.string(), destination.string())
         return;
     }
 
     try {
+        LOG_DEBUG("Copying file {} to {}", source, destination);
         std::filesystem::copy(source, destination);
     } catch (const std::filesystem::filesystem_error& ex) {
         if (ex.code().default_error_condition() == std::errc::file_exists) {
-            LOG_WARN("File {} already exists, skip copying", source.string());
+            LOG_WARN("File {} already exists, skip copying", source);
             return;
         }
 
@@ -401,14 +292,20 @@ void copyFile(std::filesystem::path source, std::filesystem::path destination)
     }
 }
 
+bool exists(const std::filesystem::path& path)
+{
+    return std::filesystem::exists(path);
+}
+
 void installFile(const std::filesystem::path& path, std::istream& data)
 {
-    if (cloyster::dryRun) {
-        LOG_WARN("Dry Run: Would install file {}", path.string());
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would install file {}", path.string());
         return;
     }
 
-    if (std::filesystem::exists(path)) {
+    if (cloyster::functions::exists(path)) {
         LOG_WARN("File already exists: {}, skipping", path.string());
         return;
     }
@@ -416,5 +313,65 @@ void installFile(const std::filesystem::path& path, std::istream& data)
     std::ofstream fil(path);
     fil << data.rdbuf();
 }
+
+void installFile(const std::filesystem::path& path, std::string&& data)
+{
+    std::istringstream stringData(std::move(data));
+    installFile(path, stringData);
+}
+
+HTTPRepo createHTTPRepo(const std::string_view repoName)
+{
+    const auto confPath = fmt::format("/etc/httpd/conf.d/{}.conf", repoName);
+    const auto repoFolder = fmt::format("/var/www/html/repos/{}", repoName);
+    // @FIXME:  Use the HN hostname instead of localhost to make it work in the
+    // nodes
+    HTTPRepo repo(repoFolder, std::string(repoName),
+        fmt::format("http://localhost/repos/{}", repoName));
+    if (cloyster::functions::exists(confPath)) {
+        LOG_WARN("Skipping the creation of HTTP repository, {} already exists",
+            confPath);
+        return repo;
+    }
+
+    cloyster::functions::createDirectory("/var/www/html/repos/");
+    LOG_INFO("Creating HTTP repository {} at {}", confPath, repoFolder);
+    auto runner = cloyster::Singleton<IRunner>::get();
+    cloyster::functions::createDirectory(repoFolder);
+    cloyster::functions::installFile(confPath,
+        fmt::format(
+            R"(<Directory "{0}">
+Options +Indexes +FollowSymLinks
+AllowOverride None
+Require all granted
+IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
+</Directory>
+)",
+            repoFolder));
+
+    runner->checkCommand("apachectl configtest");
+    runner->checkCommand("systemctl restart httpd");
+    return repo;
+}
+
+void backupFilesByExtension(
+    const wrappers::DestinationPath& backupPath,
+    const wrappers::SourcePath& sourcePath,
+    const wrappers::Extension& extension)
+{
+    const auto opts = cloyster::Singleton<services::Options>::get();
+    if (opts->shouldForce("backups")) {
+        std::filesystem::remove_all(backupPath);
+    }
+
+    if (!cloyster::functions::exists(backupPath)) {
+        LOG_INFO("Backing up {} files from {} to {}", extension, sourcePath, backupPath);
+        cloyster::functions::createDirectory(backupPath.get());
+        cloyster::functions::moveFilesWithExtension(sourcePath.get(), backupPath.get(), extension.get());
+    } else {
+        LOG_INFO("Backup path {} already exists, skipping", backupPath);
+    }
+}
+TEST_SUITE_END();
 
 }; // namespace cloyster

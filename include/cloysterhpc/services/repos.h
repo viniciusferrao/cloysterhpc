@@ -10,9 +10,9 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <cloysterhpc/concepts.h>
-#include <cloysterhpc/inifile.h>
 #include <cloysterhpc/models/os.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -58,47 +58,49 @@ protected:
         = default; // Protected constructor to prevent direct instantiation
 };
 
-class RepoManager {
+class RepoManager final {
     using OS = cloyster::models::OS;
     struct Impl;
     std::unique_ptr<Impl> m_impl;
 
 public:
-    ~RepoManager();
+    ~RepoManager(); // required by Impl opaque type
     using Repositories
-        = std::unordered_map<std::string, std::shared_ptr<IRepository>>;
-    explicit RepoManager(const OS& osinfo);
+        = std::unordered_map<std::string, std::unique_ptr<IRepository>>;
+    RepoManager();
+    RepoManager(const RepoManager&) = delete;
+    RepoManager(RepoManager&&) = delete;
+    RepoManager& operator=(const RepoManager&) = delete;
+    RepoManager& operator=(RepoManager&&) = delete;
+    /**
+     * @brief Install a new default repository handling custom mirror logic.
+     */
+    /*
+    void addDefaultRPMRepository(
+        const std::string& repoId,
+        const std::string& repoName,
+        const std::string& repoPath,
+        const std::string& upstreamUrlPrefix,
+        const std::string& upstreamGpg,
+        const std::filesystem::path& sourceFile,
+        const bool forceUpstream = false
+    );
+    */
+
+
     void initializeDefaultRepositories();
-    void updateDiskFiles();
     void enable(const std::string& repo);
     void enable(const std::vector<std::string>& repos);
     void disable(const std::string& repo);
     void disable(const std::vector<std::string>& repos);
     void install(const std::filesystem::path& path);
     void install(const std::vector<std::filesystem::path>& paths);
-    [[nodiscard]] std::vector<std::shared_ptr<const IRepository>>
+    [[nodiscard]] std::vector<std::unique_ptr<const IRepository>>
     listRepos() const;
-
-private:
-    void loadFiles(const std::filesystem::path& basedir);
-    void loadRPMRepos(const std::filesystem::path& source);
-    std::filesystem::path generateCloysterReposFile();
-
-    Repositories m_repos;
-    std::unordered_set<std::filesystem::path> m_filesLoaded;
-
-    // @FIXME: Make these shared pointers
-    const OS& m_os;
-
-    void createFileFor(std::filesystem::path path);
-
-    void loadDefaultRPMReposFromDisk(const std::filesystem::path& basedir);
-
-    void mergeWithCurrentList(Repositories&& repo);
-
-    void loadSingleFile(const std::filesystem::path& source);
-    void saveRepositories();
-    void configureEL();
+    [[nodiscard]] std::unique_ptr<const IRepository> repo(
+        const std::string& repo) const;
+    [[nodiscard]] std::vector<std::unique_ptr<const IRepository>> repoFile(
+        const std::string& repo) const;
 };
 
 };
