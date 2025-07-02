@@ -1,0 +1,16 @@
+#ifndef CLOYSTER_SERVICES_ANSIBLE_ROLE_BASE_H_
+#define CLOYSTER_SERVICES_ANSIBLE_ROLE_BASE_H_
+
+#include <cloysterhpc/services/scriptbuilder.h>
+#include <cloysterhpc/services/ansible/role.h>
+
+namespace cloyster::services::ansible::roles::base {
+
+ScriptBuilder installScript(
+    const Role& role,
+    const cloyster::models::OS& osinfo
+);
+
+};
+
+#endif

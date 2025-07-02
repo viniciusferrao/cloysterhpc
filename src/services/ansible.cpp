@@ -1,4 +1,7 @@
+#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/utils/string.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -8,6 +11,9 @@
 #endif
 
 #include <fmt/core.h>
+
+
+namespace cloyster::services::ansible {
 
 TEST_CASE("ansible::Role formatter produces correct output") {
     ansible::Role role{
@@ -35,4 +41,6 @@ TEST_CASE("ansible::Role formatter produces correct output") {
     CHECK((actual.find("auditd_enabled=true") != std::string::npos));
     CHECK((actual.find("log_level=debug") != std::string::npos));
 }
+
+} // namespace 
 

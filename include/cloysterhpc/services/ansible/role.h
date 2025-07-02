@@ -8,7 +8,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
-namespace ansible {
+namespace cloyster::services::ansible {
 
 struct Role {
     using Variables = std::unordered_map<std::string, std::string>;
@@ -23,13 +23,13 @@ struct Role {
 
 // Custom formatter for ansible::Role
 template <>
-struct fmt::formatter<ansible::Role> {
-    constexpr auto parse(format_parse_context& ctx) {
+struct fmt::formatter<cloyster::services::ansible::Role> {
+    static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
 
     template <typename FormatContext>
-    auto format(const ansible::Role& role, FormatContext& ctx) {
+    auto format(const cloyster::services::ansible::Role& role, FormatContext& ctx) {
         std::string result = fmt::format("Role: {}", role.m_roleName);
 
         if (role.m_whenCondition) {
