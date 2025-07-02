@@ -9,15 +9,15 @@
 #include <cloysterhpc/presenter/Presenter.h>
 
 #include <boost/asio.hpp>
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/newt.h>
 
-#include <magic_enum/magic_enum.hpp>
-
 #include <memory>
 #include <utility>
+
+namespace cloyster::presenter {
 
 struct NetworkCreatorData {
     Network::Profile profile;
@@ -61,8 +61,8 @@ private:
                 Network::Type type, Network::Profile profile)
             {
                 return fmt::format("Select your {} ({}) network interface",
-                    magic_enum::enum_name(profile),
-                    magic_enum::enum_name(type));
+                    cloyster::utils::enums::toString(profile),
+                    cloyster::utils::enums::toString(type));
             }
 
             static constexpr const auto help
@@ -131,6 +131,8 @@ public:
         std::unique_ptr<Newt>& view, NetworkCreator& nc,
         Network::Profile profile = Network::Profile::External,
         Network::Type type = Network::Type::Ethernet);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERNETWORK_H_

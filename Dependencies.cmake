@@ -86,14 +86,6 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET glibmm::glibmm)
-    if (cloysterhpc_ENABLE_CONAN)
-      CPMFindPackage(NAME glibmm)
-    else()
-      CPMAddPackage("gh:GNOME/glibmm@2.78.1")
-    endif()
-  endif()
-
   if(NOT TARGET SDBusCpp::sdbus-c++)
     if (cloysterhpc_ENABLE_CONAN)
       CPMFindPackage(NAME sdbus-c++)
@@ -105,29 +97,29 @@ function(cloysterhpc_setup_dependencies)
     endif()
   endif()
 
-  if(NOT TARGET hwinfo)
-    CPMAddPackage(
-      NAME hwinfo
-      GITHUB_REPOSITORY lfreist/hwinfo
-      GIT_TAG main
-	  OPTIONS "HWINFO_STATIC ON" "HWINFO_SHARED OFF")
-  endif()
-
-  # Packages only available with CPM
-  #if(NOT TARGET tools::tools)
-  #  CPMAddPackage("gh:lefticus/tools#update_build_system")
-  #endif()
-
-  if(NOT TARGET SimpleIni::SimpleIni)
-    CPMAddPackage("gh:brofield/simpleini@4.20")
-  endif()
-
   # Standalone packages
+  include(FindPackageHandleStandardArgs)
+
   # Include module path for packages that we need to find or build
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
   include(cmake/Findnewt.cmake)
   if(NOT TARGET newt)
     CPMFindPackage(NAME newt)
+  endif()
+
+  if(NOT TARGET glibmm)
+    # Using pkg_check_modules to link against the host glibmm
+    # instead of using conan
+    pkg_check_modules(GLIBMM REQUIRED glibmm-2.4)
+
+    message(STATUS "GLIBMM_LIBRARIES=${GLIBMM_LIBRARIES}")
+    message(STATUS "GLIBMM_INCLUDE_DIRS=${GLIBMM_INCLUDE_DIRS}")
+    find_package_handle_standard_args(glibmm
+      DEFAULT_MSG
+      GLIBMM_LIBRARIES
+      GLIBMM_INCLUDE_DIRS)
+
+    mark_as_advanced(GLIBMM_INCLUDE_DIRS GLIBMM_LIBRARIES)
   endif()
 
   # Set the variable ${STDC++FS} to the correct library

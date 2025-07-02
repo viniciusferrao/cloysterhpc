@@ -6,7 +6,10 @@
 #ifndef CLOYSTERHPC_OFED_H_
 #define CLOYSTERHPC_OFED_H_
 
-#include <cloysterhpc/functions.h>
+#include <string>
+#include <utility>
+
+#include <cloysterhpc/services/repos.h>
 
 /**
  * @class OFED
@@ -26,13 +29,21 @@ public:
 
 private:
     Kind m_kind { Kind::Inbox };
+    std::string m_version;
 
 public:
     OFED() = default;
-    explicit OFED(Kind kind);
+    OFED(Kind kind, std::string version)
+        : m_kind(kind)
+        , m_version(std::move(version))
+    {
+    }
 
     void setKind(Kind kind);
     [[nodiscard]] Kind getKind() const;
+
+    void setVersion(std::string&& value) { m_version = std::move(value); }
+    [[nodiscard]] std::string getVersion() const { return m_version; }
 
     /**
      * @brief Installs the OFED software package.
@@ -41,6 +52,11 @@ public:
      * specified kind.
      */
     void install() const;
+
+    /**
+     * @brief Returns true if OFED is already installed
+     */
+    [[nodiscard]] bool installed() const;
 };
 
 #endif // CLOYSTERHPC_OFED_H_

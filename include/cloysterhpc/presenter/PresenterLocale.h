@@ -8,6 +8,8 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
+namespace cloyster::presenter {
+
 class PresenterLocale : public Presenter {
 private:
     struct Messages {
@@ -20,6 +22,8 @@ private:
 public:
     PresenterLocale(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERLOCALE_H_

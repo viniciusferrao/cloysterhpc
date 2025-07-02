@@ -1,6 +1,8 @@
 #include <cloysterhpc/cloyster.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/IService.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/options.h>
 #include <stdexcept>
 
 /* BUG: Refactor:
@@ -11,6 +13,8 @@
  * Check grammar.
  * Warnings during compilation.
  */
+
+namespace cloyster::services {
 
 using EnableRType
     = std::vector<sdbus::Struct<std::string, std::string, std::string>>;
@@ -27,8 +31,9 @@ bool IService::handleException(const sdbus::Error& e, const std::string_view fn)
 
 void IService::enable()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would have enabled the service {}", m_name)
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would have enabled the service {}", m_name)
         return;
     }
 
@@ -49,8 +54,9 @@ void IService::enable()
 
 void IService::disable()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would have disabled the service {}", m_name)
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would have disabled the service {}", m_name)
         return;
     }
 
@@ -69,8 +75,9 @@ void IService::disable()
 
 void IService::start()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would have started the service {}", m_name)
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would have started the service {}", m_name)
         return;
     }
 
@@ -80,8 +87,9 @@ void IService::start()
 
 void IService::restart()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would have restarted the service {}", m_name)
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would have restarted the service {}", m_name)
         return;
     }
 
@@ -91,11 +99,14 @@ void IService::restart()
 
 void IService::stop()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would have stopped the service {}", m_name)
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would have stopped the service {}", m_name)
         return;
     }
 
     LOG_TRACE("service: stopping {}", m_name);
     callObjectFunction("StopUnit", "replace");
 }
+
+}; // namespace cloyster::services

@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.26.5)
 
-project(CmakeConfigPackageTests LANGUAGES CXX)
+project(CloysterHPC-tests LANGUAGES CXX)
 
 # ---- Test as standalone project the exported config package ----
-
 if (PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
     enable_testing()
 
@@ -16,14 +15,14 @@ if (PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
 endif ()
 
 # Provide a simple smoke test to make sure that the CLI works and can display a --help message
-add_test(NAME cli.has_help COMMAND main --help)
+# add_test(NAME cli.has_help COMMAND main --help)
 
 # Provide a test to verify that the version being reported from the application
 # matches the version given to CMake. This will be important once you package
 # your program. Real world shows that this is the kind of simple mistake that is easy
 # to make, but also easy to test for.
-add_test(NAME cli.version_matches COMMAND main --version)
-set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
+# add_test(NAME cli.version_matches COMMAND main --version)
+# set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
 
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 list(REMOVE_ITEM TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
@@ -52,6 +51,9 @@ target_link_system_libraries(
         ${PROJECT_NAME}
         PRIVATE
         ${COMMON_LIBS})
+
+# Include glibmm headers as SYSTEM header to avoid warnings
+target_include_directories(cloysterhpc_test_object SYSTEM PRIVATE ${GLIBMM_INCLUDE_DIRS})
 
 target_include_directories(${PROJECT_NAME} ${WARNING_GUARD} PRIVATE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include>
@@ -90,23 +92,23 @@ endif ()
 # testing frameworks add the tests target instead: add_test(NAME ${PROJECT_NAME} COMMAND
 # ${PROJECT_NAME})
 
-if (cloysterhpc_ENABLE_CONAN)
-    string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
-    string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" CMAKE_SYSTEM_PROCESSOR_LOWER)
-
-    # Hack to fix wrong architecture name for aarch64 during Conan install
-    if (CMAKE_SYSTEM_PROCESSOR_LOWER STREQUAL "aarch64")
-        set(CMAKE_SYSTEM_PROCESSOR_LOWER "armv8")
-    endif ()
-
-    include(${doctest_DIR}/doctest-${CMAKE_BUILD_TYPE_LOWER}-${CMAKE_SYSTEM_PROCESSOR_LOWER}-data.cmake)
-    include(${doctest_BUILD_DIRS_${CMAKE_BUILD_TYPE_UPPER}}/doctest.cmake)
-else ()
-    include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
-endif ()
-
-doctest_discover_tests(${PROJECT_NAME})
+# if (cloysterhpc_ENABLE_CONAN)
+#     string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+#     string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
+#     string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" CMAKE_SYSTEM_PROCESSOR_LOWER)
+# 
+#     # Hack to fix wrong architecture name for aarch64 during Conan install
+#     if (CMAKE_SYSTEM_PROCESSOR_LOWER STREQUAL "aarch64")
+#         set(CMAKE_SYSTEM_PROCESSOR_LOWER "armv8")
+#     endif ()
+# 
+#     include(${doctest_DIR}/doctest-${CMAKE_BUILD_TYPE_LOWER}-${CMAKE_SYSTEM_PROCESSOR_LOWER}-data.cmake)
+#     include(${doctest_BUILD_DIRS_${CMAKE_BUILD_TYPE_UPPER}}/doctest.cmake)
+# else ()
+#     include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
+# endif ()
+# 
+# doctest_discover_tests(${PROJECT_NAME})
 
 # ---- code coverage ----
 

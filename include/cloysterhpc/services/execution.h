@@ -8,13 +8,12 @@
 
 #include <string>
 
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
 
 class Execution {
 public:
     virtual ~Execution() = default;
 
-    // virtual void runCommand(const std::string&) = 0;
     virtual void install() = 0;
 };
 

@@ -8,6 +8,8 @@
 
 #include <cloysterhpc/presenter/Presenter.h>
 
+namespace cloyster::presenter {
+
 class PresenterGeneralSettings : public Presenter {
 private:
     struct Messages {
@@ -35,6 +37,8 @@ private:
 public:
     PresenterGeneralSettings(
         std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view);
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTERGENERALSETTINGS_H_

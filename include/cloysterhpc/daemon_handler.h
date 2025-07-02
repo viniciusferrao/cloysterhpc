@@ -5,6 +5,9 @@
 
 #include <cloysterhpc/messagebus.h>
 
+using cloyster::services::MessageBus;
+using cloyster::services::MessageReply;
+
 class DaemonHandler {
 private:
     std::shared_ptr<MessageBus> m_bus;

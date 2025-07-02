@@ -6,16 +6,15 @@
 #ifndef CLOYSTERHPC_CONNECTION_H_
 #define CLOYSTERHPC_CONNECTION_H_
 
-#include <cloysterhpc/network.h>
-
 #include <arpa/inet.h>
 #include <boost/asio.hpp>
 #include <expected>
 #include <ifaddrs.h>
-#include <memory>
 #include <string>
 
 #include <gsl/gsl-lite.hpp>
+
+#include <cloysterhpc/network.h>
 
 /* Each server can have one and only one connection to a given network, although
  * it can have more than one address on the same interface. This may seem

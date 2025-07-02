@@ -56,6 +56,8 @@ function(
         -Wdouble-promotion # warn if float is implicit promoted to double
         -Wformat=2 # warn on security issues around functions that format output (ie printf)
         -Wimplicit-fallthrough # warn on statements that fallthrough without an explicit annotation
+        # -fconcepts-ts # enable auto i template arguments # Deprecated
+        -fconcepts-diagnostics-depth=2 # enable more diagnostics for concepts
     )
   endif()
 
@@ -71,6 +73,7 @@ function(
         -Wno-unused-function
         -Wno-unused-parameter
         -Wno-shadow
+        -Wno-missing-field-initializers
     )
   endif()
 

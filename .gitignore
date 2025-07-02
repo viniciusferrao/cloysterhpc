@@ -317,3 +317,8 @@ tags
 .vagrant
 
 .cache/
+
+test/output/**
+.clangd
+CMakePresets.json
+CMakeUserPresets.json

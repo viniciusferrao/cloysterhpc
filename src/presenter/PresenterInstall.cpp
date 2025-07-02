@@ -18,6 +18,7 @@
 #include <cloysterhpc/presenter/PresenterTime.h>
 #include <cloysterhpc/presenter/PresenterWelcome.h>
 
+namespace cloyster::presenter {
 PresenterInstall::PresenterInstall(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -56,14 +57,16 @@ PresenterInstall::PresenterInstall(
         Call<PresenterNetwork>(nc, Network::Profile::External);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-            magic_enum::enum_name(Network::Profile::External), ex.what());
+            cloyster::utils::enums::toString(Network::Profile::External),
+            ex.what());
     }
 
     try {
         Call<PresenterNetwork>(nc, Network::Profile::Management);
     } catch (const std::exception& ex) {
         LOG_ERROR("Failed to add {} network: {}",
-            magic_enum::enum_name(Network::Profile::Management), ex.what());
+            cloyster::utils::enums::toString(Network::Profile::Management),
+            ex.what());
     }
 
 #endif
@@ -88,4 +91,6 @@ PresenterInstall::PresenterInstall(
 
     // Destroy the view since we don't need it anymore
     m_view.reset();
+}
+
 }

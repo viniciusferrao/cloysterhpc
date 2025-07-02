@@ -6,17 +6,20 @@
 #ifndef CLOYSTERHPC_XCAT_H_
 #define CLOYSTERHPC_XCAT_H_
 
+#include "scriptbuilder.h"
+#include <filesystem>
+#include <string>
+
+#include <fmt/format.h>
+#include <fmt/ranges.h> // for std::vector formatters
+
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/services/execution.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/provisioner.h>
 #include <cloysterhpc/services/shell.h>
 
-#include <magic_enum/magic_enum.hpp>
-
-#include <filesystem>
-#include <memory>
-#include <string>
+namespace cloyster::services {
 
 /**
  * @class XCAT
@@ -26,14 +29,30 @@
  * provisioning process of compute and service nodes in a cluster using xCAT.
  */
 class XCAT : public Provisioner {
-private:
+public:
+    struct Image {
+        std::vector<std::string_view> otherpkgs = {};
+        // @TODO: We need to support more than one osimage (:
+        //   this can be a default osimage though
+        std::string osimage;
+        std::filesystem::path chroot;
+        std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
+        std::vector<std::string> synclists;
+    };
+
+    struct ImageInstallArgs final {
+        std::string imageName;
+        std::filesystem::path rootfs;
+        std::filesystem::path postinstall;
+        std::filesystem::path pkglist;
+    };
     /**
      * @enum ImageType
      * @brief Defines the types of OS images.
      *
      * This enum specifies the types of OS images that can be created.
      */
-    enum class ImageType { Install, Netboot };
+    enum class ImageType : bool { Install, Netboot };
 
     /**
      * @enum NodeType
@@ -41,20 +60,17 @@ private:
      *
      * This enum specifies the types of nodes in the cluster.
      */
-    enum class NodeType { Compute, Service };
+    enum class NodeType : bool { Compute, Service };
+
+    [[nodiscard]] ImageInstallArgs getImageInstallArgs(
+        ImageType imageType, NodeType nodeType
+    );
+
 
 private:
-    const std::unique_ptr<Cluster>& m_cluster;
+    Image m_stateless;
 
-    struct {
-        std::vector<std::string_view> otherpkgs = {};
-        std::string osimage;
-        std::filesystem::path chroot;
-        std::vector<std::string> postinstall = { "#!/bin/sh\n\n" };
-        std::vector<std::string> synclists = {};
-    } m_stateless;
 
-private:
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
 
@@ -63,7 +79,7 @@ private:
      *
      * @param diskImage The path to the disk image.
      */
-    static void copycds(const std::filesystem::path& diskImage);
+    void copycds(const std::filesystem::path& diskImage) const;
 
     /**
      * @brief Generates the OS image.
@@ -94,6 +110,13 @@ private:
     static void createDirectoryTree();
 
     /**
+     * @brief Configures SELinux settings.
+     *
+     * This function sets up SELinux configurations in the image
+     */
+    void configureSELinux();
+
+    /**
      * @brief Configures OpenHPC settings.
      *
      * This function sets up OpenHPC configurations.
@@ -106,13 +129,6 @@ private:
      * This function sets up the time synchronization service.
      */
     void configureTimeService();
-
-    /**
-     * @brief Configures InfiniBand settings.
-     *
-     * This function sets up InfiniBand interconnect settings.
-     */
-    void configureInfiniband();
 
     /**
      * @brief Configures SLURM settings.
@@ -154,14 +170,14 @@ private:
      *
      * This function applies customizations to the OS image.
      */
-    void customizeImage();
+    void customizeImage(const std::vector<ScriptBuilder>& customizations) const;
 
     /**
      * @brief Adds a node to the cluster.
      *
      * @param node The node to add.
      */
-    static void addNode(const Node& node);
+    static void addNode(const cloyster::models::Node& node);
 
     /**
      * @brief Generates the OS image name based on type and node.
@@ -187,6 +203,13 @@ private:
     static void configureEL9();
 
 public:
+    XCAT();
+
+    /**
+     * @brief Return a list of repos for xCAT image
+     */
+    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
+
     /**
      * @brief Installs the necessary packages.
      *
@@ -221,7 +244,9 @@ public:
      * Compute).
      */
     void createImage(
-        ImageType = ImageType::Netboot, NodeType = NodeType::Compute);
+        ImageType = ImageType::Netboot, NodeType = NodeType::Compute,
+        const std::vector<ScriptBuilder>& customizations = {}
+    );
 
     /**
      * @brief Adds nodes to the provisioning system.
@@ -251,7 +276,31 @@ public:
      */
     static void resetNodes();
 
-    explicit XCAT(const std::unique_ptr<Cluster>& cluster);
+    /**
+     * @brief Configures InfiniBand settings.
+     *
+     * This function sets up InfiniBand interconnect settings.
+     */
+    void configureInfiniband();
+
+    /**
+     * @brief Return the Image
+     */
+    [[nodiscard]] Image getImage() const;
+};
+
+};
+
+template <>
+struct fmt::formatter<cloyster::services::XCAT::Image>
+    : formatter<string_view> {
+    template <typename FormatContext>
+    auto format(const cloyster::services::XCAT::Image& image,
+        FormatContext& ctx) const -> decltype(ctx.out())
+    {
+        return fmt::format_to(
+            ctx.out(), "XCAT::Image({}, {})", image.osimage, image.otherpkgs);
+    }
 };
 
 #endif // CLOYSTERHPC_XCAT_H_

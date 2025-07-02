@@ -3,18 +3,61 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <cloysterhpc/functions.h>
-#include <cloysterhpc/services/execution.h>
-#include <cloysterhpc/services/shell.h>
-#include <cloysterhpc/services/xcat.h>
-
-#include <cloysterhpc/repos.h>
-#include <cloysterhpc/runner.h>
+#include <algorithm>
 #include <cstdlib> // setenv / getenv
+
+#include <filesystem>
 #include <fmt/format.h>
 
-XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
-    : m_cluster(cluster)
+#include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/os.h>
+#include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/osservice.h>
+#include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/xcat.h>
+
+namespace {
+using cloyster::models::Cluster;
+
+inline auto cluster() { return cloyster::Singleton<Cluster>::get(); }
+
+// Returns the distribution name with the version, e.g., rocky9.5
+std::string getOSImageDistroVersion()
+{
+    using cloyster::models::OS;
+    std::string osimage;
+
+    switch (cluster()->getDiskImage().getDistro()) {
+        case OS::Distro::RHEL:
+            osimage += "rhels";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+        case OS::Distro::OL:
+            osimage += "ol";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            osimage += ".0";
+            break;
+        case OS::Distro::Rocky:
+            osimage += "rocky";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+        case OS::Distro::AlmaLinux:
+            osimage += "alma";
+            osimage += cluster()->getNodes()[0].getOS().getVersion();
+            break;
+    }
+    return osimage;
+}
+}; // namespace{}
+
+namespace cloyster::services {
+
+using cloyster::models::Node;
+using cloyster::services::repos::RepoManager;
+
+XCAT::XCAT()
 {
 
     // Initialize some environment variables needed by proper xCAT execution
@@ -29,12 +72,18 @@ XCAT::XCAT(const std::unique_ptr<Cluster>& cluster)
 
     // TODO: Hacky, we should properly set environment variable on locale
     setenv("PERL_BADLANG", "0", false);
+
+    // Ensure image name is setted
+    generateOSImageName(ImageType::Netboot, NodeType::Compute);
 }
+
+XCAT::Image XCAT::getImage() const { return m_stateless; }
 
 void XCAT::installPackages()
 {
-    m_cluster->getHeadnode().getOS().packageManager()->install("initscripts");
-    m_cluster->getHeadnode().getOS().packageManager()->install("xCAT");
+    auto osservice = cloyster::Singleton<IOSService>::get();
+    osservice->install("initscripts");
+    osservice->install("xCAT");
 }
 
 void XCAT::patchInstall()
@@ -42,63 +91,112 @@ void XCAT::patchInstall()
     /* Required for EL 9.5
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
-    cloyster::runCommand("sed -i \"s/-extensions usr_cert //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
-    cloyster::runCommand("sed -i \"s/-extensions server //g\" "
-                         "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
-    cloyster::runCommand("xcatconfig -f");
+
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    if (runner->executeCommand(
+            "grep -q \"extensions usr_cert\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
+        == 0) {
+        runner->executeCommand(
+            "sed -i \"s/-extensions usr_cert //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
+        runner->executeCommand(
+            "sed -i \"s/-extensions server //g\" "
+            "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+        runner->executeCommand("xcatconfig -f");
+    } else {
+        LOG_WARN("xCAT Already patched, skipping");
+    }
 }
 
 void XCAT::setup()
 {
-    setDHCPInterfaces(m_cluster->getHeadnode()
+    setDHCPInterfaces(cluster()
+            ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getInterface()
             .value());
-    setDomain(m_cluster->getDomainName());
+    setDomain(cluster()->getDomainName());
 }
 
 /* TODO: Maybe create a chdef method to do it cleaner? */
 void XCAT::setDHCPInterfaces(std::string_view interface)
 {
-    cloyster::runCommand(
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    runner->checkCommand(
         fmt::format("chdef -t site dhcpinterfaces=\"xcatmn|{}\"", interface));
 }
 
 void XCAT::setDomain(std::string_view domain)
 {
-    cloyster::runCommand(fmt::format("chdef -t site domain={}", domain));
+    auto runner = cloyster::Singleton<services::IRunner>::get();
+    runner->checkCommand(fmt::format("chdef -t site domain={}", domain));
 }
 
-void XCAT::copycds(const std::filesystem::path& diskImage)
+namespace {
+    constexpr bool imageExists(const std::string& image)
+    {
+        LOG_ASSERT(
+            image.size() > 0, "Trying to generate an image with empty name");
+
+        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+        if (opts->dryRun) {
+            LOG_WARN("Dry-Run: skipping image check, assuming it doesn't exists");
+            return false;
+        }
+
+        auto runner = cloyster::Singleton<services::IRunner>::get();
+        if (opts->shouldForce("genimage")) {
+            runner->executeCommand(fmt::format("rmdef -t osimage -o {}", image));
+        }
+
+        std::list<std::string> output;
+        auto exitCode = runner->executeCommand(fmt::format("lsdef -t osimage {}", image), output);
+        if (exitCode == 0) { // image exists
+            LOG_WARN("Skipping image generation {}, use --force=genimage to force",
+                image, image);
+            LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
+            return true;
+        }
+
+        return false;
+    }
+
+}; // anonymous namespace
+
+void XCAT::copycds(const std::filesystem::path& diskImage) const
 {
-    cloyster::runCommand(fmt::format("copycds {}", diskImage.string()));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("copycds {}", diskImage.string()));
 }
 
 void XCAT::genimage()
 {
-    cloyster::runCommand(fmt::format("genimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("genimage {}", m_stateless.osimage));
 }
 
 void XCAT::packimage()
 {
-    cloyster::runCommand(fmt::format("packimage {}", m_stateless.osimage));
+    cloyster::Singleton<IRunner>::get()->checkCommand(
+        fmt::format("packimage {}", m_stateless.osimage));
 }
 
 void XCAT::nodeset(std::string_view nodes)
 {
-    cloyster::runCommand(
+    cloyster::Singleton<IRunner>::get()->checkCommand(
         fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
 }
 
 void XCAT::createDirectoryTree()
 {
-    if (cloyster::dryRun) {
-        LOG_INFO("Would create the directory /install/custom/netboot")
-        return;
-    }
+    functions::createDirectory(CHROOT "/install/custom/netboot");
+}
 
-    std::filesystem::create_directories(CHROOT "/install/custom/netboot");
+void XCAT::configureSELinux()
+{
+    m_stateless.postinstall.emplace_back(fmt::format(
+        "echo \"SELINUX=disabled\nSELINUXTYPE=targeted\" > $IMG_ROOTIMGDIR/etc/selinux/config\n\n"));
 }
 
 void XCAT::configureOpenHPC()
@@ -123,7 +221,8 @@ void XCAT::configureTimeService()
 
     m_stateless.postinstall.emplace_back(fmt::format(
         "echo \"server {} iburst\" >> $IMG_ROOTIMGDIR/etc/chrony.conf\n\n",
-        m_cluster->getHeadnode()
+        cluster()
+            ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress()
             .to_string()));
@@ -131,17 +230,59 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
-    if (const auto& ofed = m_cluster->getOFED())
+    LOG_INFO("[xCAT] Configuring infiniband");
+    if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {
             case OFED::Kind::Inbox:
                 m_stateless.otherpkgs.emplace_back("@infiniband");
 
                 break;
 
-            case OFED::Kind::Mellanox:
-                throw std::logic_error("MLNX OFED is not yet supported");
+            case OFED::Kind::Mellanox: {
+                auto repoManager = cloyster::Singleton<RepoManager>::get();
+                auto runner = cloyster::Singleton<IRunner>::get();
+                auto arch = cloyster::utils::enums::toString(
+                    cluster()->getNodes()[0].getOS().getArch());
+                auto osService = cloyster::Singleton<IOSService>::get();
+                auto opts = cloyster::Singleton<Options>::get();
 
-                break;
+                // Add the rpm to the image
+                m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
+                m_stateless.otherpkgs.emplace_back("doca-ofed");
+
+                // The kernel modules are build by the OFED.cpp module, see
+                // OFED.cpp
+                const auto kernelVersion = opts->dryRun 
+                    ? "5.14.0-503.33.1.el9_5"
+                    // getKernelInstalled cannot run at dryRun
+                    : osService->getKernelInstalled();
+                // Configure Apache to serve the RPM repository
+                const auto repoName
+                    = fmt::format("doca-kernel-{}", kernelVersion);
+                const auto localRepo = functions::createHTTPRepo(repoName);
+
+                // Create the RPM repository
+                runner->checkCommand(fmt::format(
+                    "bash -c \"cp -v "
+                    "/usr/share/doca-host-*/Modules/{}/*.rpm {}\"",
+                    kernelVersion, localRepo.directory.string()));
+                runner->checkCommand(
+                    fmt::format("createrepo {}", localRepo.directory.string()));
+
+                // dryRun does not initialize the repositories
+                if (!opts->dryRun) {
+                    auto docaUrl = repoManager->repo("doca")->uri().value();
+                    runner->checkCommand(fmt::format(
+                        "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                        m_stateless.osimage, docaUrl));
+                }
+
+                // Add the local repository to the stateless image
+                runner->checkCommand(fmt::format(
+                    "bash -c \"chdef -t osimage {} --plus otherpkgdir={}\"",
+                    m_stateless.osimage, localRepo.url));
+
+            } break;
 
             case OFED::Kind::Oracle:
                 throw std::logic_error(
@@ -149,6 +290,7 @@ void XCAT::configureInfiniband()
 
                 break;
         }
+    }
 }
 
 void XCAT::configureSLURM()
@@ -159,7 +301,8 @@ void XCAT::configureSLURM()
     m_stateless.postinstall.emplace_back(
         fmt::format("echo SLURMD_OPTIONS=\\\"--conf-server {}\\\" > "
                     "$IMG_ROOTIMGDIR/etc/sysconfig/slurmd\n\n",
-            m_cluster->getHeadnode()
+            cluster()
+                ->getHeadnode()
                 .getConnection(Network::Profile::Management)
                 .getAddress()
                 .to_string()));
@@ -193,8 +336,8 @@ void XCAT::generateOtherPkgListFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.otherpkglist";
 
-    cloyster::removeFile(filename);
-    cloyster::addStringToFile(
+    functions::removeFile(filename);
+    functions::addStringToFile(
         filename, fmt::format("{}\n", fmt::join(m_stateless.otherpkgs, "\n")));
 }
 
@@ -203,18 +346,7 @@ void XCAT::generatePostinstallFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.postinstall";
 
-    cloyster::removeFile(filename);
-
-    // TODO: Should be replaced with autofs
-    m_stateless.postinstall.emplace_back(
-        fmt::format("cat << END >> $IMG_ROOTIMGDIR/etc/fstab\n"
-                    "{0}:/home /home nfs nfsvers=3,nodev,nosuid 0 0\n"
-                    "{0}:/opt/ohpc/pub /opt/ohpc/pub nfs nfsvers=3,nodev 0 0\n"
-                    "END\n\n",
-            m_cluster->getHeadnode()
-                .getConnection(Network::Profile::Management)
-                .getAddress()
-                .to_string()));
+    functions::removeFile(filename);
 
     m_stateless.postinstall.emplace_back(
         "perl -pi -e 's/# End of file/\\* soft memlock unlimited\\n$&/s' "
@@ -226,11 +358,13 @@ void XCAT::generatePostinstallFile()
     m_stateless.postinstall.emplace_back("systemctl disable firewalld\n");
 
     for (const auto& entries : std::as_const(m_stateless.postinstall)) {
-        cloyster::addStringToFile(filename, entries);
+        functions::addStringToFile(filename, entries);
     }
 
-    if (cloyster::dryRun) {
-        LOG_INFO("Would change file {} permissions", filename)
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+
+    if (opts->dryRun) {
+        LOG_INFO("Dry Run: Would change file {} permissions", filename)
         return;
     }
     std::filesystem::permissions(filename,
@@ -244,8 +378,8 @@ void XCAT::generateSynclistsFile()
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.synclists";
 
-    cloyster::removeFile(filename);
-    cloyster::addStringToFile(filename,
+    functions::removeFile(filename);
+    functions::addStringToFile(filename,
         "/etc/passwd -> /etc/passwd\n"
         "/etc/group -> /etc/group\n"
         "/etc/shadow -> /etc/shadow\n"
@@ -255,49 +389,60 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition()
 {
-    Runner r;
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkglist="
-                                 "/install/custom/netboot/compute.otherpkglist",
-        m_stateless.osimage));
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto runner = cloyster::Singleton<IRunner>::get();
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus otherpkglist="
+                    "/install/custom/netboot/compute.otherpkglist",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus postinstall="
-                                 "/install/custom/netboot/compute.postinstall",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus postinstall="
+                    "/install/custom/netboot/compute.postinstall",
+            m_stateless.osimage));
 
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus synclists="
-                                 "/install/custom/netboot/compute.synclists",
-        m_stateless.osimage));
+    runner->executeCommand(
+        fmt::format("chdef -t osimage {} --plus synclists="
+                    "/install/custom/netboot/compute.synclists",
+            m_stateless.osimage));
 
     /* Add external repositories to otherpkgdir */
-
-    RepoManager repoManager(r, m_cluster->getNodes()[0].getOS());
-    std::vector<std::string> repos = repoManager.getxCATOSImageRepos();
-
-    r.executeCommand(fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
-        m_stateless.osimage, fmt::join(repos, ",")));
+    if (!opts->dryRun) {
+        std::vector<std::string> repos = getxCATOSImageRepos();
+        runner->executeCommand(
+            fmt::format("chdef -t osimage {} --plus otherpkgdir={}",
+                m_stateless.osimage, fmt::join(repos, ",")));
+    }
 }
 
-void XCAT::customizeImage()
+void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations) const
 {
+    auto runner = cloyster::Singleton<IRunner>::get();
+    // @TODO: Extract the munge fixes to its own customization script
     // Permission fixes for munge
-    if (m_cluster->getQueueSystem().value()->getKind()
-        == QueueSystem::Kind::SLURM) {
-        cloyster::runCommand(
+    if (cluster()->getQueueSystem().value()->getKind()
+        == models::QueueSystem::Kind::SLURM) {
+        cloyster::functions::createDirectory(m_stateless.chroot / "etc");
+        runner->executeCommand(
             fmt::format("cp -f /etc/passwd /etc/group /etc/shadow {}/etc",
                 m_stateless.chroot.string()));
-        cloyster::runCommand(
+        runner->executeCommand(
             fmt::format("mkdir -p {0}/var/lib/munge {0}/var/log/munge "
                         "{0}/etc/munge {0}/run/munge",
                 m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/var/lib/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/var/log/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/etc/munge", m_stateless.chroot.string()));
-        cloyster::runCommand(fmt::format(
+        runner->executeCommand(fmt::format(
             "chown munge:munge {}/run/munge", m_stateless.chroot.string()));
     }
+
+    for (const auto& script : customizations) {
+        runner->run(script);
+    };
 }
 
 /* This is necessary to avoid problems with EL9-based distros.
@@ -359,37 +504,68 @@ void XCAT::configureEL9()
         commands.insert(commands.end(), temp.begin(), temp.end());
     }
 
+    auto runner = cloyster::Singleton<IRunner>::get();
     for (const auto& command : commands) {
-        cloyster::runCommand(command);
+        runner->executeCommand(command);
     }
+}
+
+cloyster::services::XCAT::ImageInstallArgs
+XCAT::getImageInstallArgs(ImageType imageType, NodeType nodeType)
+{
+    generateOSImageName(imageType, nodeType);
+    generateOSImagePath(imageType, nodeType);
+    LOG_ASSERT(!m_stateless.osimage.empty(), "Empty osimage name");
+    return ImageInstallArgs {
+        .imageName = m_stateless.osimage,
+        .rootfs = m_stateless.chroot,
+        .postinstall = "/install/custom/netboot/compute.postinstall",
+        .pkglist = "/install/custom/netboot/compute.otherpkglist"
+    };
 }
 
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
-void XCAT::createImage(ImageType imageType, NodeType nodeType)
+void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector<ScriptBuilder>& customizations)
 {
     configureEL9();
 
-    copycds(m_cluster->getDiskImage());
     generateOSImageName(imageType, nodeType);
-    generateOSImagePath(imageType, nodeType);
 
-    createDirectoryTree();
-    configureOpenHPC();
-    configureTimeService();
-    configureInfiniband();
-    configureSLURM();
+    const auto opts = cloyster::Singleton<Options>::get();
+    const auto imageExists_ = imageExists(m_stateless.osimage);
+    const auto runner = cloyster::Singleton<IRunner>::get();
+    if (!imageExists_ || opts->shouldSkip("copycds")) {
+        if (opts->shouldSkip("copycds")) {
+            // Remove rootfs and cleanup otherpkgs and postinstall scripts
+            runner->executeCommand(fmt::format(
+                "bash -c \"rm -rf {} && echo > {} && echo > {}\"", 
+                m_stateless.chroot,
+                "/install/custom/netboot/compute.otherpkglist", 
+                "/install/custom/netboot/compute.postinstall"));
+        } else {
+            copycds(cluster()->getDiskImage().getPath());
+        }
+        generateOSImagePath(imageType, nodeType);
 
-    generateOtherPkgListFile();
-    generatePostinstallFile();
-    generateSynclistsFile();
+        createDirectoryTree();
+        configureSELinux();
+        configureOpenHPC();
+        configureTimeService();
+        configureInfiniband();
+        configureSLURM();
 
-    configureOSImageDefinition();
+        generateOtherPkgListFile();
+        generatePostinstallFile();
+        generateSynclistsFile();
 
-    genimage();
-    customizeImage();
-    packimage();
+        configureOSImageDefinition();
+
+        customizeImage(customizations);
+        genimage();
+        packimage();
+    }
 }
 
 void XCAT::addNode(const Node& node)
@@ -399,7 +575,8 @@ void XCAT::addNode(const Node& node)
     std::string command = fmt::format(
         "mkdef -f -t node {} arch={} ip={} mac={} groups=compute,all "
         "netboot=xnba ",
-        node.getHostname(), magic_enum::enum_name(node.getOS().getArch()),
+        node.getHostname(),
+        cloyster::utils::enums::toString(node.getOS().getArch()),
         node.getConnection(Network::Profile::Management)
             .getAddress()
             .to_string(),
@@ -424,19 +601,22 @@ void XCAT::addNode(const Node& node)
     } catch (...) {
     }
 
-    cloyster::runCommand(command);
+    cloyster::Singleton<IRunner>::get()->executeCommand(command);
 }
 
 void XCAT::addNodes()
 {
-    for (const auto& node : m_cluster->getNodes())
+    for (const auto& node : cluster()->getNodes()) {
         addNode(node);
+    }
+
+    auto runner = cloyster::Singleton<IRunner>::get();
 
     // TODO: Create separate functions
-    cloyster::runCommand("makehosts");
-    cloyster::runCommand("makedhcp -n");
-    cloyster::runCommand("makedns -n");
-    cloyster::runCommand("makegocons");
+    runner->executeCommand("makehosts");
+    runner->executeCommand("makedhcp -n");
+    runner->executeCommand("makedns -n");
+    runner->executeCommand("makegocons");
     setNodesImage();
 }
 
@@ -450,39 +630,22 @@ void XCAT::setNodesBoot()
 {
     // TODO: Do proper checking if a given node have BMC support, and then issue
     //  rsetboot only on the compatible machines instead of running in compute.
-    cloyster::runCommand("rsetboot compute net");
+    auto runner = cloyster::Singleton<IRunner>::get();
+    runner->executeCommand("rsetboot compute net");
 }
 
-void XCAT::resetNodes() { cloyster::runCommand("rpower compute reset"); }
+void XCAT::resetNodes()
+{
+    auto runner = cloyster::Singleton<IRunner>::get();
+    runner->executeCommand("rpower compute reset");
+}
 
 void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 {
-    std::string osimage;
-
-    // FIXME: If there's no nodes defined this switch will fail, it should
-    //  instead generate an image for future use.
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            osimage += "rhels";
-            osimage += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::OL:
-            osimage += "ol";
-            osimage += m_cluster->getNodes()[0].getOS().getVersion();
-            osimage += ".0";
-            break;
-        case OS::Distro::Rocky:
-            osimage += "rocky";
-            osimage += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::AlmaLinux:
-            osimage += "alma";
-            osimage += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
-    }
+    std::string osimage = getOSImageDistroVersion();
     osimage += "-";
 
-    switch (m_cluster->getNodes()[0].getOS().getArch()) {
+    switch (cluster()->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             osimage += "x86_64";
             break;
@@ -517,35 +680,16 @@ void XCAT::generateOSImageName(ImageType imageType, NodeType nodeType)
 void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
 {
 
-    if (imageType != XCAT::ImageType::Netboot)
+    if (imageType != XCAT::ImageType::Netboot) {
         throw std::logic_error(
             "Image path is only available on Netboot (Stateless) images");
-
-    std::filesystem::path chroot = "/install/netboot/";
-
-    switch (m_cluster->getNodes()[0].getOS().getDistro()) {
-        case OS::Distro::RHEL:
-            chroot += "rhels";
-            chroot += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::OL:
-            chroot += "ol";
-            chroot += m_cluster->getNodes()[0].getOS().getVersion();
-            chroot += ".0";
-            break;
-        case OS::Distro::Rocky:
-            chroot += "rocky";
-            chroot += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
-        case OS::Distro::AlmaLinux:
-            chroot += "alma";
-            chroot += m_cluster->getNodes()[0].getOS().getVersion();
-            break;
     }
 
+    std::filesystem::path chroot = "/install/netboot/";
+    chroot += getOSImageDistroVersion();
     chroot += "/";
 
-    switch (m_cluster->getNodes()[0].getOS().getArch()) {
+    switch (cluster()->getNodes()[0].getOS().getArch()) {
         case OS::Arch::x86_64:
             chroot += "x86_64";
             break;
@@ -557,3 +701,41 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     chroot += "/compute/rootimg";
     m_stateless.chroot = chroot;
 }
+
+std::vector<std::string> XCAT::getxCATOSImageRepos() const
+{
+    const auto osinfo = cluster()->getHeadnode().getOS();
+    const auto repoManager = cloyster::Singleton<RepoManager>::get();
+    std::vector<std::string> repos;
+    const auto addReposFromFile = [&](const std::string& filename) {
+        for (auto& repo : repoManager->repoFile(filename)) {
+            if (repo->enabled()) {
+                repos.emplace_back(repo->uri().value());
+            }
+        }
+    };
+
+    switch (osinfo.getDistro()) {
+        case OS::Distro::RHEL:
+            addReposFromFile("rhel.repo");
+            break;
+        case OS::Distro::OL:
+            addReposFromFile("oracle.repo");
+            break;
+        case OS::Distro::Rocky:
+            RockyLinux::shouldUseVault(osinfo) ?
+                addReposFromFile("rocky-vault.repo") :
+                addReposFromFile("rocky.repo");
+            break;
+        case OS::Distro::AlmaLinux:
+            addReposFromFile("almalinux.repo");
+            break;
+    }
+
+    addReposFromFile("epel.repo");
+    addReposFromFile("OpenHPC.repo");
+
+    return repos;
+}
+
+};

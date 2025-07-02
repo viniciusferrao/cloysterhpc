@@ -1,0 +1,32 @@
+diff --git a/ansible/roles/cloyster_setup/provision/rhel9.yml b/ansible/roles/cloyster_setup/provision/rhel9.yml
+index 02ff213..968471d 100644
+--- a/ansible/roles/cloyster_setup/provision/rhel9.yml
++++ b/ansible/roles/cloyster_setup/provision/rhel9.yml
+@@ -48,6 +48,12 @@
+     - name: Install packages
+       ansible.builtin.dnf:
+         name:
++          - perl
++          - perl-File-Copy
++          # for building
++          # - gcc-toolset-13
++          # - gcc-toolset-13-libubsan-devel
++          # - gcc-toolset-13-libasan-devel
+           - libasan8
+           - libubsan
+         state: present
+diff --git a/ansible/roles/cloyster_setup/tasks/cleanup.yml b/ansible/roles/cloyster_setup/tasks/cleanup.yml
+index 87f8fc2..4c38652 100644
+--- a/ansible/roles/cloyster_setup/tasks/cleanup.yml
++++ b/ansible/roles/cloyster_setup/tasks/cleanup.yml
+@@ -1,6 +1,9 @@
+ ---
+ - name: Destroy Vagrant machine
+-  command: vagrant destroy "{{ vagrant_machine_name }}" -f
++  shell: |
++    virsh destroy "{{ vagrant_machine_name }}" -f
++    virsh undefine "{{ vagrant_machine_name }}" -f
++    virsh vol-delete --pool default $(virsh vol-list default | awk '/{{ vagrant_machine_name }}/ {print $1}') || :
+
+ - name: Remove the disk image
+   file:

@@ -6,13 +6,23 @@
 #ifndef CLOYSTERHPC_PRESENTER_H_
 #define CLOYSTERHPC_PRESENTER_H_
 
-#include <array>
-#include <cloysterhpc/cluster.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/models/queuesystem.h>
+#include <cloysterhpc/models/slurm.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/view/newt.h>
-#include <memory>
-#include <string>
-#include <vector>
+
+namespace cloyster::presenter {
+
+using IRunner = cloyster::services::IRunner;
+using Cluster = cloyster::models::Cluster;
+using QueueSystem = cloyster::models::QueueSystem;
+using SLURM = cloyster::models::SLURM;
+using PBS = cloyster::models::PBS;
+using OS = cloyster::models::OS;
+using CPU = cloyster::models::CPU;
+using Node = cloyster::models::Node;
 
 class Presenter {
 protected:
@@ -40,6 +50,8 @@ protected:
     {
         C(m_model, m_view, std::forward<Args>(args)...);
     }
+};
+
 };
 
 #endif // CLOYSTERHPC_PRESENTER_H_

@@ -3,39 +3,49 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/presenter/PresenterRepository.h>
+#include <ranges>
+
+namespace cloyster::presenter {
 
 PresenterRepository::PresenterRepository(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
-    auto manager = m_model->getRepoManager();
+    auto manager = cloyster::Singleton<services::repos::RepoManager>::get();
 
-    manager.loadFiles();
+    manager->initializeDefaultRepositories();
 
-    auto repo_names = manager.listRepos();
-    std::vector<std::tuple<std::string, std::string, bool>> repo_strings;
+    const auto allRepos = manager->listRepos();
+    using UISelectionAdapterTy
+        = std::vector<std::tuple<std::string, std::string, bool>>;
+    auto allReposUIAdapter = allRepos | std::views::transform([](auto& entry) {
+        return std::make_tuple(std::string { entry->id() },
+            std::string { entry->name() }, entry->enabled());
+    }) | std::ranges::to<UISelectionAdapterTy>();
 
-    std::transform(repo_names.begin(), repo_names.end(),
-        std::back_inserter(repo_strings), [](auto entry) {
-            return std::make_tuple(std::string { entry.id },
-                std::string { entry.name }, entry.enabled);
-        });
+    const auto& [ret, toEnable] = m_view->multipleSelectionMenu(Messages::title,
+        Messages::General::question, Messages::General::help,
+        allReposUIAdapter);
 
-    const auto& [ret, selectedRepositories]
-        = m_view->multipleSelectionMenu(Messages::title,
-            Messages::General::question, Messages::General::help, repo_strings);
-
-    LOG_DEBUG("{} repos selected", selectedRepositories.size());
+    LOG_DEBUG("{} repos selected", toEnable.size());
 
     if (ret == 1) {
-        for (const auto& [id, _name, _state] : repo_strings) {
-            manager.disable(id);
-        }
+        auto toDisable = allReposUIAdapter
+            | std::views::filter([&toEnable](auto& tuple) {
+                  auto& [id, _name, _state] = tuple;
+                  return !cloyster::functions::isIn(toEnable, id);
+              })
+            | std::views::transform([](auto& tuple) {
+                  auto& [id, _name, _state] = tuple;
+                  return id;
+              })
+            | std::ranges::to<std::vector<std::string>>();
 
-        for (const auto& repo : selectedRepositories) {
-            manager.enable(repo);
-        }
+        manager->disable(toDisable);
+        manager->enable(toEnable);
     }
+}
+
 }

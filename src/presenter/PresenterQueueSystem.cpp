@@ -5,14 +5,20 @@
 
 #include <cloysterhpc/presenter/PresenterQueueSystem.h>
 
+namespace cloyster::presenter {
+
+using cloyster::models::SLURM;
+
 PresenterQueueSystem::PresenterQueueSystem(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
 {
 
-    m_model->setQueueSystem(magic_enum::enum_cast<QueueSystem::Kind>(
-        m_view->listMenu(Messages::title, Messages::question,
-            magic_enum::enum_names<QueueSystem::Kind>(), Messages::help))
+    m_model->setQueueSystem(
+        cloyster::utils::enums::ofStringOpt<QueueSystem::Kind>(
+            m_view->listMenu(Messages::title, Messages::question,
+                cloyster::utils::enums::toStrings<QueueSystem::Kind>(),
+                Messages::help))
             .value());
 
     // TODO: Placeholder data
@@ -41,19 +47,21 @@ PresenterQueueSystem::PresenterQueueSystem(
             case QueueSystem::Kind::PBS: {
                 const auto& execution = m_view->listMenu(Messages::PBS::title,
                     Messages::PBS::question,
-                    magic_enum::enum_names<PBS::ExecutionPlace>(),
+                    cloyster::utils::enums::toStrings<PBS::ExecutionPlace>(),
                     Messages::PBS::help);
 
                 const auto& pbs = dynamic_cast<PBS*>(queue.value().get());
                 pbs->setExecutionPlace(
-                    magic_enum::enum_cast<PBS::ExecutionPlace>(execution)
+                    cloyster::utils::enums::ofStringOpt<PBS::ExecutionPlace>(
+                        execution)
                         .value());
                 LOG_DEBUG("Set PBS Execution Place: {}",
-                    magic_enum::enum_name<PBS::ExecutionPlace>(
+                    cloyster::utils::enums::toString<PBS::ExecutionPlace>(
                         pbs->getExecutionPlace()));
 
                 break;
             }
         }
     }
+}
 }

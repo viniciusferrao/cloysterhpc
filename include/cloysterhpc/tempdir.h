@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CLOYSTER_TEMPDIR_H
+#define CLOYSTER_TEMPDIR_H
 
 #include <filesystem>
 
@@ -8,7 +9,7 @@
  *
  * More or less inspired by Python's `tempfile.TemporaryDirectory` class
  */
-class TempDir {
+class [[deprecated("Use std::filesystem::temp_directory()")]] TempDir {
 private:
     std::filesystem::path m_path;
 
@@ -21,3 +22,5 @@ public:
     TempDir(TempDir&) = delete;
     TempDir(TempDir&&) = delete;
 };
+
+#endif

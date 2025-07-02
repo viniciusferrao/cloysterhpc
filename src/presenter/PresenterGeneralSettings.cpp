@@ -5,6 +5,10 @@
 
 #include <cloysterhpc/presenter/PresenterGeneralSettings.h>
 
+namespace cloyster::presenter {
+
+using cloyster::models::Headnode;
+
 PresenterGeneralSettings::PresenterGeneralSettings(
     std::unique_ptr<Cluster>& model, std::unique_ptr<Newt>& view)
     : Presenter(model, view)
@@ -31,12 +35,14 @@ PresenterGeneralSettings::PresenterGeneralSettings(
 
     // Boot target
     m_model->getHeadnode().setBootTarget(
-        magic_enum::enum_cast<Headnode::BootTarget>(
+        cloyster::utils::enums::ofStringOpt<Headnode::BootTarget>(
             m_view->listMenu(Messages::title, Messages::BootTarget::question,
-                magic_enum::enum_names<Headnode::BootTarget>(),
+                cloyster::utils::enums::toStrings<Headnode::BootTarget>(),
                 Messages::BootTarget::help))
             .value());
     LOG_DEBUG("{} boot target set on headnode",
-        magic_enum::enum_name<Headnode::BootTarget>(
+        cloyster::utils::enums::toString<Headnode::BootTarget>(
             m_model->getHeadnode().getBootTarget()));
 }
+
+};

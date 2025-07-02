@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <variant>
 
+namespace cloyster::services {
+
 /**
  * Not much to be done here... just our simple needs for an answer type
  *
@@ -161,3 +163,5 @@ public:
         = 0;
     virtual ~MessageBus() = default;
 };
+
+}; // namespace cloyster::services
