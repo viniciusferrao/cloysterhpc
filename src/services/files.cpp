@@ -197,4 +197,12 @@ std::string checksum(
     return checksum.get_string();
 }
 
+std::string md5sum(const std::string& data)
+{
+    Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_MD5);
+    checksum.update(data);
+    return checksum.get_string();
+}
+
+
 } // namespace cloyster::services::files

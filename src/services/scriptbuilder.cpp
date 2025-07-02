@@ -67,9 +67,11 @@ ScriptBuilder& ScriptBuilder::removeLineWithKeyFromFile(
     const std::filesystem::path& path,
     const std::string& key)
 {
-    return addCommand(
-        "grep -q {} && sed -i /{}/d {}",
-        key, key, path);
+    return
+        addCommand("# Removing line with {} from {}", key, path)
+        .addCommand(
+            "grep -q {} {} && sed -i /{}/d {}",
+            key, path, key, path);
 }
 
 [[nodiscard]] std::string ScriptBuilder::toString() const

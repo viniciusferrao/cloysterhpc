@@ -322,3 +322,4 @@ test/output/**
 .clangd
 CMakePresets.json
 CMakeUserPresets.json
+.aider*
