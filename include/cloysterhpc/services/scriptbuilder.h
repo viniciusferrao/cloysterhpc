@@ -41,7 +41,11 @@ public:
         Args&&... args)
     {
         auto line = fmt::format(fmt, std::forward<decltype(args)>(args)...);
-        return addCommand("grep -q \"{}\" \"{}\" || \\\n  echo \"{}\" >> \"{}\"", key, path, line, path);
+        return addCommand("# Adding line to file")
+            .addCommand("grep -q \"{key}\" \"{path}\" || \\\n  echo \"{line}\" >> \"{path}\"",
+                        fmt::arg("key", key),
+                        fmt::arg("path", path),
+                        fmt::arg("line", line));
     };
 
     /**
@@ -52,12 +56,14 @@ public:
     constexpr ScriptBuilder& addFileTemplate(const auto&path, fmt::format_string<Args...> fmt, Args&&... args)
     {
         const std::string content = fmt::format(fmt, std::forward<decltype(args)>(args)...);
-        const auto md5sum = cloyster::services::files::md5sum(content);
-        addCommand("# Create {} file if checksum fails", path);
-        addCommand(R"(echo "{} {}" | md5sum -c --quiet - || cat <<EOF > {}
-{}
-EOF)",
-                   md5sum, path, path, content);
+        addCommand("# Create {} file", path);
+        addCommand(R"(touch {path}
+cat <<EOF > {path}
+{content}
+EOF
+)",
+                   fmt::arg("path", path),
+                   fmt::arg("content", content));
 
         return *this;
     };

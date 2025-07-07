@@ -17,14 +17,22 @@ namespace cloyster::services::ansible::roles {
 
 Role parseRoleString(const std::string& input) {
     Role role;
+
     auto colonPos = input.find(':');
 
-    if (colonPos == std::string::npos || colonPos == 0 || colonPos == input.size() - 1) {
-        throw std::invalid_argument("Input must be in format <rolename>:var1=val1,var2=val2");
+    // If no colon, assume input is only role name with no variables
+    if (colonPos == std::string::npos) {
+        role.m_roleName = input;
+        return role;
     }
 
+    // Otherwise, parse role name and optional variables
     role.m_roleName = input.substr(0, colonPos);
     std::string varsPart = input.substr(colonPos + 1);
+
+    if (varsPart.empty()) {
+        return role;  // no variables provided
+    }
 
     std::stringstream ss(varsPart);
     std::string pair;
@@ -43,6 +51,7 @@ Role parseRoleString(const std::string& input) {
 
     return role;
 }
+
 
 TEST_CASE("ansible::Role formatter produces correct output") {
     ansible::roles::Role role{

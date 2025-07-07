@@ -113,9 +113,6 @@ grep -q "example.com" "/etc/hosts" || \
   echo "123.123.123.123 example.com" >> "/etc/hosts"
 systemctl enable --now foo-service)del");
 }
-// windsurf https://aider.chat/
-// codex (ai) codex-cli
-// e como adicionar um CI
 
 TEST_SUITE_END();
 

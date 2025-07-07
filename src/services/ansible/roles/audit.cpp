@@ -78,7 +78,7 @@ end_of_event_timeout = 2
 )EOF")
         .addNewLine()
         .addCommand("# Ensure auditd service is enabled and running")
-        .enableService("autitd");
+        .enableService("auditd");
 
     return builder;
 }
