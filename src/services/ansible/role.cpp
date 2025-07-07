@@ -13,12 +13,40 @@
 #include <fmt/core.h>
 
 
-namespace cloyster::services::ansible {
+namespace cloyster::services::ansible::roles {
+
+Role parseRoleString(const std::string& input) {
+    Role role;
+    auto colonPos = input.find(':');
+
+    if (colonPos == std::string::npos || colonPos == 0 || colonPos == input.size() - 1) {
+        throw std::invalid_argument("Input must be in format <rolename>:var1=val1,var2=val2");
+    }
+
+    role.m_roleName = input.substr(0, colonPos);
+    std::string varsPart = input.substr(colonPos + 1);
+
+    std::stringstream ss(varsPart);
+    std::string pair;
+
+    while (std::getline(ss, pair, ',')) {
+        auto eqPos = pair.find('=');
+        if (eqPos == std::string::npos || eqPos == 0 || eqPos == pair.size() - 1) {
+            throw std::invalid_argument("Each variable must be in format key=value");
+        }
+
+        std::string key = pair.substr(0, eqPos);
+        std::string value = pair.substr(eqPos + 1);
+
+        role.m_vars[key] = value;
+    }
+
+    return role;
+}
 
 TEST_CASE("ansible::Role formatter produces correct output") {
-    ansible::Role role{
+    ansible::roles::Role role{
         .m_roleName = "audit",
-        .m_whenCondition = "ansible_os_family == 'RedHat'",
         .m_tags = {"security", "compliance"},
         .m_vars = {
             {"auditd_enabled", "true"},
@@ -36,7 +64,6 @@ TEST_CASE("ansible::Role formatter produces correct output") {
 
     // Note: Since map iteration is unordered, we match parts instead of exact string
     CHECK(actual.find("Role: audit") != std::string::npos);
-    CHECK(actual.find("When: ansible_os_family == 'RedHat'") != std::string::npos);
     CHECK(actual.find("Tags: security compliance") != std::string::npos);
     CHECK((actual.find("auditd_enabled=true") != std::string::npos));
     CHECK((actual.find("log_level=debug") != std::string::npos));

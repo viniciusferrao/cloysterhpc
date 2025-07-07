@@ -18,6 +18,7 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 
@@ -65,6 +66,12 @@ int runTestCommand(const std::string& testCommand,
     } else if (testCommand == "dump-xcat-osimage") {
         auto provisioner = std::make_unique<cloyster::services::XCAT>();
         LOG_INFO("xCAT osimage: {}", provisioner->getImage());
+    } else if (testCommand == "ansible-role") {
+        assert(testCommandArgs.size() == 1);
+        // Execute a single role
+        cloyster::services::ansible::roles::run(
+            ansible::roles::parseRoleString(testCommandArgs[0]),
+            cluster->getHeadnode().getOS());
     } else {
         LOG_ERROR("Invalid test command {}", testCommand);
         return EXIT_FAILURE;
