@@ -1,5 +1,9 @@
 // src/services/ansible/roles/base.cpp
 
+#include <set>
+
+#include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/log.h>
@@ -59,11 +63,25 @@ ScriptBuilder installScript(
         .addNewLine()
         .addCommand("# Install general base packages");
 
+    std::set<std::string> allPackages = {
+        "wget",
+        "curl",
+        "dnf-plugins-core",
+        "chkconfig",
+        "jq",
+        "tar",
+        "python3-dnf-plugin-versionlock"
+    };
     if (const auto iter = role.m_vars.find("base_packages"); iter != role.m_vars.end()) {
         for (const auto& pkg : cloyster::utils::string::split(iter->second, " ")) {
-            builder.addPackage(pkg);
+            allPackages.emplace(pkg);
         }
     }
+    builder.addPackages(allPackages);
+
+    // Configure timezone
+    const auto& cluster = cloyster::Singleton<models::Cluster>::get();
+    builder.addCommand("timedatectl set-timezone {}", cluster->getTimezone().getTimezone());
 
     return builder;
 }

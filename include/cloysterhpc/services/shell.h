@@ -50,13 +50,6 @@ private:
     void configureHostsFile();
 
     /**
-     * @brief Configures the system timezone.
-     *
-     * This function sets the system's timezone.
-     */
-    void configureTimezone();
-
-    /**
      * @brief Configures the system locale.
      *
      * This function sets the system's locale settings.
@@ -81,21 +74,6 @@ private:
      * @param connections A list of network connections to configure.
      */
     static void configureNetworks(const std::list<Connection>&);
-
-    /**
-     * @brief Runs a system update.
-     *
-     * This function updates the system packages to their latest versions.
-     */
-    void runSystemUpdate();
-
-    /**
-     * @brief Installs required packages.
-     *
-     * This function installs all the necessary packages for the system to
-     * operate.
-     */
-    static void installRequiredPackages();
 
     /**
      * @brief Disallows SSH root password login.
@@ -125,17 +103,6 @@ private:
      * This function configure the required repos
      */
     static void pinOSVersion();
-
-    /**
-     * @brief Configures the time service.
-     *
-     * This function sets up the time synchronization service using the provided
-     * connections.
-     *
-     * @param connections A list of network connections to use for time service
-     * configuration.
-     */
-    static void configureTimeService(const std::list<Connection>&);
 
     /**
      * @brief Configures the queue system.

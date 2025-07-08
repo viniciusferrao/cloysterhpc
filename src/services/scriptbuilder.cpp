@@ -58,6 +58,11 @@ ScriptBuilder& ScriptBuilder::addPackage(const std::string_view pkg)
     return addCommand("dnf install -y {}", pkg);
 };
 
+ScriptBuilder& ScriptBuilder::addPackages(const std::set<std::string>& pkgs)
+{
+    return addCommand("dnf install -y {}", fmt::join(pkgs, " "));
+}
+
 ScriptBuilder& ScriptBuilder::removePackage(const std::string_view pkg)
 {
     return addCommand("dnf remove -y {}", pkg);
@@ -70,7 +75,7 @@ ScriptBuilder& ScriptBuilder::removeLineWithKeyFromFile(
     return
         addCommand("# Removing line with {} from {}", key, path)
         .addCommand(
-            "grep -q {} {} && sed -i /{}/d {}",
+            R"(grep -q "{}" "{}" && sed -i "/{}/d" "{}")",
             key, path, key, path);
 }
 

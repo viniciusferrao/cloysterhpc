@@ -6,6 +6,11 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/ansible/roles.h>
+#include <cloysterhpc/services/ansible/roles/fail2ban.h>
+#include <cloysterhpc/services/ansible/roles/audit.h>
+#include <cloysterhpc/services/ansible/roles/aide.h>
+#include <cloysterhpc/services/ansible/roles/spack.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
@@ -50,6 +55,7 @@ auto getToEnableRepoNames(const OS& osinfo)
 }
 
 constexpr auto cluster() { return cloyster::Singleton<Cluster>::get(); }
+constexpr auto os() { return cloyster::Singleton<Cluster>::get()->getHeadnode().getOS(); }
 constexpr auto runner() { return cloyster::Singleton<IRunner>::get(); }
 constexpr auto osservice() { return cloyster::Singleton<IOSService>::get(); }
 
@@ -164,14 +170,6 @@ void Shell::configureHostsFile()
         filename, fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
-void Shell::configureTimezone()
-{
-    LOG_INFO("Setting up timezone")
-
-    runner()->executeCommand(fmt::format(
-        "timedatectl set-timezone {}", cluster()->getTimezone().getTimezone()));
-}
-
 void Shell::configureLocale()
 {
     LOG_INFO("Setting up locale")
@@ -280,25 +278,6 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
     disableNetworkManagerDNSOverride();
 }
 
-void Shell::runSystemUpdate()
-{
-    if (cluster()->isUpdateSystem()) {
-        LOG_INFO("Checking if system updates are available")
-        osservice()->update();
-
-        // Network manager issues warnings if it gets updated
-        // and not restarted
-        osservice()->restartService("NetworkManager");
-    }
-}
-
-void Shell::installRequiredPackages()
-{
-    LOG_INFO("Installing required system packages")
-
-    osservice()->install("wget curl dnf-plugins-core chkconfig jq tar python3-dnf-plugin-versionlock");
-}
-
 void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
@@ -313,36 +292,6 @@ void Shell::installOpenHPCBase()
     LOG_INFO("Installing base OpenHPC packages")
 
     osservice()->install("ohpc-base");
-}
-
-void Shell::configureTimeService(const std::list<Connection>& connections)
-{
-    LOG_INFO("Setting up time services")
-
-    osservice()->install("chrony");
-
-    std::string_view filename = CHROOT "/etc/chrony.conf";
-
-    functions::backupFile(filename);
-
-    for (const auto& connection : std::as_const(connections)) {
-        if ((connection.getNetwork()->getProfile()
-                == Network::Profile::Management)
-            || (connection.getNetwork()->getProfile()
-                == Network::Profile::Service)) {
-
-            // Configure server as local stratum (serve time without sync)
-            functions::addStringToFile(filename, "local stratum 10\n");
-
-            functions::addStringToFile(filename,
-                fmt::format("allow {}/{}\n",
-                    connection.getAddress().to_string(),
-                    connection.getNetwork()->cidr.at(
-                        connection.getNetwork()->getSubnetMask().to_string())));
-        }
-    }
-
-    osservice()->enableService("chronyd");
 }
 
 using cloyster::models::PBS;
@@ -452,25 +401,28 @@ void Shell::pinOSVersion()
 void Shell::install()
 {
     const auto opts = cloyster::Singleton<Options>::get();
+    const auto osinfo = os();
     configureRepositories();
     pinOSVersion();
     opts->maybeStopAfterStep("configure-repositories");
-    installRequiredPackages();
-    opts->maybeStopAfterStep("install-required-packages");
 
-    runSystemUpdate();
-    opts->maybeStopAfterStep("run-system-update");
+    // System updates and packages handled by base role
+    ansible::roles::run("base", osinfo);
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
     disallowSSHRootPasswordLogin();
 
     configureHostsFile();
-    configureTimezone();
     configureLocale();
 
+    ansible::roles::run("timesync", osinfo);
+    ansible::roles::run("fail2ban", osinfo);
+    ansible::roles::run("audit", osinfo);
+    ansible::roles::run("aide", osinfo);
+    ansible::roles::run("spack", osinfo);
+
     configureNetworks(cluster()->getHeadnode().getConnections());
-    configureTimeService(cluster()->getHeadnode().getConnections());
     opts->maybeStopAfterStep("configure-time-service");
     installOpenHPCBase();
     configureInfiniband();
@@ -491,7 +443,7 @@ void Shell::install()
         configureMailSystem();
     }
     removeMemlockLimits();
-
+    
     installDevelopmentComponents();
     opts->maybeStopAfterStep("install-development-components");
 
@@ -501,7 +453,6 @@ void Shell::install()
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
     const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
 
-    // std::unique_ptr<Provisioner> provisioner;
     std::unique_ptr<XCAT> provisioner;
     switch (cluster()->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
@@ -526,7 +477,6 @@ void Shell::install()
 
     opts->maybeStopAfterStep("provisioner-setup");
     const auto imageInstallArgs = provisioner->getImageInstallArgs(imageType, nodeType);
-    const auto osinfo = cluster()->getHeadnode().getOS();
 
     // Customizations to the image
     const auto nfsImageInstallScript =

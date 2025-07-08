@@ -1,6 +1,7 @@
 #ifndef CLOYSTERHPC_SCRIPTBUILDER_H_
 #define CLOYSTERHPC_SCRIPTBUILDER_H_
 
+#include <set>
 #include <vector>
 #include <filesystem>
 
@@ -81,6 +82,7 @@ EOF
      * may change depending on m_os
      */
     ScriptBuilder& addPackage(const std::string_view pkg);
+    ScriptBuilder& addPackages(const std::set<std::string>& pkgs);
     ScriptBuilder& removePackage(const std::string_view pkg);
     ScriptBuilder& removeLineWithKeyFromFile(const std::filesystem::path& path, const std::string& key);
     [[nodiscard]] std::string toString() const;

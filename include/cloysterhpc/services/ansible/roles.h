@@ -50,6 +50,22 @@ ScriptBuilder installScript(const Role& role, const models::OS& osinfo);
  */
 void run(const Role& role, const models::OS& osinfo);
 
+/**
+ * @brief A convenient overload for calling roles by name
+ *
+ * This function evaluates the optional `when` condition of the role against the provided
+ * operating system information. If the condition is either not specified or returns true,
+ * it retrieves the system-wide script runner and prepares the installation script for execution.
+ *
+ * @param role The Ansible role containing installation logic, variables, and optional condition.
+ * @param osinfo The operating system information used to evaluate the role condition.
+ */
+void run(std::string_view roleName, 
+         const models::OS& osinfo,
+         std::unordered_map<std::string, std::string>&& vars = {}, 
+         std::optional<std::function<bool(const models::OS& osinfo)>>&& = std::nullopt
+         );
+
 }
 
 #endif // CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_H_
