@@ -620,18 +620,20 @@ void AnswerFile::loadPostfix()
 
 void AnswerFile::loadOFED()
 {
-    auto kind = m_keyfile.getString("ofed", "kind");
-    if (kind != "") {
-        ofed.enabled = true;
-        ofed.kind = kind;
-        auto afVersion = m_keyfile.getString("ofed", "version");
-        if (afVersion != "") {
-            ofed.version = afVersion;
-        } else {
-            ofed.version = "latest"; // use as default
-        }
+    if (m_keyfile.hasGroup("ofed")) {
+        auto kind = m_keyfile.getString("ofed", "kind");
+        if (kind != "") {
+            ofed.enabled = true;
+            ofed.kind = kind;
+            auto afVersion = m_keyfile.getString("ofed", "version");
+            if (afVersion != "") {
+                ofed.version = afVersion;
+            } else {
+                ofed.version = "latest"; // use as default
+            }
 
-        LOG_DEBUG("OFED enabled, {} {}", ofed.kind, ofed.version.value())
+            LOG_DEBUG("OFED enabled, {} {}", ofed.kind, ofed.version.value())
+        }
     }
 }
 
