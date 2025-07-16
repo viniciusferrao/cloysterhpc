@@ -28,10 +28,7 @@ ScriptBuilder::ScriptBuilder(const OS& osinfo)
     m_commands.emplace_back("#!/bin/bash -xeu");
 };
 
-ScriptBuilder& ScriptBuilder::addNewLine()
-{
-    return addCommand("");
-}
+ScriptBuilder& ScriptBuilder::addNewLine() { return addCommand(""); }
 
 ScriptBuilder& ScriptBuilder::enableService(const std::string_view service)
 {
@@ -69,14 +66,11 @@ ScriptBuilder& ScriptBuilder::removePackage(const std::string_view pkg)
 }
 
 ScriptBuilder& ScriptBuilder::removeLineWithKeyFromFile(
-    const std::filesystem::path& path,
-    const std::string& key)
+    const std::filesystem::path& path, const std::string& key)
 {
-    return
-        addCommand("# Removing line with {} from {}", key, path)
-        .addCommand(
-            R"(grep -q "{}" "{}" && sed -i "/{}/d" "{}")",
-            key, path, key, path);
+    return addCommand("# Removing line with {} from {}", key, path)
+        .addCommand(R"(grep -q "{}" "{}" && sed -i "/{}/d" "{}")", key, path,
+            key, path);
 }
 
 [[nodiscard]] std::string ScriptBuilder::toString() const
@@ -89,27 +83,21 @@ ScriptBuilder& ScriptBuilder::removeLineWithKeyFromFile(
     return m_commands;
 }
 
-TEST_CASE("Basic") { 
-    const OS osinfo = cloyster::models::OS(
-        OS::Distro::Rocky,
-        OS::Platform::el9,
-        5
-    );
-    ScriptBuilder builder(osinfo); 
+TEST_CASE("Basic")
+{
+    const OS osinfo
+        = cloyster::models::OS(OS::Distro::Rocky, OS::Platform::el9, 5);
+    ScriptBuilder builder(osinfo);
 
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Foo")
         .addCommand("foo")
         .addNewLine()
         .addLineToFile(
-            "/etc/hosts", 
-            "example.com",
-            "123.123.123.123 example.com", 10)
-        .enableService("foo-service")
-        ;
-    CHECK(builder.toString() == 
-R"del(#!/bin/bash -xeu
+            "/etc/hosts", "example.com", "123.123.123.123 example.com", 10)
+        .enableService("foo-service");
+    CHECK(builder.toString() ==
+        R"del(#!/bin/bash -xeu
 
 # Foo
 foo

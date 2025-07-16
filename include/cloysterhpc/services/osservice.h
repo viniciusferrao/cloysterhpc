@@ -42,7 +42,8 @@ public:
     [[nodiscard]] virtual std::string getKernelRunning() const = 0;
 
     [[nodiscard]] virtual std::string getLocale() const = 0;
-    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const = 0;
+    [[nodiscard]] virtual std::vector<std::string> getAvailableLocales() const
+        = 0;
 
     // These methods are const because the implementation is expected to be
     // stateless The implementation is expect to be stateless to avoid double
@@ -68,12 +69,12 @@ public:
     static std::unique_ptr<IOSService> factory(const OS& osinfo);
 };
 
-
 /**
  * @brief Utility class for RockyLinux idiosyncrasies
  */
 class RockyLinux final {
     static std::optional<bool> m_shouldUseVault;
+
 public:
     /**
      * @brief Returns true if the Rocky Linux Vault should be used

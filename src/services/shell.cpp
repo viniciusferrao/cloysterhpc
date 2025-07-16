@@ -5,12 +5,12 @@
  */
 
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/ansible/roles.h>
-#include <cloysterhpc/services/ansible/roles/fail2ban.h>
-#include <cloysterhpc/services/ansible/roles/audit.h>
 #include <cloysterhpc/services/ansible/roles/aide.h>
+#include <cloysterhpc/services/ansible/roles/audit.h>
+#include <cloysterhpc/services/ansible/roles/fail2ban.h>
 #include <cloysterhpc/services/ansible/roles/spack.h>
+#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
@@ -46,16 +46,18 @@ auto getToEnableRepoNames(const OS& osinfo)
         case OS::Platform::el8:
         case OS::Platform::el9:
         case OS::Platform::el10:
-            return std::vector<std::string>(
-                       { "beegfs", "elrepo", "epel", "openhpc",
-                           "openhpcupdates", "rpmfusionfreeupdates" });
+            return std::vector<std::string>({ "beegfs", "elrepo", "epel",
+                "openhpc", "openhpcupdates", "rpmfusionfreeupdates" });
         default:
             throw std::logic_error("Not implemented");
     }
 }
 
 constexpr auto cluster() { return cloyster::Singleton<Cluster>::get(); }
-constexpr auto os() { return cloyster::Singleton<Cluster>::get()->getHeadnode().getOS(); }
+constexpr auto os()
+{
+    return cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
+}
 constexpr auto runner() { return cloyster::Singleton<IRunner>::get(); }
 constexpr auto osservice() { return cloyster::Singleton<IOSService>::get(); }
 
@@ -230,8 +232,8 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         }
 
         auto opts = Singleton<Options>::get();
-        auto connectionName = utils::enums::toString(
-            connection.getNetwork()->getProfile());
+        auto connectionName
+            = utils::enums::toString(connection.getNetwork()->getProfile());
         if (!opts->dryRun
 
             && ::runner()->executeCommand(
@@ -434,8 +436,8 @@ void Shell::install()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
-    const auto nfsInstallScript =
-        networkFileSystem.installScript(cluster()->getHeadnode().getOS());
+    const auto nfsInstallScript
+        = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
     ::runner()->run(nfsInstallScript);
     opts->maybeStopAfterStep("nfs-setup");
     configureQueueSystem();
@@ -443,7 +445,7 @@ void Shell::install()
         configureMailSystem();
     }
     removeMemlockLimits();
-    
+
     installDevelopmentComponents();
     opts->maybeStopAfterStep("install-development-components");
 
@@ -476,20 +478,17 @@ void Shell::install()
     const auto nodeType = XCAT::NodeType::Compute;
 
     opts->maybeStopAfterStep("provisioner-setup");
-    const auto imageInstallArgs = provisioner->getImageInstallArgs(imageType, nodeType);
+    const auto imageInstallArgs
+        = provisioner->getImageInstallArgs(imageType, nodeType);
 
     // Customizations to the image
-    const auto nfsImageInstallScript =
-        networkFileSystem.imageInstallScript(
-            osinfo,
-            imageInstallArgs);
+    const auto nfsImageInstallScript
+        = networkFileSystem.imageInstallScript(osinfo, imageInstallArgs);
 
     LOG_INFO("[{}] Creating node images", provisionerName);
-    provisioner->createImage(
-        imageType, nodeType, {
-        // Customizations to the image
-        nfsImageInstallScript
-    });
+    provisioner->createImage(imageType, nodeType,
+        { // Customizations to the image
+            nfsImageInstallScript });
     opts->maybeStopAfterStep("provisioner-create-image");
 
     LOG_INFO("[{}] Adding compute nodes", provisionerName)

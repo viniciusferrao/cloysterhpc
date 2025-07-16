@@ -1,9 +1,9 @@
 // src/services/ansible/roles/fail2ban.cpp
 
-#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/ansible/roles/fail2ban.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/string.h>
 
 #ifdef BUILD_TESTING
@@ -19,17 +19,15 @@
 namespace cloyster::services::ansible::roles::fail2ban {
 
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-) {
+    const Role& role, const cloyster::models::OS& osinfo)
+{
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
     LOG_ASSERT(role.m_roleName == "fail2ban",
-               fmt::format("Expected fail2ban role, found {}", role.m_roleName));
+        fmt::format("Expected fail2ban role, found {}", role.m_roleName));
 
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Install fail2ban package")
         .addPackage("fail2ban")
         .addNewLine()

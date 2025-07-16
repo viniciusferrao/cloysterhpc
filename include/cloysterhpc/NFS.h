@@ -6,11 +6,11 @@
 #ifndef CLOYSTERHPC_NFS_H_
 #define CLOYSTERHPC_NFS_H_
 
-#include <string>
 #include <boost/asio.hpp>
 #include <cloysterhpc/messagebus.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/xcat.h>
+#include <string>
 
 using cloyster::models::OS;
 
@@ -39,15 +39,15 @@ public:
      * @param address The IP address of the NFS server.
      * @param permissions The permissions for the NFS share.
      */
-    NFS(const std::string& directoryName,
-        const std::string& directoryPath,
+    NFS(const std::string& directoryName, const std::string& directoryPath,
         const boost::asio::ip::address& address,
         const std::string& permissions);
 
     [[nodiscard]] static cloyster::services::ScriptBuilder installScript(
         const OS& osinfo);
     [[nodiscard]] static cloyster::services::ScriptBuilder imageInstallScript(
-        const OS& osinfo, const cloyster::services::XCAT::ImageInstallArgs& args);
+        const OS& osinfo,
+        const cloyster::services::XCAT::ImageInstallArgs& args);
 
 private:
     /**

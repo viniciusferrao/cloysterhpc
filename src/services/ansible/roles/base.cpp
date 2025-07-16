@@ -2,11 +2,11 @@
 
 #include <set>
 
-#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/services/scriptbuilder.h>
+#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/string.h>
 
 #ifdef BUILD_TESTING
@@ -20,18 +20,15 @@
 namespace cloyster::services::ansible::roles::base {
 
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-) {
+    const Role& role, const cloyster::models::OS& osinfo)
+{
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
     LOG_ASSERT(role.m_roleName == "base",
-               fmt::format("Expected base role, found {}", role.m_roleName));
+        fmt::format("Expected base role, found {}", role.m_roleName));
 
-    builder
-        .addNewLine()
-        .addCommand("# Install EPEL repositories if needed");
+    builder.addNewLine().addCommand("# Install EPEL repositories if needed");
 
     switch (osinfo.getDistro()) {
         case models::OS::Distro::RHEL:
@@ -59,21 +56,14 @@ ScriptBuilder installScript(
             break;
     }
 
-    builder
-        .addNewLine()
-        .addCommand("# Install general base packages");
+    builder.addNewLine().addCommand("# Install general base packages");
 
-    std::set<std::string> allPackages = {
-        "wget",
-        "curl",
-        "dnf-plugins-core",
-        "chkconfig",
-        "jq",
-        "tar",
-        "python3-dnf-plugin-versionlock"
-    };
-    if (const auto iter = role.m_vars.find("base_packages"); iter != role.m_vars.end()) {
-        for (const auto& pkg : cloyster::utils::string::split(iter->second, " ")) {
+    std::set<std::string> allPackages = { "wget", "curl", "dnf-plugins-core",
+        "chkconfig", "jq", "tar", "python3-dnf-plugin-versionlock" };
+    if (const auto iter = role.m_vars.find("base_packages");
+        iter != role.m_vars.end()) {
+        for (const auto& pkg :
+            cloyster::utils::string::split(iter->second, " ")) {
             allPackages.emplace(pkg);
         }
     }
@@ -81,7 +71,8 @@ ScriptBuilder installScript(
 
     // Configure timezone
     const auto& cluster = cloyster::Singleton<models::Cluster>::get();
-    builder.addCommand("timedatectl set-timezone {}", cluster->getTimezone().getTimezone());
+    builder.addCommand(
+        "timedatectl set-timezone {}", cluster->getTimezone().getTimezone());
 
     return builder;
 }

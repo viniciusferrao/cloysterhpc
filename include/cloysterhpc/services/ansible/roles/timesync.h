@@ -1,8 +1,8 @@
 #ifndef CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_TIMESYNC_H_
 #define CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_TIMESYNC_H_
 
-#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles::timesync {
 
@@ -14,9 +14,7 @@ namespace cloyster::services::ansible::roles::timesync {
  * @return ScriptBuilder with the generated commands.
  */
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-);
+    const Role& role, const cloyster::models::OS& osinfo);
 
 } // namespace cloyster::services::ansible::roles::timesync
 

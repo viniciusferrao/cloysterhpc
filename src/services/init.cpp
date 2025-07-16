@@ -1,11 +1,11 @@
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/osservice.h>
-#include <cloysterhpc/patterns/singleton.h>
-#include <cloysterhpc/functions.h>
 
-#include <cloysterhpc/messagebus.h>
 #include <cloysterhpc/dbus_client.h>
+#include <cloysterhpc/messagebus.h>
 
 namespace cloyster::services {
 
@@ -36,7 +36,8 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
 }
 
 // Singletons that depends on the cluster model
-void initializeSingletonsModel(std::unique_ptr<cloyster::models::Cluster>&& cluster)
+void initializeSingletonsModel(
+    std::unique_ptr<cloyster::models::Cluster>&& cluster)
 {
     using cloyster::models::Cluster;
     cloyster::Singleton<Cluster>::init(std::move(cluster));

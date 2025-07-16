@@ -87,7 +87,6 @@ public:
     );
     */
 
-
     void initializeDefaultRepositories();
     void enable(const std::string& repo);
     void enable(const std::vector<std::string>& repos);

@@ -8,10 +8,10 @@
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/utils/formatters.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/scriptbuilder.h>
+#include <cloysterhpc/utils/formatters.h>
 
 using cloyster::models::OS;
 
@@ -38,13 +38,11 @@ void NFS::setFullPath()
     m_fullPath = fmt::format("{}/{}", m_directoryPath, m_directoryName);
 }
 
-cloyster::services::ScriptBuilder
-NFS::installScript(const OS& osinfo) 
+cloyster::services::ScriptBuilder NFS::installScript(const OS& osinfo)
 {
     using namespace cloyster;
     services::ScriptBuilder builder(osinfo);
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Variables")
         .addCommand("HEADNODE=$(hostname -s)")
         .addNewLine()
@@ -52,21 +50,13 @@ NFS::installScript(const OS& osinfo)
         .addPackage("nfs-utils")
         .addNewLine()
         .addCommand("# Add exports to /etc/exports")
-        .addLineToFile(
-            "/etc/exports", 
-            "/home",
+        .addLineToFile("/etc/exports", "/home",
             "/home *(rw,no_subtree_check,fsid={},no_root_squash)", 10)
-        .addLineToFile(
-            "/etc/exports", 
-            "/opt/ohpc/pub",
+        .addLineToFile("/etc/exports", "/opt/ohpc/pub",
             "/opt/ohpc/pub *(ro,no_subtree_check,fsid={})", 11)
-        .addLineToFile(
-            "/etc/exports", 
-            "/tftpboot",
+        .addLineToFile("/etc/exports", "/tftpboot",
             "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)")
-        .addLineToFile(
-            "/etc/exports", 
-            "/install",
+        .addLineToFile("/etc/exports", "/install",
             "/install *(rw,no_root_squash,sync,no_subtree_check)")
         .addNewLine()
         .enableService("rpcbind nfs-server")
@@ -81,8 +71,7 @@ fi)");
 }
 
 cloyster::services::ScriptBuilder NFS::imageInstallScript(
-    const OS& osinfo,
-    const cloyster::services::XCAT::ImageInstallArgs& args)
+    const OS& osinfo, const cloyster::services::XCAT::ImageInstallArgs& args)
 {
     using namespace cloyster;
     services::ScriptBuilder builder(osinfo);
@@ -96,7 +85,8 @@ cloyster::services::ScriptBuilder NFS::imageInstallScript(
         .addCommand("HEADNODE=$(hostname -s)")
         .addNewLine()
         .addCommand("# Add autofs commands to postinstall")
-        .addLineToFile("${POSTINSTALL}", "autofs", "chroot \\${{IMG_ROOTIMGDIR}} systemctl enable autofs")
+        .addLineToFile("${POSTINSTALL}", "autofs",
+            "chroot \\${{IMG_ROOTIMGDIR}} systemctl enable autofs")
         .addCommand("chmod +x \"${{POSTINSTALL}}\"")
         .addNewLine()
         .addCommand("# Add required packages to the image")
@@ -127,11 +117,12 @@ cloyster::services::ScriptBuilder NFS::imageInstallScript(
 
 TEST_SUITE_BEGIN("cloyster::services::NFS");
 
-TEST_CASE("installScript") {
+TEST_CASE("installScript")
+{
     const OS osinfo
         = cloyster::models::OS(OS::Distro::Rocky, OS::Platform::el9, 5);
     const auto builder = NFS::installScript(osinfo);
-    
+
     // @TODO, this test check for string equality, while simple
     // it is very sensitive to changes, make this test more propositional
     // like:
@@ -140,8 +131,8 @@ TEST_CASE("installScript") {
     // - Check if the files are being updated
     // - Check if packages are being installed
     // - etc...
-    CHECK(builder.toString() == 
-R"del(#!/bin/bash -xeu
+    CHECK(builder.toString() ==
+        R"del(#!/bin/bash -xeu
 
 # Variables
 HEADNODE=$(hostname -s)
@@ -169,18 +160,18 @@ if systemctl is-enabled --quiet firewalld.service; then
 fi)del");
 }
 
-TEST_CASE("installImageScript") {
+TEST_CASE("installImageScript")
+{
     const OS osinfo
         = cloyster::models::OS(OS::Distro::Rocky, OS::Platform::el9, 5);
-    const auto builder = NFS::imageInstallScript(osinfo, {
-        .imageName = "rocky9.5-x86_64-netboot-compute",
-        .rootfs = "/install/netboot/rocky9.5/x86_64/compute/rootimg",
-        .postinstall = "/install/custom/netboot/compute.postinstall",
-        .pkglist = "/install/custom/netboot/compute.otherpkglist"
-    });
-    
-    CHECK(builder.toString() == 
-R"del(#!/bin/bash -xeu
+    const auto builder = NFS::imageInstallScript(osinfo,
+        { .imageName = "rocky9.5-x86_64-netboot-compute",
+            .rootfs = "/install/netboot/rocky9.5/x86_64/compute/rootimg",
+            .postinstall = "/install/custom/netboot/compute.postinstall",
+            .pkglist = "/install/custom/netboot/compute.otherpkglist" });
+
+    CHECK(builder.toString() ==
+        R"del(#!/bin/bash -xeu
 
 # Define variables (for shell script execution)
 IMAGE="rocky9.5-x86_64-netboot-compute"

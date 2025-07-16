@@ -1,7 +1,7 @@
-#include <cloysterhpc/services/ansible/roles.h>
-#include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/services/ansible/roles.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
 
 namespace cloyster::services::ansible::roles {
 
@@ -36,17 +36,17 @@ void run(const Role& role, const models::OS& osinfo)
     }
 }
 
-void run(std::string_view roleName, 
-         const models::OS& osinfo,
-         std::unordered_map<std::string, std::string>&& vars,
-         std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
+void run(std::string_view roleName, const models::OS& osinfo,
+    std::unordered_map<std::string, std::string>&& vars,
+    std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
 {
-    run(Role{
-        .m_roleName = std::string(roleName),
-        .m_vars = std::move(vars),
-        .m_when = std::move(when),
-    }, osinfo);
+    run(
+        Role {
+            .m_roleName = std::string(roleName),
+            .m_vars = std::move(vars),
+            .m_when = std::move(when),
+        },
+        osinfo);
 }
 
 }
-

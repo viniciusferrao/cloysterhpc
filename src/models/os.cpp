@@ -78,16 +78,12 @@ OS::OS()
 
             if (line.starts_with("ID=")) {
                 LOG_DEBUG("Found distro (ID=)");
-                setDistro(!isTest
-                          ? getValueFromKey(line)
-                          : "rocky");
+                setDistro(!isTest ? getValueFromKey(line) : "rocky");
             }
 
             if (line.starts_with("VERSION=")) {
                 LOG_DEBUG("Found version (VERSION=)");
-                setVersion(!isTest 
-                           ? getValueFromKey(line)
-                           : "9.5");
+                setVersion(!isTest ? getValueFromKey(line) : "9.5");
             }
         }
 
@@ -98,11 +94,8 @@ OS::OS()
     }
 }
 
-OS::OS(const Distro& distro,
-   const Platform& platform,
-   const unsigned minorVersion,
-   const Arch& arch,
-   const Family& family)
+OS::OS(const Distro& distro, const Platform& platform,
+    const unsigned minorVersion, const Arch& arch, const Family& family)
     : m_arch(arch)
     , m_family(family)
     , m_platform(platform)
@@ -120,7 +113,8 @@ OS::OS(const Distro& distro,
             m_majorVersion = 8;
             break;
         default:
-            cloyster::functions::abort("Invalid platform: {}", cloyster::utils::enums::toString(platform));
+            cloyster::functions::abort("Invalid platform: {}",
+                cloyster::utils::enums::toString(platform));
     }
 }
 
@@ -155,7 +149,8 @@ OS::Platform OS::getPlatform() const
     return std::get<OS::Platform>(m_platform);
 }
 
-void OS::setPlatform(OS::Platform platform) { 
+void OS::setPlatform(OS::Platform platform)
+{
 
     LOG_DEBUG("Found platform ........ (PLATFORM_ID=)");
     m_platform = platform;
@@ -164,9 +159,8 @@ void OS::setPlatform(OS::Platform platform) {
 void OS::setPlatform(std::string_view platform)
 {
     using namespace cloyster::utils;
-    auto enumValue = enums::ofStringOpt<Platform>(
-        platform,
-        enums::Case::Insensitive);
+    auto enumValue
+        = enums::ofStringOpt<Platform>(platform, enums::Case::Insensitive);
     if (!enumValue) {
         cloyster::functions::abort("Unsupported Platform: {}", platform);
     } else {
@@ -236,10 +230,7 @@ std::string_view OS::getKernel() const { return m_kernel; }
 
 void OS::setKernel(std::string_view kernel) { m_kernel = kernel; }
 
-unsigned int OS::getMajorVersion() const
-{
-    return m_majorVersion;
-}
+unsigned int OS::getMajorVersion() const { return m_majorVersion; }
 
 void OS::setMajorVersion(unsigned int majorVersion)
 {
@@ -320,4 +311,3 @@ void OS::printData() const
 #endif
 }
 };
-

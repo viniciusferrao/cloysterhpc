@@ -1,5 +1,5 @@
-#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/services/options.h>
 
 namespace cloyster::services {
 using namespace cloyster;
@@ -8,7 +8,7 @@ using namespace cloyster;
 // depends on these
 void initializeSingletonsOptions(std::unique_ptr<Options>&& opts);
 
-
 // Singletons that depends on the cluster model
-void initializeSingletonsModel(std::unique_ptr<cloyster::models::Cluster>&& cluster);
+void initializeSingletonsModel(
+    std::unique_ptr<cloyster::models::Cluster>&& cluster);
 }

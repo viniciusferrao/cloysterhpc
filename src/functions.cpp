@@ -5,8 +5,8 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/patterns/wrapper.h>
+#include <cloysterhpc/services/options.h>
 
 #include <chrono>
 #include <cstdio> /* FILE*, fopen, fclose */
@@ -107,8 +107,7 @@ void createDirectory(const std::filesystem::path& path)
 TEST_CASE("createDirectory - recursive creation and idempotency")
 {
     using cloyster::services::Options;
-    cloyster::Singleton<Options>::init(
-        std::make_unique<Options>(Options{}));
+    cloyster::Singleton<Options>::init(std::make_unique<Options>(Options {}));
     const std::filesystem::path testBaseDir = "test/output/functions";
     const std::filesystem::path targetDir = testBaseDir / "foo" / "bar" / "tar";
 
@@ -354,8 +353,7 @@ IndexOptions FancyIndexing VersionSort NameWidth=* HTMLTable Charset=UTF-8
     return repo;
 }
 
-void backupFilesByExtension(
-    const wrappers::DestinationPath& backupPath,
+void backupFilesByExtension(const wrappers::DestinationPath& backupPath,
     const wrappers::SourcePath& sourcePath,
     const wrappers::Extension& extension)
 {
@@ -365,9 +363,11 @@ void backupFilesByExtension(
     }
 
     if (!cloyster::functions::exists(backupPath)) {
-        LOG_INFO("Backing up {} files from {} to {}", extension, sourcePath, backupPath);
+        LOG_INFO("Backing up {} files from {} to {}", extension, sourcePath,
+            backupPath);
         cloyster::functions::createDirectory(backupPath.get());
-        cloyster::functions::moveFilesWithExtension(sourcePath.get(), backupPath.get(), extension.get());
+        cloyster::functions::moveFilesWithExtension(
+            sourcePath.get(), backupPath.get(), extension.get());
     } else {
         LOG_INFO("Backup path {} already exists, skipping", backupPath);
     }

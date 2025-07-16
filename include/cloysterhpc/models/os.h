@@ -87,12 +87,9 @@ public:
     OS();
 
     // Construct a OS instance without probing the running OS
-    OS(const Distro& distro,
-       const Platform& platform,
-       const unsigned minorVersion,
-       const Arch& arch = OS::Arch::x86_64, 
-       const Family& family = OS::Family::Linux);
-
+    OS(const Distro& distro, const Platform& platform,
+        const unsigned minorVersion, const Arch& arch = OS::Arch::x86_64,
+        const Family& family = OS::Family::Linux);
 
     [[nodiscard]] Arch getArch() const;
     void setArch(Arch arch);
@@ -130,6 +127,5 @@ public:
 };
 
 }; // namespace cloyster::models
-
 
 #endif // CLOYSTERHPC_OS_H_

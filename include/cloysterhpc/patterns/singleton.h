@@ -29,7 +29,7 @@ public:
 
     static void init(std::unique_ptr<T> value)
     {
-#ifdef BUILD_TESTING 
+#ifdef BUILD_TESTING
         // Allow reinitialization during the tests
         instance = std::move(value);
 #else
@@ -39,7 +39,7 @@ public:
 
     static void init(const auto& factory)
     {
-#ifdef BUILD_TESTING 
+#ifdef BUILD_TESTING
         instance = std::move(factory());
 #else
         std::call_once(initFlag, [&]() { instance = std::move(factory()); });

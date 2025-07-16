@@ -63,13 +63,10 @@ public:
     enum class NodeType : bool { Compute, Service };
 
     [[nodiscard]] ImageInstallArgs getImageInstallArgs(
-        ImageType imageType, NodeType nodeType
-    );
-
+        ImageType imageType, NodeType nodeType);
 
 private:
     Image m_stateless;
-
 
     static void setDHCPInterfaces(std::string_view interface);
     static void setDomain(std::string_view domain);
@@ -243,10 +240,9 @@ public:
      * @param nodeType The type of node to create the image for (default is
      * Compute).
      */
-    void createImage(
-        ImageType = ImageType::Netboot, NodeType = NodeType::Compute,
-        const std::vector<ScriptBuilder>& customizations = {}
-    );
+    void createImage(ImageType = ImageType::Netboot,
+        NodeType = NodeType::Compute,
+        const std::vector<ScriptBuilder>& customizations = {});
 
     /**
      * @brief Adds nodes to the provisioning system.

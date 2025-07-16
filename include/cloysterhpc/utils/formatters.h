@@ -2,9 +2,8 @@
 #ifndef CLOYSTERHPC_FORMATTERS_H_
 #define CLOYSTERHPC_FORMATTERS_H_
 
-
-#include <fmt/format.h>
 #include <filesystem>
+#include <fmt/format.h>
 
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/patterns/wrapper.h>
@@ -35,12 +34,10 @@ struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
 template <typename T, typename Tag>
 struct fmt::formatter<cloyster::Wrapper<T, Tag>> : formatter<string_view> {
     template <typename FormatContext>
-    auto format(const cloyster::Wrapper<T, Tag>& wrapper, FormatContext& ctx) const
-        -> decltype(ctx.out())
+    auto format(const cloyster::Wrapper<T, Tag>& wrapper,
+        FormatContext& ctx) const -> decltype(ctx.out())
     {
         return fmt::format_to(ctx.out(), "{}", wrapper.get());
     }
 };
 #endif
-
-

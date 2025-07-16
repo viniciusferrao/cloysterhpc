@@ -3,8 +3,8 @@
 #ifndef CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_FAIL2BAN_H_
 #define CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_FAIL2BAN_H_
 
-#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles::fail2ban {
 
@@ -16,9 +16,7 @@ namespace cloyster::services::ansible::roles::fail2ban {
  * @return ScriptBuilder with the generated commands.
  */
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-);
+    const Role& role, const cloyster::models::OS& osinfo);
 
 } // namespace cloyster::services::ansible::roles::fail2ban
 

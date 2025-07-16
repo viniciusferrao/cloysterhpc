@@ -339,17 +339,19 @@ void AnswerFile::loadNetwork(
     network.con_interface = m_keyfile.getString(networkSection, "interface");
     convertNetworkAddressAndValidate(
         networkSection, "ip_address", network.con_ip_addr);
-    network.con_mac_addr = m_keyfile.getString(networkSection, "mac_address", "");
+    network.con_mac_addr
+        = m_keyfile.getString(networkSection, "mac_address", "");
     convertNetworkAddressAndValidate(
         networkSection, "subnet_mask", network.subnet_mask);
-    network.domain_name = m_keyfile.getString(networkSection, "domain_name", "");
+    network.domain_name
+        = m_keyfile.getString(networkSection, "domain_name", "");
     convertNetworkAddressAndValidate(
         networkSection, "gateway", network.gateway);
 
     if (auto opt = m_keyfile.getStringOpt(networkSection, "nameservers")) {
         std::vector<std::string> nameservers;
-        boost::split(nameservers, opt.value(),
-            boost::is_any_of(", "), boost::token_compress_on);
+        boost::split(nameservers, opt.value(), boost::is_any_of(", "),
+            boost::token_compress_on);
 
         network.nameservers = nameservers;
     }
@@ -456,8 +458,10 @@ AFNode AnswerFile::loadNode(const std::string& section)
     node.hostname = m_keyfile.getString(section, "hostname", "");
     node.root_password = m_keyfile.getString(section, "node_root_password", "");
     node.sockets = m_keyfile.getString(section, "sockets", "");
-    node.cores_per_socket = m_keyfile.getString(section, "cores_per_socket", "");
-    node.threads_per_core = m_keyfile.getString(section, "threads_per_core", "");
+    node.cores_per_socket
+        = m_keyfile.getString(section, "cores_per_socket", "");
+    node.threads_per_core
+        = m_keyfile.getString(section, "threads_per_core", "");
     node.bmc_address = m_keyfile.getString(section, "bmc_address", "");
     node.bmc_username = m_keyfile.getString(section, "bmc_username", "");
     node.bmc_password = m_keyfile.getString(section, "bmc_password", "");

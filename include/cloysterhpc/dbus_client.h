@@ -13,8 +13,8 @@
 #include <cloysterhpc/messagebus.h>
 
 using cloyster::services::MessageBus;
-using cloyster::services::MessageReply;
 using cloyster::services::MessageBusMethod;
+using cloyster::services::MessageReply;
 using cloyster::services::MethodParamVariant;
 
 class DBusClient : public MessageBus {

@@ -1,9 +1,9 @@
 // src/services/ansible/roles/audit.cpp
 
-#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/ansible/roles/audit.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/string.h>
 
 #ifdef BUILD_TESTING
@@ -19,17 +19,15 @@
 namespace cloyster::services::ansible::roles::audit {
 
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-) {
+    const Role& role, const cloyster::models::OS& osinfo)
+{
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
     LOG_ASSERT(role.m_roleName == "audit",
-               fmt::format("Expected audit role, found {}", role.m_roleName));
+        fmt::format("Expected audit role, found {}", role.m_roleName));
 
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Install audit packages")
         .addPackage("audit")
         .addPackage("audispd-plugins")

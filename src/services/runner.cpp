@@ -1,9 +1,9 @@
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/services/files.h>
 
 #include <fmt/format.h>
 #include <ranges>
@@ -88,15 +88,11 @@ int runCommand(const std::string& command, bool overrideDryRun)
 
 namespace cloyster::services::runner {
 
-int shell(std::string_view cmd)
-{
-    return shellfmt("{}", cmd);
-}
+int shell(std::string_view cmd) { return shellfmt("{}", cmd); }
 
 }
 
 namespace cloyster::services {
-
 
 std::optional<std::string> CommandProxy::getline()
 {
@@ -144,7 +140,8 @@ int Runner::executeCommand(const std::string& cmd)
     return runCommand(cmd, true);
 }
 
-int Runner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+int Runner::executeCommand(
+    const std::string& cmd, std::list<std::string>& output)
 {
     return runCommand(cmd, output, true);
 }
@@ -195,7 +192,8 @@ int DryRunner::executeCommand(const std::string& cmd)
     return OK;
 }
 
-int DryRunner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+int DryRunner::executeCommand(
+    const std::string& cmd, std::list<std::string>& output)
 {
     return 0;
 }
@@ -205,17 +203,12 @@ void DryRunner::checkCommand(const std::string& cmd)
     LOG_WARN("Dry Run: Would execute command: {}", cmd);
 }
 
-int DryRunner::run(const ScriptBuilder& script)
-{
-    return 0;
-}
+int DryRunner::run(const ScriptBuilder& script) { return 0; }
 
 std::vector<std::string> DryRunner::checkOutput(const std::string& cmd)
 {
-    throw std::runtime_error(
-        fmt::format(
-            "Cannot capture the output of a command during dry-run mode: {}",
-            cmd));
+    throw std::runtime_error(fmt::format(
+        "Cannot capture the output of a command during dry-run mode: {}", cmd));
 }
 
 CommandProxy DryRunner::executeCommandIter(
@@ -237,12 +230,12 @@ int MockRunner::executeCommand(const std::string& cmd)
     return OK;
 }
 
-int MockRunner::executeCommand(const std::string& cmd, std::list<std::string>& output)
+int MockRunner::executeCommand(
+    const std::string& cmd, std::list<std::string>& output)
 {
     m_cmds.push_back(cmd);
     return 0;
 }
-
 
 void MockRunner::checkCommand(const std::string& cmd) { }
 
@@ -270,9 +263,6 @@ int MockRunner::downloadFile(const std::string& url, const std::string& file)
     return OK;
 }
 
-int MockRunner::run(const ScriptBuilder& script)
-{
-    return 0;
-}
+int MockRunner::run(const ScriptBuilder& script) { return 0; }
 
 } // namespace cloyster::services

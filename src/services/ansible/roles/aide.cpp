@@ -13,18 +13,16 @@
 namespace cloyster::services::ansible::roles::aide {
 
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-) {
+    const Role& role, const cloyster::models::OS& osinfo)
+{
     using namespace cloyster;
 
     ScriptBuilder builder(osinfo);
 
     LOG_ASSERT(role.m_roleName == "aide",
-               fmt::format("Expected aide role, found {}", role.m_roleName));
+        fmt::format("Expected aide role, found {}", role.m_roleName));
 
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Install AIDE package")
         .addPackage("aide")
         .addNewLine()

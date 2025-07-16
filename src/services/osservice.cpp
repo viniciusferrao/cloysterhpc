@@ -1,17 +1,19 @@
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/services/osservice.h>
+#include <cloysterhpc/utils/string.h>
 #include <stdexcept>
 
 namespace cloyster::services {
-using cloyster::functions::makeUniqueDerived;
 using cloyster::Singleton;
+using cloyster::functions::makeUniqueDerived;
 using cloyster::services::IOSService;
 
 class ELOSService final : public IOSService {
     OS m_osinfo;
+
 public:
-    explicit ELOSService(const OS& osinfo) : m_osinfo(osinfo) {};
+    explicit ELOSService(const OS& osinfo)
+        : m_osinfo(osinfo) { };
 
     [[nodiscard]] std::string getKernelInstalled() const override
     {
@@ -94,21 +96,22 @@ public:
     {
         const auto runner = cloyster::Singleton<IRunner>::get();
         switch (m_osinfo.getDistro()) {
-                // Rocky Linux is pinned by using Vault, this is done
-                // during the repository generation
-                case OS::Distro::Rocky:
-                // For Oracle Linux and Alma Linux I assume that we'll
-                // need to do the same trick with the repositories
-                case OS::Distro::AlmaLinux:
-                case OS::Distro::OL:
-                    break;
-                case OS::Distro::RHEL:
-                    runner->executeCommand(
-                        fmt::format("subscription-manager release --set={}", m_osinfo.getVersion()));
-                    break;
-                default:
-                    std::unreachable();
-            }
+            // Rocky Linux is pinned by using Vault, this is done
+            // during the repository generation
+            case OS::Distro::Rocky:
+            // For Oracle Linux and Alma Linux I assume that we'll
+            // need to do the same trick with the repositories
+            case OS::Distro::AlmaLinux:
+            case OS::Distro::OL:
+                break;
+            case OS::Distro::RHEL:
+                runner->executeCommand(
+                    fmt::format("subscription-manager release --set={}",
+                        m_osinfo.getVersion()));
+                break;
+            default:
+                std::unreachable();
+        }
     }
 
     void clean() const override
@@ -179,7 +182,9 @@ bool RockyLinux::shouldUseVault(const OS& osinfo)
     const auto lastVersion = osinfo.getVersion();
     LOG_INFO("Checking if Rocky {} should use vault", lastVersion);
     auto output = cloyster::functions::getHttpStatus(
-        fmt::format("https://dl.rockylinux.org/vault/rocky/{}/BaseOS/x86_64/os/repodata/repomd.xml", lastVersion));
+        fmt::format("https://dl.rockylinux.org/vault/rocky/{}/BaseOS/x86_64/os/"
+                    "repodata/repomd.xml",
+            lastVersion));
     const auto should = output == "200";
     LOG_INFO("{}", should ? "Yes, use vault" : "No, don't use vault");
     // Cache it

@@ -5,8 +5,8 @@
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/services/timezone.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/timezone.h>
 #include <fmt/format.h>
 #include <map>
 #include <string>
@@ -43,7 +43,7 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
     auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    std::multimap<std::string, std::string> timezones{};
+    std::multimap<std::string, std::string> timezones {};
     if (opts->dryRun) {
         LOG_DEBUG("Dry-Run skipping fetching available system timezones")
         return timezones;

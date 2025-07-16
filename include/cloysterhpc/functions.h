@@ -1,6 +1,7 @@
 #ifndef CLOYSTERHPC_FUNCTIONS_H_
 #define CLOYSTERHPC_FUNCTIONS_H_
 
+#include <algorithm>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/patterns/wrapper.h>
@@ -8,7 +9,6 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/utils/enums.h>
 #include <cloysterhpc/utils/string.h>
-#include <algorithm>
 #include <filesystem>
 #include <string>
 
@@ -139,11 +139,9 @@ struct HTTPRepo {
 
 HTTPRepo createHTTPRepo(const std::string_view repoName);
 
-void backupFilesByExtension(
-    const wrappers::DestinationPath& backupPath,
+void backupFilesByExtension(const wrappers::DestinationPath& backupPath,
     const wrappers::SourcePath& sourcePath,
     const wrappers::Extension& extension);
-
 
 /**
  * @brief Returns true if [val] is in [container]
@@ -156,8 +154,9 @@ inline bool isIn(const auto& container, const auto& val)
 
 TEST_SUITE_BEGIN("cloyster::utils");
 
-TEST_CASE("isIn") {
-    const auto container = {1,2,3};
+TEST_CASE("isIn")
+{
+    const auto container = { 1, 2, 3 };
     CHECK(isIn(container, 3) == true);
     CHECK(isIn(container, 4) == false);
 };
@@ -189,39 +188,37 @@ std::filesystem::directory_iterator openDir(const Path& path)
 }
 
 std::vector<std::string> getFilesByExtension(
-    const auto& path,
-    const auto& extension
-) {
+    const auto& path, const auto& extension)
+{
     std::vector<std::string> result;
     namespace fs = std::filesystem;
 
     for (const auto& entry : fs::directory_iterator(path)) {
-        if (entry.is_regular_file() &&
-            entry.path().extension() == extension) {
+        if (entry.is_regular_file() && entry.path().extension() == extension) {
             result.push_back(entry.path().filename().string());
-            }
+        }
     }
 
     return result;
 }
 
-TEST_CASE("getFilesByExtension") {
+TEST_CASE("getFilesByExtension")
+{
     const auto files = getFilesByExtension("repos/", ".conf");
     CHECK(files.size() > 0);
     CHECK(isIn(files, "repos.conf"));
 }
 
-void removeFilesWithExtension(
-    const auto& path,
-    const auto& extension
-) {
+void removeFilesWithExtension(const auto& path, const auto& extension)
+{
     namespace fs = std::filesystem;
 
     std::string extensionLower = utils::string::lower(std::string(extension));
 
     for (const auto& entry : fs::directory_iterator(path)) {
         if (entry.is_regular_file()) {
-            std::string ext = utils::string::lower(entry.path().extension().string());
+            std::string ext
+                = utils::string::lower(entry.path().extension().string());
 
             if (ext == extensionLower) {
                 LOG_DEBUG("Removing file {}", entry.path());
@@ -231,8 +228,10 @@ void removeFilesWithExtension(
     }
 }
 
-TEST_CASE("removeFilesWithExtension") {
-    const std::filesystem::path path = "test/output/utils/removeFilesWithExtension";
+TEST_CASE("removeFilesWithExtension")
+{
+    const std::filesystem::path path
+        = "test/output/utils/removeFilesWithExtension";
     createDirectory(path);
     touchFile(path / "test.txt");
     CHECK(getFilesByExtension(path, ".txt").size() == 1);
@@ -241,24 +240,23 @@ TEST_CASE("removeFilesWithExtension") {
 }
 
 void copyFilesWithExtension(
-    const auto& source,
-    const auto& destination,
-    const auto& extension
-)
+    const auto& source, const auto& destination, const auto& extension)
 {
     namespace fs = std::filesystem;
 
     for (const auto& entry : fs::directory_iterator(source)) {
-        if (entry.is_regular_file() &&
-            entry.path().extension() == extension) {
+        if (entry.is_regular_file() && entry.path().extension() == extension) {
             copyFile(entry.path(), destination / entry.path().filename());
-            }
+        }
     }
 }
 
-TEST_CASE("copyFileWithExtension") {
-    const std::filesystem::path source = "test/output/utils/copyFilesWithExtension/src";
-    const std::filesystem::path destination = "test/output/utils/copyFilesWithExtension/dst";
+TEST_CASE("copyFileWithExtension")
+{
+    const std::filesystem::path source
+        = "test/output/utils/copyFilesWithExtension/src";
+    const std::filesystem::path destination
+        = "test/output/utils/copyFilesWithExtension/dst";
     createDirectory(source);
     createDirectory(destination);
     touchFile(source / "test.txt");
@@ -272,10 +270,8 @@ TEST_CASE("copyFileWithExtension") {
 }
 
 void moveFilesWithExtension(
-    const auto& source,
-    const auto& destination,
-    const auto& extension
-) {
+    const auto& source, const auto& destination, const auto& extension)
+{
     copyFilesWithExtension(source, destination, extension);
     removeFilesWithExtension(source, extension);
 }
@@ -288,21 +284,25 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     auto runner = cloyster::Singleton<IRunner>::get();
     auto opts = cloyster::Singleton<services::Options>::get();
     if (opts->shouldSkip("http-status")) {
-        LOG_WARN("Skipping HTTP status check for {}, assuming 200 (reason: --skip=http-status in the command line)", url);
+        LOG_WARN("Skipping HTTP status check for {}, assuming 200 (reason: "
+                 "--skip=http-status in the command line)",
+            url);
         return "200";
     }
-    constexpr auto getHttpStatusInner = [](const auto& url, const auto& runner) {
-        auto lines = runner->checkOutput(fmt::format(R"(bash -c "curl -sSLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )", url));
+    constexpr auto getHttpStatusInner = [](const auto& url,
+                                            const auto& runner) {
+        auto lines = runner->checkOutput(fmt::format(
+            R"(bash -c "curl -sSLI {} | awk '/HTTP/ {{print $2}}' | tail -1" )",
+            url));
         if (lines.size() > 0) {
             return lines[0];
         }
         return std::string("CURL ERROR");
     };
 
-
     std::string header;
     for (std::size_t i = 0; i < maxRetries; ++i) {
-        header = getHttpStatusInner(url, runner);     
+        header = getHttpStatusInner(url, runner);
         LOG_DEBUG("HTTP status of {}: {}", url, header);
         if (!header.starts_with("5")) {
             LOG_DEBUG("HTTP {} error, retry {}", header, i);
@@ -312,8 +312,10 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     return header;
 };
 
-[[noreturn]] void abort(const fmt::string_view& fmt, auto&&... args) {
-    throw std::runtime_error(fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+[[noreturn]] void abort(const fmt::string_view& fmt, auto&&... args)
+{
+    throw std::runtime_error(
+        fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
 }
 
 TEST_SUITE_END();

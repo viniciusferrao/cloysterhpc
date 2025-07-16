@@ -10,9 +10,9 @@
 #include <glibmm/fileutils.h>
 #include <glibmm/keyfile.h>
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/functions.h>
 
 namespace cloyster::services::files {
 
@@ -23,7 +23,6 @@ struct KeyFile::Impl {
     Impl(Glib::KeyFile&& keyfile, std::filesystem::path path)
         : m_path(std::move(path))
         , m_keyfile(std::make_unique<Glib::KeyFile>(std::move(keyfile))) { };
-
 };
 
 KeyFile::KeyFile(const std::filesystem::path& path)
@@ -77,8 +76,8 @@ std::string KeyFile::getString(
     }
 }
 
-std::string KeyFile::getString(
-    const std::string& group, const std::string& key, std::string&& defaultValue) const
+std::string KeyFile::getString(const std::string& group, const std::string& key,
+    std::string&& defaultValue) const
 {
     try {
         if (!m_impl->m_keyfile->has_key(group, key)) {
@@ -158,7 +157,10 @@ void KeyFile::save() { m_impl->m_keyfile->save_to_file(m_impl->m_path); }
 
 void KeyFile::load() { m_impl->m_keyfile->load_from_file(m_impl->m_path); }
 
-void KeyFile::loadData(const std::string& data) { m_impl->m_keyfile->load_from_data(data); }
+void KeyFile::loadData(const std::string& data)
+{
+    m_impl->m_keyfile->load_from_data(data);
+}
 
 std::string checksum(const std::string& data)
 {
@@ -203,6 +205,5 @@ std::string md5sum(const std::string& data)
     checksum.update(data);
     return checksum.get_string();
 }
-
 
 } // namespace cloyster::services::files

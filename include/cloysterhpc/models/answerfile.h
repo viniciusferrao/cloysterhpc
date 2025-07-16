@@ -16,8 +16,8 @@
 #include <utility>
 #include <vector>
 
-using cloyster::services::Postfix;
 using boost::asio::ip::address;
+using cloyster::services::Postfix;
 
 namespace cloyster::models {
 

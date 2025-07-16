@@ -1,7 +1,7 @@
-#include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/ansible/roles/spack.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/scriptbuilder.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -16,17 +16,15 @@
 namespace cloyster::services::ansible::roles::spack {
 
 ScriptBuilder installScript(
-    const Role& role,
-    const cloyster::models::OS& osinfo
-) {
+    const Role& role, const cloyster::models::OS& osinfo)
+{
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
     LOG_ASSERT(role.m_roleName == "spack",
-               fmt::format("Expected spack role, found {}", role.m_roleName));
+        fmt::format("Expected spack role, found {}", role.m_roleName));
 
-    builder
-        .addNewLine()
+    builder.addNewLine()
         .addCommand("# Install dependencies for Spack")
         .addPackage("git")
         .addNewLine()

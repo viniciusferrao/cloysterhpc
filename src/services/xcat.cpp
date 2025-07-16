@@ -92,12 +92,13 @@ void XCAT::patchInstall()
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
 
-    const auto opts  = cloyster::Singleton<services::Options>::get();
+    const auto opts = cloyster::Singleton<services::Options>::get();
     auto runner = cloyster::Singleton<services::IRunner>::get();
-    if (opts->shouldForce("xcat-patch") || runner->executeCommand(
-            "grep -q \"extensions usr_cert\" "
-            "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
-        == 0) {
+    if (opts->shouldForce("xcat-patch")
+        || runner->executeCommand(
+               "grep -q \"extensions usr_cert\" "
+               "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
+            == 0) {
         runner->executeCommand(
             "sed -i \"s/-extensions usr_cert //g\" "
             "/opt/xcat/share/xcat/scripts/setup-local-client.sh");
@@ -105,7 +106,8 @@ void XCAT::patchInstall()
             "sed -i \"s/-extensions server //g\" "
             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
 
-        cloyster::services::runner::shell(R"del((cd / && patch --forward --batch -p0 <<'EOF'
+        cloyster::services::runner::shell(
+            R"del((cd / && patch --forward --batch -p0 <<'EOF'
 --- opt/xcat/lib/perl/xCAT_plugin/ddns.pm.orig	2025-07-16 09:53:20.546246189 -0300
 +++ opt/xcat/lib/perl/xCAT_plugin/ddns.pm	2025-07-16 09:53:36.614512354 -0300
 @@ -1286,8 +1286,8 @@ sub update_namedconf {
@@ -160,19 +162,23 @@ namespace {
 
         auto opts = cloyster::Singleton<cloyster::services::Options>::get();
         if (opts->dryRun) {
-            LOG_WARN("Dry-Run: skipping image check, assuming it doesn't exists");
+            LOG_WARN(
+                "Dry-Run: skipping image check, assuming it doesn't exists");
             return false;
         }
 
         auto runner = cloyster::Singleton<services::IRunner>::get();
         if (opts->shouldForce("genimage")) {
-            runner->executeCommand(fmt::format("rmdef -t osimage -o {}", image));
+            runner->executeCommand(
+                fmt::format("rmdef -t osimage -o {}", image));
         }
 
         std::list<std::string> output;
-        auto exitCode = runner->executeCommand(fmt::format("lsdef -t osimage {}", image), output);
+        auto exitCode = runner->executeCommand(
+            fmt::format("lsdef -t osimage {}", image), output);
         if (exitCode == 0) { // image exists
-            LOG_WARN("Skipping image generation {}, use --force=genimage to force",
+            LOG_WARN(
+                "Skipping image generation {}, use --force=genimage to force",
                 image, image);
             LOG_DEBUG("Command output: {}", fmt::join(output, "\n"));
             return true;
@@ -214,8 +220,9 @@ void XCAT::createDirectoryTree()
 
 void XCAT::configureSELinux()
 {
-    m_stateless.postinstall.emplace_back(fmt::format(
-        "echo \"SELINUX=disabled\nSELINUXTYPE=targeted\" > $IMG_ROOTIMGDIR/etc/selinux/config\n\n"));
+    m_stateless.postinstall.emplace_back(
+        fmt::format("echo \"SELINUX=disabled\nSELINUXTYPE=targeted\" > "
+                    "$IMG_ROOTIMGDIR/etc/selinux/config\n\n"));
 }
 
 void XCAT::configureOpenHPC()
@@ -271,7 +278,7 @@ void XCAT::configureInfiniband()
 
                 // The kernel modules are build by the OFED.cpp module, see
                 // OFED.cpp
-                const auto kernelVersion = opts->dryRun 
+                const auto kernelVersion = opts->dryRun
                     ? "5.14.0-503.33.1.el9_5"
                     // getKernelInstalled cannot run at dryRun
                     : osService->getKernelInstalled();
@@ -281,10 +288,10 @@ void XCAT::configureInfiniband()
                 const auto localRepo = functions::createHTTPRepo(repoName);
 
                 // Create the RPM repository
-                runner->checkCommand(fmt::format(
-                    "bash -c \"cp -v "
-                    "/usr/share/doca-host-*/Modules/{}/*.rpm {}\"",
-                    kernelVersion, localRepo.directory.string()));
+                runner->checkCommand(
+                    fmt::format("bash -c \"cp -v "
+                                "/usr/share/doca-host-*/Modules/{}/*.rpm {}\"",
+                        kernelVersion, localRepo.directory.string()));
                 runner->checkCommand(
                     fmt::format("createrepo {}", localRepo.directory.string()));
 
@@ -434,7 +441,8 @@ void XCAT::configureOSImageDefinition()
     }
 }
 
-void XCAT::customizeImage(const std::vector<ScriptBuilder>& customizations) const
+void XCAT::customizeImage(
+    const std::vector<ScriptBuilder>& customizations) const
 {
     auto runner = cloyster::Singleton<IRunner>::get();
     // @TODO: Extract the munge fixes to its own customization script
@@ -529,24 +537,23 @@ void XCAT::configureEL9()
     }
 }
 
-cloyster::services::XCAT::ImageInstallArgs
-XCAT::getImageInstallArgs(ImageType imageType, NodeType nodeType)
+cloyster::services::XCAT::ImageInstallArgs XCAT::getImageInstallArgs(
+    ImageType imageType, NodeType nodeType)
 {
     generateOSImageName(imageType, nodeType);
     generateOSImagePath(imageType, nodeType);
     LOG_ASSERT(!m_stateless.osimage.empty(), "Empty osimage name");
-    return ImageInstallArgs {
-        .imageName = m_stateless.osimage,
+    return ImageInstallArgs { .imageName = m_stateless.osimage,
         .rootfs = m_stateless.chroot,
         .postinstall = "/install/custom/netboot/compute.postinstall",
-        .pkglist = "/install/custom/netboot/compute.otherpkglist"
-    };
+        .pkglist = "/install/custom/netboot/compute.otherpkglist" };
 }
 
 /* This method will create an image for compute nodes, by default it will be a
  * stateless image with default services.
  */
-void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector<ScriptBuilder>& customizations)
+void XCAT::createImage(ImageType imageType, NodeType nodeType,
+    const std::vector<ScriptBuilder>& customizations)
 {
     configureEL9();
 
@@ -558,11 +565,11 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType, const std::vector
     if (!imageExists_ || opts->shouldSkip("copycds")) {
         if (opts->shouldSkip("copycds")) {
             // Remove rootfs and cleanup otherpkgs and postinstall scripts
-            runner->executeCommand(fmt::format(
-                "bash -c \"rm -rf {} && echo > {} && echo > {}\"", 
-                m_stateless.chroot,
-                "/install/custom/netboot/compute.otherpkglist", 
-                "/install/custom/netboot/compute.postinstall"));
+            runner->executeCommand(
+                fmt::format("bash -c \"rm -rf {} && echo > {} && echo > {}\"",
+                    m_stateless.chroot,
+                    "/install/custom/netboot/compute.otherpkglist",
+                    "/install/custom/netboot/compute.postinstall"));
         } else {
             copycds(cluster()->getDiskImage().getPath());
         }
@@ -742,9 +749,9 @@ std::vector<std::string> XCAT::getxCATOSImageRepos() const
             addReposFromFile("oracle.repo");
             break;
         case OS::Distro::Rocky:
-            RockyLinux::shouldUseVault(osinfo) ?
-                addReposFromFile("rocky-vault.repo") :
-                addReposFromFile("rocky.repo");
+            RockyLinux::shouldUseVault(osinfo)
+                ? addReposFromFile("rocky-vault.repo")
+                : addReposFromFile("rocky.repo");
             break;
         case OS::Distro::AlmaLinux:
             addReposFromFile("almalinux.repo");

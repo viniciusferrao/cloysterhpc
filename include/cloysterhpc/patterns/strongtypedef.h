@@ -4,10 +4,12 @@
 namespace cloyster {
 
 // NewType template (from your previous context)
-template <typename T, typename Tag>
-struct Wrapper {
+template <typename T, typename Tag> struct Wrapper {
     T value;
-    explicit Wrapper(const T& v) : value(v) {}
+    explicit Wrapper(const T& v)
+        : value(v)
+    {
+    }
     explicit operator T() const { return value; }
 };
 

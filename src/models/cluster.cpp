@@ -48,8 +48,7 @@ static constexpr std::unique_ptr<IRunner> makeRunner(const bool option)
 
 namespace cloyster::models {
 
-Cluster::Cluster()
-= default;
+Cluster::Cluster() = default;
 
 Headnode& Cluster::getHeadnode() { return m_headnode; }
 
@@ -592,8 +591,8 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     if (answerfil.ofed.enabled) {
         // Install the cofigured OFED variant
         LOG_DEBUG("Loading OFED {}", answerfil.ofed.kind);
-        auto kind = utils::enums::ofStringOpt<OFED::Kind>(answerfil.ofed.kind, 
-                                                          utils::enums::Case::Insensitive);
+        auto kind = utils::enums::ofStringOpt<OFED::Kind>(
+            answerfil.ofed.kind, utils::enums::Case::Insensitive);
         if (!kind) {
             throw std::runtime_error(fmt::format(
                 "Invalid OFED kind, expected one of {}, found {}. Edit the "

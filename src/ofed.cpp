@@ -60,7 +60,6 @@ void OFED::install() const
         return;
     }
 
-
     switch (m_kind) {
         case OFED::Kind::Inbox:
             cloyster::Singleton<cloyster::services::IOSService>::get()

@@ -47,12 +47,12 @@ struct Options final {
     bool shouldForce(const std::string& step) const;
 
     void maybeStopAfterStep(const std::string& step) const;
-
 };
-static_assert(std::is_aggregate_v<Options>, "Options must be an aggregate type.");
+static_assert(
+    std::is_aggregate_v<Options>, "Options must be an aggregate type.");
 
 namespace options {
-std::unique_ptr<Options> factory(int argc, const char** argv);
+    std::unique_ptr<Options> factory(int argc, const char** argv);
 };
 }
 
