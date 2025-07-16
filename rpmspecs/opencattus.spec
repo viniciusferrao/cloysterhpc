@@ -1,6 +1,6 @@
 Name: opencattus-installer 
 Version: 1.0
-Release: 1
+Release: 2
 Summary: OpenCATTUS Installer
 License: Apache 2.0
 URL: https://versatushpc.com.br/opencattus/
@@ -49,8 +49,11 @@ install -m 644 repos/rocky-vault.conf %{buildroot}/opt/cloysterhpc/conf/repos/ro
 /opt/cloysterhpc/conf/repos/rocky-vault.conf
 
 %changelog
-* Tue Jun 10 2025 Daniel Hilst <daniel@versatushpc.com.br> - 1.0-2
-- Repositories revamped
+* Wed Jul 16 2025  Daniel Hilst <daniel@versatushpc.com.br> - 1.0-3 - Add ansible roles
+- Add ansible roles implementation
+- Fix dnssec configuration generation in xCAT plugin
+- Make ofed group optional in the configuration file
+* Tue Jun 10 2025 Daniel Hilst <daniel@versatushpc.com.br> - 1.0-2 - Repositories revamped
 - NFS fixed
 - Doca OFED support added
 * Tue Feb 25 2025 Daniel Hilst <daniel@versatushpc.com.br> - 1.0-1

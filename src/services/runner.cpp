@@ -84,31 +84,13 @@ int runCommand(const std::string& command, bool overrideDryRun)
 }
 
 }; // namespace {
+//
 
 namespace cloyster::services::runner {
 
-int shell(std::string_view command)
+int shell(std::string_view cmd)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    if (!opts->dryRun) {
-        LOG_DEBUG("Running shell command: {}", command)
-        boost::process::ipstream pipe_stream;
-        boost::process::child child(
-            "/bin/bash", "-c", std::string(command), boost::process::std_out > pipe_stream);
-
-        std::string line;
-
-        while (pipe_stream && std::getline(pipe_stream, line)) {
-            LOG_TRACE("{}", line)
-        }
-
-        child.wait();
-        LOG_DEBUG("Exit code: {}", child.exit_code())
-        return child.exit_code();
-    } else {
-        LOG_INFO("Dry Run: {}", command)
-        return 0;
-    }
+    return shellfmt("{}", cmd);
 }
 
 }

@@ -7,18 +7,50 @@
 #define CLOYSTERHPC_RUNNER_H_
 
 #include <boost/process.hpp>
+#include <fmt/format.h>
 
 #include <string>
 #include <vector>
 
 #include <cloysterhpc/services/scriptbuilder.h>
+#include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/patterns/singleton.h>
+
 
 namespace cloyster::services::runner {
 
-// Run a command wrapped in `bash -c`
-int shell(std::string_view command);
+
+template<typename... Args>
+int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    auto command = fmt::format(fmt, std::forward<Args>(args)...);
+
+    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    if (!opts->dryRun) {
+        LOG_DEBUG("Running shell command: {}", command);
+        boost::process::ipstream pipe_stream;
+        boost::process::child child(
+            "/bin/bash", "-c", command, boost::process::std_out > pipe_stream);
+
+        std::string line;
+        while (pipe_stream && std::getline(pipe_stream, line)) {
+            LOG_TRACE("{}", line);
+        }
+
+        child.wait();
+        LOG_DEBUG("Exit code: {}", child.exit_code());
+        return child.exit_code();
+    } else {
+        LOG_INFO("Dry Run: {}", command);
+        return 0;
+    }
+}
+
+int shell(std::string_view cmd);
 
 }
+
 
 namespace cloyster::services {
 

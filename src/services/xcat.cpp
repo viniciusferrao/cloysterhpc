@@ -634,7 +634,7 @@ void XCAT::addNodes()
     // TODO: Create separate functions
     runner->executeCommand("makehosts");
     runner->executeCommand("makedhcp -n");
-    runner->executeCommand("makedns -n");
+    runner->executeCommand("makedns -a");
     runner->executeCommand("makegocons");
     setNodesImage();
 }
