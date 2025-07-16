@@ -73,7 +73,7 @@ Shell::Shell()
 
 void Shell::disableSELinux()
 {
-    runner()->executeCommand("setenforce 0");
+    ::runner()->executeCommand("setenforce 0");
 
     const auto filename = CHROOT "/etc/sysconfig/selinux";
 
@@ -89,13 +89,13 @@ void Shell::configureSELinuxMode()
 
     switch (cluster()->getSELinux()) {
         case Cluster::SELinuxMode::Permissive:
-            runner()->executeCommand("setenforce 0");
+            ::runner()->executeCommand("setenforce 0");
             /* Permissive mode */
             break;
 
         case Cluster::SELinuxMode::Enforcing:
             /* Enforcing mode */
-            runner()->executeCommand("setenforce 1");
+            ::runner()->executeCommand("setenforce 1");
             break;
 
         case Cluster::SELinuxMode::Disabled:
@@ -116,7 +116,7 @@ void Shell::configureFirewall()
         osservice()->enableService("firewalld");
 
         // Add the management interface as trusted
-        runner()->executeCommand(fmt::format(
+        ::runner()->executeCommand(fmt::format(
             "firewall-cmd --permanent --zone=trusted --change-interface={}",
             cluster()
                 ->getHeadnode()
@@ -126,7 +126,7 @@ void Shell::configureFirewall()
 
         // If we have IB, also add its interface as trusted
         if (cluster()->getOFED())
-            runner()->executeCommand(fmt::format(
+            ::runner()->executeCommand(fmt::format(
                 "firewall-cmd --permanent --zone=trusted --change-interface={}",
                 cluster()
                     ->getHeadnode()
@@ -134,7 +134,7 @@ void Shell::configureFirewall()
                     .getInterface()
                     .value()));
 
-        runner()->executeCommand("firewall-cmd --reload");
+        ::runner()->executeCommand("firewall-cmd --reload");
     } else {
         osservice()->disableService("firewalld");
 
@@ -146,7 +146,7 @@ void Shell::configureFQDN()
 {
     LOG_INFO("Setting up hostname")
 
-    runner()->executeCommand(fmt::format(
+    ::runner()->executeCommand(fmt::format(
         "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
 }
 
@@ -174,7 +174,7 @@ void Shell::configureLocale()
 {
     LOG_INFO("Setting up locale")
 
-    runner()->executeCommand(
+    ::runner()->executeCommand(
         fmt::format("localectl set-locale {}", cluster()->getLocale()));
 }
 
@@ -199,7 +199,7 @@ void Shell::disableNetworkManagerDNSOverride()
 // BUG: Why this method exists? The name does not do what it says.
 void Shell::deleteConnectionIfExists(std::string_view connectionName)
 {
-    runner()->executeCommand(
+    ::runner()->executeCommand(
         fmt::format("nmcli connection delete \"{}\"", connectionName));
 }
 
@@ -234,7 +234,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             connection.getNetwork()->getProfile());
         if (!opts->dryRun
 
-            && runner()->executeCommand(
+            && ::runner()->executeCommand(
                    fmt::format("nmcli connection show {}", connectionName))
                 == 0) {
             LOG_WARN("Connection exists {}, skipping", connectionName);
@@ -242,11 +242,11 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         }
 
         deleteConnectionIfExists(connectionName);
-        runner()->executeCommand(
+        ::runner()->executeCommand(
             fmt::format("nmcli device set {} managed yes", interface));
-        runner()->executeCommand(
+        ::runner()->executeCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
-        runner()->executeCommand(
+        ::runner()->executeCommand(
             fmt::format("nmcli connection add con-name {} ifname {} type {} "
                         "mtu {} ipv4.method manual ipv4.address {}/{} "
                         "ipv4.dns \"{}\" "
@@ -271,7 +271,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
         // Breaking my ssh connection during development
-        runner()->executeCommand(
+        ::runner()->executeCommand(
             fmt::format("nmcli device connect {}", interface));
     }
 
@@ -282,7 +282,7 @@ void Shell::disallowSSHRootPasswordLogin()
 {
     LOG_INFO("Allowing root login only through public key authentication (SSH)")
 
-    runner()->executeCommand(
+    ::runner()->executeCommand(
         "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
         " /etc/ssh/sshd_config");
 }
@@ -322,13 +322,13 @@ void Shell::configureQueueSystem()
 
                 osservice()->install("openpbs-server-ohpc");
                 osservice()->enableService("pbs");
-                runner()->executeCommand(
+                ::runner()->executeCommand(
                     "qmgr -c \"set server default_qsub_arguments= -V\"");
-                runner()->executeCommand(fmt::format(
+                ::runner()->executeCommand(fmt::format(
                     "qmgr -c \"set server resources_default.place={}\"",
                     cloyster::utils::enums::toString<PBS::ExecutionPlace>(
                         pbs->getExecutionPlace())));
-                runner()->executeCommand(
+                ::runner()->executeCommand(
                     "qmgr -c \"set server job_history_enable=True\"");
                 break;
             }
@@ -436,7 +436,7 @@ void Shell::install()
         "ro,no_subtree_check");
     const auto nfsInstallScript =
         networkFileSystem.installScript(cluster()->getHeadnode().getOS());
-    runner()->run(nfsInstallScript);
+    ::runner()->run(nfsInstallScript);
     opts->maybeStopAfterStep("nfs-setup");
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {

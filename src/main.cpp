@@ -66,6 +66,9 @@ int runTestCommand(const std::string& testCommand,
     } else if (testCommand == "dump-xcat-osimage") {
         auto provisioner = std::make_unique<cloyster::services::XCAT>();
         LOG_INFO("xCAT osimage: {}", provisioner->getImage());
+    } else if (testCommand == "xcat-patch") {
+        auto provisioner = std::make_unique<cloyster::services::XCAT>();
+        provisioner->patchInstall();
     } else if (testCommand == "ansible-role") {
         assert(testCommandArgs.size() == 1);
         // Execute a single role

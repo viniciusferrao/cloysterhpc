@@ -28,6 +28,8 @@ ScriptBuilder installScript(
         .addCommand("# Install AIDE package")
         .addPackage("aide")
         .addNewLine()
+        .addCommand("# Skip if aide database exists")
+        .addCommand("test -f /var/lib/aide/aide.db.gz && exit 0")
         .addCommand("# Initialize AIDE database")
         .addCommand("aide --init")
         .addCommand("mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz");

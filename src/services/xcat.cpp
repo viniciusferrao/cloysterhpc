@@ -92,8 +92,9 @@ void XCAT::patchInstall()
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
 
+    const auto opts  = cloyster::Singleton<services::Options>::get();
     auto runner = cloyster::Singleton<services::IRunner>::get();
-    if (runner->executeCommand(
+    if (opts->shouldForce("xcat-patch") || runner->executeCommand(
             "grep -q \"extensions usr_cert\" "
             "/opt/xcat/share/xcat/scripts/setup-local-client.sh")
         == 0) {
@@ -103,6 +104,24 @@ void XCAT::patchInstall()
         runner->executeCommand(
             "sed -i \"s/-extensions server //g\" "
             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
+
+        cloyster::services::runner::shell(R"del((cd / && patch --forward --batch -p0 <<'EOF'
+--- opt/xcat/lib/perl/xCAT_plugin/ddns.pm.orig	2025-07-16 09:53:20.546246189 -0300
++++ opt/xcat/lib/perl/xCAT_plugin/ddns.pm	2025-07-16 09:53:36.614512354 -0300
+@@ -1286,8 +1286,8 @@ sub update_namedconf {
+             my @bind_version =xCAT::Utils->runcmd($bind_version_cmd, 0);
+             # Turn off DNSSEC if running with bind vers 9.16.6 or higher
+             if ((scalar @bind_version > 0) && (xCAT::Utils::CheckVersion($bind_version[0], "9.16.6") >= 0)) {
+-                push @newnamed, "\tdnssec-enable no;\n";
+-                push @newnamed, "\tdnssec-validation no;\n";
++                push @newnamed, "\t#dnssec-enable no;\n";
++                push @newnamed, "\t#dnssec-validation no;\n";
+             }
+         }
+ 
+EOF
+))del");
+        opts->maybeStopAfterStep("xcat-patch");
         runner->executeCommand("xcatconfig -f");
     } else {
         LOG_WARN("xCAT Already patched, skipping");

@@ -13,7 +13,15 @@
 
 #include <cloysterhpc/services/scriptbuilder.h>
 
+namespace cloyster::services::runner {
+
+// Run a command wrapped in `bash -c`
+int shell(std::string_view command);
+
+}
+
 namespace cloyster::services {
+
 
 /**
  * @struct CommandProxy
