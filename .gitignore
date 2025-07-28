@@ -323,3 +323,5 @@ test/output/**
 CMakePresets.json
 CMakeUserPresets.json
 .aider*
+
+deploy*.txt
