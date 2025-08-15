@@ -1,0 +1,10 @@
+Base (open)
+    1. confluent
+    2. RHEL10 sup
+
+Features (closed)
+    1. ood
+    2. grafana
+    3. slurm 
+    4. integração ood slurm
+    5. lustre

@@ -344,6 +344,7 @@ struct RepoConfigVars final {
     std::string releasever; // major, ex: 9
     std::string xcatVersion; // major.minor, ex: 2.17 or latest
     std::string zabbixVersion; // major.minor, ex: 6.4
+    std::string ofedVersion; // major.minor, ex: 6.4
 };
 
 // Represents a Mirror Repository
@@ -488,7 +489,7 @@ struct RepoChooser final {
         }
 
         const auto opts = cloyster::Singleton<Options>::get();
-        if (opts->disableMirrors) {
+        if (!opts->enableMirrors) {
             return Choice::UPSTREAM;
         }
 
@@ -522,7 +523,7 @@ TEST_CASE("RepoChooser")
         = { .repo = "https://upstream.example.com/upstream/repo",
             .gpgkey = "https://upstream.example.com/upstream/key.gpg" } };
 
-    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    cloyster::Singleton<Options>::get()->enableMirrors = true;
     auto choice1 = RepoChooser::choose(mirrorConfigOnline, upstreamConfig);
     CHECK(choice1 == RepoChooser::Choice::MIRROR);
     auto choice2 = RepoChooser::choose(mirrorConfigOffline, upstreamConfig);
@@ -587,7 +588,7 @@ TEST_CASE("RepoAssembler")
         == RepoChooser::Choice::MIRROR);
 
     // Disable mirrors
-    cloyster::Singleton<Options>::get()->disableMirrors = true;
+    cloyster::Singleton<Options>::get()->enableMirrors = false;
 
     // If mirrors are disabled it should choose the upstream even if the
     // mirror is online
@@ -605,7 +606,7 @@ TEST_CASE("RepoAssembler")
     CHECK(repoUpstream.baseurl().value() == upstreamConfig.baseurl());
 
     // Enable mirrors again
-    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    cloyster::Singleton<Options>::get()->enableMirrors = true;
     auto repoMirror
         = RepoAssembler::assemble(repoId, mirrorConfigOnline, upstreamConfig);
     // CHECK(repoMirror.baseurl().value() == mirrorConfigOnline.baseurl());
@@ -684,7 +685,8 @@ class RepoConfigParser final {
             fmt::arg("beegfsVersion", vars.beegfsVersion),
             fmt::arg("zabbixVersion", vars.zabbixVersion),
             fmt::arg("xcatVersion", vars.xcatVersion),
-            fmt::arg("ohpcVersion", vars.ohpcVersion));
+            fmt::arg("ohpcVersion", vars.ohpcVersion),
+            fmt::arg("ofedVersion", vars.ofedVersion));
     };
 
 public:
@@ -807,6 +809,7 @@ public:
             .releasever = "9",
             .xcatVersion = "latest",
             .zabbixVersion = "6.4",
+            .ofedVersion = "latest-2.9",
         })
     {
         RepoConfFile conffile;
@@ -1337,7 +1340,7 @@ struct RepoGenerator final {
 TEST_CASE("RepoGenerator")
 {
     auto opts = Options {
-        .disableMirrors = false,
+        .enableMirrors = true,
         .mirrorBaseUrl = "https://mirror.example.com",
     };
     const auto osinfo = OS(models::OS::Distro::Rocky, OS::Platform::el9, 5);
@@ -1521,8 +1524,9 @@ void RepoManager::initializeDefaultRepositories()
         return;
     }
     LOG_INFO("RepoManager initialization");
-    auto osinfo
-        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    auto cluster = cloyster::Singleton<models::Cluster>::get();
+    auto osinfo = cluster->getHeadnode().getOS();
+    auto ofedVersion = cluster->getOFED()->getVersion();
 
     const auto vars = RepoConfigVars {
         .arch = cloyster::utils::enums::toString(osinfo.getArch()),
@@ -1532,7 +1536,9 @@ void RepoManager::initializeDefaultRepositories()
         .releasever = fmt::format("{}", osinfo.getMajorVersion()),
         .xcatVersion = opts->xcatVersion,
         .zabbixVersion = opts->zabbixVersion,
+        .ofedVersion = ofedVersion,
     };
+
     switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM: {
             // Generate the repository files
@@ -1543,6 +1549,11 @@ void RepoManager::initializeDefaultRepositories()
             m_impl->rpm.loadBaseDir();
             // Enable the repositories
             m_impl->rpm.enable(repos, true);
+
+            LOG_INFO("Enabling dnf keepcache option, use `dnf config-manager "
+                     "--save --setopt=keepcache=False` to disable it")
+            runner::shell::cmd("grep -q '^keepcache=' /etc/dnf/dnf.conf || dnf "
+                               "config-manager --save --setopt=keepcache=True");
         } break;
         case OS::PackageType::DEB:
             throw std::logic_error("DEB packages not implemented");

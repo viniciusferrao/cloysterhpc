@@ -38,30 +38,43 @@ void DiskImage::setPath(const std::filesystem::path& path)
 
 bool DiskImage::isKnownImage(const std::filesystem::path& path)
 {
+    constexpr auto chooseDistro = [](std::string_view imageView)
+        -> std::optional<cloyster::models::OS::Distro> {
+        if (imageView.starts_with("Rocky")) {
+            return cloyster::models::OS::Distro::Rocky;
+        } else if (imageView.starts_with("rhel")) {
+            return cloyster::models::OS::Distro::RHEL;
+        } else if (imageView.starts_with("OracleLinux")) {
+            return cloyster::models::OS::Distro::OL;
+        } else if (imageView.starts_with("AlmaLinux")) {
+            return cloyster::models::OS::Distro::AlmaLinux;
+        } else {
+            return std::nullopt;
+        }
+    };
+
     for (const auto& image : m_knownImageFilename) {
         if (path.filename().string() == image) {
             LOG_TRACE("Disk image is recognized")
 
             auto imageView = std::string_view(image);
-            if (imageView.starts_with("Rocky")) {
-                m_distro = cloyster::models::OS::Distro::Rocky;
-            } else if (imageView.starts_with("rhel")) {
-                m_distro = cloyster::models::OS::Distro::RHEL;
-            } else if (imageView.starts_with("OracleLinux")) {
-                m_distro = cloyster::models::OS::Distro::OL;
-            } else if (imageView.starts_with("AlmaLinux")) {
-                m_distro = cloyster::models::OS::Distro::AlmaLinux;
-            } else {
-                throw std::logic_error(fmt::format(
-                    "Can't determine the distro for the image {}", image));
+            const auto distro = chooseDistro(imageView);
+            if (distro) {
+                m_distro = distro;
+                return true;
             }
-
-            return true;
         }
     }
 
-    LOG_TRACE("Disk image is unknown. Maybe you're using a custom image or "
-              "changed the default name?");
+    const auto distro
+        = chooseDistro(std::string_view(path.filename().string()));
+    if (distro) {
+        m_distro = distro;
+        return true;
+    }
+    cloyster::functions::abort(
+        "Disk image is unknown. Maybe you're using a custom image or "
+        "changed the default name?");
     return false;
 }
 

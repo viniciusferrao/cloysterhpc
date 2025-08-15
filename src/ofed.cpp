@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <fmt/core.h>
+
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/ofed.h>
@@ -47,6 +49,8 @@ bool OFED::installed() const
 void OFED::install() const
 {
     const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
+    const auto osinfo = cluster->getNodes()[0].getOS();
 
     if (opts->dryRun) {
         LOG_WARN("Dry-Run: Skiping OFED installation");
@@ -73,14 +77,16 @@ void OFED::install() const
                 cloyster::services::repos::RepoManager>::get();
             auto osService
                 = cloyster::Singleton<cloyster::services::IOSService>::get();
+            const std::string kernelVersion = std::string(osinfo.getKernel());
             repoManager->enable("doca");
             // Install the required packages
             runner->checkCommand("dnf makecache --repo=doca");
             runner->checkCommand(
-                "dnf -y install kernel kernel-devel doca-extra");
+                fmt::format("dnf -y install kernel-{kernelVersion} "
+                            "kernel-devel-{kernelVersion} doca-extra",
+                    fmt::arg("kernelVersion", kernelVersion)));
 
-            if (osService->getKernelRunning()
-                != osService->getKernelInstalled()) {
+            if (osService->getKernelRunning() != kernelVersion) {
                 LOG_WARN("New kernel installed! Rebooting after the "
                          "installation finishes is advised!");
             }
@@ -96,10 +102,9 @@ void OFED::install() const
             // The driver may support weak updates modules and load without
             // need for reboot.
             if (!opts->shouldSkip("compile-doca-driver")) {
-                runner->checkCommand(
-                    "bash -c \"/opt/mellanox/doca/tools/doca-kernel-support -k "
-                    "$(rpm -q --qf \"%{VERSION}-%{RELEASE}.%{ARCH}\n\" "
-                    "kernel-devel)\"");
+                runner->checkCommand(fmt::format(
+                    "/opt/mellanox/doca/tools/doca-kernel-support -k {}",
+                    kernelVersion));
             }
 
             // Get the last rpm in /tmp/DOCA*/ folder
