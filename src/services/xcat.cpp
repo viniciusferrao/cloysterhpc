@@ -199,7 +199,7 @@ void XCAT::genimage()
 {
     using namespace runner;
     const auto osinfo
-        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+        = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
     const auto kernelVersion = osinfo.getKernel();
     const auto kernelPackages = fmt::format(
         // Pay attention to the spaces, they are required
@@ -275,7 +275,7 @@ void XCAT::configureTimeService()
 void XCAT::configureInfiniband()
 {
     const auto osinfo
-        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+        = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
     LOG_INFO("[xCAT] Configuring infiniband");
     if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {
@@ -287,8 +287,6 @@ void XCAT::configureInfiniband()
             case OFED::Kind::Mellanox: {
                 auto repoManager = cloyster::Singleton<RepoManager>::get();
                 auto runner = cloyster::Singleton<IRunner>::get();
-                auto arch = cloyster::utils::enums::toString(
-                    cluster()->getNodes()[0].getOS().getArch());
                 auto opts = cloyster::Singleton<Options>::get();
 
                 // Add the rpm to the image

@@ -287,6 +287,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
                         "mtu {} ipv4.method manual ipv4.address {}/{} "
                         "ipv4.dns \"{}\" "
                         // "ipv4.gateway {} ipv4.dns \"{}\" "
+                        // @FIXME: This will break Confluent, is it required by xCAT?
                         "ipv4.dns-search {} ipv6.method disabled",
                 cloyster::utils::enums::toString(
                     connection.getNetwork()->getProfile()),

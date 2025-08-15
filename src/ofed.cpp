@@ -50,7 +50,7 @@ void OFED::install() const
 {
     const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     const auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
-    const auto osinfo = cluster->getHeadnode().getOS();
+    const auto osinfo = cluster->getNodes()[0].getOS();
 
     if (opts->dryRun) {
         LOG_WARN("Dry-Run: Skiping OFED installation");
