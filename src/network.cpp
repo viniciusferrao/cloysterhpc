@@ -195,7 +195,6 @@ address Network::fetchSubnetMask(const std::string& interface)
     }
 
     freeifaddrs(ifaddr);
-    return {};
     throw std::runtime_error(fmt::format(
         "Interface {} does not have a netmask address defined", interface));
 }
