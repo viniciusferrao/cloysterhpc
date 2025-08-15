@@ -21,32 +21,32 @@
 namespace cloyster::services::runner {
 
 namespace unsafe {
-template <typename... Args>
-[[nodiscard]]
-int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
-{
-    auto command = fmt::format(fmt, std::forward<Args>(args)...);
+    template <typename... Args>
+    [[nodiscard]]
+    int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
+    {
+        auto command = fmt::format(fmt, std::forward<Args>(args)...);
 
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    if (!opts->dryRun) {
-        LOG_DEBUG("Running shell command: {}", command);
-        boost::process::ipstream pipe_stream;
-        boost::process::child child(
-            "/bin/bash", "-c", command, boost::process::std_out > pipe_stream);
+        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+        if (!opts->dryRun) {
+            LOG_DEBUG("Running shell command: {}", command);
+            boost::process::ipstream pipe_stream;
+            boost::process::child child("/bin/bash", "-c", command,
+                boost::process::std_out > pipe_stream);
 
-        std::string line;
-        while (pipe_stream && std::getline(pipe_stream, line)) {
-            LOG_TRACE("{}", line);
+            std::string line;
+            while (pipe_stream && std::getline(pipe_stream, line)) {
+                LOG_TRACE("{}", line);
+            }
+
+            child.wait();
+            LOG_DEBUG("Exit code: {}", child.exit_code());
+            return child.exit_code();
+        } else {
+            LOG_INFO("Dry Run: {}", command);
+            return 0;
         }
-
-        child.wait();
-        LOG_DEBUG("Exit code: {}", child.exit_code());
-        return child.exit_code();
-    } else {
-        LOG_INFO("Dry Run: {}", command);
-        return 0;
     }
-}
 }
 
 template <typename... Args>
@@ -55,8 +55,8 @@ void shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
     const auto exitCode = unsafe::shellfmt(fmt, args...);
     if (exitCode != 0) {
         auto command = fmt::format(fmt, std::forward<Args>(args)...);
-        throw std::runtime_error(fmt::format("Command {} failed with exit code {}",
-                                             command, exitCode));
+        throw std::runtime_error(fmt::format(
+            "Command {} failed with exit code {}", command, exitCode));
     }
 }
 

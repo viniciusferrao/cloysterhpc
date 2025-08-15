@@ -50,7 +50,7 @@ void dumpPreInstallState()
 
     LOG_INFO("Repositories URLs");
     shell("grep -EH '^(mirrorlist|baseurl)' /etc/yum.repos.d/*.repo");
-    
+
     LOG_INFO("Packages installed");
     shell("rpm -qa");
 

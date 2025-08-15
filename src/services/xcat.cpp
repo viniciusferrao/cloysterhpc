@@ -198,7 +198,8 @@ void XCAT::copycds(const std::filesystem::path& diskImage) const
 void XCAT::genimage()
 {
     using namespace runner;
-    const auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    const auto osinfo
+        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     const auto kernelVersion = osinfo.getKernel();
     const auto kernelPackages = fmt::format(
         // Pay attention to the spaces, they are required
@@ -210,9 +211,11 @@ void XCAT::genimage()
         kernelVersion);
 
     shellfmt("mkdir -p /install/kernels/{}", kernelVersion);
-    shellfmt("dnf download {} --destdir /install/kernels/{}", kernelPackages, kernelVersion);
+    shellfmt("dnf download {} --destdir /install/kernels/{}", kernelPackages,
+        kernelVersion);
     shellfmt("createrepo /install/kernels/{}", kernelVersion);
-    shellfmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}", m_stateless.osimage, kernelVersion);
+    shellfmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}",
+        m_stateless.osimage, kernelVersion);
     shellfmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
 }
 
@@ -271,7 +274,8 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
-    const auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    const auto osinfo
+        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     LOG_INFO("[xCAT] Configuring infiniband");
     if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {

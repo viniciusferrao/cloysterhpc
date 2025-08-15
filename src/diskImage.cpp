@@ -38,7 +38,7 @@ void DiskImage::setPath(const std::filesystem::path& path)
 
 bool DiskImage::isKnownImage(const std::filesystem::path& path)
 {
-    constexpr auto chooseDistro = [](std::string_view imageView) 
+    constexpr auto chooseDistro = [](std::string_view imageView)
         -> std::optional<cloyster::models::OS::Distro> {
         if (imageView.starts_with("Rocky")) {
             return cloyster::models::OS::Distro::Rocky;
@@ -66,13 +66,15 @@ bool DiskImage::isKnownImage(const std::filesystem::path& path)
         }
     }
 
-    const auto distro = chooseDistro(std::string_view(path.filename().string()));
+    const auto distro
+        = chooseDistro(std::string_view(path.filename().string()));
     if (distro) {
         m_distro = distro;
         return true;
     }
-    cloyster::functions::abort("Disk image is unknown. Maybe you're using a custom image or "
-              "changed the default name?");
+    cloyster::functions::abort(
+        "Disk image is unknown. Maybe you're using a custom image or "
+        "changed the default name?");
     return false;
 }
 

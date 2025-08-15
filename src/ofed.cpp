@@ -82,11 +82,9 @@ void OFED::install() const
             // Install the required packages
             runner->checkCommand("dnf makecache --repo=doca");
             runner->checkCommand(
-                fmt::format(
-                "dnf -y install kernel-{kernelVersion} kernel-devel-{kernelVersion} doca-extra",
-                fmt::arg("kernelVersion", kernelVersion)
-                ));
-
+                fmt::format("dnf -y install kernel-{kernelVersion} "
+                            "kernel-devel-{kernelVersion} doca-extra",
+                    fmt::arg("kernelVersion", kernelVersion)));
 
             if (osService->getKernelRunning()
                 != osService->getKernelInstalled()) {
@@ -105,9 +103,9 @@ void OFED::install() const
             // The driver may support weak updates modules and load without
             // need for reboot.
             if (!opts->shouldSkip("compile-doca-driver")) {
-                runner->checkCommand(
-                    fmt::format(
-                    "/opt/mellanox/doca/tools/doca-kernel-support -k {}", kernelVersion));
+                runner->checkCommand(fmt::format(
+                    "/opt/mellanox/doca/tools/doca-kernel-support -k {}",
+                    kernelVersion));
             }
 
             // Get the last rpm in /tmp/DOCA*/ folder

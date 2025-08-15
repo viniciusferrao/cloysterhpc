@@ -154,9 +154,10 @@ int Runner::run(const ScriptBuilder& script)
     executeCommand(fmt::format("chmod +x {}", path));
     const auto exitCode = executeCommand(path);
     if (exitCode != 0) {
-        cloyster::functions::abort("Script {} failed with exit code {}", path, exitCode);
+        cloyster::functions::abort(
+            "Script {} failed with exit code {}", path, exitCode);
     }
-    
+
     return exitCode;
 }
 

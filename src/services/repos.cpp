@@ -809,7 +809,7 @@ public:
             .releasever = "9",
             .xcatVersion = "latest",
             .zabbixVersion = "6.4",
-            .ofedVersion= "latest-2.9",
+            .ofedVersion = "latest-2.9",
         })
     {
         RepoConfFile conffile;
@@ -1525,8 +1525,7 @@ void RepoManager::initializeDefaultRepositories()
     }
     LOG_INFO("RepoManager initialization");
     auto cluster = cloyster::Singleton<models::Cluster>::get();
-    auto osinfo
-        = cluster->getHeadnode().getOS();
+    auto osinfo = cluster->getHeadnode().getOS();
     auto ofedVersion = cluster->getOFED()->getVersion();
 
     const auto vars = RepoConfigVars {
