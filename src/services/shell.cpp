@@ -40,6 +40,40 @@ using cloyster::services::IRunner;
 
 namespace {
 
+void dumpPreInstallState()
+{
+    using namespace cloyster::services::runner;
+    LOG_INFO("Dumping cluster state before the installation begins")
+
+    LOG_INFO("OS");
+    shell("cat /etc/os-release");
+
+    LOG_INFO("Repositories URLs");
+    shell("grep -EH '^(mirrorlist|baseurl)' /etc/yum.repos.d/*.repo");
+    
+    LOG_INFO("Packages installed");
+    shell("rpm -qa");
+
+    LOG_INFO("Network configuration");
+    shell("ip a");
+    shell("ip link");
+
+    LOG_INFO("Kernel version");
+    shell("uname -a");
+
+    LOG_INFO("Memory");
+    shell("free -m");
+
+    LOG_INFO("Services running");
+    shell("systemctl --no-pager list-units --plain --type=service --all");
+
+    LOG_INFO("Firewall configuration");
+    // firewalld may not be running
+    shell("firewall-cmd --list-all-zones || true");
+
+    LOG_INFO("End of cluster state dump");
+}
+
 auto getToEnableRepoNames(const OS& osinfo)
 {
     switch (osinfo.getPlatform()) {
@@ -402,6 +436,10 @@ void Shell::pinOSVersion()
  */
 void Shell::install()
 {
+    // Dump the state of the cluster before start the installation, this
+    // will output a lot of helpful information in the logs
+    dumpPreInstallState();
+
     const auto opts = cloyster::Singleton<Options>::get();
     const auto osinfo = os();
     configureRepositories();
@@ -438,7 +476,6 @@ void Shell::install()
         "ro,no_subtree_check");
     const auto nfsInstallScript
         = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
-    ::runner()->run(nfsInstallScript);
     opts->maybeStopAfterStep("nfs-setup");
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
@@ -468,6 +505,9 @@ void Shell::install()
 
     LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
+
+    // NFS requires /install and /tftpboot folders
+    ::runner()->run(nfsInstallScript);
 
     LOG_INFO("[{}] Patching the provisioner", provisionerName)
     provisioner->patchInstall();

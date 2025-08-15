@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdlib> // setenv / getenv
+#include <ranges>
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -82,7 +83,6 @@ XCAT::Image XCAT::getImage() const { return m_stateless; }
 void XCAT::installPackages()
 {
     auto osservice = cloyster::Singleton<IOSService>::get();
-    osservice->install("initscripts");
     osservice->install("xCAT");
 }
 
@@ -197,8 +197,23 @@ void XCAT::copycds(const std::filesystem::path& diskImage) const
 
 void XCAT::genimage()
 {
-    cloyster::Singleton<IRunner>::get()->checkCommand(
-        fmt::format("genimage {}", m_stateless.osimage));
+    using namespace runner;
+    const auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+    const auto kernelVersion = osinfo.getKernel();
+    const auto kernelPackages = fmt::format(
+        // Pay attention to the spaces, they are required
+        "kernel-{0} "
+        "kernel-devel-{0} "
+        "kernel-core-{0} "
+        "kernel-modules-{0} "
+        "kernel-modules-core-{0}",
+        kernelVersion);
+
+    shellfmt("mkdir -p /install/kernels/{}", kernelVersion);
+    shellfmt("dnf download {} --destdir /install/kernels/{}", kernelPackages, kernelVersion);
+    shellfmt("createrepo /install/kernels/{}", kernelVersion);
+    shellfmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}", m_stateless.osimage, kernelVersion);
+    shellfmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
 }
 
 void XCAT::packimage()
@@ -256,6 +271,7 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
+    const auto osinfo = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
     LOG_INFO("[xCAT] Configuring infiniband");
     if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {
@@ -269,7 +285,6 @@ void XCAT::configureInfiniband()
                 auto runner = cloyster::Singleton<IRunner>::get();
                 auto arch = cloyster::utils::enums::toString(
                     cluster()->getNodes()[0].getOS().getArch());
-                auto osService = cloyster::Singleton<IOSService>::get();
                 auto opts = cloyster::Singleton<Options>::get();
 
                 // Add the rpm to the image
@@ -278,10 +293,7 @@ void XCAT::configureInfiniband()
 
                 // The kernel modules are build by the OFED.cpp module, see
                 // OFED.cpp
-                const auto kernelVersion = opts->dryRun
-                    ? "5.14.0-503.33.1.el9_5"
-                    // getKernelInstalled cannot run at dryRun
-                    : osService->getKernelInstalled();
+                const auto kernelVersion = osinfo.getKernel();
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);

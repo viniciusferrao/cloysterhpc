@@ -344,6 +344,7 @@ struct RepoConfigVars final {
     std::string releasever; // major, ex: 9
     std::string xcatVersion; // major.minor, ex: 2.17 or latest
     std::string zabbixVersion; // major.minor, ex: 6.4
+    std::string ofedVersion; // major.minor, ex: 6.4
 };
 
 // Represents a Mirror Repository
@@ -684,7 +685,8 @@ class RepoConfigParser final {
             fmt::arg("beegfsVersion", vars.beegfsVersion),
             fmt::arg("zabbixVersion", vars.zabbixVersion),
             fmt::arg("xcatVersion", vars.xcatVersion),
-            fmt::arg("ohpcVersion", vars.ohpcVersion));
+            fmt::arg("ohpcVersion", vars.ohpcVersion),
+            fmt::arg("ofedVersion", vars.ofedVersion));
     };
 
 public:
@@ -807,6 +809,7 @@ public:
             .releasever = "9",
             .xcatVersion = "latest",
             .zabbixVersion = "6.4",
+            .ofedVersion= "latest-2.9",
         })
     {
         RepoConfFile conffile;
@@ -1521,8 +1524,10 @@ void RepoManager::initializeDefaultRepositories()
         return;
     }
     LOG_INFO("RepoManager initialization");
+    auto cluster = cloyster::Singleton<models::Cluster>::get();
     auto osinfo
-        = cloyster::Singleton<models::Cluster>::get()->getHeadnode().getOS();
+        = cluster->getHeadnode().getOS();
+    auto ofedVersion = cluster->getOFED()->getVersion();
 
     const auto vars = RepoConfigVars {
         .arch = cloyster::utils::enums::toString(osinfo.getArch()),
@@ -1532,7 +1537,9 @@ void RepoManager::initializeDefaultRepositories()
         .releasever = fmt::format("{}", osinfo.getMajorVersion()),
         .xcatVersion = opts->xcatVersion,
         .zabbixVersion = opts->zabbixVersion,
+        .ofedVersion = ofedVersion,
     };
+
     switch (osinfo.getPackageType()) {
         case OS::PackageType::RPM: {
             // Generate the repository files

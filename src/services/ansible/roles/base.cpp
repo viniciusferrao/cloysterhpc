@@ -58,8 +58,10 @@ ScriptBuilder installScript(
 
     builder.addNewLine().addCommand("# Install general base packages");
 
+    // "python3-dnf-plugin-versionlock" is conflicting with dnf-plugins-core
+    // during the first install
     std::set<std::string> allPackages = { "wget", "curl", "dnf-plugins-core",
-        "chkconfig", "jq", "tar", "python3-dnf-plugin-versionlock" };
+        "chkconfig", "initscripts", "jq", "tar", };
     if (const auto iter = role.m_vars.find("base_packages");
         iter != role.m_vars.end()) {
         for (const auto& pkg :

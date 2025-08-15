@@ -9,6 +9,7 @@
 #include <boost/process.hpp>
 #include <fmt/format.h>
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,9 @@
 
 namespace cloyster::services::runner {
 
+namespace unsafe {
 template <typename... Args>
+[[nodiscard]]
 int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
 {
     auto command = fmt::format(fmt, std::forward<Args>(args)...);
@@ -44,8 +47,20 @@ int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
         return 0;
     }
 }
+}
 
-int shell(std::string_view cmd);
+template <typename... Args>
+void shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    const auto exitCode = unsafe::shellfmt(fmt, args...);
+    if (exitCode != 0) {
+        auto command = fmt::format(fmt, std::forward<Args>(args)...);
+        throw std::runtime_error(fmt::format("Command {} failed with exit code {}",
+                                             command, exitCode));
+    }
+}
+
+void shell(std::string_view cmd);
 
 }
 
