@@ -84,11 +84,10 @@ int runCommand(const std::string& command, bool overrideDryRun)
 }
 
 }; // namespace {
-//
 
-namespace cloyster::services::runner {
+namespace cloyster::services::runner::shell {
 
-int shell(std::string_view cmd) { return shellfmt("{}", cmd); }
+void cmd(std::string_view cmd) { shell::fmt("{}", cmd); }
 
 }
 
@@ -153,8 +152,13 @@ int Runner::run(const ScriptBuilder& script)
     const std::filesystem::path path = fmt::format("/tmp/{}.sh", hash);
     functions::installFile(path, std::move(content));
     executeCommand(fmt::format("chmod +x {}", path));
-    executeCommand(path);
-    return 0;
+    const auto exitCode = executeCommand(path);
+    if (exitCode != 0) {
+        cloyster::functions::abort(
+            "Script {} failed with exit code {}", path, exitCode);
+    }
+
+    return exitCode;
 }
 
 CommandProxy Runner::executeCommandIter(const std::string& cmd, Stream /*out*/)

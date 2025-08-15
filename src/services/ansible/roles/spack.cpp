@@ -25,6 +25,8 @@ ScriptBuilder installScript(
         fmt::format("Expected spack role, found {}", role.m_roleName));
 
     builder.addNewLine()
+        .addCommand("# Exit early if spack is already installed")
+        .addCommand("test -d /opt/spack/.git && exit 0")
         .addCommand("# Install dependencies for Spack")
         .addPackage("git")
         .addNewLine()

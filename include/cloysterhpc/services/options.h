@@ -21,7 +21,7 @@ struct Options final {
     bool runAsDaemon;
     bool airGap;
     bool unattended;
-    bool disableMirrors;
+    bool enableMirrors;
     std::size_t logLevelInput;
     std::string error;
     std::string config;

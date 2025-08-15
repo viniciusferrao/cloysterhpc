@@ -40,6 +40,44 @@ using cloyster::services::IRunner;
 
 namespace {
 
+void dumpPreInstallState()
+{
+    using namespace cloyster::services::runner;
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+
+    LOG_INFO("Dumping cluster state before the installation begins")
+
+    LOG_INFO("OS");
+    shell::cmd("cat /etc/os-release");
+
+    LOG_INFO("Repositories URLs");
+    shell::cmd(
+        "grep -EH '^(mirrorlist|baseurl)' /etc/yum.repos.d/*.repo || true");
+
+    LOG_INFO("Packages installed");
+    shell::cmd("rpm -qa");
+
+    LOG_INFO("Network configuration");
+    shell::cmd("ip a");
+    shell::cmd("ip link");
+
+    LOG_INFO("Kernel version");
+    shell::cmd("uname -a");
+
+    LOG_INFO("Memory");
+    shell::cmd("free -m");
+
+    LOG_INFO("Services running");
+    shell::cmd("systemctl --no-pager list-units --plain --type=service --all");
+
+    LOG_INFO("Firewall configuration");
+    // firewalld may not be running
+    shell::cmd("firewall-cmd --list-all-zones || true");
+
+    LOG_INFO("End of cluster state dump");
+    opts->maybeStopAfterStep("dump-cluster-state");
+}
+
 auto getToEnableRepoNames(const OS& osinfo)
 {
     switch (osinfo.getPlatform()) {
@@ -248,23 +286,24 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             fmt::format("nmcli device set {} managed yes", interface));
         ::runner()->executeCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
-        ::runner()->executeCommand(
-            fmt::format("nmcli connection add con-name {} ifname {} type {} "
-                        "mtu {} ipv4.method manual ipv4.address {}/{} "
-                        "ipv4.dns \"{}\" "
-                        // "ipv4.gateway {} ipv4.dns \"{}\" "
-                        "ipv4.dns-search {} ipv6.method disabled",
-                cloyster::utils::enums::toString(
-                    connection.getNetwork()->getProfile()),
-                interface,
-                cloyster::utils::enums::toString(
-                    connection.getNetwork()->getType()),
-                connection.getMTU(), connection.getAddress().to_string(),
-                connection.getNetwork()->cidr.at(
-                    connection.getNetwork()->getSubnetMask().to_string()),
-                // connection.getNetwork()->getGateway().to_string(),
-                fmt::join(formattedNameservers, " "),
-                connection.getNetwork()->getDomainName()));
+        ::runner()->executeCommand(fmt::format(
+            "nmcli connection add con-name {} ifname {} type {} "
+            "mtu {} ipv4.method manual ipv4.address {}/{} "
+            "ipv4.dns \"{}\" "
+            // "ipv4.gateway {} ipv4.dns \"{}\" "
+            // @FIXME: This will break Confluent, is it required by xCAT?
+            "ipv4.dns-search {} ipv6.method disabled",
+            cloyster::utils::enums::toString(
+                connection.getNetwork()->getProfile()),
+            interface,
+            cloyster::utils::enums::toString(
+                connection.getNetwork()->getType()),
+            connection.getMTU(), connection.getAddress().to_string(),
+            connection.getNetwork()->cidr.at(
+                connection.getNetwork()->getSubnetMask().to_string()),
+            // connection.getNetwork()->getGateway().to_string(),
+            fmt::join(formattedNameservers, " "),
+            connection.getNetwork()->getDomainName()));
 
         /* Give network manage some time to settle thing up
          * Avoids: Error: Connection activation failed: IP configuration could
@@ -402,6 +441,10 @@ void Shell::pinOSVersion()
  */
 void Shell::install()
 {
+    // Dump the state of the cluster before start the installation, this
+    // will output a lot of helpful information in the logs
+    dumpPreInstallState();
+
     const auto opts = cloyster::Singleton<Options>::get();
     const auto osinfo = os();
     configureRepositories();
@@ -438,7 +481,6 @@ void Shell::install()
         "ro,no_subtree_check");
     const auto nfsInstallScript
         = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
-    ::runner()->run(nfsInstallScript);
     opts->maybeStopAfterStep("nfs-setup");
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
@@ -468,6 +510,9 @@ void Shell::install()
 
     LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
+
+    // NFS requires /install and /tftpboot folders
+    ::runner()->run(nfsInstallScript);
 
     LOG_INFO("[{}] Patching the provisioner", provisionerName)
     provisioner->patchInstall();
@@ -501,6 +546,10 @@ void Shell::install()
         provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
+
+    // Fix slurmctld: error: Check for out of sync clocks
+    LOG_INFO("Synchronizing clocks");
+    osservice()->restartService("chronyd");
 }
 
 }

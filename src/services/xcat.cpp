@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdlib> // setenv / getenv
+#include <ranges>
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -82,7 +83,6 @@ XCAT::Image XCAT::getImage() const { return m_stateless; }
 void XCAT::installPackages()
 {
     auto osservice = cloyster::Singleton<IOSService>::get();
-    osservice->install("initscripts");
     osservice->install("xCAT");
 }
 
@@ -106,7 +106,7 @@ void XCAT::patchInstall()
             "sed -i \"s/-extensions server //g\" "
             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
 
-        cloyster::services::runner::shell(
+        cloyster::services::runner::shell::cmd(
             R"del((cd / && patch --forward --batch -p0 <<'EOF'
 --- opt/xcat/lib/perl/xCAT_plugin/ddns.pm.orig	2025-07-16 09:53:20.546246189 -0300
 +++ opt/xcat/lib/perl/xCAT_plugin/ddns.pm	2025-07-16 09:53:36.614512354 -0300
@@ -197,8 +197,33 @@ void XCAT::copycds(const std::filesystem::path& diskImage) const
 
 void XCAT::genimage()
 {
-    cloyster::Singleton<IRunner>::get()->checkCommand(
-        fmt::format("genimage {}", m_stateless.osimage));
+    using namespace runner;
+    const auto osinfo
+        = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
+    const auto kernelVersion = osinfo.getKernel();
+    const auto osService = cloyster::Singleton<IOSService>::get();
+    if (kernelVersion == osService->getKernelRunning()) {
+        shell::fmt("genimage {} ", m_stateless.osimage);
+        return;
+    }
+
+    LOG_INFO("Customizing the kernel image");
+    const auto kernelPackages = fmt::format(
+        // Pay attention to the spaces, they are required
+        "kernel-{0} "
+        "kernel-devel-{0} "
+        "kernel-core-{0} "
+        "kernel-modules-{0} "
+        "kernel-modules-core-{0}",
+        kernelVersion);
+
+    shell::fmt("mkdir -p /install/kernels/{}", kernelVersion);
+    shell::fmt("dnf download {} --destdir /install/kernels/{}", kernelPackages,
+        kernelVersion);
+    shell::fmt("createrepo /install/kernels/{}", kernelVersion);
+    shell::fmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}",
+        m_stateless.osimage, kernelVersion);
+    shell::fmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
 }
 
 void XCAT::packimage()
@@ -256,6 +281,8 @@ void XCAT::configureTimeService()
 
 void XCAT::configureInfiniband()
 {
+    const auto osinfo
+        = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
     LOG_INFO("[xCAT] Configuring infiniband");
     if (const auto& ofed = cluster()->getOFED()) {
         switch (ofed->getKind()) {
@@ -267,9 +294,6 @@ void XCAT::configureInfiniband()
             case OFED::Kind::Mellanox: {
                 auto repoManager = cloyster::Singleton<RepoManager>::get();
                 auto runner = cloyster::Singleton<IRunner>::get();
-                auto arch = cloyster::utils::enums::toString(
-                    cluster()->getNodes()[0].getOS().getArch());
-                auto osService = cloyster::Singleton<IOSService>::get();
                 auto opts = cloyster::Singleton<Options>::get();
 
                 // Add the rpm to the image
@@ -278,10 +302,7 @@ void XCAT::configureInfiniband()
 
                 // The kernel modules are build by the OFED.cpp module, see
                 // OFED.cpp
-                const auto kernelVersion = opts->dryRun
-                    ? "5.14.0-503.33.1.el9_5"
-                    // getKernelInstalled cannot run at dryRun
-                    : osService->getKernelInstalled();
+                const auto kernelVersion = osinfo.getKernel();
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);
@@ -321,7 +342,9 @@ void XCAT::configureInfiniband()
 
 void XCAT::configureSLURM()
 {
+    // NOTE: hwloc-libs required to fix slurmd
     m_stateless.otherpkgs.emplace_back("ohpc-slurm-client");
+    m_stateless.otherpkgs.emplace_back("hwloc-libs");
 
     // TODO: Deprecate this for SRV entries on DNS: _slurmctld._tcp 0 100 6817
     m_stateless.postinstall.emplace_back(
@@ -641,7 +664,7 @@ void XCAT::addNodes()
     // TODO: Create separate functions
     runner->executeCommand("makehosts");
     runner->executeCommand("makedhcp -n");
-    runner->executeCommand("makedns -a");
+    runner->executeCommand("makedns -n");
     runner->executeCommand("makegocons");
     setNodesImage();
 }
