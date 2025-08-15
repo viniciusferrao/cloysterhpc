@@ -18,14 +18,43 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 
-namespace cloyster::services::runner {
+namespace cloyster::services::runner::shell {
 
 namespace unsafe {
     template <typename... Args>
     [[nodiscard]]
-    int shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
+    int fmt(std::vector<std::string>& output,
+        fmt::format_string<Args...> format, Args&&... args)
     {
-        auto command = fmt::format(fmt, std::forward<Args>(args)...);
+        auto command = fmt::format(format, std::forward<Args>(args)...);
+
+        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+        if (!opts->dryRun) {
+            LOG_DEBUG("Running shell command: {}", command);
+            boost::process::ipstream pipe_stream;
+            boost::process::child child("/bin/bash", "-c", command,
+                boost::process::std_out > pipe_stream);
+
+            std::string line;
+            while (pipe_stream && std::getline(pipe_stream, line)) {
+                output.emplace_back(line);
+                LOG_TRACE("{}", line);
+            }
+
+            child.wait();
+            LOG_DEBUG("Exit code: {}", child.exit_code());
+            return child.exit_code();
+        } else {
+            LOG_INFO("Dry Run: {}", command);
+            return 0;
+        }
+    }
+
+    template <typename... Args>
+    [[nodiscard]]
+    int fmt(fmt::format_string<Args...> format, Args&&... args)
+    {
+        auto command = fmt::format(format, std::forward<Args>(args)...);
 
         auto opts = cloyster::Singleton<cloyster::services::Options>::get();
         if (!opts->dryRun) {
@@ -50,17 +79,35 @@ namespace unsafe {
 }
 
 template <typename... Args>
-void shellfmt(fmt::format_string<Args...> fmt, Args&&... args)
+void fmt(fmt::format_string<Args...> format, Args&&... args)
 {
-    const auto exitCode = unsafe::shellfmt(fmt, args...);
+    const std::string command
+        = fmt::format(format, std::forward<Args>(args)...);
+    const auto exitCode = unsafe::fmt("{}", command);
     if (exitCode != 0) {
-        auto command = fmt::format(fmt, std::forward<Args>(args)...);
         throw std::runtime_error(fmt::format(
             "Command {} failed with exit code {}", command, exitCode));
     }
 }
 
-void shell(std::string_view cmd);
+void cmd(std::string_view cmd);
+
+template <typename... Args>
+[[nodiscard]]
+std::string output(fmt::format_string<Args...> format, Args&&... args)
+{
+    std::vector<std::string> output;
+    // Cosntruct a command here because it will be used twice and
+    // we can't use args twice without hurting the perfect forwarding
+    const std::string command
+        = fmt::format(format, std::forward<Args>(args)...);
+    const auto exitCode = unsafe::fmt(output, "{}", command);
+    if (exitCode != 0) {
+        throw std::runtime_error(fmt::format(
+            "Command {} failed with exit code {}", command, exitCode));
+    }
+    return fmt::format("{}", fmt::join(output, "\n"));
+}
 
 }
 

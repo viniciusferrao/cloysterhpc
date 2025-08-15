@@ -24,7 +24,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         .runAsDaemon = false,
         .airGap = false,
         .unattended = false,
-        .disableMirrors = false,
+        .enableMirrors = false,
         .logLevelInput = 3,
         .error = "NO ERROR",
         .config = "",
@@ -47,8 +47,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
     app.add_flag("-t,--tui", opt.enableTUI, "Enable TUI");
     app.add_flag("-c,--cli", opt.enableCLI, "Enable CLI");
     app.add_flag("-D,--daemon", opt.runAsDaemon, "Run as daemon");
-    app.add_flag(
-        "--disable-mirrors", opt.disableMirrors, "Disable mirror URLs");
+    app.add_flag("--enable-mirrors", opt.enableMirrors, "Disable mirror URLs");
     app.add_option("--mirror-url", opt.mirrorBaseUrl, "Base URL for mirror")
         ->default_str("https://mirror.versatushpc.com.br");
     app.add_option(

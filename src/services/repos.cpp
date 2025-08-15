@@ -489,7 +489,7 @@ struct RepoChooser final {
         }
 
         const auto opts = cloyster::Singleton<Options>::get();
-        if (opts->disableMirrors) {
+        if (!opts->enableMirrors) {
             return Choice::UPSTREAM;
         }
 
@@ -523,7 +523,7 @@ TEST_CASE("RepoChooser")
         = { .repo = "https://upstream.example.com/upstream/repo",
             .gpgkey = "https://upstream.example.com/upstream/key.gpg" } };
 
-    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    cloyster::Singleton<Options>::get()->enableMirrors = true;
     auto choice1 = RepoChooser::choose(mirrorConfigOnline, upstreamConfig);
     CHECK(choice1 == RepoChooser::Choice::MIRROR);
     auto choice2 = RepoChooser::choose(mirrorConfigOffline, upstreamConfig);
@@ -588,7 +588,7 @@ TEST_CASE("RepoAssembler")
         == RepoChooser::Choice::MIRROR);
 
     // Disable mirrors
-    cloyster::Singleton<Options>::get()->disableMirrors = true;
+    cloyster::Singleton<Options>::get()->enableMirrors = false;
 
     // If mirrors are disabled it should choose the upstream even if the
     // mirror is online
@@ -606,7 +606,7 @@ TEST_CASE("RepoAssembler")
     CHECK(repoUpstream.baseurl().value() == upstreamConfig.baseurl());
 
     // Enable mirrors again
-    cloyster::Singleton<Options>::get()->disableMirrors = false;
+    cloyster::Singleton<Options>::get()->enableMirrors = true;
     auto repoMirror
         = RepoAssembler::assemble(repoId, mirrorConfigOnline, upstreamConfig);
     // CHECK(repoMirror.baseurl().value() == mirrorConfigOnline.baseurl());
@@ -1340,7 +1340,7 @@ struct RepoGenerator final {
 TEST_CASE("RepoGenerator")
 {
     auto opts = Options {
-        .disableMirrors = false,
+        .enableMirrors = true,
         .mirrorBaseUrl = "https://mirror.example.com",
     };
     const auto osinfo = OS(models::OS::Distro::Rocky, OS::Platform::el9, 5);
@@ -1550,8 +1550,10 @@ void RepoManager::initializeDefaultRepositories()
             // Enable the repositories
             m_impl->rpm.enable(repos, true);
 
-            LOG_INFO("Enabling dnf keepcache option, use `dnf config-manager --save --setopt=keepcache=False` to disable it")
-            runner::shell("grep -q '^keepcache=' /etc/dnf/dnf.conf || dnf config-manager --save --setopt=keepcache=True");
+            LOG_INFO("Enabling dnf keepcache option, use `dnf config-manager "
+                     "--save --setopt=keepcache=False` to disable it")
+            runner::shell::cmd("grep -q '^keepcache=' /etc/dnf/dnf.conf || dnf "
+                               "config-manager --save --setopt=keepcache=True");
         } break;
         case OS::PackageType::DEB:
             throw std::logic_error("DEB packages not implemented");

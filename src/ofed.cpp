@@ -86,8 +86,7 @@ void OFED::install() const
                             "kernel-devel-{kernelVersion} doca-extra",
                     fmt::arg("kernelVersion", kernelVersion)));
 
-            if (osService->getKernelRunning()
-                != osService->getKernelInstalled()) {
+            if (osService->getKernelRunning() != kernelVersion) {
                 LOG_WARN("New kernel installed! Rebooting after the "
                          "installation finishes is advised!");
             }

@@ -85,9 +85,9 @@ int runCommand(const std::string& command, bool overrideDryRun)
 
 }; // namespace {
 
-namespace cloyster::services::runner {
+namespace cloyster::services::runner::shell {
 
-void shell(std::string_view cmd) { shellfmt("{}", cmd); }
+void cmd(std::string_view cmd) { shell::fmt("{}", cmd); }
 
 }
 

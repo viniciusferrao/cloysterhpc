@@ -43,35 +43,39 @@ namespace {
 void dumpPreInstallState()
 {
     using namespace cloyster::services::runner;
+    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+
     LOG_INFO("Dumping cluster state before the installation begins")
 
     LOG_INFO("OS");
-    shell("cat /etc/os-release");
+    shell::cmd("cat /etc/os-release");
 
     LOG_INFO("Repositories URLs");
-    shell("grep -EH '^(mirrorlist|baseurl)' /etc/yum.repos.d/*.repo");
+    shell::cmd(
+        "grep -EH '^(mirrorlist|baseurl)' /etc/yum.repos.d/*.repo || true");
 
     LOG_INFO("Packages installed");
-    shell("rpm -qa");
+    shell::cmd("rpm -qa");
 
     LOG_INFO("Network configuration");
-    shell("ip a");
-    shell("ip link");
+    shell::cmd("ip a");
+    shell::cmd("ip link");
 
     LOG_INFO("Kernel version");
-    shell("uname -a");
+    shell::cmd("uname -a");
 
     LOG_INFO("Memory");
-    shell("free -m");
+    shell::cmd("free -m");
 
     LOG_INFO("Services running");
-    shell("systemctl --no-pager list-units --plain --type=service --all");
+    shell::cmd("systemctl --no-pager list-units --plain --type=service --all");
 
     LOG_INFO("Firewall configuration");
     // firewalld may not be running
-    shell("firewall-cmd --list-all-zones || true");
+    shell::cmd("firewall-cmd --list-all-zones || true");
 
     LOG_INFO("End of cluster state dump");
+    opts->maybeStopAfterStep("dump-cluster-state");
 }
 
 auto getToEnableRepoNames(const OS& osinfo)
@@ -282,24 +286,24 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             fmt::format("nmcli device set {} managed yes", interface));
         ::runner()->executeCommand(
             fmt::format("nmcli device set {} autoconnect yes", interface));
-        ::runner()->executeCommand(
-            fmt::format("nmcli connection add con-name {} ifname {} type {} "
-                        "mtu {} ipv4.method manual ipv4.address {}/{} "
-                        "ipv4.dns \"{}\" "
-                        // "ipv4.gateway {} ipv4.dns \"{}\" "
-                        // @FIXME: This will break Confluent, is it required by xCAT?
-                        "ipv4.dns-search {} ipv6.method disabled",
-                cloyster::utils::enums::toString(
-                    connection.getNetwork()->getProfile()),
-                interface,
-                cloyster::utils::enums::toString(
-                    connection.getNetwork()->getType()),
-                connection.getMTU(), connection.getAddress().to_string(),
-                connection.getNetwork()->cidr.at(
-                    connection.getNetwork()->getSubnetMask().to_string()),
-                // connection.getNetwork()->getGateway().to_string(),
-                fmt::join(formattedNameservers, " "),
-                connection.getNetwork()->getDomainName()));
+        ::runner()->executeCommand(fmt::format(
+            "nmcli connection add con-name {} ifname {} type {} "
+            "mtu {} ipv4.method manual ipv4.address {}/{} "
+            "ipv4.dns \"{}\" "
+            // "ipv4.gateway {} ipv4.dns \"{}\" "
+            // @FIXME: This will break Confluent, is it required by xCAT?
+            "ipv4.dns-search {} ipv6.method disabled",
+            cloyster::utils::enums::toString(
+                connection.getNetwork()->getProfile()),
+            interface,
+            cloyster::utils::enums::toString(
+                connection.getNetwork()->getType()),
+            connection.getMTU(), connection.getAddress().to_string(),
+            connection.getNetwork()->cidr.at(
+                connection.getNetwork()->getSubnetMask().to_string()),
+            // connection.getNetwork()->getGateway().to_string(),
+            fmt::join(formattedNameservers, " "),
+            connection.getNetwork()->getDomainName()));
 
         /* Give network manage some time to settle thing up
          * Avoids: Error: Connection activation failed: IP configuration could

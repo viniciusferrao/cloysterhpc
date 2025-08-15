@@ -106,7 +106,7 @@ void XCAT::patchInstall()
             "sed -i \"s/-extensions server //g\" "
             "/opt/xcat/share/xcat/scripts/setup-server-cert.sh");
 
-        cloyster::services::runner::shell(
+        cloyster::services::runner::shell::cmd(
             R"del((cd / && patch --forward --batch -p0 <<'EOF'
 --- opt/xcat/lib/perl/xCAT_plugin/ddns.pm.orig	2025-07-16 09:53:20.546246189 -0300
 +++ opt/xcat/lib/perl/xCAT_plugin/ddns.pm	2025-07-16 09:53:36.614512354 -0300
@@ -201,6 +201,13 @@ void XCAT::genimage()
     const auto osinfo
         = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
     const auto kernelVersion = osinfo.getKernel();
+    const auto osService = cloyster::Singleton<IOSService>::get();
+    if (kernelVersion == osService->getKernelRunning()) {
+        shell::fmt("genimage {} ", m_stateless.osimage);
+        return;
+    }
+
+    LOG_INFO("Customizing the kernel image");
     const auto kernelPackages = fmt::format(
         // Pay attention to the spaces, they are required
         "kernel-{0} "
@@ -210,13 +217,13 @@ void XCAT::genimage()
         "kernel-modules-core-{0}",
         kernelVersion);
 
-    shellfmt("mkdir -p /install/kernels/{}", kernelVersion);
-    shellfmt("dnf download {} --destdir /install/kernels/{}", kernelPackages,
+    shell::fmt("mkdir -p /install/kernels/{}", kernelVersion);
+    shell::fmt("dnf download {} --destdir /install/kernels/{}", kernelPackages,
         kernelVersion);
-    shellfmt("createrepo /install/kernels/{}", kernelVersion);
-    shellfmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}",
+    shell::fmt("createrepo /install/kernels/{}", kernelVersion);
+    shell::fmt("chdef -t osimage {} -p pkgdir=/install/kernels/{}",
         m_stateless.osimage, kernelVersion);
-    shellfmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
+    shell::fmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
 }
 
 void XCAT::packimage()

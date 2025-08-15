@@ -65,7 +65,8 @@ ScriptBuilder installScript(
         "curl",
         "dnf-plugins-core",
         "chkconfig",
-        "initscripts",
+        "initscripts", // @FIXME: This is only required if the provisioner is
+                       // xCAT
         "jq",
         "tar",
     };
