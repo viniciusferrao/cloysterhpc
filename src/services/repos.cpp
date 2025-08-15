@@ -1549,6 +1549,9 @@ void RepoManager::initializeDefaultRepositories()
             m_impl->rpm.loadBaseDir();
             // Enable the repositories
             m_impl->rpm.enable(repos, true);
+
+            LOG_INFO("Enabling dnf keepcache option, use `dnf config-manager --save --setopt=keepcache=False` to disable it")
+            runner::shell("grep -q '^keepcache=' /etc/dnf/dnf.conf || dnf config-manager --save --setopt=keepcache=True");
         } break;
         case OS::PackageType::DEB:
             throw std::logic_error("DEB packages not implemented");
