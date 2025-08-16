@@ -342,7 +342,9 @@ void XCAT::configureInfiniband()
 
 void XCAT::configureSLURM()
 {
+    // NOTE: hwloc-libs required to fix slurmd 
     m_stateless.otherpkgs.emplace_back("ohpc-slurm-client");
+    m_stateless.otherpkgs.emplace_back("hwloc-libs");
 
     // TODO: Deprecate this for SRV entries on DNS: _slurmctld._tcp 0 100 6817
     m_stateless.postinstall.emplace_back(
