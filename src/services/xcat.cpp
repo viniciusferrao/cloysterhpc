@@ -342,7 +342,7 @@ void XCAT::configureInfiniband()
 
 void XCAT::configureSLURM()
 {
-    // NOTE: hwloc-libs required to fix slurmd 
+    // NOTE: hwloc-libs required to fix slurmd
     m_stateless.otherpkgs.emplace_back("ohpc-slurm-client");
     m_stateless.otherpkgs.emplace_back("hwloc-libs");
 
@@ -664,7 +664,7 @@ void XCAT::addNodes()
     // TODO: Create separate functions
     runner->executeCommand("makehosts");
     runner->executeCommand("makedhcp -n");
-    runner->executeCommand("makedns -a");
+    runner->executeCommand("makedns -n");
     runner->executeCommand("makegocons");
     setNodesImage();
 }

@@ -546,6 +546,10 @@ void Shell::install()
         provisionerName);
     provisioner->setNodesBoot();
     provisioner->resetNodes();
+
+    // Fix slurmctld: error: Check for out of sync clocks
+    LOG_INFO("Synchronizing clocks");
+    osservice()->restartService("chronyd");
 }
 
 }
