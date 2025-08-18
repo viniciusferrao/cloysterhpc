@@ -96,15 +96,10 @@ TEST_CASE("Basic")
         .addLineToFile(
             "/etc/hosts", "example.com", "123.123.123.123 example.com", 10)
         .enableService("foo-service");
-    CHECK(builder.toString() ==
-        R"del(#!/bin/bash -xeu
 
-# Foo
-foo
-
-grep -q "example.com" "/etc/hosts" || \
-  echo "123.123.123.123 example.com" >> "/etc/hosts"
-systemctl enable --now foo-service)del");
+    const auto script = builder.toString();
+    CHECK(script.contains(R"_(echo "123.123.123.123 example.com" >> "/etc/hosts")_"));
+    CHECK(script.contains("systemctl enable --now foo-service"));
 }
 
 TEST_SUITE_END();

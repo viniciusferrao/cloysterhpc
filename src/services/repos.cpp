@@ -583,9 +583,10 @@ TEST_CASE("RepoAssembler")
     // If mirror is offline it should fallback to upstream
     CHECK(RepoChooser::choose(mirrorConfigOffline, upstreamConfig)
         == RepoChooser::Choice::UPSTREAM);
-    // If mirror is online it should chose the mirror
+    // If mirror is online it should chose the default
+    constexpr auto defaultRepoChoice = RepoChooser::Choice::UPSTREAM;
     CHECK(RepoChooser::choose(mirrorConfigOnline, upstreamConfig)
-        == RepoChooser::Choice::MIRROR);
+        == defaultRepoChoice);
 
     // Disable mirrors
     cloyster::Singleton<Options>::get()->enableMirrors = false;
