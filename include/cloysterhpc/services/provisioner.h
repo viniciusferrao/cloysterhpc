@@ -8,6 +8,8 @@
 
 #include <string>
 
+// TODO: CFL Make this a generic interface between XCAT and Confluent
+// try to use compile time polymorphims instead of runtime polymorphism
 class Provisioner {
 public:
     virtual ~Provisioner() = default;

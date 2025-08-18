@@ -60,6 +60,7 @@ ScriptBuilder installScript(
 
     // "python3-dnf-plugin-versionlock" is conflicting with dnf-plugins-core
     // during the first install
+    // TODO: CFL initscripts is only required by xCAT
     std::set<std::string> allPackages = {
         "wget",
         "curl",

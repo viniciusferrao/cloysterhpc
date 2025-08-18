@@ -771,6 +771,9 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     // System
     setUpdateSystem(true);
+
+
+    // TODO: CFL Retrieve the provisioner from the answerfile
     setProvisioner(Provisioner::xCAT);
 
     // FIXME: This should come from /etc/os-release

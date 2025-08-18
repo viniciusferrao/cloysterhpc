@@ -19,6 +19,7 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/services/confluent.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 
@@ -60,6 +61,9 @@ int runTestCommand(const std::string& testCommand,
         auto file = cloyster::services::files::KeyFile(testCommandArgs[0]);
         LOG_INFO("Groups: {}", fmt::join(file.getGroups(), ","));
         LOG_INFO("Contents: {}", file.toData());
+    } else if (testCommand == "confluent-install") {
+        Confluent cfl;
+        cfl.foo();
     } else if (testCommand == "install-mellanox-ofed") {
         OFED(OFED::Kind::Mellanox, "latest").install();
     } else if (testCommand == "image-install-mellanox-ofed") {

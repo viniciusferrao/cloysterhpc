@@ -291,6 +291,7 @@ void Shell::configureNetworks(const std::list<Connection>& connections)
             "mtu {} ipv4.method manual ipv4.address {}/{} "
             "ipv4.dns \"{}\" "
             // "ipv4.gateway {} ipv4.dns \"{}\" "
+            // @TODO: CFL only do this if we're using xCAT as provisioner
             // @FIXME: This will break Confluent, is it required by xCAT?
             "ipv4.dns-search {} ipv6.method disabled",
             cloyster::utils::enums::toString(
@@ -445,6 +446,9 @@ void Shell::install()
     // will output a lot of helpful information in the logs
     dumpPreInstallState();
 
+    // Initialize repositories. This will setup Rocky Vault and assemble
+    // the repositories files at /etc/yum.repos.d/ if not already initialized
+    // It will also pin the OS version in RHEL distro.
     const auto opts = cloyster::Singleton<Options>::get();
     const auto osinfo = os();
     configureRepositories();
@@ -453,50 +457,60 @@ void Shell::install()
 
     // System updates and packages handled by base role
     ansible::roles::run("base", osinfo);
+
+    // Headnode stantard configuration
     configureSELinuxMode();
     configureFirewall();
     configureFQDN();
     disallowSSHRootPasswordLogin();
-
     configureHostsFile();
     configureLocale();
 
+    // Ansible roles migrated
     ansible::roles::run("timesync", osinfo);
     ansible::roles::run("fail2ban", osinfo);
     ansible::roles::run("audit", osinfo);
     ansible::roles::run("aide", osinfo);
     ansible::roles::run("spack", osinfo);
 
+    // Network setup
     configureNetworks(cluster()->getHeadnode().getConnections());
     opts->maybeStopAfterStep("configure-time-service");
     installOpenHPCBase();
     configureInfiniband();
     opts->maybeStopAfterStep("install-infiniband");
 
+    // NFS setup
     NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
             ->getHeadnode()
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
+    // TODO: CFL NFS script is coupled to XCAT, generalize it
     const auto nfsInstallScript
         = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
     opts->maybeStopAfterStep("nfs-setup");
+
+    // Queue system setup
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
         configureMailSystem();
     }
     removeMemlockLimits();
 
+    // Install OHPC packages
     installDevelopmentComponents();
     opts->maybeStopAfterStep("install-development-components");
 
+    // Setup provisioner
     const auto& provisionerName { cloyster::utils::enums::toString(
         cluster()->getProvisioner()) };
 
     LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
     const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
 
+    // TODO: CFL Generalize provisioner here
     std::unique_ptr<XCAT> provisioner;
     switch (cluster()->getProvisioner()) {
         case Cluster::Provisioner::xCAT:
@@ -511,6 +525,7 @@ void Shell::install()
     LOG_INFO("[{}] Installing provisioner packages", provisionerName)
     provisioner->installPackages();
 
+    // TODO: CFL nfsInstallScript depends on provisioner here, double check
     // NFS requires /install and /tftpboot folders
     ::runner()->run(nfsInstallScript);
 
