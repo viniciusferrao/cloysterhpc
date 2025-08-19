@@ -122,7 +122,7 @@ private:
         std::filesystem::path disk_image;
         OS::Distro distro;
         std::string version;
-        std::string kernel;
+        std::optional<std::string> kernel;
     };
 
     /**

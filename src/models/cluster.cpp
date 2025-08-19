@@ -563,7 +563,7 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
 
     LOG_INFO("Distro: {}",
         cloyster::utils::enums::toString(answerfil.system.distro));
-    LOG_INFO("Kernel: {}", answerfil.system.kernel);
+    LOG_INFO("Kernel: {}", answerfil.system.kernel.value_or(""));
     LOG_INFO("Version: {}", answerfil.system.version);
 
     // FIXME: This information should be deduced from the ISO file
@@ -571,7 +571,9 @@ void Cluster::fillData(const std::filesystem::path& answerfilePath)
     nodeOS.setArch(OS::Arch::x86_64);
     nodeOS.setFamily(OS::Family::Linux);
     nodeOS.setDistro(answerfil.system.distro);
-    nodeOS.setKernel(answerfil.system.kernel);
+    if (answerfil.system.kernel) {
+        nodeOS.setKernel(answerfil.system.kernel.value());
+     }
     nodeOS.setVersion(answerfil.system.version);
 
     LOG_TRACE("Cluster name: {}", answerfil.information.cluster_name)

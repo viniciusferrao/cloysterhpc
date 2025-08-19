@@ -1392,7 +1392,7 @@ TEST_CASE("RepoGenerator")
     generatorMirror.generate(conffiles, osinfo, airgapPath);
 };
 
-TEST_SUITE("repos urls")
+TEST_SUITE("cloyster::services::repos [slow]")
 {
     // RH CDN requires a certificate that only exists in RHEL machines
     // because of this the repostiories gives 403 and SSL errors. I'm skipping

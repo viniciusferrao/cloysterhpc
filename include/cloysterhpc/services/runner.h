@@ -38,7 +38,7 @@ namespace unsafe {
             std::string line;
             while (pipe_stream && std::getline(pipe_stream, line)) {
                 output.emplace_back(line);
-                LOG_TRACE("{}", line);
+                LOG_DEBUG("{}", line);
             }
 
             child.wait();
@@ -65,7 +65,7 @@ namespace unsafe {
 
             std::string line;
             while (pipe_stream && std::getline(pipe_stream, line)) {
-                LOG_TRACE("{}", line);
+                LOG_DEBUG("{}", line);
             }
 
             child.wait();

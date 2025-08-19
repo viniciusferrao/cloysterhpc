@@ -325,3 +325,4 @@ CMakeUserPresets.json
 .aider*
 
 deploy*.txt
+test/vms/

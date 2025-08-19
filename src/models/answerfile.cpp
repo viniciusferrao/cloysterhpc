@@ -430,24 +430,7 @@ void AnswerFile::loadSystemSettings()
     }
 
     system.version = m_keyfile.getString("system", "version");
-    const auto kernel = m_keyfile.getStringOpt("system", "kernel");
-    if (kernel) {
-        system.kernel = kernel.value();
-        LOG_INFO("Kernel override in the answerfile {}", system.kernel);
-    } else {
-        const auto latestKernelVersion = services::runner::shell::output(
-            // This runs very early so it stops loading all repositories caches,
-            // which is unecessary, so I pinned --repo=appstream here
-            "dnf list --repo=appstream kernel-devel --available "
-            "--showduplicates | sed 1d | "
-            // captures the kernel arch, e.g. x86_64, in $1
-            // this is important later when used to access /lib/modules/...
-            // folders
-            R"(perl -lane '$F[0] =~ s/kernel-devel\.(.*)$//; printf "%s.%s\n", $F[1], $1' | tail -1)");
-        system.kernel = latestKernelVersion;
-        LOG_INFO("Kernel omitted in the answerfile, using running kernel {}",
-            system.kernel);
-    }
+    system.kernel = m_keyfile.getStringOpt("system", "kernel");
 }
 
 AFNode AnswerFile::loadNode(const std::string& section)

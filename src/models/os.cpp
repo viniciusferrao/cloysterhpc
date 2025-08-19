@@ -226,7 +226,7 @@ void OS::setDistro(std::string_view distro)
     }
 }
 
-std::string_view OS::getKernel() const { return m_kernel; }
+std::optional<std::string_view> OS::getKernel() const { return m_kernel; }
 
 void OS::setKernel(std::string_view kernel) { m_kernel = kernel; }
 
@@ -301,7 +301,7 @@ void OS::printData() const
         cloyster::utils::enums::toString(std::get<Arch>(m_arch)))
     LOG_DEBUG("Family: {}",
         cloyster::utils::enums::toString(std::get<Family>(m_family)))
-    LOG_DEBUG("Kernel Release: {}", m_kernel)
+    LOG_DEBUG("Kernel Release: {}", m_kernel.value_or(""))
     // LOG_DEBUG("Platform: {}",
     //     cloyster::utils::enums::toString(std::get<Platform>(m_platform)))
     LOG_DEBUG("Distribution: {}",

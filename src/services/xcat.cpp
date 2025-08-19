@@ -200,12 +200,12 @@ void XCAT::genimage()
     using namespace runner;
     const auto osinfo
         = cloyster::Singleton<models::Cluster>::get()->getNodes()[0].getOS();
-    const auto kernelVersion = osinfo.getKernel();
-    const auto osService = cloyster::Singleton<IOSService>::get();
-    if (kernelVersion == osService->getKernelRunning()) {
+    const auto kernelVersionOpt = osinfo.getKernel();
+    if (!kernelVersionOpt) {
         shell::fmt("genimage {} ", m_stateless.osimage);
         return;
     }
+    const auto& kernelVersion = kernelVersionOpt.value();
 
     LOG_INFO("Customizing the kernel image");
     const auto kernelPackages = fmt::format(
@@ -295,6 +295,7 @@ void XCAT::configureInfiniband()
                 auto repoManager = cloyster::Singleton<RepoManager>::get();
                 auto runner = cloyster::Singleton<IRunner>::get();
                 auto opts = cloyster::Singleton<Options>::get();
+                auto osservice = cloyster::Singleton<IOSService>::get();
 
                 // Add the rpm to the image
                 m_stateless.otherpkgs.emplace_back("mlnx-ofa_kernel");
@@ -302,7 +303,16 @@ void XCAT::configureInfiniband()
 
                 // The kernel modules are build by the OFED.cpp module, see
                 // OFED.cpp
-                const auto kernelVersion = osinfo.getKernel();
+                const auto kernelVersion = [&]() -> std::string {
+                    const auto kernelOpt = osinfo.getKernel();
+                    if (kernelOpt) {
+                        return std::string(kernelOpt.value());
+                    }
+                    const auto kernel = osservice->getKernelRunning();
+                    LOG_WARN("Kernel version ommited in configuration, using the running kernel {}", kernel);
+                    return kernel;
+                }();
+                    osinfo.getKernel().value_or(osservice->getKernelInstalled());;
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);

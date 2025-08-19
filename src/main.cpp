@@ -13,13 +13,14 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/presenter/PresenterInstall.h>
 #include <cloysterhpc/services/ansible/roles.h>
+#include <cloysterhpc/services/confluent.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/shell.h>
 #include <cloysterhpc/services/xcat.h>
-#include <cloysterhpc/services/confluent.h>
+#include <cloysterhpc/utils/formatters.h>
 #include <cloysterhpc/verification.h>
 #include <cloysterhpc/view/newt.h>
 

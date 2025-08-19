@@ -27,7 +27,7 @@ struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
         -> decltype(ctx.out())
     {
         return fmt::format_to(ctx.out(), "OS(distro={}, kernel={})",
-            osinfo.getDistroString(), osinfo.getKernel());
+            osinfo.getDistroString(), osinfo.getKernel().value_or(""));
     }
 };
 

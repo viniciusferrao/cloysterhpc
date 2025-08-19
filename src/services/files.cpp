@@ -14,18 +14,21 @@
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 
+
 namespace cloyster::services::files {
 
+TEST_SUITE_BEGIN("cloyster::services::files");
+
 struct KeyFile::Impl {
-    std::filesystem::path m_path;
+    fs::path m_path;
     std::unique_ptr<Glib::KeyFile> m_keyfile;
 
-    Impl(Glib::KeyFile&& keyfile, std::filesystem::path path)
+    Impl(Glib::KeyFile&& keyfile, fs::path path)
         : m_path(std::move(path))
         , m_keyfile(std::make_unique<Glib::KeyFile>(std::move(keyfile))) { };
 };
 
-KeyFile::KeyFile(const std::filesystem::path& path)
+KeyFile::KeyFile(const fs::path& path)
     : m_impl(std::make_unique<KeyFile::Impl>(Glib::KeyFile(), path))
 {
     m_impl->m_path = path;
@@ -170,12 +173,12 @@ std::string checksum(const std::string& data)
 }
 
 std::string checksum(
-    const std::filesystem::path& path, const std::size_t chunkSize)
+    const fs::path& path, const std::size_t chunkSize)
 {
     Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
     std::ifstream file(path, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
-        throw std::filesystem::filesystem_error(
+        throw fs::filesystem_error(
             "Failed to open file", path, std::error_code());
     }
 
@@ -205,5 +208,100 @@ std::string md5sum(const std::string& data)
     checksum.update(data);
     return checksum.get_string();
 }
+
+namespace {
+void check(const auto& file, const fs::path& path)
+{
+    if (!file.is_open()) {
+        throw std::system_error(
+            errno, std::generic_category(), fmt::format(
+                "File error {}", path.string()));
+    }
+}
+
+}
+
+bool exists(const fs::path& path)
+{
+    return fs::exists(path);
+}
+
+void create(const fs::path& path)
+{
+    if (files::exists(path)) {
+        return;
+    }
+
+    fs::create_directories(path.parent_path());
+    std::ofstream file(path);
+    check(file, path);
+}
+
+void remove(const fs::path& path)
+{
+    if (!files::exists(path)) {
+        return;
+    }
+
+    fs::remove(path);
+}
+
+std::string read(const fs::path& path)
+{
+    std::ifstream file(path);
+    check(file, path);
+
+    file.seekg(0, std::ios::end);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::string contents(static_cast<std::size_t>(size), '\0');
+    if (!file.read(contents.data(), size)) {
+        throw std::system_error(errno, std::generic_category(),
+                                "Failed to read file: " + path.string());
+    }
+    return contents;
+}
+
+void write(const fs::path& path, std::string_view contents)
+{
+    if (!files::exists(path)) {
+        fs::create_directories(path.parent_path());
+    }
+    std::ofstream file(path, std::ios::trunc);
+    check(file, path);
+    file << contents;
+}
+
+void append(const fs::path& path, std::string_view contents)
+{
+    if (!files::exists(path)) {
+        fs::create_directories(path.parent_path());
+    }
+    std::ofstream file(path, std::ios::app);
+    check(file, path);
+    file << contents;
+}
+
+
+TEST_CASE("create/remove/read/write/append") {
+    const fs::path testPath = "test/files/read_write.txt";
+
+    files::remove(testPath);
+    CHECK(!files::exists(testPath));
+    files::create(testPath);
+    CHECK(files::exists(testPath));
+    files::write(testPath, "foo");
+    CHECK("foo" == files::read(testPath));
+    files::write(testPath, "bar");
+    CHECK("bar" == files::read(testPath));
+    files::append(testPath, " tar");
+    CHECK("bar tar" == files::read(testPath));
+    files::remove(testPath);
+    CHECK(!files::exists(testPath));
+}
+
+TEST_SUITE_END();
+
 
 } // namespace cloyster::services::files

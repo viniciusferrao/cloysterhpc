@@ -33,6 +33,9 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
+
+// @FIXME: File utilities functions should live in services::files namespace
+
 using models::OS;
 using services::IRunner;
 
@@ -304,8 +307,13 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
     for (std::size_t i = 0; i < maxRetries; ++i) {
         header = getHttpStatusInner(url, runner);
         LOG_DEBUG("HTTP status of {}: {}", url, header);
-        if (!header.starts_with("5")) {
-            LOG_DEBUG("HTTP {} error, retry {}", header, i);
+        if (header.starts_with("2")) {
+            return header;
+        } else if (header.starts_with("5")) {
+            LOG_DEBUG("HTTP INTERNAL SERVER ERROR {} error, retring ...{}", header, i);
+            return header;
+        } else  {
+            LOG_DEBUG("HTTP {} error, retrying ...{}", header, i);
             return header;
         }
     }
@@ -316,6 +324,14 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
 {
     throw std::runtime_error(
         fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+}
+
+void abortif(const bool cond, const fmt::string_view& fmt, auto&&... args)
+{
+    if (cond) {
+    throw std::runtime_error(
+        fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+    }
 }
 
 TEST_SUITE_END();

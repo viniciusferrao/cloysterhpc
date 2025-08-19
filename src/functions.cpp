@@ -26,7 +26,7 @@
 #include <stdexcept>
 #include <tuple>
 
-TEST_SUITE_BEGIN("cloyster");
+TEST_SUITE_BEGIN("cloyster::functions");
 
 namespace cloyster::functions {
 using cloyster::services::repos::RepoManager;

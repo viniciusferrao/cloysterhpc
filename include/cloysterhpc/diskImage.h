@@ -11,6 +11,7 @@
 
 #include <cloysterhpc/models/os.h>
 
+// @FIXME: Add proper namespace
 /**
  * @class DiskImage
  * @brief Manages disk image paths and validation for known images.
@@ -22,7 +23,7 @@ class DiskImage {
 private:
     std::filesystem::path m_path;
     std::optional<cloyster::models::OS::Distro> m_distro = std::nullopt;
-
+    
     // BUG: This is bad design, and also overrides what's inside the map
     // variable on the class that holds the checksums.
     /**

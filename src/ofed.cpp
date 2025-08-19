@@ -77,19 +77,30 @@ void OFED::install() const
                 cloyster::services::repos::RepoManager>::get();
             auto osService
                 = cloyster::Singleton<cloyster::services::IOSService>::get();
-            const std::string kernelVersion = std::string(osinfo.getKernel());
+            const auto kernelVersion = osinfo.getKernel();
+
             repoManager->enable("doca");
             // Install the required packages
             runner->checkCommand("dnf makecache --repo=doca");
-            runner->checkCommand(
-                fmt::format("dnf -y install kernel-{kernelVersion} "
-                            "kernel-devel-{kernelVersion} doca-extra",
-                    fmt::arg("kernelVersion", kernelVersion)));
-
-            if (osService->getKernelRunning() != kernelVersion) {
-                LOG_WARN("New kernel installed! Rebooting after the "
-                         "installation finishes is advised!");
+            if (kernelVersion) {
+                runner->checkCommand(
+                    fmt::format("dnf -y install kernel-{kernelVersion} "
+                                "kernel-devel-{kernelVersion} doca-extra",
+                        fmt::arg("kernelVersion", kernelVersion.value())));
+                if (osService->getKernelRunning() != kernelVersion) {
+                    LOG_WARN("New kernel installed! Rebooting after the "
+                             "installation finishes is advised!");
+                }
+            } else {
+                runner->checkCommand(
+                    fmt::format("dnf -y install kernel kernel-devel doca-extra",
+                        fmt::arg("kernelVersion", kernelVersion.value())));
+                if (osService->getKernelRunning() != osService->getKernelInstalled()) {
+                    LOG_WARN("New kernel installed! Rebooting after the "
+                             "installation finishes is advised!");
+                }
             }
+
 
             LOG_INFO("Compiling OFED DOCA drivers, this may take a while, use "
                      "`--skip compile-doca-driver` to skip");
@@ -101,10 +112,15 @@ void OFED::install() const
             // drivers the headnode should be rebooted to reload the new kernel.
             // The driver may support weak updates modules and load without
             // need for reboot.
-            if (!opts->shouldSkip("compile-doca-driver")) {
+            if (kernelVersion) {
+                if (!opts->shouldSkip("compile-doca-driver")) {
+                    runner->checkCommand(fmt::format(
+                        "/opt/mellanox/doca/tools/doca-kernel-support -k {}",
+                        kernelVersion.value()));
+                }
+            } else {
                 runner->checkCommand(fmt::format(
-                    "/opt/mellanox/doca/tools/doca-kernel-support -k {}",
-                    kernelVersion));
+                    "/opt/mellanox/doca/tools/doca-kernel-support"));
             }
 
             // Get the last rpm in /tmp/DOCA*/ folder

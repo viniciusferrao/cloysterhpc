@@ -9,6 +9,7 @@
 #include <cloysterhpc/const.h>
 #include <fmt/format.h>
 #include <gsl/gsl-lite.hpp>
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -66,7 +67,7 @@ private:
     std::variant<std::monostate, Family> m_family;
     std::variant<std::monostate, Platform> m_platform;
     std::variant<std::monostate, Distro> m_distro;
-    std::string m_kernel;
+    std::optional<std::string> m_kernel; // kernel version may be uninitialized
     unsigned m_majorVersion {};
     unsigned m_minorVersion {};
 
@@ -108,7 +109,7 @@ public:
     void setDistro(Distro distro);
     void setDistro(std::string_view distro);
 
-    [[nodiscard]] std::string_view getKernel() const;
+    [[nodiscard]] std::optional<std::string_view> getKernel() const;
     void setKernel(std::string_view kernel);
 
     [[nodiscard]] std::string getVersion() const;

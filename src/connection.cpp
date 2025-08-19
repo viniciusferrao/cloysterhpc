@@ -335,7 +335,7 @@ void Connection::dumpConnection() const
 #include <doctest/doctest.h>
 #endif
 
-TEST_SUITE("Test MAC address validity")
+TEST_SUITE("cloyster::services::network")
 {
     /*
         Network network;

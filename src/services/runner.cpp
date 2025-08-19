@@ -64,7 +64,7 @@ int runCommand(const std::string& command, std::list<std::string>& output,
         std::string line;
 
         while (pipe_stream && std::getline(pipe_stream, line)) {
-            LOG_TRACE("{}", line)
+            LOG_DEBUG("{}", line)
             output.emplace_back(line);
         }
 

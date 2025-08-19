@@ -11,6 +11,7 @@
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/services/cache.h>
 #include <unordered_map>
 
 // @FIXME: This file need some work
@@ -27,10 +28,9 @@ void DiskImage::setPath(const std::filesystem::path& path)
 
     // Verify checksum only if the image is known.
     if (isKnownImage(path)) {
-#ifdef NDEBUG
-        if (!hasVerifiedChecksum(path))
-            throw std::runtime_error("Disk Image checksum isn't valid");
-#endif
+        if (!hasVerifiedChecksum(path)) {
+            LOG_WARN("Disk Image checksum isn't valid");
+        }
     }
 
     m_path = path;
@@ -121,12 +121,14 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "e" }
     };
 
-    auto checksum = cloyster::services::files::checksum(path);
+    std::string checksum = cloyster::services::cache::fs::checksum("disk-checksum", path);
     LOG_INFO("SHA256 checksum of file {} is: {}", path.string(), checksum);
 
-    if (checksum == hash_map.find(path.filename().string())->second) {
-        LOG_TRACE("Checksum - The disk image is valid")
-        return true;
+    if (auto pair = hash_map.find(path.filename().string()); pair != hash_map.end()) {
+        if (checksum == pair->second) {
+            LOG_TRACE("Checksum - The disk image is valid")
+            return true;
+        }
     }
 
     LOG_TRACE("Checksum - The disk image is invalid. Maybe you're using a "
@@ -141,7 +143,7 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 #include <doctest/doctest.h>
 #endif
 
-TEST_SUITE("Disk image test suite")
+TEST_SUITE("cloyster::services::diskimage")
 {
     /*
     DiskImage diskImage;

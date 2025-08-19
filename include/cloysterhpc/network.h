@@ -14,6 +14,7 @@
 
 using boost::asio::ip::address;
 
+// @FIXME: This should be in a namespace
 /* TODO: Refactoring is necessary
  *  m_domainName is also available here since non-default networks may
  *  exist on the entire cluster and they should have their own domain.
