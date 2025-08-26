@@ -4,50 +4,56 @@
 #include <cloysterhpc/services/runner.h>
 
 namespace {
+[[noreturn]]
 constexpr void TODO() { throw std::logic_error("not implemented"); };
 }
 
 namespace cloyster::services::ansible::roles {
 
-
-ScriptBuilder installScript(const Role& role, const models::OS& osinfo)
+RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
 {
+    // wraps ScriptBuilder in a functor
+    constexpr auto wrap = [](const ScriptBuilder& scriptbuilder) -> RoleRunnable {
+        return [&](const Role& /* role */) {
+            cloyster::Singleton<IRunner>::get()->run(scriptbuilder);
+        };
+    };
     if (role.m_roleName == "repos") {
-        TODO();
+        return repos::run;
     } else if (role.m_roleName == "network") {
-        TODO();
+        return wrap(network::installScript(role, osinfo));
     } else if (role.m_roleName == "locale") {
-        TODO();
-    } else if (role.m_roleName == "firewall") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "selinux") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "nfs") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "queuesystem") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "slurm") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "ohpc") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "provisioner") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "xcat") { // firewall selinux etc
-        TODO();
-    } else if (role.m_roleName == "confluent") { // firewall selinux etc
-        TODO();
+        return wrap(locale::installScript(role, osinfo));
+    } else if (role.m_roleName == "firewall") {
+        return wrap(firewall::installScript(role, osinfo));
+    } else if (role.m_roleName == "selinux") {
+        return wrap(selinux::installScript(role, osinfo));
+    } else if (role.m_roleName == "nfs") {
+        return wrap(nfs::installScript(role, osinfo));
+    } else if (role.m_roleName == "queuesystem") {
+        return wrap(queuesystem::installScript(role, osinfo));
+    } else if (role.m_roleName == "slurm") {
+        return wrap(slurm::installScript(role, osinfo));
+    } else if (role.m_roleName == "ohpc") {
+        return wrap(ohpc::installScript(role, osinfo));
+    } else if (role.m_roleName == "provisioner") {
+        return wrap(provisioner::installScript(role, osinfo));
+    } else if (role.m_roleName == "xcat") {
+        return wrap(xcat::installScript(role, osinfo));
+    } else if (role.m_roleName == "confluent") {
+        return wrap(confluent::installScript(role, osinfo));
     } else if (role.m_roleName == "base") {
-        return base::installScript(role, osinfo);
+        return wrap(base::installScript(role, osinfo));
     } else if (role.m_roleName == "audit") {
-        return audit::installScript(role, osinfo);
+        return wrap(audit::installScript(role, osinfo));
     } else if (role.m_roleName == "aide") {
-        return aide::installScript(role, osinfo);
+        return wrap(aide::installScript(role, osinfo));
     } else if (role.m_roleName == "fail2ban") {
-        return fail2ban::installScript(role, osinfo);
+        return wrap(fail2ban::installScript(role, osinfo));
     } else if (role.m_roleName == "timesync") {
-        return timesync::installScript(role, osinfo);
+        return wrap(timesync::installScript(role, osinfo));
     } else if (role.m_roleName == "spack") {
-        return spack::installScript(role, osinfo);
+        return wrap(spack::installScript(role, osinfo));
     } else {
         throw std::invalid_argument("Unknown role: " + role.m_roleName);
     }
@@ -56,10 +62,9 @@ ScriptBuilder installScript(const Role& role, const models::OS& osinfo)
 void run(const Role& role, const models::OS& osinfo)
 {
     if (!role.m_when || role.m_when.value()(osinfo)) {
-        const auto runner = cloyster::Singleton<IRunner>::get();
-        const auto script = installScript(role, osinfo);
+        const auto runnable = getRunnable(role, osinfo);
         LOG_INFO("Executing role {}", role.m_roleName);
-        runner->run(script);
+        runnable(role);
     } else {
         LOG_INFO("Skippig role {}, when condition is false", role.m_roleName);
     }

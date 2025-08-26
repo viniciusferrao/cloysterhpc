@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include <cerrno>
 #include <cstring>
+#include <ranges>
 #include <fmt/core.h>
 
 #include <boost/algorithm/string.hpp>
@@ -255,8 +256,7 @@ std::vector<std::string> Connection::fetchInterfaces()
         interfaces.emplace(ifa.ifa_name);
     }
 
-    // Deduplicate using ranges
-    return interfaces | std::ranges::to<std::vector>();
+    return interfaces | std::ranges::to<std::vector<std::string>>();
 }
 
 std::optional<std::string_view> Connection::getMAC() const { return m_mac; }

@@ -3,15 +3,34 @@
 
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/ansible/role.h>
+
+// All ansible roles implemented, keep it sorted
+// in alphabetic order
 #include <cloysterhpc/services/ansible/roles/aide.h>
 #include <cloysterhpc/services/ansible/roles/audit.h>
 #include <cloysterhpc/services/ansible/roles/base.h>
+#include <cloysterhpc/services/ansible/roles/confluent.h>
 #include <cloysterhpc/services/ansible/roles/fail2ban.h>
+#include <cloysterhpc/services/ansible/roles/firewall.h>
+#include <cloysterhpc/services/ansible/roles/locale.h>
+#include <cloysterhpc/services/ansible/roles/network.h>
+#include <cloysterhpc/services/ansible/roles/nfs.h>
+#include <cloysterhpc/services/ansible/roles/ohpc.h>
+#include <cloysterhpc/services/ansible/roles/ood.h>
+#include <cloysterhpc/services/ansible/roles/provisioner.h>
+#include <cloysterhpc/services/ansible/roles/queuesystem.h>
+#include <cloysterhpc/services/ansible/roles/repos.h>
+#include <cloysterhpc/services/ansible/roles/selinux.h>
+#include <cloysterhpc/services/ansible/roles/slurm.h>
 #include <cloysterhpc/services/ansible/roles/spack.h>
 #include <cloysterhpc/services/ansible/roles/timesync.h>
+#include <cloysterhpc/services/ansible/roles/xcat.h>
+
 #include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles {
+
+using RoleRunnable = std::function<void(const Role& role)>;
 
 /**
  * @brief Dispatches the installation script builder for the given Ansible role.
@@ -37,7 +56,7 @@ namespace cloyster::services::ansible::roles {
  *
  * @throws std::invalid_argument if the role name is not recognized.
  */
-ScriptBuilder installScript(const Role& role, const models::OS& osinfo);
+RoleRunnable getRunnable(const Role& role, const models::OS& osinfo);
 
 /**
  * @brief Executes the installation script for a given Ansible role if the
