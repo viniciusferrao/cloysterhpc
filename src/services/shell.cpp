@@ -451,6 +451,8 @@ void Shell::install()
     // It will also pin the OS version in RHEL distro.
     const auto opts = cloyster::Singleton<Options>::get();
     const auto osinfo = os();
+
+    // @FIXME: Create repostiories role
     configureRepositories();
     pinOSVersion();
     opts->maybeStopAfterStep("configure-repositories");
@@ -458,6 +460,7 @@ void Shell::install()
     // System updates and packages handled by base role
     ansible::roles::run("base", osinfo);
 
+    // @FIXME: Migrate these to roles
     // Headnode stantard configuration
     configureSELinuxMode();
     configureFirewall();
@@ -474,12 +477,14 @@ void Shell::install()
     ansible::roles::run("spack", osinfo);
 
     // Network setup
+    // @FIXME: Network role
     configureNetworks(cluster()->getHeadnode().getConnections());
     opts->maybeStopAfterStep("configure-time-service");
     installOpenHPCBase();
     configureInfiniband();
     opts->maybeStopAfterStep("install-infiniband");
 
+    // @FIXME: NFS role
     // NFS setup
     NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
@@ -492,6 +497,7 @@ void Shell::install()
         = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
     opts->maybeStopAfterStep("nfs-setup");
 
+    // @FIXME: Queue system role
     // Queue system setup
     configureQueueSystem();
     if (cluster()->getMailSystem().has_value()) {
@@ -499,10 +505,12 @@ void Shell::install()
     }
     removeMemlockLimits();
 
+    // OHPC role
     // Install OHPC packages
     installDevelopmentComponents();
     opts->maybeStopAfterStep("install-development-components");
 
+    // Provisioner role
     // Setup provisioner
     const auto& provisionerName { cloyster::utils::enums::toString(
         cluster()->getProvisioner()) };
@@ -545,12 +553,14 @@ void Shell::install()
     const auto nfsImageInstallScript
         = networkFileSystem.imageInstallScript(osinfo, imageInstallArgs);
 
+    // Image role
     LOG_INFO("[{}] Creating node images", provisionerName);
     provisioner->createImage(imageType, nodeType,
         { // Customizations to the image
             nfsImageInstallScript });
     opts->maybeStopAfterStep("provisioner-create-image");
 
+    // nodes role
     LOG_INFO("[{}] Adding compute nodes", provisionerName)
     provisioner->addNodes();
 

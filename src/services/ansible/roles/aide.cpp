@@ -8,6 +8,9 @@
 #include <doctest/doctest.h>
 #endif
 
+// @FIXME: Not creating cron script (daily)
+//  /opt/versatushpc/scripts/aide-check.sh
+
 #include <fmt/core.h>
 
 namespace cloyster::services::ansible::roles::aide {

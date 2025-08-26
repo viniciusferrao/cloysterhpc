@@ -3,11 +3,40 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
 
+namespace {
+constexpr void TODO() { throw std::logic_error("not implemented"); };
+}
+
 namespace cloyster::services::ansible::roles {
+
 
 ScriptBuilder installScript(const Role& role, const models::OS& osinfo)
 {
-    if (role.m_roleName == "base") {
+    if (role.m_roleName == "repos") {
+        TODO();
+    } else if (role.m_roleName == "network") {
+        TODO();
+    } else if (role.m_roleName == "locale") {
+        TODO();
+    } else if (role.m_roleName == "firewall") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "selinux") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "nfs") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "queuesystem") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "slurm") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "ohpc") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "provisioner") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "xcat") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "confluent") { // firewall selinux etc
+        TODO();
+    } else if (role.m_roleName == "base") {
         return base::installScript(role, osinfo);
     } else if (role.m_roleName == "audit") {
         return audit::installScript(role, osinfo);
