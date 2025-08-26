@@ -499,10 +499,9 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
     answerfil.dumpFile(answerfilePath);
 }
 
-void Cluster::fillData(const std::filesystem::path& answerfilePath)
+void Cluster::fillData(const AnswerFile& answerfil)
 {
     const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
-    AnswerFile answerfil(answerfilePath);
 
     LOG_TRACE("Configure Management Network")
     // Management Network

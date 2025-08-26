@@ -6,6 +6,7 @@
 #ifndef CLOYSTERHPC_CLUSTER_H_
 #define CLOYSTERHPC_CLUSTER_H_
 
+#include "answerfile.h"
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -230,9 +231,9 @@ public:
     /**
      * @brief Fills cluster data from the specified answer file.
      *
-     * @param answerfilePath Path to the answer file.
+     * @param answerfile, the AnswerFile instance
      */
-    void fillData(const std::filesystem::path& answerfilePath);
+    void fillData(const AnswerFile& answerfile);
 
     void dumpData(const std::filesystem::path& answerfilePath);
 

@@ -162,9 +162,11 @@ int main(int argc, const char** argv)
     LOG_INFO("Initializing the model");
     auto model = std::make_unique<cloyster::models::Cluster>();
     LOG_INFO("Model initialized");
+    std::unique_ptr<models::AnswerFile> answerfile;
     if (!opts->answerfile.empty()) {
         LOG_INFO("Loading the answerfile: {}", opts->answerfile)
-        model->fillData(opts->answerfile);
+        answerfile = std::make_unique<models::AnswerFile>(opts->answerfile);
+        model->fillData(*answerfile);
     }
 
     opts->enableTUI = opts->answerfile.empty() && opts->testCommand.empty();
@@ -186,7 +188,7 @@ int main(int argc, const char** argv)
         model->dumpData(opts->dumpAnswerfile);
     }
 
-    initializeSingletonsModel(std::move(model));
+    initializeSingletonsModel(std::move(model), std::move(answerfile));
 
 #ifndef NDEBUG
     if (!opts->testCommand.empty()) {

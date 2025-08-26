@@ -10,5 +10,8 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts);
 
 // Singletons that depends on the cluster model
 void initializeSingletonsModel(
-    std::unique_ptr<cloyster::models::Cluster>&& cluster);
+    std::unique_ptr<cloyster::models::Cluster>&& cluster,
+    std::unique_ptr<cloyster::models::AnswerFile>&& answerfile
+);
+
 }
