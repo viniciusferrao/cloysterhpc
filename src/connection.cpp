@@ -11,14 +11,15 @@
 
 #include <expected>
 #include <regex>
-#include <set>
 #include <string>
+#include <stdexcept>
+#include <cerrno>
+#include <cstring>
+#include <fmt/core.h>
 
 #include <boost/algorithm/string.hpp>
-#include <utility>
 
 #include <arpa/inet.h> /* inet_*() functions */
-#include <cstring>
 #include <ifaddrs.h> /* getifaddrs() */
 
 #include <fmt/format.h>
@@ -26,6 +27,119 @@
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
 #endif
+
+namespace {
+
+/**
+ * @class ifaddrslist
+ * @brief A non-copyable, non-movable RAII wrapper for the `ifaddrs` linked list.
+ *
+ * This class uses the RAII (Resource Acquisition Is Initialization) idiom to
+ * manage the dynamic resource acquired by `getifaddrs()`. It ensures that the
+ * memory is automatically freed by `freeifaddrs()` when the object goes out of scope,
+ * preventing memory leaks.
+ *
+ * The class provides a `const` iterator to traverse the `ifaddrs` linked list,
+ * allowing it to be used in a range-based for loop. This design choice
+ * guarantees that the acquired data is read-only and cannot be modified.
+ *
+ * The class is intentionally designed to be non-copyable and non-movable to
+ * ensure that the resource is uniquely owned by the `ifaddrsptr` object and cannot
+ * be transferred or duplicated.
+ *
+ * @note This class is not thread-safe and relies on the `strerror` and `errno`
+ * which are global and not thread-safe. A production-ready version might use
+ * `strerror_r` or similar thread-safe alternatives.
+ *
+ */
+class ifaddrslist {
+private:
+    ifaddrs* m_ptr{};
+
+public:
+    // The const iterator class
+    class iterator {
+    private:
+        const ifaddrs* m_currentNode;
+
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = const ifaddrs;
+        using pointer = const ifaddrs*;
+        using reference = const ifaddrs&;
+
+        explicit iterator(const ifaddrs* node = nullptr) : m_currentNode(node) {}
+
+        reference operator*() const {
+            if (m_currentNode == nullptr) {
+                throw std::out_of_range("Iterator out of bounds.");
+            }
+            return *m_currentNode;
+        }
+
+        pointer operator->() const {
+            if (m_currentNode == nullptr) {
+                throw std::out_of_range("Iterator out of bounds.");
+            }
+            return m_currentNode;
+        }
+
+        iterator& operator++() {
+            if (m_currentNode != nullptr) {
+                m_currentNode = m_currentNode->ifa_next;
+            }
+            return *this;
+        }
+
+        iterator operator++(int) {
+            iterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        bool operator==(const iterator& other) const {
+            return m_currentNode == other.m_currentNode;
+        }
+        bool operator!=(const iterator& other) const {
+            return !(*this == other);
+        }
+    };
+
+    ifaddrslist() {
+        if (getifaddrs(&m_ptr) == -1) {
+            throw std::runtime_error(
+                fmt::format("Cannot get the interfaces: {}", std::strerror(errno))
+            );
+        }
+    }
+    explicit ifaddrslist(ifaddrs* ptr) : m_ptr(ptr) {
+        if (m_ptr == nullptr) {
+            throw std::runtime_error(
+                fmt::format("Cannot get the interfaces: {}", std::strerror(errno))
+            );
+        }
+    }
+    
+    ~ifaddrslist() {
+        freeifaddrs(m_ptr);
+    }
+
+    ifaddrslist(const ifaddrslist&) = delete;
+    ifaddrslist(ifaddrslist&&) = delete;
+    ifaddrslist& operator=(const ifaddrslist&) = delete;
+    ifaddrslist& operator=(ifaddrslist&&) = delete;
+
+    // Const iterator access for a non-const object
+    [[nodiscard]] iterator begin() const { return iterator(m_ptr); }
+    [[nodiscard]] static iterator end()  { return iterator(nullptr); }
+
+    // Explicit const iterator access (for consistency)
+    [[nodiscard]] iterator cbegin() const { return begin(); }
+    [[nodiscard]] static iterator cend()  { return end(); }
+};
+
+}
 
 Connection::Connection(Network* network)
     : m_network(network)
@@ -78,34 +192,22 @@ void Connection::setInterface(std::string_view interface)
     if (interface == "lo")
         throw std::runtime_error("Cannot use the loopback interface");
 
-    /* TODO: Use smart pointers */
-    /* Code based on getifaddrs(3) man page */
-    struct ifaddrs *ifaddr, *ifa;
+    ifaddrslist ifaddr;
 
-    if (getifaddrs(&ifaddr) == -1)
-        throw std::runtime_error(
-            fmt::format("Cannot get interface: {}\n", std::strerror(errno)));
-
-    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == nullptr)
-            continue;
-
+    for (const auto& ifa : ifaddr) {
         // TODO: Since we are already here, get the MAC Address from sa_data and
         //       add it to m_mac.
-        if (interface == ifa->ifa_name) {
+        if (interface == ifa.ifa_name) {
             m_interface = interface;
-
-            freeifaddrs(ifaddr);
             return;
         }
     }
-
-    freeifaddrs(ifaddr);
 
     throw std::runtime_error(
         fmt::format("Cannot find network interface {}", interface));
 }
 
+/*
 std::vector<std::string> Connection::fetchInterfaces()
 {
     struct ifaddrs *ifaddr, *ifa;
@@ -133,6 +235,28 @@ std::vector<std::string> Connection::fetchInterfaces()
     interfaces.assign(aux.begin(), aux.end());
 
     return interfaces;
+}
+*/
+
+// FIXME: Do we need escape hatches for special cases, like when
+//   interfaces may not yet exist in the operating system?
+std::vector<std::string> Connection::fetchInterfaces()
+{
+    ifaddrslist ifaddr;
+
+    std::unordered_set<std::string> interfaces;
+    for (const auto& ifa : ifaddr) {
+        if (ifa.ifa_addr == nullptr) {
+            continue;
+        }
+        if (std::strcmp(ifa.ifa_name, "lo") == 0) {
+            continue;
+        }
+        interfaces.emplace(ifa.ifa_name);
+    }
+
+    // Deduplicate using ranges
+    return interfaces | std::ranges::to<std::vector>();
 }
 
 std::optional<std::string_view> Connection::getMAC() const { return m_mac; }
