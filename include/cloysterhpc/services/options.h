@@ -37,6 +37,7 @@ struct Options final {
     std::set<std::string> skipSteps;
     std::set<std::string> forceSteps;
     std::set<std::string> ohpcPackages;
+    std::vector<std::string> roles;
 
     std::string testCommand;
     std::vector<std::string> testCommandArgs;

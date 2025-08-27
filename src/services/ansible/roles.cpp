@@ -1,7 +1,11 @@
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+
 #include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
+
 
 namespace {
 [[noreturn]]
@@ -78,5 +82,14 @@ void run(std::string_view roleName, const models::OS& osinfo,
         },
         osinfo);
 }
+
+void Executor::install() {
+    LOG_INFO("Running roles: {}", fmt::join(m_roles, ","));
+    const auto osinfo = utils::singleton::os();
+    for (const auto& role : m_roles) {
+        run(role, osinfo);
+    }
+};
+
 
 }

@@ -28,6 +28,7 @@
 #include <cloysterhpc/services/ansible/roles/timesync.h>
 #include <cloysterhpc/services/ansible/roles/xcat.h>
 
+#include <cloysterhpc/services/execution.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles {
@@ -93,6 +94,16 @@ void run(std::string_view roleName, const models::OS& osinfo,
     std::unordered_map<std::string, std::string>&& vars = {},
     std::optional<
         std::function<bool(const models::OS& osinfo)>>&& = std::nullopt);
+
+
+class Executor final : public Execution {
+    std::vector<std::string> m_roles;
+public:
+    // We copy the roles names becaues they came from options and options
+    // should not change after loaded
+    explicit Executor(std::vector<std::string>& roles) : m_roles(roles) {};
+    void install() override;
+};
 
 }
 

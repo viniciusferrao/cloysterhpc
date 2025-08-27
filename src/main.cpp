@@ -196,8 +196,13 @@ int main(int argc, const char** argv)
     }
 #endif
     LOG_TRACE("Starting execution engine");
-    std::unique_ptr<Execution> executionEngine
-        = std::make_unique<cloyster::services::Shell>();
+    auto executionEngine = [&]() -> std::unique_ptr<Execution>{ 
+        if (opts->roles.empty()) {
+            return std::make_unique<cloyster::services::Shell>();
+        } else {
+            return std::make_unique<cloyster::services::ansible::roles::Executor>(opts->roles);
+        };
+    }();
 
     executionEngine->install();
 
