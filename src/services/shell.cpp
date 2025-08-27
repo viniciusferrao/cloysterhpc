@@ -439,18 +439,12 @@ void Shell::pinOSVersion()
  */
 void Shell::install()
 {
-    // Dump the state of the cluster before start the installation, this
-    // will output a lot of helpful information in the logs
-    dumpPreInstallState();
-
-    // Initialize repositories. This will setup Rocky Vault and assemble
-    // the repositories files at /etc/yum.repos.d/ if not already initialized
-    // It will also pin the OS version in RHEL distro.
     const auto osinfo = os();
     const auto run = [&](std::string_view role) {
         ansible::roles::run(role, osinfo);
     };
 
+    run("dump");
     run("repos");
     run("base");
     run("network");

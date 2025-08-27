@@ -5,6 +5,7 @@
 #include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
+#include <utility>
 
 
 namespace cloyster::services::ansible::roles {
@@ -17,45 +18,55 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
             utils::singleton::runner()->run(scriptbuilder);
         };
     };
-    if (role.m_roleName == "repos") {
-        return repos::run;
-    } else if (role.m_roleName == "network") {
-        return network::run;
-    } else if (role.m_roleName == "ofed") {
-        return ofed::run;
-    } else if (role.m_roleName == "locale") {
-        return locale::run;
-    } else if (role.m_roleName == "firewall") {
-        return firewall::run;
-    } else if (role.m_roleName == "selinux") {
-        return selinux::run;
-    } else if (role.m_roleName == "nfs") {
-        return nfs::run;
-    } else if (role.m_roleName == "queuesystem") {
-        return queuesystem::run;
-    } else if (role.m_roleName == "ohpc") {
-        return ohpc::run;
-    } else if (role.m_roleName == "provisioner") {
-        return provisioner::run;
-    } else if (role.m_roleName == "xcat") {
-        return xcat::run;
-    } else if (role.m_roleName == "confluent") {
-        return confluent::run;
-    } else if (role.m_roleName == "base") {
-        return wrap(base::installScript(role, osinfo));
-    } else if (role.m_roleName == "audit") {
-        return wrap(audit::installScript(role, osinfo));
-    } else if (role.m_roleName == "aide") {
-        return wrap(aide::installScript(role, osinfo));
-    } else if (role.m_roleName == "fail2ban") {
-        return wrap(fail2ban::installScript(role, osinfo));
-    } else if (role.m_roleName == "timesync") {
-        return wrap(timesync::installScript(role, osinfo));
-    } else if (role.m_roleName == "spack") {
-        return wrap(spack::installScript(role, osinfo));
-    } else {
+    const auto roleEnum = utils::enums::ofStringOpt<Roles>(role.m_roleName);
+    if (!roleEnum.has_value()) {
         throw std::invalid_argument("Unknown role: " + role.m_roleName);
     }
+
+    switch (roleEnum.value()) {
+        case Roles::REPOS:
+            return repos::run;
+        case Roles::NETWORK:
+            return network::run;
+        case Roles::OFED:
+            return ofed::run;
+        case Roles::DUMP:
+            return dump::run;
+        case Roles::LOCALE:
+            return locale::run;
+        case Roles::FIREWALL:
+            return firewall::run;
+        case Roles::SELINUX:
+            return selinux::run;
+        case Roles::NFS:
+            return nfs::run;
+        case Roles::QUEUESYSTEM:
+            return queuesystem::run;
+        case Roles::OHPC:
+            return ohpc::run;
+        case Roles::PROVISIONER:
+            return provisioner::run;
+        case Roles::XCAT:
+            return xcat::run;
+        case Roles::CONFLUENT:
+            return confluent::run;
+        case Roles::BASE:
+            return wrap(base::installScript(role, osinfo));
+        case Roles::AUDIT:
+            return wrap(audit::installScript(role, osinfo));
+        case Roles::AIDE:
+            return wrap(aide::installScript(role, osinfo));
+        case Roles::FAIL2BAN:
+            return wrap(fail2ban::installScript(role, osinfo));
+        case Roles::TIMESYNC:
+            return wrap(timesync::installScript(role, osinfo));
+        case Roles::SPACK:
+            return wrap(spack::installScript(role, osinfo));
+        default:
+            std::unreachable();
+    };
+
+    std::unreachable();
 }
 
 void run(const Role& role, const models::OS& osinfo)

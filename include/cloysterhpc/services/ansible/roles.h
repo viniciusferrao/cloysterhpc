@@ -12,6 +12,7 @@
 #include <cloysterhpc/services/ansible/roles/audit.h>
 #include <cloysterhpc/services/ansible/roles/base.h>
 #include <cloysterhpc/services/ansible/roles/confluent.h>
+#include <cloysterhpc/services/ansible/roles/dump.h>
 #include <cloysterhpc/services/ansible/roles/fail2ban.h>
 #include <cloysterhpc/services/ansible/roles/firewall.h>
 #include <cloysterhpc/services/ansible/roles/locale.h>
@@ -33,6 +34,28 @@
 #include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles {
+
+enum class Roles : std::uint8_t {
+    REPOS,
+    NETWORK,
+    OFED,
+    DUMP,
+    LOCALE,
+    FIREWALL,
+    SELINUX,
+    NFS,
+    QUEUESYSTEM,
+    OHPC,
+    PROVISIONER,
+    XCAT,
+    CONFLUENT,
+    BASE,
+    AUDIT,
+    AIDE,
+    FAIL2BAN,
+    TIMESYNC,
+    SPACK,
+};
 
 /**
  * @brief Represents a callable unit of Ansible role logic.
@@ -108,19 +131,7 @@ void run(std::string_view roleName, const models::OS& osinfo,
     std::optional<
         std::function<bool(const models::OS& osinfo)>>&& = std::nullopt);
 
-/**
- * @class Executor
- * @brief Manages and executes a list of specified Ansible roles.
- *
- * This class is a concrete implementation of the `Execution` interface. It is
- * specifically designed to handle the `--roles` command-line argument,
- * executing the specified roles in the order they were provided.
- *
- * The `Executor` is responsible for retrieving the list of roles from the
- * global `Options` singleton. It then iterates through this list, resolves
- * each role name to its corresponding runnable function, and executes
- * that function to perform the role's installation or configuration logic.
- */
+
 class Executor final : public Execution {
 public:
     void install() override;

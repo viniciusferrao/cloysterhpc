@@ -646,4 +646,10 @@ void AnswerFile::loadOFED()
     }
 }
 
+auto AnswerFile::path() const
+-> const std::filesystem::path&
+{
+        return m_path;
+}
+
 };
