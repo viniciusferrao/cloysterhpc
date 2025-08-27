@@ -1,5 +1,6 @@
 #include <cloysterhpc/services/ansible/roles/nfs.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/NFS.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -10,12 +11,22 @@
 
 #include <fmt/core.h>
 
+namespace {
+using namespace cloyster::utils::singleton;
+}
+
 namespace cloyster::services::ansible::roles::nfs {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo)
+void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
+        cluster()
+            ->getHeadnode()
+            .getConnection(Network::Profile::Management)
+            .getAddress(),
+        "ro,no_subtree_check");
+    // TODO: CFL NFS script is coupled to XCAT, generalize it
+    ::options()->maybeStopAfterStep("nfs-setup");
 }
 
 }

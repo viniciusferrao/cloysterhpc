@@ -6,8 +6,7 @@
 
 namespace cloyster::services::ansible::roles::firewall {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo);
+void run(const Role& role);
 
 };
 

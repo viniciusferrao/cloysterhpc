@@ -92,10 +92,7 @@ auto getToEnableRepoNames(const OS& osinfo)
 }
 
 constexpr auto cluster() { return cloyster::Singleton<Cluster>::get(); }
-constexpr auto os()
-{
-    return cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
-}
+constexpr auto os() { return cloyster::Singleton<Cluster>::get()->getHeadnode().getOS(); }
 constexpr auto runner() { return cloyster::Singleton<IRunner>::get(); }
 constexpr auto osservice() { return cloyster::Singleton<IOSService>::get(); }
 

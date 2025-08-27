@@ -21,27 +21,23 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
     if (role.m_roleName == "repos") {
         return repos::run;
     } else if (role.m_roleName == "network") {
-        return wrap(network::installScript(role, osinfo));
+        return network::run;
     } else if (role.m_roleName == "locale") {
-        return wrap(locale::installScript(role, osinfo));
+        return locale::run;
     } else if (role.m_roleName == "firewall") {
-        return wrap(firewall::installScript(role, osinfo));
+        return firewall::run;
     } else if (role.m_roleName == "selinux") {
-        return wrap(selinux::installScript(role, osinfo));
+        return selinux::run;
     } else if (role.m_roleName == "nfs") {
-        return wrap(nfs::installScript(role, osinfo));
+        return nfs::run;
     } else if (role.m_roleName == "queuesystem") {
-        return wrap(queuesystem::installScript(role, osinfo));
-    } else if (role.m_roleName == "slurm") {
-        return wrap(slurm::installScript(role, osinfo));
+        return queuesystem::run;
     } else if (role.m_roleName == "ohpc") {
-        return wrap(ohpc::installScript(role, osinfo));
-    } else if (role.m_roleName == "provisioner") {
-        return wrap(provisioner::installScript(role, osinfo));
+        return ohpc::run;
     } else if (role.m_roleName == "xcat") {
-        return wrap(xcat::installScript(role, osinfo));
+        return xcat::run;
     } else if (role.m_roleName == "confluent") {
-        return wrap(confluent::installScript(role, osinfo));
+        return confluent::run;
     } else if (role.m_roleName == "base") {
         return wrap(base::installScript(role, osinfo));
     } else if (role.m_roleName == "audit") {

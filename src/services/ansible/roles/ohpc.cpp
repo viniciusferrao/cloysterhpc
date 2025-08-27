@@ -12,10 +12,13 @@
 
 namespace cloyster::services::ansible::roles::ohpc {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo)
+void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
+             "MPI stacks");
+
+    auto ohpcPackages = utils::singleton::options()->ohpcPackages;
+    utils::singleton::osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
 
 }

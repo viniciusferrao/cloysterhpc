@@ -2,7 +2,9 @@
 #define CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_H_
 
 #include <cloysterhpc/models/os.h>
+#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/services/ansible/role.h>
+#include <cloysterhpc/services/osservice.h>
 
 // All ansible roles implemented, keep it sorted
 // in alphabetic order

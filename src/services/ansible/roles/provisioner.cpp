@@ -12,8 +12,7 @@
 
 namespace cloyster::services::ansible::roles::provisioner {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo)
+void run(const Role& role)
 {
     throw std::logic_error("Not implemented");
 }

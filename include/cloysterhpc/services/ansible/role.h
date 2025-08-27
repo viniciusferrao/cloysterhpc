@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <cloysterhpc/models/os.h>
+#include <cloysterhpc/utils/singleton.h>
 
 namespace cloyster::services::ansible::roles {
 

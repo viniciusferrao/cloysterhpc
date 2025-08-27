@@ -10,12 +10,22 @@
 
 #include <fmt/core.h>
 
+namespace {
+using namespace cloyster::utils::singleton;
+void configureLocale()
+{
+    LOG_INFO("Setting up locale")
+
+    ::runner()->executeCommand(
+        fmt::format("localectl set-locale {}", cluster()->getLocale()));
+}
+}
+
 namespace cloyster::services::ansible::roles::locale {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo)
+void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    configureLocale();
 }
 
 }

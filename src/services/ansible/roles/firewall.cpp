@@ -10,12 +10,49 @@
 
 #include <fmt/core.h>
 
+namespace {
+using namespace cloyster::utils::singleton;
+void configureFirewall()
+{
+    LOG_INFO("Setting up firewall")
+
+    if (cluster()->isFirewall()) {
+        osservice()->enableService("firewalld");
+
+        // Add the management interface as trusted
+        ::runner()->executeCommand(fmt::format(
+            "firewall-cmd --permanent --zone=trusted --change-interface={}",
+            cluster()
+                ->getHeadnode()
+                .getConnection(Network::Profile::Management)
+                .getInterface()
+                .value()));
+
+        // If we have IB, also add its interface as trusted
+        if (cluster()->getOFED())
+            ::runner()->executeCommand(fmt::format(
+                "firewall-cmd --permanent --zone=trusted --change-interface={}",
+                cluster()
+                    ->getHeadnode()
+                    .getConnection(Network::Profile::Application)
+                    .getInterface()
+                    .value()));
+
+        ::runner()->executeCommand("firewall-cmd --reload");
+    } else {
+        osservice()->disableService("firewalld");
+
+        LOG_WARN("Firewalld has been disabled")
+    }
+}
+
+}
+
 namespace cloyster::services::ansible::roles::firewall {
 
-ScriptBuilder installScript(
-    const Role& role, const cloyster::models::OS& osinfo)
+void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    configureFirewall();
 }
 
 }
