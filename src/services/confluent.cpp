@@ -5,7 +5,7 @@
 
 namespace cloyster::services {
 
-void Confluent::foo() { fmt::print("Hello world"); }
+void Confluent::install() { fmt::print("Hello world"); }
 
 }
 

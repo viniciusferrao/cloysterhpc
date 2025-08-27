@@ -12,9 +12,14 @@
 // try to use compile time polymorphims instead of runtime polymorphism
 class Provisioner {
 public:
+    Provisioner(const Provisioner&) = delete;
+    Provisioner(Provisioner&&) = delete;
+    Provisioner& operator=(const Provisioner&) = delete;
+    Provisioner& operator=(Provisioner&&) = delete;
+    Provisioner() = default;
     virtual ~Provisioner() = default;
 
-    // virtual void method () = 0;
+    virtual void install() = 0;
 };
 
 #endif // CLOYSTERHPC_PROVISIONER_H_

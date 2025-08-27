@@ -178,7 +178,7 @@ public:
     std::optional<OFED> getOFED() const;
     void setOFED(OFED::Kind kind, std::string version = "latest");
 
-    std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem();
+    [[nodiscard]] const std::optional<std::unique_ptr<QueueSystem>>& getQueueSystem() const;
     void setQueueSystem(QueueSystem::Kind kind);
 
     std::optional<services::Postfix>& getMailSystem();

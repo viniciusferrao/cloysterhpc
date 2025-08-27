@@ -431,6 +431,7 @@ void AnswerFile::loadSystemSettings()
 
     system.version = m_keyfile.getString("system", "version");
     system.kernel = m_keyfile.getStringOpt("system", "kernel");
+    system.provisioner = m_keyfile.getStringOpt("system", "provisioner").value_or("confluent");
 }
 
 AFNode AnswerFile::loadNode(const std::string& section)

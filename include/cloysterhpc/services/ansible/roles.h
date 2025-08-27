@@ -18,6 +18,7 @@
 #include <cloysterhpc/services/ansible/roles/network.h>
 #include <cloysterhpc/services/ansible/roles/nfs.h>
 #include <cloysterhpc/services/ansible/roles/ohpc.h>
+#include <cloysterhpc/services/ansible/roles/ofed.h>
 #include <cloysterhpc/services/ansible/roles/ood.h>
 #include <cloysterhpc/services/ansible/roles/provisioner.h>
 #include <cloysterhpc/services/ansible/roles/queuesystem.h>
@@ -33,31 +34,43 @@
 
 namespace cloyster::services::ansible::roles {
 
+/**
+ * @brief Represents a callable unit of Ansible role logic.
+ *
+ * `RoleRunnable` is a type alias for a standard C++ function object (`std::function`).
+ * It encapsulates the executable logic for a specific Ansible role, making it
+ * possible to store and invoke different role implementations in a uniform way.
+ *
+ * The function signature defined by `RoleRunnable` takes a single constant
+ * reference to a `Role` object as its parameter and returns nothing (`void`).
+ * This design ensures that all runnable role implementations share a common interface,
+ * regardless of whether they are a simple function, a lambda expression, or a
+ * function object.
+ *
+ * This type is a key component of the dispatcher pattern used by the `getRunnable()`
+ * function, allowing it to return a generic callable that can be executed later.
+ */
 using RoleRunnable = std::function<void(const Role& role)>;
 
 /**
- * @brief Dispatches the installation script builder for the given Ansible role.
+ * @brief Retrieves a runnable role function based on the role name.
  *
- * This function takes a Role object and uses its name to select the appropriate
- * role-specific installation script function. It constructs a ScriptBuilder
- * populated with the shell commands required to provision the system
- * for that role.
+ * This function acts as a factory or dispatch mechanism, returning the appropriate
+ * function pointer or functor (a `RoleRunnable`) to execute a specific Ansible role's
+ * `run` or `installScript` method.
  *
- * Supported roles include:
- * - base
- * - audit
- * - aide
- * - fail2ban
- * - timesync
- * - spack
+ * It maps a given `role.m_roleName` string to a corresponding
+ * function. For some roles, it directly returns a function pointer (e.g., `repos::run`),
+ * while for others (the `installScript` roles), it wraps the script-generating
+ * function in a lambda to ensure it matches the `RoleRunnable` signature.
  *
- * @param role The Ansible Role to process. Must have a valid `m_roleName`.
- * @param osinfo The OS metadata to determine compatibility and
- * platform-specific behavior.
- * @return ScriptBuilder A builder object containing the installation script for
- * the given role.
- *
- * @throws std::invalid_argument if the role name is not recognized.
+ * @param role The `Role` object containing the name of the role to get the runnable for.
+ * @param osinfo The `models::OS` object, providing operating system information,
+ * which is passed to the script-generating functions.
+ * @return A `RoleRunnable` functor or function pointer that can be invoked to
+ * execute the logic for the specified role.
+ * @throws std::invalid_argument Throws an exception if the `role.m_roleName`
+ * does not match any of the known roles.
  */
 RoleRunnable getRunnable(const Role& role, const models::OS& osinfo);
 
@@ -95,13 +108,21 @@ void run(std::string_view roleName, const models::OS& osinfo,
     std::optional<
         std::function<bool(const models::OS& osinfo)>>&& = std::nullopt);
 
-
+/**
+ * @class Executor
+ * @brief Manages and executes a list of specified Ansible roles.
+ *
+ * This class is a concrete implementation of the `Execution` interface. It is
+ * specifically designed to handle the `--roles` command-line argument,
+ * executing the specified roles in the order they were provided.
+ *
+ * The `Executor` is responsible for retrieving the list of roles from the
+ * global `Options` singleton. It then iterates through this list, resolves
+ * each role name to its corresponding runnable function, and executes
+ * that function to perform the role's installation or configuration logic.
+ */
 class Executor final : public Execution {
-    std::vector<std::string> m_roles;
 public:
-    // We copy the roles names becaues they came from options and options
-    // should not change after loaded
-    explicit Executor(std::vector<std::string>& roles) : m_roles(roles) {};
     void install() override;
 };
 

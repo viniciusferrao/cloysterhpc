@@ -7,11 +7,6 @@
 #include <cloysterhpc/services/runner.h>
 
 
-namespace {
-[[noreturn]]
-constexpr void TODO() { throw std::logic_error("not implemented"); };
-}
-
 namespace cloyster::services::ansible::roles {
 
 RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
@@ -19,13 +14,15 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
     // wraps ScriptBuilder in a functor
     constexpr auto wrap = [](const ScriptBuilder& scriptbuilder) -> RoleRunnable {
         return [&](const Role& /* role */) {
-            cloyster::Singleton<IRunner>::get()->run(scriptbuilder);
+            utils::singleton::runner()->run(scriptbuilder);
         };
     };
     if (role.m_roleName == "repos") {
         return repos::run;
     } else if (role.m_roleName == "network") {
         return network::run;
+    } else if (role.m_roleName == "ofed") {
+        return ofed::run;
     } else if (role.m_roleName == "locale") {
         return locale::run;
     } else if (role.m_roleName == "firewall") {
@@ -38,6 +35,8 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
         return queuesystem::run;
     } else if (role.m_roleName == "ohpc") {
         return ohpc::run;
+    } else if (role.m_roleName == "provisioner") {
+        return provisioner::run;
     } else if (role.m_roleName == "xcat") {
         return xcat::run;
     } else if (role.m_roleName == "confluent") {
@@ -84,9 +83,10 @@ void run(std::string_view roleName, const models::OS& osinfo,
 }
 
 void Executor::install() {
-    LOG_INFO("Running roles: {}", fmt::join(m_roles, ","));
+    const auto& roles = utils::singleton::options()->roles;
+    LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     const auto osinfo = utils::singleton::os();
-    for (const auto& role : m_roles) {
+    for (const auto& role : roles) {
         run(role, osinfo);
     }
 };

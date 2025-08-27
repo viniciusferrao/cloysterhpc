@@ -77,28 +77,28 @@ private:
      *
      * @param diskImage The path to the disk image.
      */
-    void copycds(const std::filesystem::path& diskImage) const;
+    static void copycds(const std::filesystem::path& diskImage);
 
     /**
      * @brief Generates the OS image.
      *
      * This function creates the OS image based on the configuration.
      */
-    void genimage();
+    void genimage() const;
 
     /**
      * @brief Packs the OS image.
      *
      * This function packages the OS image for deployment.
      */
-    void packimage();
+    void packimage() const;
 
     /**
      * @brief Sets the nodes for a specific image.
      *
      * @param nodes The nodes to set for the image.
      */
-    void nodeset(std::string_view nodes);
+    void nodeset(std::string_view nodes) const;
 
     /**
      * @brief Creates the necessary directory tree.
@@ -111,6 +111,8 @@ private:
      * @brief Configures SELinux settings.
      *
      * This function sets up SELinux configurations in the image
+     *
+     * Mutates m_stateless
      */
     void configureSELinux();
 
@@ -118,6 +120,8 @@ private:
      * @brief Configures OpenHPC settings.
      *
      * This function sets up OpenHPC configurations.
+     *
+     * Mutates m_stateless
      */
     void configureOpenHPC();
 
@@ -125,6 +129,8 @@ private:
      * @brief Configures the time service.
      *
      * This function sets up the time synchronization service.
+     *
+     * Mutates m_stateless
      */
     void configureTimeService();
 
@@ -132,6 +138,8 @@ private:
      * @brief Configures SLURM settings.
      *
      * This function sets up SLURM for job scheduling and management.
+     *
+     * Mutates m_stateless
      */
     void configureSLURM();
 
@@ -140,12 +148,14 @@ private:
      *
      * This function creates a file that lists additional packages to install.
      */
-    void generateOtherPkgListFile();
+    void generateOtherPkgListFile() const;
 
     /**
      * @brief Generates the post-installation script file.
      *
      * This function creates the post-installation script file.
+     *
+     * Mutates m_stateless
      */
     void generatePostinstallFile();
 
@@ -161,7 +171,7 @@ private:
      *
      * This function sets up the OS image definition in xCAT.
      */
-    void configureOSImageDefinition();
+    void configureOSImageDefinition() const;
 
     /**
      * @brief Customizes the OS image.
@@ -182,6 +192,8 @@ private:
      *
      * @param imageType The type of image (Install or Netboot).
      * @param nodeType The type of node (Compute or Service).
+     *
+     * Mutates m_stateless.chroot
      */
     void generateOSImageName(ImageType, NodeType);
 
@@ -190,6 +202,8 @@ private:
      *
      * @param imageType The type of image (Install or Netboot).
      * @param nodeType The type of node (Compute or Service).
+     *
+     * Mutates m_stateless.chroot
      */
     void generateOSImagePath(ImageType, NodeType);
 
@@ -206,7 +220,7 @@ public:
     /**
      * @brief Return a list of repos for xCAT image
      */
-    [[nodiscard]] std::vector<std::string> getxCATOSImageRepos() const;
+    [[nodiscard]] static std::vector<std::string> getxCATOSImageRepos();
 
     /**
      * @brief Installs the necessary packages.
@@ -214,7 +228,7 @@ public:
      * This function installs all required packages for the provisioning
      * process.
      */
-    void installPackages();
+    static void installPackages();
 
     /**
      * @brief Patches xCAT to resolve bugs that aren't addressed upstream.
@@ -229,7 +243,7 @@ public:
      *
      * This function performs the initial setup for provisioning nodes.
      */
-    void setup();
+    void setup() const;
 
     /**
      * @brief Creates an OS image.
@@ -240,6 +254,8 @@ public:
      * @param imageType The type of image to create (default is Netboot).
      * @param nodeType The type of node to create the image for (default is
      * Compute).
+     *
+     * mutates m_stateless
      */
     void createImage(ImageType = ImageType::Netboot,
         NodeType = NodeType::Compute,
@@ -250,14 +266,14 @@ public:
      *
      * This function registers new nodes with the provisioning system.
      */
-    void addNodes();
+    void addNodes() const;
 
     /**
      * @brief Sets the OS image for nodes.
      *
      * This function assigns the created OS image to the nodes.
      */
-    void setNodesImage();
+    void setNodesImage() const;
 
     /**
      * @brief Sets the boot configuration for nodes.
@@ -284,6 +300,8 @@ public:
      * @brief Return the Image
      */
     [[nodiscard]] Image getImage() const;
+
+    void install() override;
 };
 
 };

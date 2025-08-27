@@ -64,7 +64,7 @@ int runTestCommand(const std::string& testCommand,
         LOG_INFO("Contents: {}", file.toData());
     } else if (testCommand == "confluent-install") {
         Confluent cfl;
-        cfl.foo();
+        cfl.install();
     } else if (testCommand == "install-mellanox-ofed") {
         OFED(OFED::Kind::Mellanox, "latest").install();
     } else if (testCommand == "image-install-mellanox-ofed") {
@@ -200,7 +200,7 @@ int main(int argc, const char** argv)
         if (opts->roles.empty()) {
             return std::make_unique<cloyster::services::Shell>();
         } else {
-            return std::make_unique<cloyster::services::ansible::roles::Executor>(opts->roles);
+            return std::make_unique<cloyster::services::ansible::roles::Executor>();
         };
     }();
 

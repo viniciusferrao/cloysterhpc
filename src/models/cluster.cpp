@@ -201,7 +201,7 @@ void Cluster::setOFED(OFED::Kind kind, std::string version)
     m_ofed = OFED(kind, std::move(version));
 }
 
-std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem()
+const std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem() const
 {
     return m_queueSystem;
 }

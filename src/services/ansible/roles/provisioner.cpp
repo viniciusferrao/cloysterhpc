@@ -1,5 +1,8 @@
 #include <cloysterhpc/services/ansible/roles/provisioner.h>
+#include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/utils/singleton.h>
+#include <cloysterhpc/functions.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -14,7 +17,15 @@ namespace cloyster::services::ansible::roles::provisioner {
 
 void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    const auto provisioner = utils::singleton::answerfile()->system.provisioner;
+    const auto osinfo = utils::singleton::os();
+    if (provisioner == "confluent") {
+        roles::run("confluent", osinfo);
+    } else if  (provisioner == "xcat") {
+        roles::run("xcat", osinfo);
+    } else {
+        cloyster::functions::abort("Expecing xcat or confluent at system.provisioner, found: {}", provisioner);
+    }
 }
 
 }

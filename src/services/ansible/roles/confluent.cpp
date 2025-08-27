@@ -1,4 +1,5 @@
 #include <cloysterhpc/services/ansible/roles/confluent.h>
+#include <cloysterhpc/services/confluent.h>
 #include <cloysterhpc/services/log.h>
 
 #ifdef BUILD_TESTING
@@ -14,7 +15,8 @@ namespace cloyster::services::ansible::roles::confluent {
 
 void run(const Role& role)
 {
-    throw std::logic_error("Not implemented");
+    Confluent confluent;
+    confluent.install();
 }
 
 }

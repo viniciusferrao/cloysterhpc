@@ -18,6 +18,8 @@
 #include <cloysterhpc/services/repos.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/utils/singleton.h>
+#include <cloysterhpc/NFS.h>
 
 namespace {
 using cloyster::models::Cluster;
@@ -80,7 +82,7 @@ XCAT::XCAT()
 
 XCAT::Image XCAT::getImage() const { return m_stateless; }
 
-void XCAT::installPackages()
+void XCAT::installPackages() 
 {
     auto osservice = cloyster::Singleton<IOSService>::get();
     osservice->install("xCAT");
@@ -130,7 +132,7 @@ EOF
     }
 }
 
-void XCAT::setup()
+void XCAT::setup() const
 {
     setDHCPInterfaces(cluster()
             ->getHeadnode()
@@ -189,13 +191,13 @@ namespace {
 
 }; // anonymous namespace
 
-void XCAT::copycds(const std::filesystem::path& diskImage) const
+void XCAT::copycds(const std::filesystem::path& diskImage)
 {
     cloyster::Singleton<IRunner>::get()->checkCommand(
         fmt::format("copycds {}", diskImage.string()));
 }
 
-void XCAT::genimage()
+void XCAT::genimage() const
 {
     using namespace runner;
     const auto osinfo
@@ -226,13 +228,13 @@ void XCAT::genimage()
     shell::fmt("genimage {} -k {}", m_stateless.osimage, kernelVersion);
 }
 
-void XCAT::packimage()
+void XCAT::packimage() const
 {
     cloyster::Singleton<IRunner>::get()->checkCommand(
         fmt::format("packimage {}", m_stateless.osimage));
 }
 
-void XCAT::nodeset(std::string_view nodes)
+void XCAT::nodeset(std::string_view nodes) const
 {
     cloyster::Singleton<IRunner>::get()->checkCommand(
         fmt::format("nodeset {} osimage={}", nodes, m_stateless.osimage));
@@ -390,7 +392,7 @@ void XCAT::configureSLURM()
         "\n");
 }
 
-void XCAT::generateOtherPkgListFile()
+void XCAT::generateOtherPkgListFile() const
 {
     std::string_view filename
         = CHROOT "/install/custom/netboot/compute.otherpkglist";
@@ -446,7 +448,7 @@ void XCAT::generateSynclistsFile()
         "/etc/munge/munge.key -> /etc/munge/munge.key\n");
 }
 
-void XCAT::configureOSImageDefinition()
+void XCAT::configureOSImageDefinition() const
 {
     auto opts = cloyster::Singleton<cloyster::services::Options>::get();
     auto runner = cloyster::Singleton<IRunner>::get();
@@ -663,7 +665,7 @@ void XCAT::addNode(const Node& node)
     cloyster::Singleton<IRunner>::get()->executeCommand(command);
 }
 
-void XCAT::addNodes()
+void XCAT::addNodes() const
 {
     for (const auto& node : cluster()->getNodes()) {
         addNode(node);
@@ -679,7 +681,7 @@ void XCAT::addNodes()
     setNodesImage();
 }
 
-void XCAT::setNodesImage()
+void XCAT::setNodesImage() const
 {
     // TODO: For now we always run nodeset for all computes
     nodeset("compute");
@@ -761,7 +763,7 @@ void XCAT::generateOSImagePath(ImageType imageType, NodeType nodeType)
     m_stateless.chroot = chroot;
 }
 
-std::vector<std::string> XCAT::getxCATOSImageRepos() const
+std::vector<std::string> XCAT::getxCATOSImageRepos()
 {
     const auto osinfo = cluster()->getHeadnode().getOS();
     const auto repoManager = cloyster::Singleton<RepoManager>::get();
@@ -795,6 +797,70 @@ std::vector<std::string> XCAT::getxCATOSImageRepos() const
     addReposFromFile("OpenHPC.repo");
 
     return repos;
+}
+
+void XCAT::install()
+{
+    using namespace cloyster::utils;
+    LOG_INFO("Setting up compute node images... This may take a while");
+    constexpr auto provisionerName = "xCAT";
+    const auto opts = singleton::options();
+    const auto osinfo = singleton::os();
+
+    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
+        cluster()
+            ->getHeadnode()
+            .getConnection(Network::Profile::Management)
+            .getAddress(),
+        "ro,no_subtree_check");
+    // TODO: CFL NFS script is coupled to XCAT, generalize it
+    const auto nfsInstallScript
+        = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
+
+    installPackages();
+
+    // TODO: CFL nfsInstallScript depends on provisioner here, double check
+    // NFS requires /install and /tftpboot folders
+    singleton::runner()->run(nfsInstallScript);
+
+    LOG_INFO("[{}] Patching the provisioner", provisionerName)
+    patchInstall();
+
+    LOG_INFO("[{}] Setting up the provisioner", provisionerName)
+    setup();
+    const auto imageType = XCAT::ImageType::Netboot;
+    const auto nodeType = XCAT::NodeType::Compute;
+
+    opts->maybeStopAfterStep("provisioner-setup");
+    const auto imageInstallArgs
+        = getImageInstallArgs(imageType, nodeType);
+
+    // Customizations to the image
+    const auto nfsImageInstallScript
+        = networkFileSystem.imageInstallScript(osinfo, imageInstallArgs);
+
+    // Image role
+    LOG_INFO("[{}] Creating node images", provisionerName);
+    createImage(imageType, nodeType,
+        { // Customizations to the image
+            nfsImageInstallScript });
+    opts->maybeStopAfterStep("provisioner-create-image");
+
+    // nodes role
+    LOG_INFO("[{}] Adding compute nodes", provisionerName)
+    addNodes();
+
+    LOG_INFO("[{}] Setting up image on nodes", provisionerName)
+    setNodesImage();
+
+    LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
+        provisionerName);
+    setNodesBoot();
+    resetNodes();
+
+    // Fix slurmctld: error: Check for out of sync clocks
+    LOG_INFO("Synchronizing clocks");
+    singleton::osservice()->restartService("chronyd");
 }
 
 };

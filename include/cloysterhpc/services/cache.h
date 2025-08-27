@@ -31,7 +31,7 @@ std::string run(std::string_view name, const std::filesystem::path& path, std::i
         return files::read(path);
     }
 
-    LOG_INFO("Running cost effective function {}, this may take a while ...", name);
+    LOG_INFO("Running cost intensive function {}, this may take a while ...", name);
     const std::string contents = 
         std::invoke(
             std::forward<decltype(function)>(function),

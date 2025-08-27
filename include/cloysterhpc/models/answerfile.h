@@ -123,6 +123,7 @@ private:
         OS::Distro distro;
         std::string version;
         std::optional<std::string> kernel;
+        std::string provisioner;
     };
 
     /**

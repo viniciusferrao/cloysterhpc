@@ -111,8 +111,42 @@ void configureNetworks(const std::list<Connection>& connections)
 
     disableNetworkManagerDNSOverride();
 
+}
+
+void configureFQDN()
+{
+    LOG_INFO("Setting up hostname")
+
     ::runner()->executeCommand(fmt::format(
         "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
+}
+
+void disallowSSHRootPasswordLogin()
+{
+    LOG_INFO("Allowing root login only through public key authentication (SSH)")
+
+    ::runner()->executeCommand(
+        "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
+        " /etc/ssh/sshd_config");
+}
+
+void configureHostsFile()
+{
+    LOG_INFO("Setting up additional entries on hosts file")
+
+    const auto& headnode = cluster()->getHeadnode();
+
+    const auto& ip = headnode.getConnection(Network::Profile::Management)
+                         .getAddress()
+                         .to_string();
+    const auto& fqdn = headnode.getFQDN();
+    const auto& hostname = headnode.getHostname();
+
+    std::string_view filename = CHROOT "/etc/hosts";
+
+    cloyster::functions::backupFile(filename);
+    cloyster::functions::addStringToFile(
+        filename, fmt::format("{}\t{} {}\n", ip, fqdn, hostname));
 }
 
 }
@@ -125,6 +159,9 @@ void run(const Role& role)
     LOG_INFO("Setting up networks")
 
     configureNetworks(connections);
+    configureFQDN();
+    disallowSSHRootPasswordLogin();
+    configureHostsFile();
 
 }
 

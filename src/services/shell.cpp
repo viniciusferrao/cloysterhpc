@@ -446,132 +446,27 @@ void Shell::install()
     // Initialize repositories. This will setup Rocky Vault and assemble
     // the repositories files at /etc/yum.repos.d/ if not already initialized
     // It will also pin the OS version in RHEL distro.
-    const auto opts = cloyster::Singleton<Options>::get();
     const auto osinfo = os();
+    const auto run = [&](std::string_view role) {
+        ansible::roles::run(role, osinfo);
+    };
 
-    // @FIXME: Create repostiories role
-    configureRepositories();
-    pinOSVersion();
-    opts->maybeStopAfterStep("configure-repositories");
-
-    // System updates and packages handled by base role
-    ansible::roles::run("base", osinfo);
-
-    // @FIXME: Migrate these to roles
-    // Headnode stantard configuration
-    configureSELinuxMode();
-    configureFirewall();
-    configureFQDN();
-    disallowSSHRootPasswordLogin();
-    configureHostsFile();
-    configureLocale();
-
-    // Ansible roles migrated
-    ansible::roles::run("timesync", osinfo);
-    ansible::roles::run("fail2ban", osinfo);
-    ansible::roles::run("audit", osinfo);
-    ansible::roles::run("aide", osinfo);
-    ansible::roles::run("spack", osinfo);
-
-    // Network setup
-    // @FIXME: Network role
-    configureNetworks(cluster()->getHeadnode().getConnections());
-    opts->maybeStopAfterStep("configure-time-service");
-    installOpenHPCBase();
-    configureInfiniband();
-    opts->maybeStopAfterStep("install-infiniband");
-
-    // @FIXME: NFS role
-    // NFS setup
-    NFS networkFileSystem = NFS("pub", "/opt/ohpc",
-        cluster()
-            ->getHeadnode()
-            .getConnection(Network::Profile::Management)
-            .getAddress(),
-        "ro,no_subtree_check");
-    // TODO: CFL NFS script is coupled to XCAT, generalize it
-    const auto nfsInstallScript
-        = networkFileSystem.installScript(cluster()->getHeadnode().getOS());
-    opts->maybeStopAfterStep("nfs-setup");
-
-    // @FIXME: Queue system role
-    // Queue system setup
-    configureQueueSystem();
-    if (cluster()->getMailSystem().has_value()) {
-        configureMailSystem();
-    }
-    removeMemlockLimits();
-
-    // OHPC role
-    // Install OHPC packages
-    installDevelopmentComponents();
-    opts->maybeStopAfterStep("install-development-components");
-
-    // Provisioner role
-    // Setup provisioner
-    const auto& provisionerName { cloyster::utils::enums::toString(
-        cluster()->getProvisioner()) };
-
-    LOG_DEBUG("Setting up the provisioner: {}", provisionerName)
-    const auto repoManager = cloyster::Singleton<repos::RepoManager>::get();
-
-    // TODO: CFL Generalize provisioner here
-    std::unique_ptr<XCAT> provisioner;
-    switch (cluster()->getProvisioner()) {
-        case Cluster::Provisioner::xCAT:
-            repoManager->enable("xcat-core");
-            repoManager->enable("xcat-dep");
-            provisioner = std::make_unique<XCAT>();
-            break;
-    }
-
-    LOG_INFO("Setting up compute node images... This may take a while")
-
-    LOG_INFO("[{}] Installing provisioner packages", provisionerName)
-    provisioner->installPackages();
-
-    // TODO: CFL nfsInstallScript depends on provisioner here, double check
-    // NFS requires /install and /tftpboot folders
-    ::runner()->run(nfsInstallScript);
-
-    LOG_INFO("[{}] Patching the provisioner", provisionerName)
-    provisioner->patchInstall();
-
-    LOG_INFO("[{}] Setting up the provisioner", provisionerName)
-    provisioner->setup();
-    const auto imageType = XCAT::ImageType::Netboot;
-    const auto nodeType = XCAT::NodeType::Compute;
-
-    opts->maybeStopAfterStep("provisioner-setup");
-    const auto imageInstallArgs
-        = provisioner->getImageInstallArgs(imageType, nodeType);
-
-    // Customizations to the image
-    const auto nfsImageInstallScript
-        = networkFileSystem.imageInstallScript(osinfo, imageInstallArgs);
-
-    // Image role
-    LOG_INFO("[{}] Creating node images", provisionerName);
-    provisioner->createImage(imageType, nodeType,
-        { // Customizations to the image
-            nfsImageInstallScript });
-    opts->maybeStopAfterStep("provisioner-create-image");
-
-    // nodes role
-    LOG_INFO("[{}] Adding compute nodes", provisionerName)
-    provisioner->addNodes();
-
-    LOG_INFO("[{}] Setting up image on nodes", provisionerName)
-    provisioner->setNodesImage();
-
-    LOG_INFO("[{}] Setting up boot settings via IPMI, if available",
-        provisionerName);
-    provisioner->setNodesBoot();
-    provisioner->resetNodes();
-
-    // Fix slurmctld: error: Check for out of sync clocks
-    LOG_INFO("Synchronizing clocks");
-    osservice()->restartService("chronyd");
+    run("repos");
+    run("base");
+    run("network");
+    run("ofed");
+    run("selinux");
+    run("firewall");
+    run("locale");
+    run("timesync");
+    run("fail2ban");
+    run("audit");
+    run("aide");
+    run("spack");
+    run("nfs");
+    run("queuesystem");
+    run("ohpc");
+    run("provisioner");
 }
 
 }
