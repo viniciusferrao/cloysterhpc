@@ -5,6 +5,7 @@
 #include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/utils/enums.h>
 #include <utility>
 
 
@@ -18,12 +19,10 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
             utils::singleton::runner()->run(scriptbuilder);
         };
     };
-    const auto roleEnum = utils::enums::ofStringOpt<Roles>(role.m_roleName);
-    if (!roleEnum.has_value()) {
-        throw std::invalid_argument("Unknown role: " + role.m_roleName);
-    }
 
-    switch (roleEnum.value()) {
+    switch (role.role()) {
+        case Roles::CHECK:
+            return check::run;
         case Roles::REPOS:
             return repos::run;
         case Roles::NETWORK:
@@ -71,24 +70,26 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
 
 void run(const Role& role, const models::OS& osinfo)
 {
-    if (!role.m_when || role.m_when.value()(osinfo)) {
+    if (!role.when() || role.when().value()(osinfo)) {
         const auto runnable = getRunnable(role, osinfo);
-        LOG_INFO("Executing role {}", role.m_roleName);
+        LOG_INFO("Executing role {}", role.roleName());
         runnable(role);
     } else {
-        LOG_INFO("Skippig role {}, when condition is false", role.m_roleName);
+        LOG_INFO("Skippig role {}, when condition is false", role.roleName());
     }
 }
 
-void run(std::string_view roleName, const models::OS& osinfo,
-    std::unordered_map<std::string, std::string>&& vars,
+void run(Roles role, const models::OS& osinfo,
+    Role::Vars&& vars,
+    Role::Tags&& tags,
     std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
 {
     run(
         Role {
-            .m_roleName = std::string(roleName),
-            .m_vars = std::move(vars),
-            .m_when = std::move(when),
+            role,
+            std::move(tags),
+            std::move(vars),
+            std::move(when),
         },
         osinfo);
 }
@@ -98,7 +99,8 @@ void Executor::install() {
     LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     const auto osinfo = utils::singleton::os();
     for (const auto& role : roles) {
-        run(role, osinfo);
+         auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
+        run(roleEnum, osinfo);
     }
 };
 

@@ -21,8 +21,8 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "spack",
-        fmt::format("Expected spack role, found {}", role.m_roleName));
+    LOG_ASSERT(role.roleName() == "spack",
+        fmt::format("Expected spack role, found {}", role.roleName()));
 
     builder.addNewLine()
         .addCommand("# Exit early if spack is already installed")

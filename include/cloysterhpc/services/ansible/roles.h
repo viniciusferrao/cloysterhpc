@@ -11,6 +11,7 @@
 #include <cloysterhpc/services/ansible/roles/aide.h>
 #include <cloysterhpc/services/ansible/roles/audit.h>
 #include <cloysterhpc/services/ansible/roles/base.h>
+#include <cloysterhpc/services/ansible/roles/check.h>
 #include <cloysterhpc/services/ansible/roles/confluent.h>
 #include <cloysterhpc/services/ansible/roles/dump.h>
 #include <cloysterhpc/services/ansible/roles/fail2ban.h>
@@ -34,28 +35,6 @@
 #include <cloysterhpc/services/scriptbuilder.h>
 
 namespace cloyster::services::ansible::roles {
-
-enum class Roles : std::uint8_t {
-    REPOS,
-    NETWORK,
-    OFED,
-    DUMP,
-    LOCALE,
-    FIREWALL,
-    SELINUX,
-    NFS,
-    QUEUESYSTEM,
-    OHPC,
-    PROVISIONER,
-    XCAT,
-    CONFLUENT,
-    BASE,
-    AUDIT,
-    AIDE,
-    FAIL2BAN,
-    TIMESYNC,
-    SPACK,
-};
 
 /**
  * @brief Represents a callable unit of Ansible role logic.
@@ -126,12 +105,20 @@ void run(const Role& role, const models::OS& osinfo);
  * @param osinfo The operating system information used to evaluate the role
  * condition.
  */
-void run(std::string_view roleName, const models::OS& osinfo,
-    std::unordered_map<std::string, std::string>&& vars = {},
+void run(Roles role, const models::OS& osinfo,
+    Role::Vars&& vars = {},
+    Role::Tags&& tags = {},
     std::optional<
         std::function<bool(const models::OS& osinfo)>>&& = std::nullopt);
 
-
+/**
+ * @brief Executor implementation for Ansible roles.
+ *
+ * This class provides the concrete implementation of the Execution interface
+ * specifically for executing Ansible roles. It executes the roles in the order 
+ * they appear in --roles command line argument. If --roles the Shell execution
+ * is used instead.
+ */
 class Executor final : public Execution {
 public:
     void install() override;

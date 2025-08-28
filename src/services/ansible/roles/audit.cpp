@@ -25,9 +25,6 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "audit",
-        fmt::format("Expected audit role, found {}", role.m_roleName));
-
     builder.addNewLine()
         .addCommand("# Install audit packages")
         .addPackage("audit")

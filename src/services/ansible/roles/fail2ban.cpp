@@ -24,8 +24,8 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "fail2ban",
-        fmt::format("Expected fail2ban role, found {}", role.m_roleName));
+    LOG_ASSERT(role.roleName() == "fail2ban",
+        fmt::format("Expected fail2ban role, found {}", role.roleName()));
 
     builder.addNewLine()
         .addCommand("# Install fail2ban package")

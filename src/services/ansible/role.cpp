@@ -2,6 +2,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/string.h>
+#include <cloysterhpc/utils/optional.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -16,49 +17,51 @@ namespace cloyster::services::ansible::roles {
 
 Role parseRoleString(const std::string& input)
 {
-    Role role;
+    Role::Vars vars;
+    Role::Tags tags;
+    Role::When when;
 
-    auto colonPos = input.find(':');
+    const auto colonPos = input.find(':');
+    const bool hasVars = colonPos != std::string::npos;
 
     // If no colon, assume input is only role name with no variables
-    if (colonPos == std::string::npos) {
-        role.m_roleName = input;
-        return role;
-    }
+    std::string_view roleName = std::string_view(input).substr(
+        0, !hasVars ? input.size() : colonPos);
+    auto roleEnum = utils::enums::ofStringExc<Roles>(
+        roleName, utils::enums::Case::Insensitive);
 
-    // Otherwise, parse role name and optional variables
-    role.m_roleName = input.substr(0, colonPos);
-    std::string varsPart = input.substr(colonPos + 1);
+    if (hasVars) {
+        // Otherwise, parse role name and optional variables
+        std::string varsPart = input.substr(colonPos + 1);
 
-    if (varsPart.empty()) {
-        return role; // no variables provided
-    }
+        std::stringstream stream(varsPart);
+        std::string pair;
 
-    std::stringstream ss(varsPart);
-    std::string pair;
+        while (std::getline(stream, pair, ',')) {
+            auto eqPos = pair.find('=');
+            if (eqPos == std::string::npos || eqPos == 0
+                || eqPos == pair.size() - 1) {
+                throw std::invalid_argument(
+                    "Each variable must be in format key=value");
+            }
 
-    while (std::getline(ss, pair, ',')) {
-        auto eqPos = pair.find('=');
-        if (eqPos == std::string::npos || eqPos == 0
-            || eqPos == pair.size() - 1) {
-            throw std::invalid_argument(
-                "Each variable must be in format key=value");
+            std::string key = pair.substr(0, eqPos);
+            std::string value = pair.substr(eqPos + 1);
+
+            vars[key] = value;
         }
-
-        std::string key = pair.substr(0, eqPos);
-        std::string value = pair.substr(eqPos + 1);
-
-        role.m_vars[key] = value;
     }
 
-    return role;
+    return Role{roleEnum, tags, vars, when};
 }
 
 TEST_CASE("ansible::Role formatter produces correct output")
 {
-    ansible::roles::Role role { .m_roleName = "audit",
-        .m_tags = { "security", "compliance" },
-        .m_vars = { { "auditd_enabled", "true" }, { "log_level", "debug" } } };
+    ansible::roles::Role role(Roles::AUDIT,
+        Role::Tags{ "security", "compliance" },
+        Role::Vars{ { "auditd_enabled", "true" }, { "log_level", "debug" } },
+        std::nullopt
+        );
 
     std::string expected = "Role: audit\n"
                            "  When: ansible_os_family == 'RedHat'\n"

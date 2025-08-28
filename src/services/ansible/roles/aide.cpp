@@ -22,8 +22,8 @@ ScriptBuilder installScript(
 
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "aide",
-        fmt::format("Expected aide role, found {}", role.m_roleName));
+    LOG_ASSERT(role.roleName() == "aide",
+        fmt::format("Expected aide role, found {}", role.roleName()));
 
     builder.addNewLine()
         .addCommand("# Install AIDE package")

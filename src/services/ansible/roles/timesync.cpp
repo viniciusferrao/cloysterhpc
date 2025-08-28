@@ -23,8 +23,8 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "timesync",
-        fmt::format("Expected timesync role, found {}", role.m_roleName));
+    LOG_ASSERT(role.roleName() == "timesync",
+        fmt::format("Expected timesync role, found {}", role.roleName()));
 
     builder.addPackage("chrony");
 

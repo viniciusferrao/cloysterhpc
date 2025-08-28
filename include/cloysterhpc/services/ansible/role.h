@@ -15,25 +15,68 @@
 namespace cloyster::services::ansible::roles {
 
 /**
+ * @brief Enumeration of all supported Ansible roles in the system.
+ *
+ * This enum provides identifiers for each available Ansible role that can be executed.
+ * The values correspond to the role names and are used for dispatching to the
+ * appropriate role implementation.
+ */
+enum class Roles : std::uint8_t {
+    CHECK,       ///< Pre install check/validation role
+    REPOS,       ///< Repository configuration role
+    NETWORK,     ///< Network configuration role
+    OFED,        ///< OpenFabrics Enterprise Distribution role
+    DUMP,        ///< System dump/crash role
+    LOCALE,      ///< System locale configuration role
+    FIREWALL,    ///< Firewall configuration role
+    SELINUX,     ///< SELinux configuration role
+    NFS,         ///< NFS server/client role
+    QUEUESYSTEM, ///< Queue system role, SLURM + PBS logic
+    OHPC,        ///< OpenHPC components role
+    PROVISIONER, ///< Dispatches to XCAT or CONFLUENT roles
+    XCAT,        ///< xCAT management role
+    CONFLUENT,   ///< Confluent platform role
+    BASE,        ///< Base system configuration role
+    AUDIT,       ///< Audit system role
+    AIDE,        ///< Advanced Intrusion Detection Environment role
+    FAIL2BAN,    ///< Fail2ban security role
+    TIMESYNC,    ///< Time synchronization role
+    SPACK,       ///< Spack package manager role
+};
+
+
+/**
  * @brief Represents an Ansible role and its associated metadata.
  *
  * This struct models a role defined in an Ansible playbook, including its
  * name, conditional execution, tags, and variables. It is used as input for
  * generating shell-based installation scripts tailored to each role.
- *
- * Members:
- * - `m_roleName`: The name of the role (e.g., "base", "audit").
- * - `m_tags`: A list of tags associated with the role (e.g., ["audit",
- * "security"]).
- * - `m_vars`: A key-value map of variables defined for the role.
  */
-struct Role {
-    using Variables = std::unordered_map<std::string, std::string>;
-
+class Role {
+public:
+    using Vars = std::unordered_map<std::string, std::string>;
+    using When = std::function<bool(const models::OS&)>;
+    using Tags = std::set<std::string>;
+private:
+    Roles m_role;
     std::string m_roleName;
-    std::vector<std::string> m_tags;
-    Variables m_vars;
-    std::optional<std::function<bool(const models::OS&)>> m_when = std::nullopt;
+    Tags m_tags;
+    Vars m_vars;
+    std::optional<When> m_when = std::nullopt;
+public:
+    Role(Roles role, auto&& tags, auto&& vars, auto&& when)
+    : m_role(role)
+    , m_roleName(utils::enums::toStringLower(role))
+    , m_tags(std::forward<decltype(tags)>(tags))
+    , m_vars(std::forward<decltype(vars)>(vars))
+    , m_when(std::forward<decltype(when)>(when))
+    {}
+
+    auto role() const -> const auto& { return m_role; }
+    auto roleName() const -> const auto& { return m_roleName; }
+    auto vars() const -> const auto& { return m_vars; }
+    auto tags() const -> const auto& { return m_tags; }
+    auto when() const -> const auto& { return m_when; }
 };
 
 /**
@@ -72,17 +115,17 @@ template <> struct fmt::formatter<cloyster::services::ansible::roles::Role> {
     auto format(const cloyster::services::ansible::roles::Role& role,
         FormatContext& ctx)
     {
-        std::string result = fmt::format("Role: {}", role.m_roleName);
+        std::string result = fmt::format("Role: {}", role.roleName());
 
-        if (!role.m_tags.empty()) {
+        if (!role.tags().empty()) {
             result += "\n  Tags:";
-            for (const auto& tag : role.m_tags) {
+            for (const auto& tag : role.tags()) {
                 result += fmt::format(" {}", tag);
             }
         }
-        if (!role.m_vars.empty()) {
+        if (!role.vars().empty()) {
             result += "\n  Vars:";
-            for (const auto& [key, val] : role.m_vars) {
+            for (const auto& [key, val] : role.vars()) {
                 result += fmt::format(" {}={}", key, val);
             }
         }

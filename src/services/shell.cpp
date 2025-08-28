@@ -439,28 +439,30 @@ void Shell::pinOSVersion()
  */
 void Shell::install()
 {
+    namespace ansible = ansible::roles;
     const auto osinfo = os();
-    const auto run = [&](std::string_view role) {
-        ansible::roles::run(role, osinfo);
+    const auto run = [&](ansible::Roles role) {
+        ansible::run(role, osinfo);
     };
 
-    run("dump");
-    run("repos");
-    run("base");
-    run("network");
-    run("ofed");
-    run("selinux");
-    run("firewall");
-    run("locale");
-    run("timesync");
-    run("fail2ban");
-    run("audit");
-    run("aide");
-    run("spack");
-    run("nfs");
-    run("queuesystem");
-    run("ohpc");
-    run("provisioner");
+    run(ansible::Roles::DUMP);
+    run(ansible::Roles::CHECK);
+    run(ansible::Roles::REPOS);
+    run(ansible::Roles::BASE);
+    run(ansible::Roles::NETWORK);
+    run(ansible::Roles::OFED);
+    run(ansible::Roles::SELINUX);
+    run(ansible::Roles::FIREWALL);
+    run(ansible::Roles::LOCALE);
+    run(ansible::Roles::TIMESYNC);
+    run(ansible::Roles::FAIL2BAN);
+    run(ansible::Roles::AUDIT);
+    run(ansible::Roles::AIDE);
+    run(ansible::Roles::SPACK);
+    run(ansible::Roles::NFS);
+    run(ansible::Roles::QUEUESYSTEM);
+    run(ansible::Roles::OHPC);
+    run(ansible::Roles::PROVISIONER);
 }
 
 }

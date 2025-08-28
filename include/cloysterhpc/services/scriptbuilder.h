@@ -14,6 +14,9 @@
 
 namespace cloyster::services {
 
+// @TODO: Add a Script immutable class and make ScriptBuilder.build
+//  reutrn it. Update the code to use Script instead of ScriptBuilder
+//  where necessary
 class ScriptBuilder final {
     std::vector<std::string> m_commands;
     cloyster::models::OS m_os;

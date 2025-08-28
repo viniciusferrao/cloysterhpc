@@ -25,8 +25,8 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
-    LOG_ASSERT(role.m_roleName == "base",
-        fmt::format("Expected base role, found {}", role.m_roleName));
+    LOG_ASSERT(role.roleName() == "base",
+        fmt::format("Expected base role, found {}", role.roleName()));
 
     builder.addNewLine().addCommand("# Install EPEL repositories if needed");
 
@@ -71,8 +71,8 @@ ScriptBuilder installScript(
         "jq",
         "tar",
     };
-    if (const auto iter = role.m_vars.find("base_packages");
-        iter != role.m_vars.end()) {
+    if (const auto iter = role.vars().find("base_packages");
+        iter != role.vars().end()) {
         for (const auto& pkg :
             cloyster::utils::string::split(iter->second, " ")) {
             allPackages.emplace(pkg);

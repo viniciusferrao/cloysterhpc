@@ -20,9 +20,9 @@ void run(const Role& role)
     const auto provisioner = utils::singleton::answerfile()->system.provisioner;
     const auto osinfo = utils::singleton::os();
     if (provisioner == "confluent") {
-        roles::run("confluent", osinfo);
+        roles::run(Roles::CONFLUENT, osinfo);
     } else if  (provisioner == "xcat") {
-        roles::run("xcat", osinfo);
+        roles::run(Roles::XCAT, osinfo);
     } else {
         cloyster::functions::abort("Expecing xcat or confluent at system.provisioner, found: {}", provisioner);
     }
