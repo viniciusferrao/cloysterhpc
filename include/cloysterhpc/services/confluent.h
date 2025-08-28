@@ -6,9 +6,9 @@
 
 namespace cloyster::services {
 
-class Confluent final : public Provisioner {
+class Confluent final : public Provisioner<Confluent> {
 public:
-    void install() override;
+    void install();
 };
 
 }

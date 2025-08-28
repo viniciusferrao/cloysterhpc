@@ -6,20 +6,15 @@
 #ifndef CLOYSTERHPC_PROVISIONER_H_
 #define CLOYSTERHPC_PROVISIONER_H_
 
-#include <string>
-
-// TODO: CFL Make this a generic interface between XCAT and Confluent
-// try to use compile time polymorphims instead of runtime polymorphism
+template <typename Derived>
 class Provisioner {
+    constexpr auto derived() -> Derived& {
+        return static_cast<Derived&>(this);
+    }
 public:
-    Provisioner(const Provisioner&) = delete;
-    Provisioner(Provisioner&&) = delete;
-    Provisioner& operator=(const Provisioner&) = delete;
-    Provisioner& operator=(Provisioner&&) = delete;
-    Provisioner() = default;
-    virtual ~Provisioner() = default;
-
-    virtual void install() = 0;
+    void install() {
+        derived().install();
+    }
 };
 
 #endif // CLOYSTERHPC_PROVISIONER_H_

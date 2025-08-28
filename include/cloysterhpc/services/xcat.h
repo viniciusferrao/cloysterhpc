@@ -28,7 +28,7 @@ namespace cloyster::services {
  * This class provides functionalities for setting up and managing the
  * provisioning process of compute and service nodes in a cluster using xCAT.
  */
-class XCAT : public Provisioner {
+class XCAT : public Provisioner<XCAT> {
 public:
     struct Image {
         std::vector<std::string_view> otherpkgs = {};
@@ -301,7 +301,7 @@ public:
      */
     [[nodiscard]] Image getImage() const;
 
-    void install() override;
+    void install();
 };
 
 };
