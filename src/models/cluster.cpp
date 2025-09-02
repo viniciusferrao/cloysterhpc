@@ -19,6 +19,7 @@
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/headnode.h>
@@ -501,7 +502,7 @@ void Cluster::dumpData(const std::filesystem::path& answerfilePath)
 
 void Cluster::fillData(const AnswerFile& answerfil)
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
 
     LOG_TRACE("Configure Management Network")
     // Management Network

@@ -29,6 +29,7 @@
 #include <cloysterhpc/models/pbs.h>
 #include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/slurm.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #include <cloysterhpc/dbus_client.h>
 #include <ranges>
@@ -43,7 +44,7 @@ namespace {
 void dumpPreInstallState()
 {
     using namespace cloyster::services::runner;
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
 
     LOG_INFO("Dumping cluster state before the installation begins")
 
@@ -410,7 +411,7 @@ void Shell::installDevelopmentComponents()
     LOG_INFO("Installing OpenHPC tools, development libraries, compilers and "
              "MPI stacks");
 
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     auto ohpcPackages = opts->ohpcPackages;
     osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
@@ -424,7 +425,7 @@ void Shell::configureRepositories()
 
 void Shell::pinOSVersion()
 {
-    if (cloyster::Singleton<Options>::get()->shouldSkip("pin-os-version")) {
+    if (cloyster::utils::singleton::options()->shouldSkip("pin-os-version")) {
         return;
     }
     LOG_INFO("Pinning OS Version, use `--skip pin-os-version`, to skip");

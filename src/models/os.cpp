@@ -11,6 +11,7 @@
 #include <variant>
 
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #include <fstream>
 #include <memory>
@@ -32,7 +33,7 @@ OS::OS()
     //  in a machine that does not have /etc/os-release file.
     //  The isTest flag below is used to fill up default values during tests
     //  to make it possible to run outside of target machines
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     const bool isTest = !opts->testCommand.empty();
     uname(&system);
 

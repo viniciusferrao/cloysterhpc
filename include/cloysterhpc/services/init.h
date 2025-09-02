@@ -6,12 +6,10 @@ using namespace cloyster;
 
 // Singletons that depends only in the options, the cluster model
 // depends on these
-void initializeSingletonsOptions(std::unique_ptr<Options>&& opts);
+void initializeSingletonsOptions(std::unique_ptr<const Options>&& opts);
 
-// Singletons that depends on the cluster model
 void initializeSingletonsModel(
-    std::unique_ptr<cloyster::models::Cluster>&& cluster,
-    std::unique_ptr<cloyster::models::AnswerFile>&& answerfile
-);
+    std::unique_ptr<const cloyster::models::Cluster>&& cluster,
+    std::unique_ptr<const cloyster::models::AnswerFile>&& answerfile);
 
 }

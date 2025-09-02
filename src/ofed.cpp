@@ -11,6 +11,7 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/repos.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <utility>
 
 using cloyster::functions::IRunner;
@@ -21,7 +22,7 @@ OFED::Kind OFED::getKind() const { return m_kind; }
 
 bool OFED::installed() const
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->shouldForce("infiniband-install")) {
         return false;
     }
@@ -48,7 +49,7 @@ bool OFED::installed() const
 
 void OFED::install() const
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     const auto cluster = cloyster::Singleton<cloyster::models::Cluster>::get();
     const auto osinfo = cluster->getNodes()[0].getOS();
 

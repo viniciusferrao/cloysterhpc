@@ -1,5 +1,6 @@
 #include <cloysterhpc/services/ansible/roles/dump.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -15,7 +16,7 @@ using namespace cloyster::utils::singleton;
 void dumpPreInstallState()
 {
     using namespace cloyster::services::runner;
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
 
     LOG_INFO("Dumping cluster state before the installation begins")
 

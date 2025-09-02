@@ -12,6 +12,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/cache.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <unordered_map>
 
 // @FIXME: This file need some work
@@ -88,7 +89,7 @@ cloyster::models::OS::Distro DiskImage::getDistro() const
 bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
 {
 
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would verify disk image checksum.")
         return true;
@@ -121,7 +122,7 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "e" }
     };
 
-    std::string checksum = cloyster::services::cache::fs::checksum("disk-checksum", path);
+    std::string checksum = cloyster::services::cache::fs::checksum("iso-checksum", path);
     LOG_INFO("SHA256 checksum of file {} is: {}", path.string(), checksum);
 
     if (auto pair = hash_map.find(path.filename().string()); pair != hash_map.end()) {

@@ -95,6 +95,7 @@ void run(Roles role, const models::OS& osinfo,
 }
 
 void Executor::install() {
+    LOG_INFO("Loading roles from the command line ");
     const auto& roles = utils::singleton::options()->roles;
     LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     const auto osinfo = utils::singleton::os();

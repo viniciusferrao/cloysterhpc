@@ -3,7 +3,7 @@
 #include <cloysterhpc/services/IService.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
-#include <stdexcept>
+#include <cloysterhpc/utils/singleton.h>
 
 /* BUG: Refactor:
  * Legacy casting.
@@ -31,7 +31,7 @@ bool IService::handleException(const sdbus::Error& e, const std::string_view fn)
 
 void IService::enable()
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would have enabled the service {}", m_name)
         return;
@@ -54,7 +54,7 @@ void IService::enable()
 
 void IService::disable()
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would have disabled the service {}", m_name)
         return;
@@ -75,7 +75,7 @@ void IService::disable()
 
 void IService::start()
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would have started the service {}", m_name)
         return;
@@ -87,7 +87,7 @@ void IService::start()
 
 void IService::restart()
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would have restarted the service {}", m_name)
         return;
@@ -99,7 +99,7 @@ void IService::restart()
 
 void IService::stop()
 {
-    const auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would have stopped the service {}", m_name)
         return;

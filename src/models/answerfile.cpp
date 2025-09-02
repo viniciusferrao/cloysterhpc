@@ -5,20 +5,23 @@
 
 // TODO: CFL Retrieve the provisioner (xcat | confluent (default: confluent) from the answerfile
 
+#include <cstddef>
+#include <fmt/core.h>
+#include <iterator>
+#include <ranges>
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
-#include <chrono>
+
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
-#include <cstddef>
-#include <fmt/core.h>
-#include <iterator>
-#include <ranges>
+#include <cloysterhpc/utils/singleton.h>
+
 
 using cloyster::services::Postfix;
 

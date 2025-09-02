@@ -94,7 +94,7 @@ void XCAT::patchInstall()
      * Upstream PR: https://github.com/xcat2/xcat-core/pull/7489
      */
 
-    const auto opts = cloyster::Singleton<services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     auto runner = cloyster::Singleton<services::IRunner>::get();
     if (opts->shouldForce("xcat-patch")
         || runner->executeCommand(
@@ -162,7 +162,7 @@ namespace {
         LOG_ASSERT(
             image.size() > 0, "Trying to generate an image with empty name");
 
-        auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+        auto opts = cloyster::utils::singleton::options();
         if (opts->dryRun) {
             LOG_WARN(
                 "Dry-Run: skipping image check, assuming it doesn't exists");
@@ -296,7 +296,7 @@ void XCAT::configureInfiniband()
             case OFED::Kind::Mellanox: {
                 auto repoManager = cloyster::Singleton<RepoManager>::get();
                 auto runner = cloyster::Singleton<IRunner>::get();
-                auto opts = cloyster::Singleton<Options>::get();
+                auto opts = cloyster::utils::singleton::options();
                 auto osservice = cloyster::Singleton<IOSService>::get();
 
                 // Add the rpm to the image
@@ -422,7 +422,7 @@ void XCAT::generatePostinstallFile()
         functions::addStringToFile(filename, entries);
     }
 
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
 
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would change file {} permissions", filename)
@@ -450,7 +450,7 @@ void XCAT::generateSynclistsFile()
 
 void XCAT::configureOSImageDefinition() const
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     auto runner = cloyster::Singleton<IRunner>::get();
     runner->executeCommand(
         fmt::format("chdef -t osimage {} --plus otherpkglist="
@@ -594,7 +594,7 @@ void XCAT::createImage(ImageType imageType, NodeType nodeType,
 
     generateOSImageName(imageType, nodeType);
 
-    const auto opts = cloyster::Singleton<Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     const auto imageExists_ = imageExists(m_stateless.osimage);
     const auto runner = cloyster::Singleton<IRunner>::get();
     if (!imageExists_ || opts->shouldSkip("copycds")) {

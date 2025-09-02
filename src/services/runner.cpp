@@ -4,6 +4,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #include <fmt/format.h>
 #include <ranges>
@@ -27,7 +28,7 @@ std::tuple<bool, std::optional<std::string>> retrieveLine(
 CommandProxy runCommandIter(
     const std::string& command, Stream out, bool overrideDryRun)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (!opts->dryRun || overrideDryRun) {
         LOG_DEBUG("Running interative command: {}", command)
         boost::process::ipstream pipe_stream;
@@ -54,7 +55,7 @@ CommandProxy runCommandIter(
 int runCommand(const std::string& command, std::list<std::string>& output,
     bool overrideDryRun)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (!opts->dryRun || overrideDryRun) {
         LOG_DEBUG("Running command: {}", command)
         boost::process::ipstream pipe_stream;

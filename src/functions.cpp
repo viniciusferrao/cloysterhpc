@@ -7,6 +7,7 @@
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/patterns/wrapper.h>
 #include <cloysterhpc/services/options.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #include <chrono>
 #include <cstdio> /* FILE*, fopen, fclose */
@@ -76,7 +77,7 @@ void writeConfig(const std::string& filename)
 
 void touchFile(const std::filesystem::path& path)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would touch the file {}", path.string())
         return;
@@ -94,7 +95,7 @@ void touchFile(const std::filesystem::path& path)
 
 void createDirectory(const std::filesystem::path& path)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would create directory {}", path.string())
         return;
@@ -136,7 +137,7 @@ TEST_CASE("createDirectory - recursive creation and idempotency")
 /* Remove file */
 void removeFile(std::string_view filename)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would remove file {}, if exists", filename)
         return;
@@ -176,7 +177,7 @@ void backupFile(std::string_view filename)
     const auto& backupFile = fmt::format(
         "{}/backup{}_{}", installPath, filename, getCurrentTimestamp());
 
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_WARN("Dryn Run: Would create a backup copy of {} on {}", filename,
             backupFile);
@@ -205,7 +206,7 @@ void changeValueInConfigurationFile(
 {
     boost::property_tree::ptree tree;
 
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would change the {} on {} in configuration file {}",
             value, key, filename);
@@ -239,7 +240,7 @@ void addStringToFile(std::string_view filename, std::string_view string)
 #else
     std::ofstream file(std::string { filename }, std::ios_base::app);
 #endif
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_WARN(
             "Dry Run: Would add a string in file {}:\n{}", filename, string);
@@ -271,7 +272,7 @@ std::string findAndReplace(const std::string_view& source,
 /// Copy a file, ignore if file exists
 void copyFile(std::filesystem::path source, std::filesystem::path destination)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO(
             "Would copy file {} to {}", source.string(), destination.string())
@@ -298,7 +299,7 @@ bool exists(const std::filesystem::path& path)
 
 void installFile(const std::filesystem::path& path, std::istream& data)
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would install file {}", path.string());
         return;
@@ -357,7 +358,7 @@ void backupFilesByExtension(const wrappers::DestinationPath& backupPath,
     const wrappers::SourcePath& sourcePath,
     const wrappers::Extension& extension)
 {
-    const auto opts = cloyster::Singleton<services::Options>::get();
+    const auto opts = cloyster::utils::singleton::options();
     if (opts->shouldForce("backups")) {
         std::filesystem::remove_all(backupPath);
     }

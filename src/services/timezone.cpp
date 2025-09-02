@@ -7,6 +7,7 @@
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/timezone.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <fmt/format.h>
 #include <map>
 #include <string>

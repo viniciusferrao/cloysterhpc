@@ -1,8 +1,9 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
-#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/osservice.h>
+#include <cloysterhpc/patterns/singleton.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #include <cloysterhpc/dbus_client.h>
 #include <cloysterhpc/messagebus.h>
@@ -14,9 +15,9 @@ using namespace cloyster::services;
 
 // Singletons that depends only in the options, the cluster model
 // depends on these
-void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
+void initializeSingletonsOptions(std::unique_ptr<const Options>&& opts)
 {
-    Singleton<Options>::init(std::move(opts));
+    Singleton<const Options>::init(std::move(opts));
     cloyster::Singleton<MessageBus>::init([]() {
         return cloyster::functions::makeUniqueDerived<MessageBus, DBusClient>(
             "org.freedesktop.systemd1", "/org/freedesktop/systemd1");
@@ -25,7 +26,7 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
         using cloyster::services::IRunner;
         using cloyster::services::DryRunner;
         using cloyster::services::Runner;
-        auto opts = Singleton<Options>::get();
+        auto opts = Singleton<const Options>::get();
 
         if (opts->dryRun) {
             return cloyster::functions::makeUniqueDerived<IRunner, DryRunner>();
@@ -37,13 +38,12 @@ void initializeSingletonsOptions(std::unique_ptr<Options>&& opts)
 
 // Singletons that depends on the cluster model
 void initializeSingletonsModel(
-    std::unique_ptr<cloyster::models::Cluster>&& cluster,
-    std::unique_ptr<cloyster::models::AnswerFile>&& answerfile
-)
+    std::unique_ptr<const cloyster::models::Cluster>&& cluster,
+    std::unique_ptr<const cloyster::models::AnswerFile>&& answerfile)
 {
     using cloyster::models::Cluster;
-    cloyster::Singleton<models::AnswerFile>::init(std::move(answerfile));
-    cloyster::Singleton<Cluster>::init(std::move(cluster));
+    cloyster::Singleton<const models::AnswerFile>::init(std::move(answerfile));
+    cloyster::Singleton<const Cluster>::init(std::move(cluster));
 
     using cloyster::services::repos::RepoManager;
     cloyster::Singleton<RepoManager>::init([]() {
