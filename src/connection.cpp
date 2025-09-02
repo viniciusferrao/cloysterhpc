@@ -204,8 +204,12 @@ void Connection::setInterface(std::string_view interface)
         }
     }
 
+#ifdef NDEBUG
     throw std::runtime_error(
         fmt::format("Cannot find network interface {}", interface));
+#else
+    LOG_ERROR("Interface does not exists: {}, continuing anyway (debug build)");
+#endif
 }
 
 /*

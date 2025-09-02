@@ -1506,10 +1506,10 @@ struct RPMRepositoryGenerator {
         = "/opt/cloysterhpc/backup/etc/yum.repos.d/",
         const std::filesystem::path& sourcePath = "/etc/yum.repos.d")
     {
-        namespace fs = std::filesystem;
         cloyster::functions::backupFilesByExtension(
             wrappers::DestinationPath(backupPath),
-            wrappers::SourcePath(sourcePath), wrappers::Extension(".repo"));
+            wrappers::SourcePath(sourcePath),
+            wrappers::Extension(".repo"));
         LOG_DEBUG("Generating the repository files");
         const auto cluster = cloyster::Singleton<models::Cluster>::get();
         const auto osinfo = cluster->getHeadnode().getOS();

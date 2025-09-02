@@ -722,29 +722,18 @@ void Cluster::fillData(const AnswerFile& answerfil)
         auto applicationNetwork = std::make_unique<Network>(
             Network::Profile::Application, Network::Type::Ethernet);
 
-        auto& subnet_mask = answerfil.application.subnet_mask;
-        auto& gateway = answerfil.application.gateway;
-        auto& domain_name = answerfil.application.domain_name;
-        auto& nameservers = answerfil.application.nameservers;
+        const auto& subnet_mask = answerfil.application.subnet_mask;
+        const auto& gateway = answerfil.application.gateway;
+        const auto& domain_name = answerfil.application.domain_name;
+        const auto& nameservers = answerfil.application.nameservers;
 
-        auto throwIfEmpty = [](bool optional_cast_value,
-                                const char* fieldname) {
-            if (!optional_cast_value) {
-                throw AnswerfileValidationException(fmt::format(
-                    "Field {} of application network is empty", fieldname));
-            }
-        };
-#define THROW_IF_EMPTY(field) throwIfEmpty(field.has_value(), #field)
-        THROW_IF_EMPTY(subnet_mask);
-        THROW_IF_EMPTY(gateway);
-        THROW_IF_EMPTY(domain_name);
-        THROW_IF_EMPTY(nameservers);
-#undef THROW_IF_EMPTY
+        // @FIXME: Are these optional? 
+        LOG_TRACE("Application network configured, callign setters");
 
-        applicationNetwork->setSubnetMask(subnet_mask.value());
-        applicationNetwork->setGateway(gateway.value());
-        applicationNetwork->setDomainName(domain_name.value());
-        applicationNetwork->setNameservers(nameservers.value());
+        if (subnet_mask.has_value()) { applicationNetwork->setSubnetMask(subnet_mask.value()); }
+        if (gateway.has_value()) { applicationNetwork->setGateway(gateway.value()); }
+        if (domain_name.has_value()) { applicationNetwork->setDomainName(domain_name.value()); }
+        if (nameservers.has_value()) { applicationNetwork->setNameservers(nameservers.value()); }
 
         addNetwork(std::move(applicationNetwork));
 

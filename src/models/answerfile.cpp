@@ -348,7 +348,7 @@ void AnswerFile::loadNetwork(
     convertNetworkAddressAndValidate(
         networkSection, "subnet_mask", network.subnet_mask);
     network.domain_name
-        = m_keyfile.getString(networkSection, "domain_name", "");
+        = m_keyfile.getStringOpt(networkSection, "domain_name");
     convertNetworkAddressAndValidate(
         networkSection, "gateway", network.gateway);
 
