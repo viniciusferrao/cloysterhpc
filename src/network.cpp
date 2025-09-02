@@ -7,6 +7,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/utils/enums.h>
+#include <cloysterhpc/utils/formatters.h>
 
 #include <arpa/inet.h> /* inet_*() functions */
 #include <boost/asio.hpp>
@@ -23,17 +25,21 @@
 Network::Network()
     : Network(Profile::External)
 {
+    LOG_INFO("Initializing network (ctr 1), profile=external");
 }
 
 Network::Network(Profile profile)
     : Network(profile, Type::Ethernet)
 {
+    LOG_INFO("Initializing network (ctr 2) profile={}, type=ethernet", cloyster::utils::enums::toString(profile));
 }
 
 Network::Network(Profile profile, Type type)
     : m_profile(profile)
     , m_type(type)
 {
+    LOG_INFO("Initializing network (ctr 3), profile={}, type={}", cloyster::utils::enums::toString(profile),
+             cloyster::utils::enums::toString(type));
 }
 
 Network::Network(Profile profile, Type type, const std::string& ip,
@@ -42,6 +48,17 @@ Network::Network(Profile profile, Type type, const std::string& ip,
     const std::vector<address>& nameserver)
     : Network(profile, type)
 {
+    LOG_INFO(
+        "Initializing network (ctr 4), profile={}, type={}, ip={}, subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}", 
+        cloyster::utils::enums::toString(profile),
+        cloyster::utils::enums::toString(type),
+        ip,
+        subnetMask,
+        gateway,
+        vlan,
+        domainName,
+        fmt::join(nameserver, ",")
+    );
     setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);
@@ -56,6 +73,17 @@ Network::Network(Profile profile, Type type, const std::string& ip,
     const std::vector<std::string>& nameserver)
     : Network(profile, type)
 {
+    LOG_INFO(
+        "Initializing network (ctr 5), profile={}, type={}, ip={}, subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}", 
+        cloyster::utils::enums::toString(profile),
+        cloyster::utils::enums::toString(type),
+        ip,
+        subnetMask,
+        gateway,
+        vlan,
+        domainName,
+        fmt::join(nameserver, ",")
+    );
     setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);

@@ -43,7 +43,7 @@ std::multimap<std::string, std::string> Timezone::getAvailableTimezones() const
 
 std::multimap<std::string, std::string> Timezone::fetchAvailableTimezones()
 {
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
     std::multimap<std::string, std::string> timezones {};
     if (opts->dryRun) {
         LOG_DEBUG("Dry-Run skipping fetching available system timezones")

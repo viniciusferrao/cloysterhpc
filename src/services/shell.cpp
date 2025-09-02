@@ -451,6 +451,7 @@ void Shell::install()
     run(ansible::Roles::REPOS);
     run(ansible::Roles::BASE);
     run(ansible::Roles::NETWORK);
+    run(ansible::Roles::SSHD);
     run(ansible::Roles::OFED);
     run(ansible::Roles::SELINUX);
     run(ansible::Roles::FIREWALL);

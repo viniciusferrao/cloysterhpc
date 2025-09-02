@@ -416,7 +416,7 @@ void AnswerFile::loadHostnameSettings()
 void AnswerFile::loadSystemSettings()
 {
     system.disk_image = m_keyfile.getString("system", "disk_image");
-    auto opts = cloyster::Singleton<cloyster::services::Options>::get();
+    auto opts = cloyster::utils::singleton::options();
 
     // Verify supported distros
     auto afDistro = m_keyfile.getString("system", "distro");

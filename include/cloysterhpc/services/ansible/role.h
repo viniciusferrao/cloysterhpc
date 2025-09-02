@@ -25,6 +25,7 @@ enum class Roles : std::uint8_t {
     CHECK,       ///< Pre install check/validation role
     REPOS,       ///< Repository configuration role
     NETWORK,     ///< Network configuration role
+    SSHD,        ///< SSH daemon configuration role
     OFED,        ///< OpenFabrics Enterprise Distribution role
     DUMP,        ///< System dump/crash role
     LOCALE,      ///< System locale configuration role

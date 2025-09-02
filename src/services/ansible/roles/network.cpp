@@ -121,15 +121,6 @@ void configureFQDN()
         "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
 }
 
-void disallowSSHRootPasswordLogin()
-{
-    LOG_INFO("Allowing root login only through public key authentication (SSH)")
-
-    ::runner()->executeCommand(
-        "sed -i \"/^#\\?PermitRootLogin/c\\PermitRootLogin without-password\""
-        " /etc/ssh/sshd_config");
-}
-
 void configureHostsFile()
 {
     LOG_INFO("Setting up additional entries on hosts file")
@@ -160,7 +151,6 @@ void run(const Role& role)
 
     configureNetworks(connections);
     configureFQDN();
-    disallowSSHRootPasswordLogin();
     configureHostsFile();
 
 }

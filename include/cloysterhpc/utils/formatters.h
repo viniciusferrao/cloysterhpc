@@ -4,8 +4,11 @@
 #include <filesystem>
 #include <fmt/format.h>
 
+#include <boost/asio.hpp>
+
 #include <cloysterhpc/models/os.h>
 #include <cloysterhpc/patterns/wrapper.h>
+#include <cloysterhpc/utils/enums.h>
 
 // Custom formatters for 3rd party types
 template <>
@@ -15,6 +18,16 @@ struct fmt::formatter<std::filesystem::path> : formatter<string_view> {
         -> decltype(ctx.out())
     {
         return fmt::format_to(ctx.out(), "{}", path.string());
+    }
+};
+
+template <>
+struct fmt::formatter<boost::asio::ip::address> : formatter<string_view> {
+    template <typename FormatContext>
+    auto format(const boost::asio::ip::address& address, FormatContext& ctx) const
+        -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "{}", address.to_string());
     }
 };
 
@@ -30,6 +43,8 @@ struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
     }
 };
 
+
+// Wrapper<T, Tag> formatter (delegates to T formatter)
 template <typename T, typename Tag>
 struct fmt::formatter<cloyster::Wrapper<T, Tag>> : formatter<string_view> {
     template <typename FormatContext>
@@ -39,4 +54,17 @@ struct fmt::formatter<cloyster::Wrapper<T, Tag>> : formatter<string_view> {
         return fmt::format_to(ctx.out(), "{}", wrapper.get());
     }
 };
+
+// Enum types formatter
+template <typename E>
+    requires std::is_enum_v<E>
+struct fmt::formatter<E> : formatter<string_view> {
+    template <typename FormatContext>
+    auto format(const E& enumVal, FormatContext& ctx) const
+        -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "", cloyster::utils::enums::toString<E>(enumVal));
+    }
+};
+
 #endif

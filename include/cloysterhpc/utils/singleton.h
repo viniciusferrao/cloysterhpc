@@ -11,7 +11,7 @@ namespace cloyster::utils::singleton
 
 // Simpler singleton getters to keep code clean
 
-// Const singltons
+// Const singletons
 constexpr auto cluster() { return cloyster::Singleton<const models::Cluster>::get(); }
 constexpr auto os() { return cloyster::Singleton<const models::Cluster>::get()->getHeadnode().getOS(); }
 constexpr auto osservice() { return cloyster::Singleton<const services::IOSService>::get(); }
