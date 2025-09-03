@@ -51,7 +51,7 @@ void initializeSingletonsModel(
         return repoManager;
     });
 
-    cloyster::Singleton<cloyster::services::IOSService>::init([]() {
+    cloyster::Singleton<const cloyster::services::IOSService>::init([]() {
         const auto& osinfo
             = cloyster::Singleton<Cluster>::get()->getHeadnode().getOS();
         return cloyster::services::IOSService::factory(osinfo);

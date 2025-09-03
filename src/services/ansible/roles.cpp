@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/log.h>
@@ -11,13 +13,21 @@
 
 namespace cloyster::services::ansible::roles {
 
+class ScriptBuilderRunner {
+    ScriptBuilder m_scriptbuilder;
+public:
+    explicit ScriptBuilderRunner(ScriptBuilder&& builder) : m_scriptbuilder(std::move(builder)) {}
+
+    void operator()(const Role& /* role */) {
+        utils::singleton::runner()->run(m_scriptbuilder);
+    }
+};
+
 RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
 {
     // wraps ScriptBuilder in a functor
-    constexpr auto wrap = [](const ScriptBuilder& scriptbuilder) -> RoleRunnable {
-        return [&](const Role& /* role */) {
-            utils::singleton::runner()->run(scriptbuilder);
-        };
+    constexpr auto wrap = [](ScriptBuilder&& scriptbuilder) -> RoleRunnable {
+        return ScriptBuilderRunner(std::move(scriptbuilder));
     };
 
     switch (role.role()) {
@@ -27,6 +37,8 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
             return repos::run;
         case Roles::NETWORK:
             return network::run;
+        case Roles::SSHD:
+            return sshd::run;
         case Roles::OFED:
             return ofed::run;
         case Roles::DUMP:
@@ -62,7 +74,7 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
         case Roles::SPACK:
             return wrap(spack::installScript(role, osinfo));
         default:
-            std::unreachable();
+            cloyster::functions::abort("Unknown role {}", role.role());
     };
 
     std::unreachable();
@@ -73,7 +85,7 @@ void run(const Role& role, const models::OS& osinfo)
     LOG_INFO("Executing role {}", role.roleName());
     if (!role.when() || role.when().value()(osinfo)) {
         const auto runnable = getRunnable(role, osinfo);
-        LOG_INFO("Executing role {}", role.roleName());
+        LOG_INFO("Executing role {} runnable", role.roleName());
         runnable(role);
     } else {
         LOG_INFO("Skippig role {}, when condition is false", role.roleName());
@@ -99,12 +111,10 @@ void run(Roles role, const models::OS& osinfo,
 void Executor::install() {
     LOG_INFO("Loading roles from the command line ");
     const auto& roles = utils::singleton::options()->roles;
-    LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     const auto osinfo = utils::singleton::os();
-    LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     for (const auto& role : roles) {
-        LOG_INFO("Running role -> : {}", role);
-         auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
+        LOG_INFO("Loading role: {}", role);
+        auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
         run(roleEnum, osinfo);
     }
 };

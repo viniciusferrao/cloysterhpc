@@ -22,6 +22,7 @@ namespace cloyster::services::ansible::roles::base {
 ScriptBuilder installScript(
     const Role& role, const cloyster::models::OS& osinfo)
 {
+    LOG_DEBUG("Running base role");
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
@@ -34,6 +35,7 @@ ScriptBuilder installScript(
         case models::OS::Distro::RHEL:
         case models::OS::Distro::Rocky:
         case models::OS::Distro::AlmaLinux:
+            LOG_DEBUG("Running base role");
             builder.addPackage("epel-release");
             break;
 
@@ -84,6 +86,7 @@ ScriptBuilder installScript(
     const auto& cluster = cloyster::Singleton<models::Cluster>::get();
     builder.addCommand(
         "timedatectl set-timezone {}", cluster->getTimezone().getTimezone());
+
 
     return builder;
 }

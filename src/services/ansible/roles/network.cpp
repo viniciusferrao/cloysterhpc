@@ -42,25 +42,38 @@ void disableNetworkManagerDNSOverride()
 
 void configureNetworks(const std::list<Connection>& connections)
 {
-    LOG_INFO("Setting up networks")
+    LOG_INFO("Setting up networks 2")
 
     osservice()->enableService("NetworkManager");
 
     for (const auto& connection : std::as_const(connections)) {
+        LOG_INFO("Setting up networks ->> {}", connection.getNetwork()->getProfile())
         /* For now, we just skip the external network to avoid disconnects */
         if (connection.getNetwork()->getProfile() == Network::Profile::External) {
             continue;
         }
 
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
+
+#ifndef NDEBUG
+        if (!connection.getInterface().has_value()) {
+            LOG_WARN("Interface not found for connection {}, skipping (debug build)", connection.getNetwork()->getProfile());
+            continue;
+        }
+#endif
         auto interface = connection.getInterface().value();
 
         std::vector<address> nameservers
             = connection.getNetwork()->getNameservers();
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
         std::vector<std::string> formattedNameservers;
-        for (std::size_t i = 0; i < nameservers.size(); i++) {
-            formattedNameservers.emplace_back(nameservers[i].to_string());
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
+        formattedNameservers.reserve(nameservers.size());
+        for (const auto & nameserver : nameservers) {
+            formattedNameservers.emplace_back(nameserver.to_string());
         }
 
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
         auto opts = options();
         auto connectionName
             = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
@@ -72,6 +85,8 @@ void configureNetworks(const std::list<Connection>& connections)
             LOG_WARN("Connection exists {}, skipping", connectionName);
             continue;
         }
+
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
 
         deleteConnectionIfExists(connectionName);
         ::runner()->executeCommand(
@@ -98,15 +113,21 @@ void configureNetworks(const std::list<Connection>& connections)
             fmt::join(formattedNameservers, " "),
             connection.getNetwork()->getDomainName()));
 
+
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
         /* Give network manage some time to settle thing up
          * Avoids: Error: Connection activation failed: IP configuration could
          * not be reserved (no available address, timeout, etc.).
          */
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
+        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
+
         // Breaking my ssh connection during development
         runner()->executeCommand(
             fmt::format("nmcli device connect {}", interface));
+
+        LOG_INFO("Setting up networks {} returning", connection.getNetwork()->getProfile())
     }
 
     disableNetworkManagerDNSOverride();

@@ -63,7 +63,7 @@ struct fmt::formatter<E> : formatter<string_view> {
     auto format(const E& enumVal, FormatContext& ctx) const
         -> decltype(ctx.out())
     {
-        return fmt::format_to(ctx.out(), "", cloyster::utils::enums::toString<E>(enumVal));
+        return fmt::format_to(ctx.out(), "{}", cloyster::utils::enums::toString<E>(enumVal));
     }
 };
 

@@ -19,8 +19,8 @@
 #include <cloysterhpc/services/ansible/roles/locale.h>
 #include <cloysterhpc/services/ansible/roles/network.h>
 #include <cloysterhpc/services/ansible/roles/nfs.h>
-#include <cloysterhpc/services/ansible/roles/ohpc.h>
 #include <cloysterhpc/services/ansible/roles/ofed.h>
+#include <cloysterhpc/services/ansible/roles/ohpc.h>
 #include <cloysterhpc/services/ansible/roles/ood.h>
 #include <cloysterhpc/services/ansible/roles/provisioner.h>
 #include <cloysterhpc/services/ansible/roles/queuesystem.h>
@@ -28,6 +28,7 @@
 #include <cloysterhpc/services/ansible/roles/selinux.h>
 #include <cloysterhpc/services/ansible/roles/slurm.h>
 #include <cloysterhpc/services/ansible/roles/spack.h>
+#include <cloysterhpc/services/ansible/roles/sshd.h>
 #include <cloysterhpc/services/ansible/roles/timesync.h>
 #include <cloysterhpc/services/ansible/roles/xcat.h>
 
