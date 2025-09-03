@@ -3,6 +3,7 @@
 #include <cloysterhpc/services/confluent.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/utils/singleton.h>
+#include <cloysterhpc/utils/optional.h>
 #include <cloysterhpc/functions.h>
 
 
@@ -10,12 +11,6 @@ namespace cloyster::services {
 
 void Confluent::install() {
     using namespace utils::singleton;
-    cloyster::functions::abortif(
-        !answerfile()->management.con_interface.has_value(),
-        "Interaface not present in network_management.interaface in the answerfile: {}",
-        answerfile()->path().string()
-    );
-
     // NOTE: WIP - GENERALIZE THIS 
     runner::shell::fmt(R"d(
 # Add the Confluent repository
@@ -47,11 +42,11 @@ fi
 nodegroupattrib everything dns.servers={hnIp} dns.domain={domain} net.ipv4_gateway={gateway}
 
 # Fill required passwords
-FIXME: Those strings are get from `stdin` we need to automate also
+# FIXME: Those strings are get from `stdin` we need to automate also
 # nodegroupattrib everything -p bmcuser bmcpass crypted.rootpassword crypted.grubpassword
 
 # Generate a keypair for internal cluster usage
-ssh-keygen -t ed25519
+test -f ~/.ssh/id_ed25519 || ssh-keygen -t ed25519 -N ""
 
 # Define a given node
 # nodedefine n01
@@ -63,26 +58,18 @@ ssh-keygen -t ed25519
 confluent2hosts -a everything
 
 # Configure the osdeploy parameters; it's an interactive interface, so we must find a way to automate this step
-# osdeploy initialize -i
-osdeploy initialize -u -s -k -l -p -a -t
-# Add root user key to be authorized to log into nodes (-u)? (y/N): y
-
-FIXME WHAT IS THE ARGUMENT FOR ????  Initialize a profile to boot Genesis on target systems (a small Linux environment for rescue and staging use)? (y/N): 
-
-# Set up an SSH authority to help manage known_hosts and node to node ssh for all users (-s)? (y/N): y
-# Update global known hosts on this server to trust local CA certificates (-k)? (y/N): y
-# Allow managed nodes to ssh to this management node without a password (-l)? (y/N): n
-# Update tftp directory with binaries to support PXE (-p) (y/N): y
-# Initialize confluent ssh user key so confluent can execute remote automation (e.g. Ansible plays) (-a) (y/N): y
-# Generate new TLS certificates for HTTP, replacing any existing certificate (-t)? (y/N): y
+osdeploy initialize -u -s -k -l -p -a -t -g
 
 # Import the OS ISO file.
 osdeploy import {isoPath}
 
-image={distro}-{osversion}-{arch}
+# distro contains the osversion
+image={distro}-{arch}
+
+rm -rf /tmp/scratchdir || :
 
 # Create a temporary chroot to work as basis for the boot image
-imgutil build -s ${{image}} /tmp/scratchdir
+imgutil build -y -s ${{image}} /tmp/scratchdir
 
 # Pack the image from the temporary chroot and give a name
 imgutil pack /tmp/scratchdir/ ${{image}}-diskless
@@ -96,13 +83,23 @@ rm -rf /tmp/scratchdir
 
 )d",
 
+                       fmt::arg("domain", cluster()->getHeadnode().getConnection(Network::Profile::Management).getFQDN()),
                        fmt::arg("releasever", os().getMajorVersion()),
                        fmt::arg("hnIp", cluster()->getHeadnode().getConnection(Network::Profile::Management).getAddress().to_string()),
                        fmt::arg("arch", cloyster::utils::enums::toString(os().getArch())),
                        fmt::arg("distro", os().getDistroString()),
                        fmt::arg("osversion", os().getVersion()),
                        fmt::arg("isoPath", answerfile()->system.disk_image.string()),
-                       fmt::arg("internalNic", answerfile()->management.con_interface.value())
+                       fmt::arg("internalNic",
+                                utils::optional::unwrap(
+                                    answerfile()->management.con_interface,
+                                    "Internal interface not found in [network_management]"
+                                )),
+                       fmt::arg("gateway",
+                                utils::optional::unwrap(
+                                    answerfile()->management.gateway,
+                                    "Internal gateway not found in [network_management]"
+                               ))
                        );
 }
 

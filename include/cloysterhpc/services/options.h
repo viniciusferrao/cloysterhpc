@@ -22,6 +22,7 @@ struct Options final {
     bool airGap;
     bool unattended;
     bool enableMirrors;
+    bool listRoles;
     std::size_t logLevelInput;
     std::string error;
     std::string config;

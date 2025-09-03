@@ -61,7 +61,7 @@ cloyster::services::ScriptBuilder NFS::installScript(const OS& osinfo)
             "/install *(rw,no_root_squash,sync,no_subtree_check)")
         .addNewLine()
         .enableService("rpcbind nfs-server")
-        .addCommand("exportfs -a")
+        .addCommand("exportfs -a > /dev/null 2>&1 || :")
         .addNewLine()
         .addCommand(R"(# Update firewall rules
 if systemctl is-enabled --quiet firewalld.service; then

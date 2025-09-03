@@ -120,6 +120,16 @@ int main(int argc, const char** argv)
         fmt::print("Help:\n{}", optsMut->helpText);
         return EXIT_SUCCESS;
     }
+
+    if (optsMut->listRoles) {
+        const auto roles = utils::string::lower(fmt::format("{}", fmt::join(
+            utils::enums::toStrings<services::ansible::roles::Roles>(), 
+            ","
+        )));
+
+        fmt::print("Roles: {}", roles);
+        return EXIT_SUCCESS;
+    }
     Log::init(optsMut->logLevelInput);
 
 #ifndef NDEBUG

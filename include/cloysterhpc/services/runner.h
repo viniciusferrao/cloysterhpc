@@ -32,7 +32,7 @@ namespace unsafe {
         if (!opts->dryRun) {
             LOG_DEBUG("Running shell command: {}", command);
             boost::process::ipstream pipe_stream;
-            boost::process::child child("/bin/bash", "-c", command,
+            boost::process::child child("/bin/bash", "-xc", command,
                 boost::process::std_out > pipe_stream);
 
             std::string line;
@@ -60,7 +60,7 @@ namespace unsafe {
         if (!opts->dryRun) {
             LOG_DEBUG("Running shell command: {}", command);
             boost::process::ipstream pipe_stream;
-            boost::process::child child("/bin/bash", "-c", command,
+            boost::process::child child("/bin/bash", "-xc", command,
                 boost::process::std_out > pipe_stream);
 
             std::string line;

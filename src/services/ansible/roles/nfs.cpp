@@ -17,7 +17,7 @@ using namespace cloyster::utils::singleton;
 
 namespace cloyster::services::ansible::roles::nfs {
 
-void run(const Role& role)
+ScriptBuilder installScript(const Role& role, const OS& osinfo)
 {
     NFS networkFileSystem = NFS("pub", "/opt/ohpc",
         cluster()
@@ -25,8 +25,8 @@ void run(const Role& role)
             .getConnection(Network::Profile::Management)
             .getAddress(),
         "ro,no_subtree_check");
-    // TODO: CFL NFS script is coupled to XCAT, generalize it
-    ::options()->maybeStopAfterStep("nfs-setup");
+
+    return networkFileSystem.installScript(osinfo);
 }
 
 }

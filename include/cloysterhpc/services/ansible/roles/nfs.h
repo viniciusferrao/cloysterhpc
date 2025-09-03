@@ -6,7 +6,7 @@
 
 namespace cloyster::services::ansible::roles::nfs {
 
-void run(const Role& role);
+ScriptBuilder installScript(const Role& role, const OS& osinfo);
 
 }
 

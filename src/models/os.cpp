@@ -196,7 +196,7 @@ std::string OS::getDistroString() const
             distro = "almalinux";
             break;
         case OS::Distro::Rocky:
-            distro = "rockylinux";
+            distro = "rocky";
             break;
         case OS::Distro::OL:
             distro = "ol";
@@ -205,7 +205,7 @@ std::string OS::getDistroString() const
             std::unreachable();
     }
 
-    return fmt::format("{}{}.{}", distro, m_minorVersion, m_majorVersion);
+    return fmt::format("{}-{}.{}", distro, m_majorVersion, m_minorVersion);
 }
 
 OS::PackageType OS::getPackageType() const

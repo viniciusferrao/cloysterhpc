@@ -76,6 +76,7 @@ std::unique_ptr<Options> options::factory(int argc, const char** argv)
         ->multi_option_policy(CLI::MultiOptionPolicy::TakeAll);
     app.add_option("--roles", opt.roles, "Run only the provided roles")
         ->delimiter(',');
+    app.add_option("--list-roles", opt.listRoles, "Show the supported roles");
     app.add_flag("-u,--unattended", opt.unattended,
         "Perform an unattended installation");
     app.add_option("--dump-answerfile", opt.dumpAnswerfile,

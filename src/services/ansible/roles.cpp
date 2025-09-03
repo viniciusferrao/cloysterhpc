@@ -50,7 +50,7 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
         case Roles::SELINUX:
             return selinux::run;
         case Roles::NFS:
-            return nfs::run;
+            return wrap(nfs::installScript(role, osinfo));
         case Roles::QUEUESYSTEM:
             return queuesystem::run;
         case Roles::OHPC:
@@ -82,7 +82,7 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
 
 void run(const Role& role, const models::OS& osinfo)
 {
-    LOG_INFO("Executing role {}", role.roleName());
+    LOG_INFO("Loading role {}", role.roleName());
     if (!role.when() || role.when().value()(osinfo)) {
         const auto runnable = getRunnable(role, osinfo);
         LOG_INFO("Executing role {} runnable", role.roleName());
@@ -97,7 +97,6 @@ void run(Roles role, const models::OS& osinfo,
     Role::Tags&& tags,
     std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
 {
-    LOG_INFO("Executing role");
     run(
         Role {
             role,
@@ -109,11 +108,9 @@ void run(Roles role, const models::OS& osinfo,
 }
 
 void Executor::install() {
-    LOG_INFO("Loading roles from the command line ");
     const auto& roles = utils::singleton::options()->roles;
     const auto osinfo = utils::singleton::os();
     for (const auto& role : roles) {
-        LOG_INFO("Loading role: {}", role);
         auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
         run(roleEnum, osinfo);
     }
