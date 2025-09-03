@@ -285,7 +285,7 @@ void moveFilesWithExtension(
 std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
 {
     auto runner = cloyster::Singleton<IRunner>::get();
-    auto opts = cloyster::Singleton<services::Options>::get();
+    auto opts = cloyster::Singleton<const services::Options>::get();
     if (opts->shouldSkip("http-status")) {
         LOG_WARN("Skipping HTTP status check for {}, assuming 200 (reason: "
                  "--skip=http-status in the command line)",

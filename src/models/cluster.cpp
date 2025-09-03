@@ -307,7 +307,7 @@ void Cluster::printConnections()
 
 void Cluster::printData()
 {
-    LOG_DEBUG("Dump cluster data:");
+    LOG_DEBUG("--- Dump cluster data ---");
     LOG_DEBUG("Cluster attributes defined:");
     LOG_DEBUG("OS Data:");
     m_headnode.getOS().printData();
@@ -336,6 +336,7 @@ void Cluster::printData()
 
     LOG_DEBUG("Firewall: {}", (isFirewall() ? "true" : "false"))
     LOG_DEBUG("SELinux: {}", static_cast<int>(getSELinux()))
+    LOG_DEBUG("--- Dump cluster data ---");
 }
 
 void Cluster::fillTestData()

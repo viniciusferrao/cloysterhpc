@@ -5,6 +5,8 @@
 #include <memory>
 #include <mutex>
 
+#include <cloysterhpc/services/log.h>
+
 namespace cloyster {
 
 /**

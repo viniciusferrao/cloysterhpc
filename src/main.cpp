@@ -181,6 +181,7 @@ int main(int argc, const char** argv)
         answerfile = std::make_unique<models::AnswerFile>(opts->answerfile);
         model->fillData(*answerfile);
     }
+    LOG_INFO("Answerfile loaded: {}", opts->answerfile)
 
 
 #ifndef NDEBUG
@@ -188,7 +189,7 @@ int main(int argc, const char** argv)
     model->printData();
 #endif
 
-    if (optsMut->enableTUI) {
+    if (opts->enableTUI) {
         // Entrypoint; if the view is constructed it will start the TUI.
         auto view = std::make_unique<Newt>();
         auto presenter
@@ -196,20 +197,20 @@ int main(int argc, const char** argv)
                 model, view);
     }
 
-    if (!optsMut->dumpAnswerfile.empty()) {
-        model->dumpData(optsMut->dumpAnswerfile);
+    if (!opts->dumpAnswerfile.empty()) {
+        model->dumpData(opts->dumpAnswerfile);
     }
 
     initializeSingletonsModel(std::move(model), std::move(answerfile));
 
 #ifndef NDEBUG
-    if (!optsMut->testCommand.empty()) {
-        return runTestCommand(optsMut->testCommand, optsMut->testCommandArgs);
+    if (!opts->testCommand.empty()) {
+        return runTestCommand(opts->testCommand, opts->testCommandArgs);
     }
 #endif
     LOG_TRACE("Starting execution engine");
     auto executionEngine = [&]() -> std::unique_ptr<Execution>{ 
-        if (optsMut->roles.empty()) {
+        if (opts->roles.empty()) {
             return std::make_unique<cloyster::services::Shell>();
         } else {
             return std::make_unique<cloyster::services::ansible::roles::Executor>();

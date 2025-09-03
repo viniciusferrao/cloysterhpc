@@ -70,6 +70,7 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
 
 void run(const Role& role, const models::OS& osinfo)
 {
+    LOG_INFO("Executing role {}", role.roleName());
     if (!role.when() || role.when().value()(osinfo)) {
         const auto runnable = getRunnable(role, osinfo);
         LOG_INFO("Executing role {}", role.roleName());
@@ -84,6 +85,7 @@ void run(Roles role, const models::OS& osinfo,
     Role::Tags&& tags,
     std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
 {
+    LOG_INFO("Executing role");
     run(
         Role {
             role,
@@ -99,7 +101,9 @@ void Executor::install() {
     const auto& roles = utils::singleton::options()->roles;
     LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     const auto osinfo = utils::singleton::os();
+    LOG_INFO("Running roles: {}", fmt::join(roles, ","));
     for (const auto& role : roles) {
+        LOG_INFO("Running role -> : {}", role);
          auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
         run(roleEnum, osinfo);
     }

@@ -9,7 +9,7 @@ using namespace cloyster;
 void initializeSingletonsOptions(std::unique_ptr<const Options>&& opts);
 
 void initializeSingletonsModel(
-    std::unique_ptr<const cloyster::models::Cluster>&& cluster,
+    std::unique_ptr<cloyster::models::Cluster>&& cluster,
     std::unique_ptr<const cloyster::models::AnswerFile>&& answerfile);
 
 }

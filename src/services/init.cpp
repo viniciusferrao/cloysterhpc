@@ -38,17 +38,15 @@ void initializeSingletonsOptions(std::unique_ptr<const Options>&& opts)
 
 // Singletons that depends on the cluster model
 void initializeSingletonsModel(
-    std::unique_ptr<const cloyster::models::Cluster>&& cluster,
+    std::unique_ptr<cloyster::models::Cluster>&& cluster,
     std::unique_ptr<const cloyster::models::AnswerFile>&& answerfile)
 {
     using cloyster::models::Cluster;
     cloyster::Singleton<const models::AnswerFile>::init(std::move(answerfile));
-    cloyster::Singleton<const Cluster>::init(std::move(cluster));
+    cloyster::Singleton<Cluster>::init(std::move(cluster));
 
     using cloyster::services::repos::RepoManager;
     cloyster::Singleton<RepoManager>::init([]() {
-        auto clusterPtr = cloyster::Singleton<Cluster>::get();
-        const auto& osinfo = clusterPtr->getHeadnode().getOS();
         auto repoManager = std::make_unique<RepoManager>();
         return repoManager;
     });
