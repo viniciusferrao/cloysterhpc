@@ -4,8 +4,47 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/utils/singleton.h>
 #include <cloysterhpc/utils/optional.h>
+#include <cloysterhpc/utils/network.h>
 #include <cloysterhpc/functions.h>
 
+namespace {
+using namespace cloyster;
+using namespace cloyster::utils;
+
+void addNode(const models::Node& node)
+{
+    services::runner::shell::fmt(
+        R"(
+nodedefine {nodeName}
+nodeattrib {nodeName} net.ipv4_address={nodeIp}/{nodeCIDR}
+    )",
+        fmt::arg("nodeName", node.getHostname()),
+        fmt::arg("nodeIp",
+                 node.getConnection(Network::Profile::Management)
+                 .getAddress()
+                 .to_string()),
+        fmt::arg("nodeCIDR",
+                 network::subnetMaskToCIDR(
+                     node.getConnection(Network::Profile::Management)
+                         .getNetwork()->getSubnetMask()))
+    );
+
+    if (const auto& macOpt = node.getConnection(Network::Profile::Management).getMAC(); macOpt) {
+        services::runner::shell::fmt(
+            "nodeattrib {nodeName} net.hwaddr={nodeMac}",
+            fmt::arg("nodeName", node.getHostname()),
+            fmt::arg("nodeMac", macOpt.value())
+        );
+    }
+}
+
+void addNodes()
+{
+    for (const auto& node : singleton::cluster()->getNodes()) {
+        addNode(node);
+    }
+}
+}
 
 namespace cloyster::services {
 
@@ -101,6 +140,7 @@ rm -rf /tmp/scratchdir
                                     "Internal gateway not found in [network_management]"
                                ))
                        );
+    addNodes();
 }
 
 }
