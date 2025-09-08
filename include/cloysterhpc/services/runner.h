@@ -55,7 +55,6 @@ namespace unsafe {
     int fmt(fmt::format_string<Args...> format, Args&&... args)
     {
         auto command = fmt::format(format, std::forward<Args>(args)...);
-        LOG_DEBUG("Running shell command: {}", command);
         auto opts = cloyster::Singleton<const cloyster::services::Options>::get();
         if (!opts->dryRun) {
             LOG_DEBUG("Running shell command: {}", command);

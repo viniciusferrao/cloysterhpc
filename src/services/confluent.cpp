@@ -11,7 +11,7 @@ namespace {
 using namespace cloyster;
 using namespace cloyster::utils;
 
-void addNode(const models::Node& node)
+void addNode(const models::Node& node, std::string_view image)
 {
     services::runner::shell::fmt(
         R"(
@@ -36,12 +36,18 @@ nodeattrib {nodeName} net.ipv4_address={nodeIp}/{nodeCIDR}
             fmt::arg("nodeMac", macOpt.value())
         );
     }
+
+    services::runner::shell::fmt("nodedeploy -p {nodeName} -n {image}-diskless",
+                                 fmt::arg("nodeName", node.getHostname()),
+                                 fmt::arg("image", image));
+
+    services::runner::shell::cmd("confluent2hosts -a everything");
 }
 
-void addNodes()
+void addNodes(std::string_view image)
 {
     for (const auto& node : singleton::cluster()->getNodes()) {
-        addNode(node);
+        addNode(node, image);
     }
 }
 }
@@ -50,6 +56,11 @@ namespace cloyster::services {
 
 void Confluent::install() {
     using namespace utils::singleton;
+
+    const auto image = fmt::format("{distro}-{arch}", 
+                           fmt::arg("arch", cloyster::utils::enums::toString(os().getArch())),
+                           fmt::arg("distro", os().getDistroString()));
+    //
     // NOTE: WIP - GENERALIZE THIS 
     runner::shell::fmt(R"d(
 # Add the Confluent repository
@@ -78,7 +89,11 @@ if systemctl is-enabled -q firewalld; then
 fi
 
 # Add basic settings to allow a minimalist boot environment for testing
-nodegroupattrib everything dns.servers={hnIp} dns.domain={domain} net.ipv4_gateway={gateway}
+nodegroupattrib everything \
+    dns.servers={hnIp} \
+    dns.domain={domain} \
+    net.ipv4_gateway={hnIp} \
+    deployment.useinsecureprotocols=always
 
 # Fill required passwords
 # FIXME: Those strings are get from `stdin` we need to automate also
@@ -87,15 +102,6 @@ nodegroupattrib everything dns.servers={hnIp} dns.domain={domain} net.ipv4_gatew
 # Generate a keypair for internal cluster usage
 test -f ~/.ssh/id_ed25519 || ssh-keygen -t ed25519 -N ""
 
-# Define a given node
-# nodedefine n01
-# nodeattrib n01 net.hwaddr=00:0c:29:7d:b6:67
-# nodeattrib n01 net.ipv4_address=100.64.0.1/24
-
-# Add nodes to /etc/hosts
-# Needs to evaluate in the future if there is a better approach to add files to /etc/hosts; `dnsmasq` maybe?
-confluent2hosts -a everything
-
 # Configure the osdeploy parameters; it's an interactive interface, so we must find a way to automate this step
 osdeploy initialize -u -s -k -l -p -a -t -g
 
@@ -103,15 +109,15 @@ osdeploy initialize -u -s -k -l -p -a -t -g
 osdeploy import {isoPath}
 
 # distro contains the osversion
-image={distro}-{arch}
 
 rm -rf /tmp/scratchdir || :
+rm -rf /var/lib/confluent/public/os/{image}-diskless || :
 
 # Create a temporary chroot to work as basis for the boot image
-imgutil build -y -s ${{image}} /tmp/scratchdir
+imgutil build -y -s {image} /tmp/scratchdir
 
 # Pack the image from the temporary chroot and give a name
-imgutil pack /tmp/scratchdir/ ${{image}}-diskless
+imgutil pack /tmp/scratchdir/ {image}-diskless
 
 # Check if the image shows up as available with the defined name
 osdeploy list
@@ -134,13 +140,9 @@ rm -rf /tmp/scratchdir
                                     answerfile()->management.con_interface,
                                     "Internal interface not found in [network_management]"
                                 )),
-                       fmt::arg("gateway",
-                                utils::optional::unwrap(
-                                    answerfile()->management.gateway,
-                                    "Internal gateway not found in [network_management]"
-                               ))
+                       fmt::arg("image", image)
                        );
-    addNodes();
+    addNodes(image);
 }
 
 }
