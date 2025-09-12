@@ -19,7 +19,7 @@ SLURM::SLURM(const Cluster& cluster)
 
 void SLURM::installServer()
 {
-    cloyster::Singleton<cloyster::services::IOSService>::get()->install(
+    cloyster::Singleton<const cloyster::services::IOSService>::get()->install(
         "ohpc-slurm-server");
 }
 
@@ -55,14 +55,14 @@ void SLURM::configureServer()
 
 void SLURM::enableServer()
 {
-    auto osservice = cloyster::Singleton<services::IOSService>::get();
+    auto osservice = cloyster::Singleton<const services::IOSService>::get();
     osservice->enableService("munge");
     osservice->enableService("slurmctld");
 }
 
 void SLURM::startServer()
 {
-    auto osservice = cloyster::Singleton<services::IOSService>::get();
+    auto osservice = cloyster::Singleton<const services::IOSService>::get();
     osservice->startService("munge");
     osservice->startService("slurmctld");
 }

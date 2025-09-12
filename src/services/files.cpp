@@ -13,7 +13,7 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
-
+#include <cloysterhpc/utils/formatters.h>
 
 namespace cloyster::services::files {
 
@@ -75,7 +75,8 @@ std::string KeyFile::getString(
         return m_impl->m_keyfile->get_string(group, key).raw();
     } catch (Glib::KeyFileError& e) {
         throw std::runtime_error(
-            fmt::format("Keyfile Error, no such entry {} {}", group, key));
+            fmt::format("Keyfile Error, {}: no such entry [{}].{}",
+                m_impl->m_path, group, key));
     }
 }
 
@@ -89,7 +90,8 @@ std::string KeyFile::getString(const std::string& group, const std::string& key,
         return m_impl->m_keyfile->get_string(group, key).raw();
     } catch (Glib::KeyFileError& e) {
         throw std::runtime_error(
-            fmt::format("Keyfile Error, no such entry {} {}", group, key));
+            fmt::format("Keyfile Error, {}: no such entry [{}].{}",
+                m_impl->m_path, group, key));
     }
 }
 

@@ -368,9 +368,6 @@ std::string Network::fetchDomainName()
     return ret;
 }
 
-/* TODO: Check return type
- *  - We can't return const (don't know exactly why)
- */
 std::vector<address> Network::getNameservers() const
 {
     std::vector<address> returnVector;

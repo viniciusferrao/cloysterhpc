@@ -1,3 +1,4 @@
+#include <cloysterhpc/services/ansible/roles.h>
 #include <cloysterhpc/services/ansible/roles/queuesystem.h>
 #include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/slurm.h>
@@ -15,6 +16,7 @@
 
 namespace {
 using namespace cloyster::utils::singleton;
+using namespace cloyster::services::ansible;
 void configureQueueSystem()
 {
     LOG_INFO("Setting up the queue system")
@@ -23,14 +25,11 @@ void configureQueueSystem()
         switch (queue.value()->getKind()) {
             case cloyster::models::QueueSystem::Kind::None: {
                 __builtin_unreachable();
+                break;
             }
 
             case cloyster::models::QueueSystem::Kind::SLURM: {
-                const auto& slurm = dynamic_cast<cloyster::models::SLURM*>(queue.value().get());
-                slurm->installServer();
-                slurm->configureServer();
-                slurm->enableServer();
-                slurm->startServer();
+                roles::run(roles::Roles::SLURM, os());
                 break;
             }
 

@@ -18,79 +18,201 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 
+/**
+ * @brief Hold functions to execute commands inside shell. This is
+ * usefull to have pipes, file descriptor, execute commands that
+ * depends on /etc/profile.d/ files, etc.
+ *
+ * WARNING: THESE FUNCTIONS ARE VULNERABLE TO SHELL INJECTION
+ *
+ * While this is a concern in genenral, in this case (this project) the user
+ * need root access to run the project so ... but do not COPY/PASTE this to
+ * projects that run behind a network or you'll introduce an attack vector.
+ */
 namespace cloyster::services::runner::shell {
 
+/**
+ * @brief Hold "unsafe" shell functions. Unsafe here means that
+ * the caller is responsible for checking the exit code, the
+ * execution is not aborted if the command fails.
+ */
 namespace unsafe {
+    /**
+     * @brief Executes a raw shell command and captures its output.
+     *
+     * Runs the provided command string in a new `/bin/bash -lc` process
+     * and collects each line of output into the provided vector.
+     *
+     * The following bash options are used:
+     * -l: load /etc/profile.d/ files
+     * -x: enable bash debug
+     * -e: stop in the first error (use command || : to mitigate)
+     * -o pipefail: return the rightmost non-zero exit code in pipelines
+     *
+     * Behavior depends on runtime options:
+     * - If `--dry-run` is enabled, the command is not executed, only logged.
+     *   In this case, no output is collected and the return value is `0`.
+     *
+     * @param output A vector that will be populated with each line of
+     *        command output (stdout/stderr).
+     * @param command The raw shell command to execute.
+     * @return The exit code of the executed command, or `0` in dry-run mode.
+     */
+    int cmd(std::vector<std::string>& output, std::string_view command);
+
+    /**
+     * @brief Executes a raw shell command without capturing output.
+     *
+     * Runs the provided command string in a new `/bin/bash -lc` process.
+     * Output is streamed to the logging system only and not captured.
+     *
+     * The following bash options are used:
+     * -l: load /etc/profile.d/ files
+     * -x: enable bash debug
+     * -e: stop in the first error (use command || : to mitigate)
+     * -o pipefail: return the rightmost non-zero exit code in pipelines
+     *
+     * Behavior depends on runtime options:
+     * - If `--dry-run` is enabled, the command is not executed, only logged.
+     *   In this case, the return value is `0`.
+     *
+     * @param command The raw shell command to execute.
+     * @return The exit code of the executed command, or `0` in dry-run mode.
+     */
+    int cmd(std::string_view command);
+
+    /**
+     * @brief Executes a formatted shell command and captures its output.
+     *
+     * This function runs a shell command constructed from a format string
+     * and arguments. The command is executed in a new `/bin/bash` process
+     * with `-lc` flags enabled:
+     *
+     * The following bash options are used:
+     * -l: load /etc/profile.d/ files
+     * -x: enable bash debug
+     * -e: stop in the first error (use command || : to mitigate)
+     * -o pipefail: return the rightmost non-zero exit code in pipelines
+     *
+     * Behavior depends on runtime options:
+     * - If `--dry-run` is enabled, the command is not executed, only logged.
+     *   are logged line-by-line for troubleshooting.
+     *
+     * @tparam Args Variadic template parameter pack for formatting arguments.
+     * @param output A vector to store each line of command output.
+     * @param format The fmtlib format string for constructing the command.
+     * @param args Arguments to format into the command string.
+     * @return The exit code of the executed command, or 0 in dry-run mode.
+     */
     template <typename... Args>
     [[nodiscard]]
     int fmt(std::vector<std::string>& output,
         fmt::format_string<Args...> format, Args&&... args)
     {
-        auto command = fmt::format(format, std::forward<Args>(args)...);
-
-        auto opts = cloyster::Singleton<const cloyster::services::Options>::get();
-        if (!opts->dryRun) {
-            LOG_DEBUG("Running shell command: {}", command);
-            boost::process::ipstream pipe_stream;
-            boost::process::child child("/bin/bash", "-xc", command,
-                boost::process::std_out > pipe_stream);
-
-            std::string line;
-            while (pipe_stream && std::getline(pipe_stream, line)) {
-                output.emplace_back(line);
-                LOG_DEBUG("{}", line);
-            }
-
-            child.wait();
-            LOG_DEBUG("Exit code: {}", child.exit_code());
-            return child.exit_code();
-        } else {
-            LOG_INFO("Dry Run: {}", command);
-            return 0;
-        }
+        return cmd(output, fmt::format(format, std::forward<Args>(args)...));
     }
 
+    /**
+     * @brief Executes a formatted shell command without capturing output.
+     *
+     * Same as the overload above, but does not store the output lines. Output
+     * is only streamed to logs.
+     *
+     * The following bash options are used:
+     * -l: load /etc/profile.d/ files
+     * -x: enable bash debug
+     * -e: stop in the first error (use command || : to mitigate)
+     * -o pipefail: return the rightmost non-zero exit code in pipelines
+     *
+     * Behavior depends on runtime options:
+     * - If `--dry-run` is enabled, the command is not executed, only logged.
+     *   are logged line-by-line for troubleshooting.
+     *
+     * @tparam Args Variadic template parameter pack for formatting arguments.
+     * @param format The fmtlib format string for constructing the command.
+     * @param args Arguments to format into the command string.
+     * @return The exit code of the executed command, or 0 in dry-run mode.
+     */
     template <typename... Args>
     [[nodiscard]]
     int fmt(fmt::format_string<Args...> format, Args&&... args)
     {
-        auto command = fmt::format(format, std::forward<Args>(args)...);
-        auto opts = cloyster::Singleton<const cloyster::services::Options>::get();
-        if (!opts->dryRun) {
-            LOG_DEBUG("Running shell command: {}", command);
-            boost::process::ipstream pipe_stream;
-            boost::process::child child("/bin/bash", "-xc", command,
-                boost::process::std_out > pipe_stream);
-
-            std::string line;
-            while (pipe_stream && std::getline(pipe_stream, line)) {
-                LOG_DEBUG("{}", line);
-            }
-
-            child.wait();
-            LOG_DEBUG("Exit code: {}", child.exit_code());
-            return child.exit_code();
-        } else {
-            LOG_INFO("Dry Run: {}", command);
-            return 0;
-        }
+        return cmd(fmt::format(format, std::forward<Args>(args)...));
     }
 }
 
+/**
+ * @brief Executes a shell command and throws if it fails.
+ *
+ * A safer wrapper around `unsafe::fmt()`. Throws std::runtime_error if the
+ * command returns a non-zero exit code.
+ *
+ * The following bash options are used:
+ * -l: load /etc/profile.d/ files
+ * -x: enable bash debug
+ * -e: stop in the first error (use command || : to mitigate)
+ * -o pipefail: return the rightmost non-zero exit code in pipelines
+ *
+ * Behavior depends on runtime options:
+ * - If `--dry-run` is enabled, the command is not executed, only logged.
+ *
+ * @tparam Args Variadic template parameter pack for formatting arguments.
+ * @param format The fmtlib format string for constructing the command.
+ * @param args Arguments to format into the command string.
+ * @throws std::runtime_error if the command exits with a non-zero code.
+ */
 template <typename... Args>
 void fmt(fmt::format_string<Args...> format, Args&&... args)
 {
     const std::string command
         = fmt::format(format, std::forward<Args>(args)...);
-    const auto exitCode = unsafe::fmt("{}", command);
+    const auto exitCode = unsafe::cmd(command);
     if (exitCode != 0) {
         throw std::runtime_error(fmt::format(
             "Command {} failed with exit code {}", command, exitCode));
     }
 }
 
+/**
+ * @brief Executes a raw shell command string.
+ *
+ * Runs the provided command string directly without formatting. Throws if
+ * execution fails.
+ *
+ * The following bash options are used:
+ * -l: load /etc/profile.d/ files
+ * -x: enable bash debug
+ * -e: stop in the first error (use command || : to mitigate)
+ * -o pipefail: return the rightmost non-zero exit code in pipelines
+ *
+ * Behavior depends on runtime options:
+ * - If `--dry-run` is enabled, the command is not executed, only logged.
+ *
+ * @param cmd The raw shell command string.
+ */
 void cmd(std::string_view cmd);
 
+/**
+ * @brief Executes a shell command and returns its combined output.
+ *
+ * Runs a command and returns its stdout as a single string, with lines
+ * joined by newlines. Throws if the command fails.
+ *
+ * Behavior depends on runtime options:
+ * - If `--dry-run` is enabled, the command is not executed, only logged.
+ *
+ * The following bash options are used:
+ * -l: load /etc/profile.d/ files
+ * -x: enable bash debug
+ * -e: stop in the first error (use command || : to mitigate)
+ * -o pipefail: return the rightmost non-zero exit code in pipelines
+ *
+ * @tparam Args Variadic template parameter pack for formatting arguments.
+ * @param format The fmtlib format string for constructing the command.
+ * @param args Arguments to format into the command string.
+ * @return A string containing the full command output.
+ * @throws std::runtime_error if the command exits with a non-zero code.
+ */
 template <typename... Args>
 [[nodiscard]]
 std::string output(fmt::format_string<Args...> format, Args&&... args)

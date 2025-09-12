@@ -33,6 +33,7 @@ enum class Roles : std::uint8_t {
     SELINUX,     ///< SELinux configuration role
     NFS,         ///< NFS server/client role
     QUEUESYSTEM, ///< Queue system role, SLURM + PBS logic
+    SLURM,       ///< SLURM role
     OHPC,        ///< OpenHPC components role
     PROVISIONER, ///< Dispatches to XCAT or CONFLUENT roles
     XCAT,        ///< xCAT management role

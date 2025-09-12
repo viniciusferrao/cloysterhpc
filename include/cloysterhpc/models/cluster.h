@@ -52,7 +52,7 @@ public:
      * @enum Provisioner
      * @brief Enumeration for cluster provisioners.
      */
-    enum class Provisioner { xCAT };
+    enum class Provisioner { xCAT, Confluent };
 
 private:
     std::string m_name;

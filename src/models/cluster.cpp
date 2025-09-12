@@ -765,8 +765,14 @@ void Cluster::fillData(const AnswerFile& answerfil)
     setUpdateSystem(true);
 
 
-    // TODO: CFL Retrieve the provisioner from the answerfile
-    setProvisioner(Provisioner::xCAT);
+    const auto provisioner = utils::string::lower(answerfil.system.provisioner);
+    if (provisioner == "xcat") {
+        setProvisioner(Provisioner::xCAT);
+    } else if (provisioner == "confluent") {
+        setProvisioner(Provisioner::Confluent);
+    } else {
+        cloyster::functions::abort("Invalid provisioner {}", provisioner);
+    }
 
     // FIXME: This should come from /etc/os-release
     m_headnode.setOS(nodeOS);

@@ -1,6 +1,8 @@
 #include <cloysterhpc/services/ansible/roles/network.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/utils/network.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -14,12 +16,7 @@
 namespace {
 
 using namespace cloyster::utils::singleton;
-
-void deleteConnectionIfExists(std::string_view connectionName)
-{
-    runner()->executeCommand(
-        fmt::format("nmcli connection delete \"{}\"", connectionName));
-}
+using namespace cloyster::services::runner;
 
 void disableNetworkManagerDNSOverride()
 {
@@ -39,98 +36,152 @@ void disableNetworkManagerDNSOverride()
     osservice()->restartService("NetworkManager");
 }
 
+// WARNING: We used to do this in a DRY way, but each connection has its own 
+// idissiocracies. Keep connection setup splitted from now on
+
+void configureManagementNetwork(const Connection& connection)
+{
+    const std::string_view ipv6Method = cluster()->getProvisioner()
+            == cloyster::models::Cluster::Provisioner::xCAT
+        ? "diabled"
+        : "link-local";
+
+    auto interface = connection.getInterface().value();
+    auto connectionName
+        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    LOG_INFO("Setting up {} network", connectionName);
+    LOG_ASSERT(connectionName == "Management", "configureManagementNetwork called with invalid network")
+
+    shell::fmt(R"(
+nmcli device set {iface} managed yes
+nmcli device set {iface} autoconnect yes
+
+# Remove existing connection if present
+nmcli con show {iface} > /dev/null && nmcli conn delete {iface}
+nmcli con show {conn_name} > /dev/null && nmcli connection delete {conn_name}
+
+# Add new static IPv4 + link-local IPv6 connection
+nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
+    ipv4.method manual \
+    ipv4.addresses "{ip}/{cidr}" \
+    ipv4.gateway "" \
+    ipv4.ignore-auto-dns yes \
+    ipv4.ignore-auto-routes yes \
+    ipv6.method {ipv6_method}
+sleep 0.2
+nmcli -w 10 device connect {iface}
+)",
+        fmt::arg("iface", interface),
+        fmt::arg("conn_name", connectionName),
+        fmt::arg("type", connection.getNetwork()->getType()),
+        fmt::arg("mtu", connection.getMTU()),
+        fmt::arg("ip", connection.getAddress().to_string()),
+        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask())),
+        fmt::arg("ipv6_method", ipv6Method)
+    );
+}
+
+void configureApplicationNetwork(const Connection& connection)
+{
+    auto interface = connection.getInterface().value();
+    auto connectionName
+        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    LOG_INFO("Setting up {} network", connectionName);
+    LOG_ASSERT(connectionName == "Application", "configureApplicationNetwork called with invalid network")
+
+    shell::fmt(R"(
+nmcli device set {iface} managed yes
+nmcli device set {iface} autoconnect yes
+
+# Remove existing connection if present
+nmcli con show {iface} > /dev/null && nmcli conn delete {iface}
+nmcli con show {conn_name} > /dev/null && nmcli connection delete {conn_name}
+
+# Add new static IPv4 + link-local IPv6 connection
+nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
+    ipv4.method manual \
+    ipv4.addresses "{ip}/{cidr}" \
+    ipv4.gateway "" \
+    ipv4.ignore-auto-dns yes \
+    ipv4.ignore-auto-routes yes \
+sleep 0.2
+nmcli -w 10 device connect {iface}
+)",
+        fmt::arg("iface", interface),
+        fmt::arg("conn_name", connectionName),
+        fmt::arg("type", connection.getNetwork()->getType()),
+        fmt::arg("mtu", connection.getMTU()),
+        fmt::arg("ip", connection.getAddress().to_string()),
+        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask()))
+    );
+}
+
+void configureServiceNetwork(const Connection& connection)
+{
+    auto interface = connection.getInterface().value();
+    auto connectionName
+        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    LOG_INFO("Setting up {} network", connectionName);
+    LOG_ASSERT(connectionName == "Service", "configureServiceNetwork called with invalid network")
+
+    shell::fmt(R"(
+nmcli device set {iface} managed yes
+nmcli device set {iface} autoconnect yes
+
+# Remove existing connection if present
+nmcli con show {iface} > /dev/null && nmcli conn delete {iface}
+nmcli con show {conn_name} > /dev/null && nmcli connection delete {conn_name}
+
+# Add new static IPv4 + link-local IPv6 connection
+nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
+    ipv4.method manual \
+    ipv4.addresses "{ip}/{cidr}" \
+    ipv4.gateway "" \
+    ipv4.ignore-auto-dns yes \
+    ipv4.ignore-auto-routes yes \
+sleep 0.2
+nmcli -w 10 device connect {iface}
+)",
+        fmt::arg("iface", interface),
+        fmt::arg("conn_name", connectionName),
+        fmt::arg("type", connection.getNetwork()->getType()),
+        fmt::arg("mtu", connection.getMTU()),
+        fmt::arg("ip", connection.getAddress().to_string()),
+        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask()))
+    );
+}
 
 void configureNetworks(const std::list<Connection>& connections)
 {
-    LOG_INFO("Setting up networks 2")
-
     osservice()->enableService("NetworkManager");
+    disableNetworkManagerDNSOverride();
 
     for (const auto& connection : std::as_const(connections)) {
-        LOG_INFO("Setting up networks ->> {}", connection.getNetwork()->getProfile())
-        /* For now, we just skip the external network to avoid disconnects */
-        if (connection.getNetwork()->getProfile() == Network::Profile::External) {
-            continue;
-        }
-
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-
-#ifndef NDEBUG
         if (!connection.getInterface().has_value()) {
-            LOG_WARN("Interface not found for connection {}, skipping (debug build)", connection.getNetwork()->getProfile());
-            continue;
-        }
-#endif
-        auto interface = connection.getInterface().value();
-
-        std::vector<address> nameservers
-            = connection.getNetwork()->getNameservers();
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-        std::vector<std::string> formattedNameservers;
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-        formattedNameservers.reserve(nameservers.size());
-        for (const auto & nameserver : nameservers) {
-            formattedNameservers.emplace_back(nameserver.to_string());
-        }
-
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-        auto opts = options();
-        auto connectionName
-            = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
-        if (!opts->dryRun
-
-            && runner()->executeCommand(
-                   fmt::format("nmcli connection show {}", connectionName))
-                == 0) {
-            LOG_WARN("Connection exists {}, skipping", connectionName);
+            LOG_WARN("Interface not found for connection {}, skipping", connection.getNetwork()->getProfile());
             continue;
         }
 
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-
-        deleteConnectionIfExists(connectionName);
-        ::runner()->executeCommand(
-            fmt::format("nmcli device set {} managed yes", interface));
-        ::runner()->executeCommand(
-            fmt::format("nmcli device set {} autoconnect yes", interface));
-        ::runner()->executeCommand(fmt::format(
-            "nmcli connection add con-name {} ifname {} type {} "
-            "mtu {} ipv4.method manual ipv4.address {}/{} "
-            "ipv4.dns \"{}\" "
-            // "ipv4.gateway {} ipv4.dns \"{}\" "
-            // @TODO: CFL only do this if we're using xCAT as provisioner
-            // @FIXME: This will break Confluent, is it required by xCAT?
-            "ipv4.dns-search {} ipv6.method disabled",
-            cloyster::utils::enums::toString(
-                connection.getNetwork()->getProfile()),
-            interface,
-            cloyster::utils::enums::toString(
-                connection.getNetwork()->getType()),
-            connection.getMTU(), connection.getAddress().to_string(),
-            connection.getNetwork()->cidr.at(
-                connection.getNetwork()->getSubnetMask().to_string()),
-            // connection.getNetwork()->getGateway().to_string(),
-            fmt::join(formattedNameservers, " "),
-            connection.getNetwork()->getDomainName()));
-
-
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-        /* Give network manage some time to settle thing up
-         * Avoids: Error: Connection activation failed: IP configuration could
-         * not be reserved (no available address, timeout, etc.).
-         */
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-        LOG_INFO("Setting up networks {}", connection.getNetwork()->getProfile())
-
-        // Breaking my ssh connection during development
-        runner()->executeCommand(
-            fmt::format("nmcli device connect {}", interface));
-
-        LOG_INFO("Setting up networks {} returning", connection.getNetwork()->getProfile())
+        switch (connection.getNetwork()->getProfile()) {
+            case Network::Profile::External:
+                continue;
+            case Network::Profile::Management:
+                configureManagementNetwork(connection);
+                break;
+            case Network::Profile::Application:
+                configureApplicationNetwork(connection);
+                break;
+            case Network::Profile::Service:
+                configureServiceNetwork(connection);
+                break;
+            default:
+                // NOTE: This should never happen
+                cloyster::functions::abort("Invalid network profile {}",
+                    connection.getNetwork()->getProfile());
+        }
+                break;
     }
 
-    disableNetworkManagerDNSOverride();
 
 }
 
@@ -138,8 +189,8 @@ void configureFQDN()
 {
     LOG_INFO("Setting up hostname")
 
-    ::runner()->executeCommand(fmt::format(
-        "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN()));
+    shell::fmt(
+        "hostnamectl set-hostname {}", cluster()->getHeadnode().getFQDN());
 }
 
 void configureHostsFile()

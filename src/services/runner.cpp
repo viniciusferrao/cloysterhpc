@@ -6,6 +6,8 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/utils/singleton.h>
 
+#include <boost/process/v2.hpp>
+
 #include <fmt/format.h>
 #include <ranges>
 
@@ -86,9 +88,80 @@ int runCommand(const std::string& command, bool overrideDryRun)
 
 }; // namespace {
 
+namespace cloyster::services::runner::shell::unsafe {
+
+int cmd(std::vector<std::string>& output, std::string_view command)
+{
+    auto opts = cloyster::Singleton<const cloyster::services::Options>::get();
+    if (!opts->dryRun) {
+        std::ostringstream scriptStream;
+        scriptStream << "set -xeu -o pipefail\n";
+        scriptStream << command;
+        const std::string script = scriptStream.str();
+        LOG_DEBUG("Running shell command: {}", command);
+        // FIXME: boost::process V1 leaks file descriptors, use V2 instead
+        //  https://www.boost.org/doc/libs/1_80_0/doc/html/boost_process/v2.html
+        boost::process::ipstream pipe_stream;
+        // -l for loading /etc/profile.d/* files
+        boost::process::child child(
+            "/bin/bash", "-lc", script,
+            boost::process::std_out > pipe_stream
+        );
+
+        std::string line;
+        while (pipe_stream && std::getline(pipe_stream, line)) {
+            output.emplace_back(line);
+            LOG_DEBUG("{}", line);
+        }
+
+        child.wait();
+        LOG_DEBUG("Exit code: {}", child.exit_code());
+        return child.exit_code();
+    } else {
+        LOG_INFO("Dry Run: {}", command);
+        return 0;
+    }
+}
+
+int cmd(std::string_view command)
+{
+    auto opts = cloyster::Singleton<const cloyster::services::Options>::get();
+    if (!opts->dryRun) {
+        std::ostringstream scriptStream;
+        scriptStream << "set -xeu -o pipefail\n";
+        scriptStream << command;
+        const std::string script = scriptStream.str();
+        LOG_DEBUG("Running shell command: {}", command);
+        boost::process::ipstream pipe_stream;
+        // -l for loading /etc/profile.d/* files
+        boost::process::child child("/bin/bash", "-lc", script,
+                                    boost::process::std_out > pipe_stream);
+
+        std::string line;
+        while (pipe_stream && std::getline(pipe_stream, line)) {
+            LOG_DEBUG("{}", line);
+        }
+
+        child.wait();
+        LOG_DEBUG("Exit code: {}", child.exit_code());
+        return child.exit_code();
+    } else {
+        LOG_INFO("Dry Run: {}", command);
+        return 0;
+    }
+}
+
+}
+
 namespace cloyster::services::runner::shell {
 
-void cmd(std::string_view cmd) { shell::fmt("{}", cmd); }
+void cmd(std::string_view cmd) { 
+    const auto exitCode = shell::unsafe::cmd(cmd);
+    if (exitCode != 0) {
+        throw std::runtime_error(fmt::format(
+            "Command {} failed with exit code {}", cmd, exitCode));
+    }
+}
 
 }
 

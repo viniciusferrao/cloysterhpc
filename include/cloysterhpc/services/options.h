@@ -8,8 +8,8 @@
 
 namespace cloyster::services {
 
-// @TODO Make this an aggregate type to avoid the warnings
-// about partial initialization
+// @TODO: Make this an aggregate type to avoid the warnings
+//   about partial initialization
 struct Options final {
     bool parsingError;
     bool helpAndExit;

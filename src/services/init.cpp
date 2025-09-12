@@ -13,6 +13,14 @@ namespace cloyster::services {
 using namespace cloyster;
 using namespace cloyster::services;
 
+// WARNING: If you change the type T in Singleton<T>::init(...) (to const T for
+// instance) all the Singleton<T>::get need to be changed, otherwise you get
+// "Singleton read before initialization error" at runtime. While there are
+// getters to handle this in cloyster/utils/singletons in a uniform way and for
+// most cases, these getters depends on headers (that introduce the type
+// T in question), so files including the same header cannot use these getters
+// (or we have recursive header inclusion error).
+
 // Singletons that depends only in the options, the cluster model
 // depends on these
 void initializeSingletonsOptions(std::unique_ptr<const Options>&& opts)

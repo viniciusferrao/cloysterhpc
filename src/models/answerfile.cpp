@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// TODO: CFL Retrieve the provisioner (xcat | confluent (default: confluent) from the answerfile
-
 #include <cstddef>
 #include <fmt/core.h>
 #include <iterator>
@@ -21,7 +19,6 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/utils/singleton.h>
-
 
 using cloyster::services::Postfix;
 
@@ -57,6 +54,7 @@ void AnswerFile::loadOptions()
     loadNodes();
     loadPostfix();
     loadOFED();
+    loadSlurm();
 }
 
 void AnswerFile::dumpNetwork(
@@ -350,8 +348,7 @@ void AnswerFile::loadNetwork(
         = m_keyfile.getString(networkSection, "mac_address", "");
     convertNetworkAddressAndValidate(
         networkSection, "subnet_mask", network.subnet_mask);
-    network.domain_name
-        = m_keyfile.getStringOpt(networkSection, "domain_name");
+    network.domain_name = m_keyfile.getStringOpt(networkSection, "domain_name");
     convertNetworkAddressAndValidate(
         networkSection, "gateway", network.gateway);
 
@@ -434,7 +431,9 @@ void AnswerFile::loadSystemSettings()
 
     system.version = m_keyfile.getString("system", "version");
     system.kernel = m_keyfile.getStringOpt("system", "kernel");
-    system.provisioner = m_keyfile.getStringOpt("system", "provisioner").value_or("confluent");
+    system.provisioner
+        = utils::optional::unwrap(m_keyfile.getStringOpt("system", "provisioner"), 
+                                  "[system].provisioner missing in the answerfile {}, expecting one of: confluent, xcat", path());
 }
 
 AFNode AnswerFile::loadNode(const std::string& section)
@@ -443,8 +442,27 @@ AFNode AnswerFile::loadNode(const std::string& section)
     LOG_DEBUG("Loading node {}", section);
 
     if (section == "node") {
+        // Fully initialize generic node
         node.prefix = m_keyfile.getString(section, "prefix");
         node.padding = m_keyfile.getString(section, "padding");
+        node.root_password = m_keyfile.getString(section, "node_root_password");
+        node.sockets = m_keyfile.getString(section, "sockets");
+        node.cores_per_socket
+            = m_keyfile.getString(section, "cores_per_socket");
+        node.cpus_per_node
+            = m_keyfile.getString(section, "cpus_per_node");
+        node.threads_per_core
+            = m_keyfile.getString(section, "threads_per_core");
+        node.real_memory
+            = m_keyfile.getString(section, "real_memory");
+        node.bmc_username = m_keyfile.getString(section, "bmc_username");
+        node.bmc_password = m_keyfile.getString(section, "bmc_password");
+        node.bmc_serialport = m_keyfile.getString(section, "bmc_serialport");
+        node.bmc_serialspeed = m_keyfile.getString(section, "bmc_serialspeed");
+        node.start_ip = convertStringToAddress(
+            m_keyfile.getString(section, "node_ip"));
+        LOG_DEBUG("Node generic configuration loaded");
+        return node;
     } else {
         node.mac_address = m_keyfile.getString(section, "mac_address");
     }
@@ -461,11 +479,11 @@ AFNode AnswerFile::loadNode(const std::string& section)
         }
     }
 
-    // Initialize with empty strings if the values are not found, the remaining
-    // of the code is assuming that
     node.hostname = m_keyfile.getString(section, "hostname", "");
     node.root_password = m_keyfile.getString(section, "node_root_password", "");
     node.sockets = m_keyfile.getString(section, "sockets", "");
+    node.cores_per_socket
+        = m_keyfile.getString(section, "cores_per_socket", "");
     node.cores_per_socket
         = m_keyfile.getString(section, "cores_per_socket", "");
     node.threads_per_core
@@ -576,6 +594,16 @@ AFNode AnswerFile::validateNode(AFNode node)
     return node;
 }
 
+auto AnswerFile::AFNodes::nodesNames() const -> std::vector<std::string> {
+    std::uint32_t nodeIdx = 0;
+    return nodes 
+        | std::views::transform([&](const auto& node) {
+            nodeIdx++;
+            return utils::optional::unwrap(node.hostname, "hostname missing for node {}", nodeIdx);
+        })
+        | std::ranges::to<std::vector>();
+}
+
 bool AnswerFile::checkEnabled(const std::string& section)
 {
     return m_keyfile.getStringOpt(section, "enabled")
@@ -649,10 +677,26 @@ void AnswerFile::loadOFED()
     }
 }
 
-auto AnswerFile::path() const
--> const std::filesystem::path&
+auto AnswerFile::path() const -> const std::filesystem::path& { return m_path; }
+
+void AnswerFile::loadSlurm()
 {
-        return m_path;
+    cloyster::functions::abortif(!m_keyfile.hasGroup("slurm"),
+        "slurm section missing in asnwerfile {}", path());
+
+    using namespace cloyster::utils;
+    slurm.mariadb_root_password = optional::unwrap(
+        m_keyfile.getStringOpt("slurm", "mariadb_root_password"),
+            "mariadb_root_password missing in the answerfile {}", path());
+    slurm.slurmdb_password = optional::unwrap(
+        m_keyfile.getStringOpt("slurm", "slurmdb_password"),
+            "slurmdb_password missing in the answerfile {}", path());
+    slurm.storage_password = optional::unwrap(
+        m_keyfile.getStringOpt("slurm", "storage_password"),
+            "storage_password missing in the answerfile {}", path());
+    slurm.partition_name = optional::unwrap(
+        m_keyfile.getStringOpt("slurm", "partition_name"),
+            "partition_name missing in the answerfile {}", path());
 }
 
 };

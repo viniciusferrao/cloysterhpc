@@ -13,6 +13,37 @@
 
 namespace cloyster::services::ansible::roles {
 
+// NOTE: I little bit of explanation on why this API is like this:
+//
+// A bit of code context:
+//
+// - ScriptBuilder is a class that implements an "ansible like" interface,
+//   it has methods like .addLineInFile(), .enableService(), .addPackages(),
+//   each method generates the required idempotent bash code and accumulates in
+//   a vector, then we can run all these commands later. So it decouples *what*
+//   runs from *when* it runs and handle the idempotency nicely.
+//
+// Now a bit of history context:
+//
+//   The idea was to use ScriptBuilder everywhere such that we decouple
+//   the script generation from the environment where it runs. This would
+//   help with testing, auditing and would enable static analysis using LLMs
+//   and all other cool tricks, but, ..., ScriptBuilder add a translation
+//   overhead when converting from shell commands -> scriptbuilder method calls,
+//   and we ran out of time to spend on this source code.
+//
+//   The `foo::run` functions are simple functions that delegates to
+//   shell calls, a "quick & dirty" solution that make shell commands ->
+//   shell calls mostly 1 to 1, so, fast to use, test and prototype. Ideally,
+//   everything would use ScriptBuilder, but we live in a real (not ideal)
+//   world. So here are some todos for sometime in the future to improve this code:
+//
+//   @TODO:
+//   - Migrate everything to ScriptBuilder
+//   - Decouple script generation from script running
+//   - Add a Script class make ScriptBuilder.build return it
+//      (s.t. ScriptBuilder becomes a real builder)
+
 class ScriptBuilderRunner {
     ScriptBuilder m_scriptbuilder;
 public:
@@ -53,6 +84,8 @@ RoleRunnable getRunnable(const Role& role, const models::OS& osinfo)
             return wrap(nfs::installScript(role, osinfo));
         case Roles::QUEUESYSTEM:
             return queuesystem::run;
+        case Roles::SLURM:
+            return slurm::run;
         case Roles::OHPC:
             return ohpc::run;
         case Roles::PROVISIONER:

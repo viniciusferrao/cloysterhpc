@@ -37,6 +37,8 @@ struct AFNode {
     std::optional<std::string> sockets;
     std::optional<std::string> cores_per_socket;
     std::optional<std::string> threads_per_core;
+    std::optional<std::string> cpus_per_node;
+    std::optional<std::string> real_memory;
     std::optional<std::string> bmc_address;
     std::optional<std::string> bmc_username;
     std::optional<std::string> bmc_password;
@@ -126,6 +128,20 @@ private:
         std::string provisioner;
     };
 
+    struct AFSlurm {
+        std::string mariadb_root_password;
+        std::string slurmdb_password;
+        std::string storage_password;
+        std::string partition_name;
+    };
+
+    struct AFProvisionerConfig {
+        std::string bmcuser;
+        std::string bmcpass;
+        std::string rootpass;
+        std::string grubpass;
+    };
+
     /**
      * @struct AFNodes
      * @brief Holds settings for multiple nodes.
@@ -136,6 +152,8 @@ private:
     struct AFNodes {
         std::optional<AFNode> generic;
         std::vector<AFNode> nodes;
+
+        auto nodesNames() const -> std::vector<std::string>;
     };
 
     struct AFPostfix {
@@ -340,6 +358,8 @@ private:
     void dumpNetwork(
         const AFNetwork& network, const std::string& networkSection);
 
+    void loadSlurm();
+
 public:
     AFNetwork external;
     AFNetwork management;
@@ -352,6 +372,7 @@ public:
     AFNodes nodes;
     AFPostfix postfix;
     AFOFED ofed;
+    AFSlurm slurm;
 
     /**
      * @brief Loads the answer file from the specified path.

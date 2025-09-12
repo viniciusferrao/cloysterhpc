@@ -12,6 +12,7 @@
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/formatters.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <string_view>
 
 using cloyster::models::OS;
@@ -55,11 +56,17 @@ cloyster::services::ScriptBuilder NFS::installScript(const OS& osinfo)
             "/home *(rw,no_subtree_check,fsid={},no_root_squash)", 10)
         .addLineToFile("/etc/exports", "/opt/ohpc/pub",
             "/opt/ohpc/pub *(ro,no_subtree_check,fsid={})", 11)
-        .addLineToFile("/etc/exports", "/tftpboot",
-            "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)")
-        .addLineToFile("/etc/exports", "/install",
-            "/install *(rw,no_root_squash,sync,no_subtree_check)")
-        .addNewLine()
+        .addLineToFile("/etc/exports", "/opt/spack",
+            "/opt/spack *(ro)");
+    if (utils::singleton::answerfile()->system.provisioner == "xcat") {
+        builder
+            .addLineToFile("/etc/exports", "/tftpboot",
+                           "/tftpboot *(rw,no_root_squash,sync,no_subtree_check)")
+            .addLineToFile("/etc/exports", "/install",
+                           "/install *(rw,no_root_squash,sync,no_subtree_check)")
+            .addNewLine();
+    }
+    builder
         .enableService("rpcbind nfs-server")
         .addCommand("exportfs -a > /dev/null 2>&1 || :")
         .addNewLine()
