@@ -24,7 +24,9 @@ void run(const Role& role)
     } else if  (provisioner == "xcat") {
         roles::run(Roles::XCAT, osinfo);
     } else {
-        cloyster::functions::abort("Expecing xcat or confluent at system.provisioner, found: {}", provisioner);
+        cloyster::functions::abort("Expecing xcat or confluent at "
+                                   "[system].provisioner, found: {}, at {}",
+            provisioner, utils::singleton::answerfile()->path());
     }
 }
 

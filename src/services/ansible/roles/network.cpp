@@ -43,7 +43,7 @@ void configureManagementNetwork(const Connection& connection)
 {
     const std::string_view ipv6Method = cluster()->getProvisioner()
             == cloyster::models::Cluster::Provisioner::xCAT
-        ? "diabled"
+        ? "disabled"
         : "link-local";
 
     auto interface = connection.getInterface().value();
@@ -69,7 +69,7 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
     ipv4.ignore-auto-routes yes \
     ipv6.method {ipv6_method}
 sleep 0.2
-nmcli -w 10 device connect {iface}
+nmcli device connect {iface}
 )",
         fmt::arg("iface", interface),
         fmt::arg("conn_name", connectionName),
@@ -105,7 +105,7 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
     ipv4.ignore-auto-dns yes \
     ipv4.ignore-auto-routes yes \
 sleep 0.2
-nmcli -w 10 device connect {iface}
+nmcli device connect {iface}
 )",
         fmt::arg("iface", interface),
         fmt::arg("conn_name", connectionName),
@@ -140,7 +140,7 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
     ipv4.ignore-auto-dns yes \
     ipv4.ignore-auto-routes yes \
 sleep 0.2
-nmcli -w 10 device connect {iface}
+nmcli device connect {iface}
 )",
         fmt::arg("iface", interface),
         fmt::arg("conn_name", connectionName),
@@ -218,13 +218,15 @@ namespace cloyster::services::ansible::roles::network {
 
 void run(const Role& role)
 {
-    const auto connections = cluster()->getHeadnode().getConnections();
-    LOG_INFO("Setting up networks")
+    LOG_INFO("Setting up networks, use `--skip network` to skip")
+    if (utils::singleton::options()->shouldSkip("network")) {
+        return;
+    }
 
+    const auto connections = cluster()->getHeadnode().getConnections();
     configureNetworks(connections);
     configureFQDN();
     configureHostsFile();
-
 }
 
 }

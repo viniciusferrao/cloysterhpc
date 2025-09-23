@@ -28,6 +28,10 @@ namespace cloyster::services::ansible::roles::ofed {
 
 void run(const Role& role)
 {
+    LOG_INFO("Setting up Infiniband, use `--skip infiniband` to skip");
+    if (cloyster::utils::singleton::options()->shouldSkip("infiniband")) {
+        return;
+    }
     configureInfiniband();
 }
 

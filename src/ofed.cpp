@@ -118,6 +118,7 @@ void OFED::install() const
             runner->checkCommand("dnf makecache --repo=doca*");
             runner->checkCommand("dnf install --nogpg -y doca-ofed mlnx-fw-updater");
             runner->executeCommand("systemctl restart openibd");
+            // runner->executeCommand("systemctl enable --now opensmd");
         } break;
 
         case OFED::Kind::Oracle:

@@ -22,7 +22,6 @@ namespace cloyster::services::ansible::roles::base {
 ScriptBuilder installScript(
     const Role& role, const cloyster::models::OS& osinfo)
 {
-    LOG_DEBUG("Running base role");
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
@@ -36,10 +35,15 @@ ScriptBuilder installScript(
         case models::OS::Distro::Rocky:
         case models::OS::Distro::AlmaLinux:
             LOG_DEBUG("Running base role");
-            builder.addPackage("epel-release");
             break;
 
         case models::OS::Distro::OL:
+            // @FIXME: This breaks the RepoManager logic. Package installing
+            //   repository files at /etc/yum.repos.d/, may install repositories
+            //   using metalink or mirrorlist, which triggers a bug in RepoManager
+            //   when the xCAT image is being generated. The RepoManager only
+            //   supports baseurl for now, metalink and mirror lists trigger a
+            //   bad optional access during runtime.
             switch (osinfo.getPlatform()) {
                 case models::OS::Platform::el8:
                     builder.addPackage("oracle-epel-release-el8");

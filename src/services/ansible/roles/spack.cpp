@@ -21,6 +21,11 @@ ScriptBuilder installScript(
     using namespace cloyster;
     ScriptBuilder builder(osinfo);
 
+    LOG_INFO("Setting up Spack, use `--skip spack` to skip");
+    if (utils::singleton::options()->shouldSkip("spack")) {
+        return builder;
+    }
+
     LOG_ASSERT(role.roleName() == "spack",
         fmt::format("Expected spack role, found {}", role.roleName()));
 
