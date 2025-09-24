@@ -1,10 +1,10 @@
-#include <fmt/core.h>
+#include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/confluent.h>
 #include <cloysterhpc/services/runner.h>
-#include <cloysterhpc/utils/singleton.h>
-#include <cloysterhpc/utils/optional.h>
 #include <cloysterhpc/utils/network.h>
-#include <cloysterhpc/functions.h>
+#include <cloysterhpc/utils/optional.h>
+#include <cloysterhpc/utils/singleton.h>
+#include <fmt/core.h>
 
 namespace {
 using namespace cloyster;
@@ -22,29 +22,29 @@ nodeattrib {nodeName} bmcuser={bmcuser} bmcpass={bmcpass} crypted.rootpassword={
     )",
         fmt::arg("nodeName", node.getHostname()),
         fmt::arg("nodeIp",
-                 node.getConnection(Network::Profile::Management)
-                 .getAddress()
-                 .to_string()),
+            node.getConnection(Network::Profile::Management)
+                .getAddress()
+                .to_string()),
         fmt::arg("nodeCIDR",
-                 network::subnetMaskToCIDR(
-                     node.getConnection(Network::Profile::Management)
-                         .getNetwork()->getSubnetMask())),
+            network::subnetMaskToCIDR(
+                node.getConnection(Network::Profile::Management)
+                    .getNetwork()
+                    ->getSubnetMask())),
         fmt::arg("bmcuser", node.getBMC()->getUsername()),
         fmt::arg("bmcpass", node.getBMC()->getPassword()),
-        fmt::arg("rootpwd", rootpwd),
-        fmt::arg("grubpwd", rootpwd)
-    );
+        fmt::arg("rootpwd", rootpwd), fmt::arg("grubpwd", rootpwd));
 
-    if (const auto& macOpt = node.getConnection(Network::Profile::Management).getMAC(); macOpt) {
-        services::runner::shell::fmt("nodeattrib {nodeName} net.hwaddr={nodeMac}",
+    if (const auto& macOpt
+        = node.getConnection(Network::Profile::Management).getMAC();
+        macOpt) {
+        services::runner::shell::fmt(
+            "nodeattrib {nodeName} net.hwaddr={nodeMac}",
             fmt::arg("nodeName", node.getHostname()),
-            fmt::arg("nodeMac", macOpt.value())
-        );
+            fmt::arg("nodeMac", macOpt.value()));
     }
 
     services::runner::shell::fmt("nodedeploy -p {nodeName} -n {image}-diskless",
-                                 fmt::arg("nodeName", node.getHostname()),
-                                 fmt::arg("image", image));
+        fmt::arg("nodeName", node.getHostname()), fmt::arg("image", image));
 
     services::runner::shell::cmd("confluent2hosts -a everything");
 }
@@ -59,12 +59,13 @@ void addNodes(std::string_view image)
 
 namespace cloyster::services {
 
-void Confluent::install() {
+void Confluent::install()
+{
     using namespace utils::singleton;
 
-    const auto image = fmt::format("{distro}-{arch}", 
-                           fmt::arg("arch", cloyster::utils::enums::toString(os().getArch())),
-                           fmt::arg("distro", os().getDistroString()));
+    const auto image = fmt::format("{distro}-{arch}",
+        fmt::arg("arch", cloyster::utils::enums::toString(os().getArch())),
+        fmt::arg("distro", os().getDistroString()));
 
     runner::shell::fmt(R"d(
 # Add the Confluent repository
@@ -215,23 +216,23 @@ rm -rf /tmp/scratchdir || :
 
         fmt::arg("domain", cluster()->getDomainName()),
         fmt::arg("releasever", os().getMajorVersion()),
-        fmt::arg("hnIp", cluster()->getHeadnode().getConnection(Network::Profile::Management).getAddress().to_string()),
+        fmt::arg("hnIp",
+            cluster()
+                ->getHeadnode()
+                .getConnection(Network::Profile::Management)
+                .getAddress()
+                .to_string()),
         fmt::arg("arch", cloyster::utils::enums::toString(os().getArch())),
         fmt::arg("distro", os().getDistroString()),
         fmt::arg("osversion", os().getVersion()),
         fmt::arg("isoPath", answerfile()->system.disk_image.string()),
         fmt::arg("internalNic",
-                 utils::optional::unwrap(
-                     answerfile()->management.con_interface,
-                     "Internal interface not found in [network_management]"
-                 )),
+            utils::optional::unwrap(answerfile()->management.con_interface,
+                "Internal interface not found in [network_management]")),
         fmt::arg("image", image),
-        fmt::arg("ofedEnabled", answerfile()->ofed.enabled)
-    );
+        fmt::arg("ofedEnabled", answerfile()->ofed.enabled));
 
     addNodes(image);
 }
 
 }
-
-

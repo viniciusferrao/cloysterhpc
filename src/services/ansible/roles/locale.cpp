@@ -23,9 +23,6 @@ void configureLocale()
 
 namespace cloyster::services::ansible::roles::locale {
 
-void run(const Role& role)
-{
-    configureLocale();
-}
+void run(const Role& role) { configureLocale(); }
 
 }

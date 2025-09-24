@@ -50,9 +50,6 @@ void configureFirewall()
 
 namespace cloyster::services::ansible::roles::firewall {
 
-void run(const Role& role)
-{
-    configureFirewall();
-}
+void run(const Role& role) { configureFirewall(); }
 
 }

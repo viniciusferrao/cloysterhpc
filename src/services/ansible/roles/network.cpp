@@ -1,5 +1,5 @@
-#include <cloysterhpc/services/ansible/roles/network.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/ansible/roles/network.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/utils/network.h>
@@ -36,7 +36,7 @@ void disableNetworkManagerDNSOverride()
     osservice()->restartService("NetworkManager");
 }
 
-// WARNING: We used to do this in a DRY way, but each connection has its own 
+// WARNING: We used to do this in a DRY way, but each connection has its own
 // idissiocracies. Keep connection setup splitted from now on
 
 void configureManagementNetwork(const Connection& connection)
@@ -47,10 +47,11 @@ void configureManagementNetwork(const Connection& connection)
         : "link-local";
 
     auto interface = connection.getInterface().value();
-    auto connectionName
-        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    auto connectionName = cloyster::utils::enums::toString(
+        connection.getNetwork()->getProfile());
     LOG_INFO("Setting up {} network", connectionName);
-    LOG_ASSERT(connectionName == "Management", "configureManagementNetwork called with invalid network")
+    LOG_ASSERT(connectionName == "Management",
+        "configureManagementNetwork called with invalid network")
 
     shell::fmt(R"(
 nmcli device set {iface} managed yes
@@ -71,23 +72,24 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
 sleep 0.2
 nmcli device connect {iface}
 )",
-        fmt::arg("iface", interface),
-        fmt::arg("conn_name", connectionName),
+        fmt::arg("iface", interface), fmt::arg("conn_name", connectionName),
         fmt::arg("type", connection.getNetwork()->getType()),
         fmt::arg("mtu", connection.getMTU()),
         fmt::arg("ip", connection.getAddress().to_string()),
-        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask())),
-        fmt::arg("ipv6_method", ipv6Method)
-    );
+        fmt::arg("cidr",
+            cloyster::utils::network::subnetMaskToCIDR(
+                connection.getNetwork()->getSubnetMask())),
+        fmt::arg("ipv6_method", ipv6Method));
 }
 
 void configureApplicationNetwork(const Connection& connection)
 {
     auto interface = connection.getInterface().value();
-    auto connectionName
-        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    auto connectionName = cloyster::utils::enums::toString(
+        connection.getNetwork()->getProfile());
     LOG_INFO("Setting up {} network", connectionName);
-    LOG_ASSERT(connectionName == "Application", "configureApplicationNetwork called with invalid network")
+    LOG_ASSERT(connectionName == "Application",
+        "configureApplicationNetwork called with invalid network")
 
     shell::fmt(R"(
 nmcli device set {iface} managed yes
@@ -107,22 +109,23 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
 sleep 0.2
 nmcli device connect {iface}
 )",
-        fmt::arg("iface", interface),
-        fmt::arg("conn_name", connectionName),
+        fmt::arg("iface", interface), fmt::arg("conn_name", connectionName),
         fmt::arg("type", connection.getNetwork()->getType()),
         fmt::arg("mtu", connection.getMTU()),
         fmt::arg("ip", connection.getAddress().to_string()),
-        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask()))
-    );
+        fmt::arg("cidr",
+            cloyster::utils::network::subnetMaskToCIDR(
+                connection.getNetwork()->getSubnetMask())));
 }
 
 void configureServiceNetwork(const Connection& connection)
 {
     auto interface = connection.getInterface().value();
-    auto connectionName
-        = cloyster::utils::enums::toString(connection.getNetwork()->getProfile());
+    auto connectionName = cloyster::utils::enums::toString(
+        connection.getNetwork()->getProfile());
     LOG_INFO("Setting up {} network", connectionName);
-    LOG_ASSERT(connectionName == "Service", "configureServiceNetwork called with invalid network")
+    LOG_ASSERT(connectionName == "Service",
+        "configureServiceNetwork called with invalid network")
 
     shell::fmt(R"(
 nmcli device set {iface} managed yes
@@ -142,13 +145,13 @@ nmcli connection add type {type} mtu {mtu} ifname {iface} con-name {conn_name} \
 sleep 0.2
 nmcli device connect {iface}
 )",
-        fmt::arg("iface", interface),
-        fmt::arg("conn_name", connectionName),
+        fmt::arg("iface", interface), fmt::arg("conn_name", connectionName),
         fmt::arg("type", connection.getNetwork()->getType()),
         fmt::arg("mtu", connection.getMTU()),
         fmt::arg("ip", connection.getAddress().to_string()),
-        fmt::arg("cidr", cloyster::utils::network::subnetMaskToCIDR(connection.getNetwork()->getSubnetMask()))
-    );
+        fmt::arg("cidr",
+            cloyster::utils::network::subnetMaskToCIDR(
+                connection.getNetwork()->getSubnetMask())));
 }
 
 void configureNetworks(const std::list<Connection>& connections)
@@ -158,7 +161,8 @@ void configureNetworks(const std::list<Connection>& connections)
 
     for (const auto& connection : std::as_const(connections)) {
         if (!connection.getInterface().has_value()) {
-            LOG_WARN("Interface not found for connection {}, skipping", connection.getNetwork()->getProfile());
+            LOG_WARN("Interface not found for connection {}, skipping",
+                connection.getNetwork()->getProfile());
             continue;
         }
 
@@ -179,10 +183,8 @@ void configureNetworks(const std::list<Connection>& connections)
                 cloyster::functions::abort("Invalid network profile {}",
                     connection.getNetwork()->getProfile());
         }
-                break;
+        break;
     }
-
-
 }
 
 void configureFQDN()

@@ -23,7 +23,7 @@ class DiskImage {
 private:
     std::filesystem::path m_path;
     std::optional<cloyster::models::OS::Distro> m_distro = std::nullopt;
-    
+
     // BUG: This is bad design, and also overrides what's inside the map
     // variable on the class that holds the checksums.
     /**

@@ -33,7 +33,6 @@ constexpr std::unique_ptr<B> makeUniqueDerived(Args... args)
     return static_cast<std::unique_ptr<B>>(std::make_unique<T>(args...));
 }
 
-
 // @FIXME: File utilities functions should live in services::files namespace
 
 using models::OS;
@@ -310,9 +309,10 @@ std::string getHttpStatus(const auto& url, const std::size_t maxRetries = 3)
         if (header.starts_with("2")) {
             return header;
         } else if (header.starts_with("5")) {
-            LOG_DEBUG("HTTP INTERNAL SERVER ERROR {} error, retring ...{}", header, i);
+            LOG_DEBUG("HTTP INTERNAL SERVER ERROR {} error, retring ...{}",
+                header, i);
             return header;
-        } else  {
+        } else {
             LOG_DEBUG("HTTP {} error, retrying ...{}", header, i);
             return header;
         }
@@ -330,8 +330,8 @@ void abort(const fmt::string_view& fmt, auto&&... args)
 void abortif(const bool cond, const fmt::string_view& fmt, auto&&... args)
 {
     if (cond) {
-    throw std::runtime_error(
-        fmt::format(fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
+        throw std::runtime_error(fmt::format(
+            fmt::runtime(fmt), std::forward<decltype(args)>(args)...));
     }
 }
 

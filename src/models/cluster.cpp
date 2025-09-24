@@ -19,7 +19,6 @@
 
 #include <cloysterhpc/cloyster.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/utils/singleton.h>
 #include <cloysterhpc/models/answerfile.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/headnode.h>
@@ -29,6 +28,7 @@
 #include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
+#include <cloysterhpc/utils/singleton.h>
 
 #if __cpp_lib_starts_ends_with < 201711L
 #include <boost/algorithm/string.hpp>
@@ -202,7 +202,8 @@ void Cluster::setOFED(OFED::Kind kind, std::string version)
     m_ofed = OFED(kind, std::move(version));
 }
 
-const std::optional<std::unique_ptr<QueueSystem>>& Cluster::getQueueSystem() const
+const std::optional<std::unique_ptr<QueueSystem>>&
+Cluster::getQueueSystem() const
 {
     return m_queueSystem;
 }
@@ -574,7 +575,7 @@ void Cluster::fillData(const AnswerFile& answerfil)
     nodeOS.setDistro(answerfil.system.distro);
     if (answerfil.system.kernel) {
         nodeOS.setKernel(answerfil.system.kernel.value());
-     }
+    }
     nodeOS.setVersion(answerfil.system.version);
 
     LOG_TRACE("Cluster name: {}", answerfil.information.cluster_name)
@@ -729,13 +730,21 @@ void Cluster::fillData(const AnswerFile& answerfil)
         const auto& domain_name = answerfil.application.domain_name;
         const auto& nameservers = answerfil.application.nameservers;
 
-        // @FIXME: Are these optional? 
+        // @FIXME: Are these optional?
         LOG_TRACE("Application network configured, callign setters");
 
-        if (subnet_mask.has_value()) { applicationNetwork->setSubnetMask(subnet_mask.value()); }
-        if (gateway.has_value()) { applicationNetwork->setGateway(gateway.value()); }
-        if (domain_name.has_value()) { applicationNetwork->setDomainName(domain_name.value()); }
-        if (nameservers.has_value()) { applicationNetwork->setNameservers(nameservers.value()); }
+        if (subnet_mask.has_value()) {
+            applicationNetwork->setSubnetMask(subnet_mask.value());
+        }
+        if (gateway.has_value()) {
+            applicationNetwork->setGateway(gateway.value());
+        }
+        if (domain_name.has_value()) {
+            applicationNetwork->setDomainName(domain_name.value());
+        }
+        if (nameservers.has_value()) {
+            applicationNetwork->setNameservers(nameservers.value());
+        }
 
         addNetwork(std::move(applicationNetwork));
 
@@ -763,7 +772,6 @@ void Cluster::fillData(const AnswerFile& answerfil)
 
     // System
     setUpdateSystem(true);
-
 
     const auto provisioner = utils::string::lower(answerfil.system.provisioner);
     if (provisioner == "xcat") {

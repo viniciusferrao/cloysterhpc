@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 
+#include <cloysterhpc/NFS.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/models/os.h>
@@ -19,13 +20,11 @@
 #include <cloysterhpc/services/runner.h>
 #include <cloysterhpc/services/xcat.h>
 #include <cloysterhpc/utils/singleton.h>
-#include <cloysterhpc/NFS.h>
 
 namespace {
 using cloyster::models::Cluster;
 
 using namespace cloyster::utils::singleton;
-
 
 // Returns the distribution name with the version, e.g., rocky9.5
 std::string getOSImageDistroVersion()
@@ -83,7 +82,7 @@ XCAT::XCAT()
 
 XCAT::Image XCAT::getImage() const { return m_stateless; }
 
-void XCAT::installPackages() 
+void XCAT::installPackages()
 {
     auto osservice = cloyster::utils::singleton::osservice();
     osservice->install("xCAT");
@@ -208,8 +207,9 @@ void XCAT::genimage() const
     }
     const auto& kernelVersion = kernelVersionOpt.value();
 
-    LOG_WARN("Using kernel version from the answerfile: {} at [system].kernel in {}",
-             kernelVersion, answerfile()->path());
+    LOG_WARN(
+        "Using kernel version from the answerfile: {} at [system].kernel in {}",
+        kernelVersion, answerfile()->path());
     LOG_INFO("Customizing the kernel image");
     const auto kernelPackages = fmt::format(
         // Pay attention to the spaces, they are required
@@ -312,10 +312,13 @@ void XCAT::configureInfiniband()
                         return std::string(kernelOpt.value());
                     }
                     const auto kernel = osservice->getKernelRunning();
-                    LOG_WARN("Kernel version ommited in configuration, using the running kernel {}", kernel);
+                    LOG_WARN("Kernel version ommited in configuration, using "
+                             "the running kernel {}",
+                        kernel);
                     return kernel;
                 }();
-                    osinfo.getKernel().value_or(osservice->getKernelInstalled());;
+                osinfo.getKernel().value_or(osservice->getKernelInstalled());
+                ;
                 // Configure Apache to serve the RPM repository
                 const auto repoName
                     = fmt::format("doca-kernel-{}", kernelVersion);
@@ -417,7 +420,8 @@ void XCAT::generatePostinstallFile()
         "$IMG_ROOTIMGDIR/etc/security/limits.conf\n"
         "\n");
 
-    m_stateless.postinstall.emplace_back("chroot $IMG_ROOTIMGDIR systemctl disable firewalld\n");
+    m_stateless.postinstall.emplace_back(
+        "chroot $IMG_ROOTIMGDIR systemctl disable firewalld\n");
 
     for (const auto& entries : std::as_const(m_stateless.postinstall)) {
         functions::addStringToFile(filename, entries);
@@ -772,9 +776,10 @@ std::vector<std::string> XCAT::getxCATOSImageRepos()
     const auto addReposFromFile = [&](const std::string& filename) {
         for (auto& repo : repoManager->repoFile(filename)) {
             if (repo->enabled()) {
-                repos.emplace_back(
-                    utils::optional::unwrap(repo->uri(), "Expecting value for repository URI {}, found None, check {}",
-                                            repo->id(), repo->source()));
+                repos.emplace_back(utils::optional::unwrap(repo->uri(),
+                    "Expecting value for repository URI {}, found None, check "
+                    "{}",
+                    repo->id(), repo->source()));
             }
         }
     };
@@ -837,8 +842,7 @@ void XCAT::install()
     const auto nodeType = XCAT::NodeType::Compute;
 
     opts->maybeStopAfterStep("provisioner-setup");
-    const auto imageInstallArgs
-        = getImageInstallArgs(imageType, nodeType);
+    const auto imageInstallArgs = getImageInstallArgs(imageType, nodeType);
 
     // Customizations to the image
     const auto nfsImageInstallScript

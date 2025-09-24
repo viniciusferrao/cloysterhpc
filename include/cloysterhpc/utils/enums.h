@@ -18,14 +18,14 @@
 #define CLOYSTER_UTILS_ENUM_H
 
 #include <cstdint>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <string>
 #include <type_traits>
 #include <vector>
-#include <fmt/ranges.h>
 
-#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/utils/optional.h>
+#include <cloysterhpc/utils/string.h>
 
 namespace cloyster::utils::enums {
 
@@ -100,7 +100,8 @@ template <typename T> constexpr std::size_t count()
  */
 template <typename T>
     requires std::is_enum_v<T>
-std::optional<T> ofStringOpt(std::string_view str, Case case_ = Case::Sensitive) noexcept
+std::optional<T> ofStringOpt(
+    std::string_view str, Case case_ = Case::Sensitive) noexcept
 {
     if (case_ == Case::Insensitive) {
         return magic_enum::enum_cast<T>(str, magic_enum::case_insensitive);
@@ -116,11 +117,9 @@ template <typename T>
     requires std::is_enum_v<T>
 T ofStringExc(std::string_view str, Case case_ = Case::Sensitive)
 {
-    return optional::unwrap(
-        ofStringOpt<T>(str, case_),
+    return optional::unwrap(ofStringOpt<T>(str, case_),
         "Invalid enum conversion, expecting one of {}, found {}",
-        fmt::join(toStrings<T>(), ","),
-        str);
+        fmt::join(toStrings<T>(), ","), str);
 }
 
 /**

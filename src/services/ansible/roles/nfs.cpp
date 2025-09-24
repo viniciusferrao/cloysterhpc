@@ -1,6 +1,6 @@
+#include <cloysterhpc/NFS.h>
 #include <cloysterhpc/services/ansible/roles/nfs.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/NFS.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

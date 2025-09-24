@@ -1,8 +1,8 @@
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/scriptbuilder.h>
-#include <cloysterhpc/utils/string.h>
 #include <cloysterhpc/utils/optional.h>
+#include <cloysterhpc/utils/string.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -25,8 +25,8 @@ Role parseRoleString(const std::string& input)
     const bool hasVars = colonPos != std::string::npos;
 
     // If no colon, assume input is only role name with no variables
-    std::string_view roleName = std::string_view(input).substr(
-        0, !hasVars ? input.size() : colonPos);
+    std::string_view roleName
+        = std::string_view(input).substr(0, !hasVars ? input.size() : colonPos);
     auto roleEnum = utils::enums::ofStringExc<Roles>(
         roleName, utils::enums::Case::Insensitive);
 
@@ -52,16 +52,15 @@ Role parseRoleString(const std::string& input)
         }
     }
 
-    return Role{roleEnum, tags, vars, when};
+    return Role { roleEnum, tags, vars, when };
 }
 
 TEST_CASE("ansible::Role formatter produces correct output")
 {
     ansible::roles::Role role(Roles::AUDIT,
-        Role::Tags{ "security", "compliance" },
-        Role::Vars{ { "auditd_enabled", "true" }, { "log_level", "debug" } },
-        std::nullopt
-        );
+        Role::Tags { "security", "compliance" },
+        Role::Vars { { "auditd_enabled", "true" }, { "log_level", "debug" } },
+        std::nullopt);
 
     std::string expected = "Role: audit\n"
                            "  When: ansible_os_family == 'RedHat'\n"

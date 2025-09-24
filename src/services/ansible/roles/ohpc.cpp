@@ -18,7 +18,8 @@ void run(const Role& role)
              "MPI stacks");
 
     auto ohpcPackages = utils::singleton::options()->ohpcPackages;
-    utils::singleton::osservice()->install(fmt::format("{}", fmt::join(ohpcPackages, " ")));
+    utils::singleton::osservice()->install(
+        fmt::format("{}", fmt::join(ohpcPackages, " ")));
 }
 
 }

@@ -98,7 +98,8 @@ TEST_CASE("Basic")
         .enableService("foo-service");
 
     const auto script = builder.toString();
-    CHECK(script.contains(R"_(echo "123.123.123.123 example.com" >> "/etc/hosts")_"));
+    CHECK(script.contains(
+        R"_(echo "123.123.123.123 example.com" >> "/etc/hosts")_"));
     CHECK(script.contains("systemctl enable --now foo-service"));
 }
 

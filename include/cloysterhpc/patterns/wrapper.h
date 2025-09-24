@@ -33,8 +33,7 @@ namespace cloyster {
  * processUser(email); // Error: Email is not User
  * @endcode
  */
-template <typename T, typename Tag>
-class Wrapper final {
+template <typename T, typename Tag> class Wrapper final {
     T value;
 
 public:

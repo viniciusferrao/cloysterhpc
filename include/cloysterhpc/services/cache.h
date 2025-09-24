@@ -2,8 +2,8 @@
 #define CLOYSTERHPC_SERVICES_CACHE_H_
 
 #include <filesystem>
-#include <functional>
 #include <fmt/core.h>
+#include <functional>
 
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/services/files.h>
@@ -24,17 +24,19 @@ TEST_SUITE_BEGIN("cloyster::services::cache::fs");
  * @brief Runs the cost intensive function `function` and cache the results into
  * `path`, subsequent calls return the cached content.
  */
-std::string run(std::string_view name, const std::filesystem::path& path, std::invocable auto&& function, auto&&... argument)
+std::string run(std::string_view name, const std::filesystem::path& path,
+    std::invocable auto&& function, auto&&... argument)
 {
     if (std::filesystem::exists(path)) {
-        LOG_INFO("Returning cached result for function from {}", name, path.string());
+        LOG_INFO("Returning cached result for function from {}", name,
+            path.string());
         return files::read(path);
     }
 
-    LOG_INFO("Running cost intensive function {}, this may take a while ...", name);
-    const std::string contents = 
-        std::invoke(
-            std::forward<decltype(function)>(function),
+    LOG_INFO(
+        "Running cost intensive function {}, this may take a while ...", name);
+    const std::string contents
+        = std::invoke(std::forward<decltype(function)>(function),
             std::forward<decltype(argument)>(argument)...);
     LOG_INFO("... finished running {}, caching the results", name);
     LOG_INFO("{}", contents);
@@ -42,7 +44,8 @@ std::string run(std::string_view name, const std::filesystem::path& path, std::i
     return contents;
 }
 
-TEST_CASE("run") {
+TEST_CASE("run")
+{
     // Test setup
     const std::filesystem::path testPath = "test/output/cache/cached.txt";
     files::remove(testPath.string());
@@ -51,7 +54,7 @@ TEST_CASE("run") {
     auto function = []() { return "foo"; };
     const std::string result = run("cacheTest", testPath, function);
     CHECK(result == "foo");
-    // Hack the cache to ensure the second call 
+    // Hack the cache to ensure the second call
     CHECK(functions::exists(testPath));
     files::write(testPath, "bar");
     const std::string result2 = run("cacheTest", testPath, function);
@@ -60,16 +63,18 @@ TEST_CASE("run") {
 }
 
 /**
- * @brief Return the cached value or takes the checksum of path, cache and return it
- *   Saves the cache state at [path].checksum
+ * @brief Return the cached value or takes the checksum of path, cache and
+ * return it Saves the cache state at [path].checksum
  */
 std::string checksum(std::string_view name, const std::filesystem::path& path);
 
-TEST_CASE("checksum") {
+TEST_CASE("checksum")
+{
     namespace fs = std::filesystem;
     const auto path = fs::path("test/output/cache/");
     const auto testFile = path / "textfile.txt";
-    const auto chksFile = fs::path(fmt::format("{}.checksum", testFile.string()));
+    const auto chksFile
+        = fs::path(fmt::format("{}.checksum", testFile.string()));
 
     files::remove(chksFile);
     CHECK(!files::exists(chksFile));

@@ -9,14 +9,14 @@
 #include <cloysterhpc/network.h>
 #include <cloysterhpc/services/log.h>
 
-#include <expected>
-#include <regex>
-#include <string>
-#include <stdexcept>
 #include <cerrno>
 #include <cstring>
-#include <ranges>
+#include <expected>
 #include <fmt/core.h>
+#include <ranges>
+#include <regex>
+#include <stdexcept>
+#include <string>
 
 #include <boost/algorithm/string.hpp>
 
@@ -33,20 +33,21 @@ namespace {
 
 /**
  * @class ifaddrslist
- * @brief A non-copyable, non-movable RAII wrapper for the `ifaddrs` linked list.
+ * @brief A non-copyable, non-movable RAII wrapper for the `ifaddrs` linked
+ * list.
  *
  * This class uses the RAII (Resource Acquisition Is Initialization) idiom to
  * manage the dynamic resource acquired by `getifaddrs()`. It ensures that the
- * memory is automatically freed by `freeifaddrs()` when the object goes out of scope,
- * preventing memory leaks.
+ * memory is automatically freed by `freeifaddrs()` when the object goes out of
+ * scope, preventing memory leaks.
  *
  * The class provides a `const` iterator to traverse the `ifaddrs` linked list,
  * allowing it to be used in a range-based for loop. This design choice
  * guarantees that the acquired data is read-only and cannot be modified.
  *
  * The class is intentionally designed to be non-copyable and non-movable to
- * ensure that the resource is uniquely owned by the `ifaddrsptr` object and cannot
- * be transferred or duplicated.
+ * ensure that the resource is uniquely owned by the `ifaddrsptr` object and
+ * cannot be transferred or duplicated.
  *
  * @note This class is not thread-safe and relies on the `strerror` and `errno`
  * which are global and not thread-safe. A production-ready version might use
@@ -55,7 +56,7 @@ namespace {
  */
 class ifaddrslist {
 private:
-    ifaddrs* m_ptr{};
+    ifaddrs* m_ptr {};
 
 public:
     // The const iterator class
@@ -70,61 +71,69 @@ public:
         using pointer = const ifaddrs*;
         using reference = const ifaddrs&;
 
-        explicit iterator(const ifaddrs* node = nullptr) : m_currentNode(node) {}
+        explicit iterator(const ifaddrs* node = nullptr)
+            : m_currentNode(node)
+        {
+        }
 
-        reference operator*() const {
+        reference operator*() const
+        {
             if (m_currentNode == nullptr) {
                 throw std::out_of_range("Iterator out of bounds.");
             }
             return *m_currentNode;
         }
 
-        pointer operator->() const {
+        pointer operator->() const
+        {
             if (m_currentNode == nullptr) {
                 throw std::out_of_range("Iterator out of bounds.");
             }
             return m_currentNode;
         }
 
-        iterator& operator++() {
+        iterator& operator++()
+        {
             if (m_currentNode != nullptr) {
                 m_currentNode = m_currentNode->ifa_next;
             }
             return *this;
         }
 
-        iterator operator++(int) {
+        iterator operator++(int)
+        {
             iterator temp = *this;
             ++(*this);
             return temp;
         }
 
-        bool operator==(const iterator& other) const {
+        bool operator==(const iterator& other) const
+        {
             return m_currentNode == other.m_currentNode;
         }
-        bool operator!=(const iterator& other) const {
+        bool operator!=(const iterator& other) const
+        {
             return !(*this == other);
         }
     };
 
-    ifaddrslist() {
+    ifaddrslist()
+    {
         if (getifaddrs(&m_ptr) == -1) {
-            throw std::runtime_error(
-                fmt::format("Cannot get the interfaces: {}", std::strerror(errno))
-            );
+            throw std::runtime_error(fmt::format(
+                "Cannot get the interfaces: {}", std::strerror(errno)));
         }
     }
-    explicit ifaddrslist(ifaddrs* ptr) : m_ptr(ptr) {
+    explicit ifaddrslist(ifaddrs* ptr)
+        : m_ptr(ptr)
+    {
         if (m_ptr == nullptr) {
-            throw std::runtime_error(
-                fmt::format("Cannot get the interfaces: {}", std::strerror(errno))
-            );
+            throw std::runtime_error(fmt::format(
+                "Cannot get the interfaces: {}", std::strerror(errno)));
         }
     }
-    
-    ~ifaddrslist() {
-        freeifaddrs(m_ptr);
-    }
+
+    ~ifaddrslist() { freeifaddrs(m_ptr); }
 
     ifaddrslist(const ifaddrslist&) = delete;
     ifaddrslist(ifaddrslist&&) = delete;
@@ -133,11 +142,11 @@ public:
 
     // Const iterator access for a non-const object
     [[nodiscard]] iterator begin() const { return iterator(m_ptr); }
-    [[nodiscard]] static iterator end()  { return iterator(nullptr); }
+    [[nodiscard]] static iterator end() { return iterator(nullptr); }
 
     // Explicit const iterator access (for consistency)
     [[nodiscard]] iterator cbegin() const { return begin(); }
-    [[nodiscard]] static iterator cend()  { return end(); }
+    [[nodiscard]] static iterator cend() { return end(); }
 };
 
 }
@@ -208,7 +217,8 @@ void Connection::setInterface(std::string_view interface)
     throw std::runtime_error(
         fmt::format("Cannot find network interface {}", interface));
 #else
-    LOG_ERROR("Interface does not exists: {}, continuing anyway (debug build)", interface);
+    LOG_ERROR("Interface does not exists: {}, continuing anyway (debug build)",
+        interface);
 #endif
 }
 

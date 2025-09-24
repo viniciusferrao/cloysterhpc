@@ -10,7 +10,6 @@
 #include <cloysterhpc/utils/enums.h>
 #include <utility>
 
-
 namespace cloyster::services::ansible::roles {
 
 // NOTE: I little bit of explanation on why this API is like this:
@@ -36,7 +35,8 @@ namespace cloyster::services::ansible::roles {
 //   shell calls, a "quick & dirty" solution that make shell commands ->
 //   shell calls mostly 1 to 1, so, fast to use, test and prototype. Ideally,
 //   everything would use ScriptBuilder, but we live in a real (not ideal)
-//   world. So here are some todos for sometime in the future to improve this code:
+//   world. So here are some todos for sometime in the future to improve this
+//   code:
 //
 //   @TODO:
 //   - Migrate everything to ScriptBuilder
@@ -46,10 +46,15 @@ namespace cloyster::services::ansible::roles {
 
 class ScriptBuilderRunner {
     ScriptBuilder m_scriptbuilder;
-public:
-    explicit ScriptBuilderRunner(ScriptBuilder&& builder) : m_scriptbuilder(std::move(builder)) {}
 
-    void operator()(const Role& /* role */) {
+public:
+    explicit ScriptBuilderRunner(ScriptBuilder&& builder)
+        : m_scriptbuilder(std::move(builder))
+    {
+    }
+
+    void operator()(const Role& /* role */)
+    {
         utils::singleton::runner()->run(m_scriptbuilder);
     }
 };
@@ -125,8 +130,7 @@ void run(const Role& role, const models::OS& osinfo)
     }
 }
 
-void run(Roles role, const models::OS& osinfo,
-    Role::Vars&& vars,
+void run(Roles role, const models::OS& osinfo, Role::Vars&& vars,
     Role::Tags&& tags,
     std::optional<std::function<bool(const models::OS& osinfo)>>&& when)
 {
@@ -140,14 +144,15 @@ void run(Roles role, const models::OS& osinfo,
         osinfo);
 }
 
-void Executor::install() {
+void Executor::install()
+{
     const auto& roles = utils::singleton::options()->roles;
     const auto osinfo = utils::singleton::os();
     for (const auto& role : roles) {
-        auto roleEnum = utils::enums::ofStringExc<Roles>(role, utils::enums::Case::Insensitive); 
+        auto roleEnum = utils::enums::ofStringExc<Roles>(
+            role, utils::enums::Case::Insensitive);
         run(roleEnum, osinfo);
     }
 };
-
 
 }

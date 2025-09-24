@@ -103,7 +103,7 @@ namespace fs = std::filesystem;
 
 /**
  * @brief Checks if a file or directory exists.
- * 
+ *
  * @param path The filesystem path to check.
  * @return true if the path exists, false otherwise.
  */
@@ -111,10 +111,10 @@ bool exists(const fs::path& path);
 
 /**
  * @brief Creates an empty file at the specified path.
- * 
+ *
  * If the file already exists, this function does nothing.
  * Ensures that all parent directories exist.
- * 
+ *
  * @param path The filesystem path of the file to create.
  * @throws std::system_error if the file cannot be created.
  */
@@ -122,9 +122,9 @@ void create(const fs::path& path);
 
 /**
  * @brief Removes the file at the specified path.
- * 
+ *
  * If the file does not exist, this function does nothing.
- * 
+ *
  * @param path The filesystem path of the file to remove.
  * @throws std::system_error if the file cannot be removed.
  */
@@ -132,7 +132,7 @@ void remove(const fs::path& path);
 
 /**
  * @brief Reads the entire contents of a file into a string.
- * 
+ *
  * @param path The filesystem path of the file to read.
  * @return A string containing the full contents of the file.
  * @throws std::system_error if the file cannot be opened or read.
@@ -141,7 +141,7 @@ std::string read(const fs::path& path);
 
 /**
  * @brief Writes the given contents to a file, overwriting any existing content.
- * 
+ *
  * @param path The filesystem path of the file to write.
  * @param contents The data to write into the file.
  * @throws std::system_error if the file cannot be opened or written.
@@ -150,9 +150,9 @@ void write(const fs::path& path, std::string_view contents);
 
 /**
  * @brief Appends the given contents to the end of a file.
- * 
+ *
  * If the file does not exist, it will be created.
- * 
+ *
  * @param path The filesystem path of the file to append to.
  * @param contents The data to append to the file.
  * @throws std::system_error if the file cannot be opened or written.

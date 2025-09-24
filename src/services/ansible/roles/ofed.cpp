@@ -1,6 +1,6 @@
+#include <cloysterhpc/ofed.h>
 #include <cloysterhpc/services/ansible/roles/ofed.h>
 #include <cloysterhpc/services/log.h>
-#include <cloysterhpc/ofed.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

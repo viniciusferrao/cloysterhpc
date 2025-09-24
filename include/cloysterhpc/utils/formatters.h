@@ -24,8 +24,8 @@ struct fmt::formatter<std::filesystem::path> : formatter<string_view> {
 template <>
 struct fmt::formatter<boost::asio::ip::address> : formatter<string_view> {
     template <typename FormatContext>
-    auto format(const boost::asio::ip::address& address, FormatContext& ctx) const
-        -> decltype(ctx.out())
+    auto format(const boost::asio::ip::address& address,
+        FormatContext& ctx) const -> decltype(ctx.out())
     {
         return fmt::format_to(ctx.out(), "{}", address.to_string());
     }
@@ -42,7 +42,6 @@ struct fmt::formatter<cloyster::models::OS> : formatter<string_view> {
             osinfo.getDistroString(), osinfo.getKernel().value_or(""));
     }
 };
-
 
 // Wrapper<T, Tag> formatter (delegates to T formatter)
 template <typename T, typename Tag>
@@ -63,7 +62,8 @@ struct fmt::formatter<E> : formatter<string_view> {
     auto format(const E& enumVal, FormatContext& ctx) const
         -> decltype(ctx.out())
     {
-        return fmt::format_to(ctx.out(), "{}", cloyster::utils::enums::toString<E>(enumVal));
+        return fmt::format_to(
+            ctx.out(), "{}", cloyster::utils::enums::toString<E>(enumVal));
     }
 };
 

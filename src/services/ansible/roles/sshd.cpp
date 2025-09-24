@@ -1,5 +1,5 @@
-#include <cloysterhpc/services/ansible/roles/sshd.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/services/ansible/roles/sshd.h>
 #include <cloysterhpc/services/log.h>
 
 #ifdef BUILD_TESTING
@@ -26,14 +26,10 @@ void disallowSSHRootPasswordLogin()
         " /etc/ssh/sshd_config");
 }
 
-
 }
 
 namespace cloyster::services::ansible::roles::sshd {
 
-void run(const Role&  /*role*/)
-{
-    disallowSSHRootPasswordLogin();
-}
+void run(const Role& /*role*/) { disallowSSHRootPasswordLogin(); }
 
 }

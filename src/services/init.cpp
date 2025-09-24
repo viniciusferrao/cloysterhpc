@@ -1,8 +1,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/services/init.h>
 #include <cloysterhpc/services/osservice.h>
-#include <cloysterhpc/patterns/singleton.h>
 #include <cloysterhpc/utils/singleton.h>
 
 #include <cloysterhpc/dbus_client.h>

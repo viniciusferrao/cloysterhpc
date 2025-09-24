@@ -1,8 +1,8 @@
 #ifndef CLOYSTERHPC_UTILS_OPTIONAL_H_
 #define CLOYSTERHPC_UTILS_OPTIONAL_H_
 
-#include <optional>
 #include <fmt/core.h>
+#include <optional>
 
 namespace cloyster::utils::optional {
 
@@ -11,7 +11,8 @@ namespace cloyster::utils::optional {
  * opt has no value
  */
 template <typename T, typename... Args>
-T unwrap(std::optional<T> opt, fmt::format_string<Args...> format, Args&&... args)
+T unwrap(
+    std::optional<T> opt, fmt::format_string<Args...> format, Args&&... args)
 {
     const auto msg = fmt::format(format, std::forward<decltype(args)>(args)...);
     if (!opt.has_value()) {
@@ -21,6 +22,5 @@ T unwrap(std::optional<T> opt, fmt::format_string<Args...> format, Args&&... arg
 }
 
 };
-
 
 #endif

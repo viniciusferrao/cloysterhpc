@@ -104,9 +104,7 @@ int cmd(std::vector<std::string>& output, std::string_view command)
         boost::process::ipstream pipe_stream;
         // -l for loading /etc/profile.d/* files
         boost::process::child child(
-            "/bin/bash", "-lc", script,
-            boost::process::std_out > pipe_stream
-        );
+            "/bin/bash", "-lc", script, boost::process::std_out > pipe_stream);
 
         std::string line;
         while (pipe_stream && std::getline(pipe_stream, line)) {
@@ -134,8 +132,8 @@ int cmd(std::string_view command)
         LOG_DEBUG("Running shell command: {}", command);
         boost::process::ipstream pipe_stream;
         // -l for loading /etc/profile.d/* files
-        boost::process::child child("/bin/bash", "-lc", script,
-                                    boost::process::std_out > pipe_stream);
+        boost::process::child child(
+            "/bin/bash", "-lc", script, boost::process::std_out > pipe_stream);
 
         std::string line;
         while (pipe_stream && std::getline(pipe_stream, line)) {
@@ -155,11 +153,12 @@ int cmd(std::string_view command)
 
 namespace cloyster::services::runner::shell {
 
-void cmd(std::string_view cmd) { 
+void cmd(std::string_view cmd)
+{
     const auto exitCode = shell::unsafe::cmd(cmd);
     if (exitCode != 0) {
-        throw std::runtime_error(fmt::format(
-            "Command {} failed with exit code {}", cmd, exitCode));
+        throw std::runtime_error(
+            fmt::format("Command {} failed with exit code {}", cmd, exitCode));
     }
 }
 

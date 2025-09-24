@@ -31,15 +31,17 @@ Network::Network()
 Network::Network(Profile profile)
     : Network(profile, Type::Ethernet)
 {
-    LOG_INFO("Initializing network (ctr 2) profile={}, type=ethernet", cloyster::utils::enums::toString(profile));
+    LOG_INFO("Initializing network (ctr 2) profile={}, type=ethernet",
+        cloyster::utils::enums::toString(profile));
 }
 
 Network::Network(Profile profile, Type type)
     : m_profile(profile)
     , m_type(type)
 {
-    LOG_INFO("Initializing network (ctr 3), profile={}, type={}", cloyster::utils::enums::toString(profile),
-             cloyster::utils::enums::toString(type));
+    LOG_INFO("Initializing network (ctr 3), profile={}, type={}",
+        cloyster::utils::enums::toString(profile),
+        cloyster::utils::enums::toString(type));
 }
 
 Network::Network(Profile profile, Type type, const std::string& ip,
@@ -49,16 +51,11 @@ Network::Network(Profile profile, Type type, const std::string& ip,
     : Network(profile, type)
 {
     LOG_INFO(
-        "Initializing network (ctr 4), profile={}, type={}, ip={}, subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}", 
+        "Initializing network (ctr 4), profile={}, type={}, ip={}, "
+        "subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}",
         cloyster::utils::enums::toString(profile),
-        cloyster::utils::enums::toString(type),
-        ip,
-        subnetMask,
-        gateway,
-        vlan,
-        domainName,
-        fmt::join(nameserver, ",")
-    );
+        cloyster::utils::enums::toString(type), ip, subnetMask, gateway, vlan,
+        domainName, fmt::join(nameserver, ","));
     setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);
@@ -74,16 +71,11 @@ Network::Network(Profile profile, Type type, const std::string& ip,
     : Network(profile, type)
 {
     LOG_INFO(
-        "Initializing network (ctr 5), profile={}, type={}, ip={}, subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}", 
+        "Initializing network (ctr 5), profile={}, type={}, ip={}, "
+        "subnetMask={}, gateway={}, vlan={}, domainName={}, nameservers={}",
         cloyster::utils::enums::toString(profile),
-        cloyster::utils::enums::toString(type),
-        ip,
-        subnetMask,
-        gateway,
-        vlan,
-        domainName,
-        fmt::join(nameserver, ",")
-    );
+        cloyster::utils::enums::toString(type), ip, subnetMask, gateway, vlan,
+        domainName, fmt::join(nameserver, ","));
     setAddress(ip);
     setSubnetMask(subnetMask);
     setGateway(gateway);

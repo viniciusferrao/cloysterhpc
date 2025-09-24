@@ -40,10 +40,10 @@ ScriptBuilder installScript(
         case models::OS::Distro::OL:
             // @FIXME: This breaks the RepoManager logic. Package installing
             //   repository files at /etc/yum.repos.d/, may install repositories
-            //   using metalink or mirrorlist, which triggers a bug in RepoManager
-            //   when the xCAT image is being generated. The RepoManager only
-            //   supports baseurl for now, metalink and mirror lists trigger a
-            //   bad optional access during runtime.
+            //   using metalink or mirrorlist, which triggers a bug in
+            //   RepoManager when the xCAT image is being generated. The
+            //   RepoManager only supports baseurl for now, metalink and mirror
+            //   lists trigger a bad optional access during runtime.
             switch (osinfo.getPlatform()) {
                 case models::OS::Platform::el8:
                     builder.addPackage("oracle-epel-release-el8");
@@ -90,7 +90,6 @@ ScriptBuilder installScript(
     const auto& cluster = cloyster::Singleton<models::Cluster>::get();
     builder.addCommand(
         "timedatectl set-timezone {}", cluster->getTimezone().getTimezone());
-
 
     return builder;
 }

@@ -27,19 +27,20 @@ public:
     ScriptBuilder(const ScriptBuilder&) = default;
     ScriptBuilder& operator=(const ScriptBuilder&) = default;
 
-    ScriptBuilder(ScriptBuilder&& builder)  noexcept
-    : m_commands(std::move(builder.m_commands))
-    , m_os(models::OS(builder.m_os)) {}
+    ScriptBuilder(ScriptBuilder&& builder) noexcept
+        : m_commands(std::move(builder.m_commands))
+        , m_os(models::OS(builder.m_os))
+    {
+    }
 
-    ScriptBuilder& operator=(ScriptBuilder&& builder) noexcept {
+    ScriptBuilder& operator=(ScriptBuilder&& builder) noexcept
+    {
         m_commands = std::move(builder.m_commands);
         m_os = builder.m_os;
         return *this;
     }
 
-
     ~ScriptBuilder() = default;
-
 
     /**
      * @brief Add a command verbatin to the script, can be used to add comments

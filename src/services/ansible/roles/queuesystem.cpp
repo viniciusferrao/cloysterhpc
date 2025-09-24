@@ -1,8 +1,8 @@
-#include <cloysterhpc/services/ansible/roles.h>
-#include <cloysterhpc/services/ansible/roles/queuesystem.h>
+#include <cloysterhpc/models/pbs.h>
 #include <cloysterhpc/models/queuesystem.h>
 #include <cloysterhpc/models/slurm.h>
-#include <cloysterhpc/models/pbs.h>
+#include <cloysterhpc/services/ansible/roles.h>
+#include <cloysterhpc/services/ansible/roles/queuesystem.h>
 #include <cloysterhpc/services/log.h>
 
 #ifdef BUILD_TESTING
@@ -34,7 +34,8 @@ void configureQueueSystem()
             }
 
             case cloyster::models::QueueSystem::Kind::PBS: {
-                const auto& pbs = dynamic_cast<cloyster::models::PBS*>(queue.value().get());
+                const auto& pbs
+                    = dynamic_cast<cloyster::models::PBS*>(queue.value().get());
 
                 osservice()->install("openpbs-server-ohpc");
                 osservice()->enableService("pbs");
@@ -42,7 +43,8 @@ void configureQueueSystem()
                     "qmgr -c \"set server default_qsub_arguments= -V\"");
                 ::runner()->executeCommand(fmt::format(
                     "qmgr -c \"set server resources_default.place={}\"",
-                    cloyster::utils::enums::toString<cloyster::models::PBS::ExecutionPlace>(
+                    cloyster::utils::enums::toString<
+                        cloyster::models::PBS::ExecutionPlace>(
                         pbs->getExecutionPlace())));
                 ::runner()->executeCommand(
                     "qmgr -c \"set server job_history_enable=True\"");
@@ -55,9 +57,6 @@ void configureQueueSystem()
 }
 namespace cloyster::services::ansible::roles::queuesystem {
 
-void run(const Role& role)
-{
-    configureQueueSystem();
-}
+void run(const Role& role) { configureQueueSystem(); }
 
 }

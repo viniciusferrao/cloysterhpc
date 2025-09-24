@@ -40,7 +40,8 @@ public:
         std::vector<std::string> synclists;
     };
 
-    // TODO: CFL Extract this to its own namespace and add a enum for the provisioner
+    // TODO: CFL Extract this to its own namespace and add a enum for the
+    // provisioner
     struct ImageInstallArgs final {
         std::string imageName;
         std::filesystem::path rootfs;

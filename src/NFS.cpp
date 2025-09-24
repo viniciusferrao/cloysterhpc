@@ -8,8 +8,8 @@
 #include <cloysterhpc/NFS.h>
 #include <cloysterhpc/const.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/init.h>
+#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/osservice.h>
 #include <cloysterhpc/services/scriptbuilder.h>
 #include <cloysterhpc/utils/formatters.h>
@@ -127,10 +127,12 @@ TEST_CASE("installScript")
 {
     const OS osinfo
         = cloyster::models::OS(OS::Distro::Rocky, OS::Platform::el9, 5);
-    cloyster::services::initializeSingletonsOptions(std::make_unique<const Options>());
+    cloyster::services::initializeSingletonsOptions(
+        std::make_unique<const Options>());
     cloyster::Singleton<const models::AnswerFile>::init(
         []() -> std::unique_ptr<const models::AnswerFile> {
-            auto answerfile = std::make_unique<models::AnswerFile>("test/sample/answerfile/rocky9-xcat.ini");
+            auto answerfile = std::make_unique<models::AnswerFile>(
+                "test/sample/answerfile/rocky9-xcat.ini");
             return answerfile;
         });
     const auto builder = NFS::installScript(osinfo);
@@ -154,7 +156,8 @@ TEST_CASE("installImageScript")
         = cloyster::models::OS(OS::Distro::Rocky, OS::Platform::el9, 5);
     cloyster::Singleton<const models::AnswerFile>::init(
         []() -> std::unique_ptr<const models::AnswerFile> {
-            auto answerfile = std::make_unique<models::AnswerFile>("test/sample/answerfile/rocky9-xcat.ini");
+            auto answerfile = std::make_unique<models::AnswerFile>(
+                "test/sample/answerfile/rocky9-xcat.ini");
             return answerfile;
         });
     const auto builder = NFS::imageInstallScript(osinfo,

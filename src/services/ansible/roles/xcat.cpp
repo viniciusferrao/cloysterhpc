@@ -1,7 +1,7 @@
-#include <cloysterhpc/services/ansible/roles/xcat.h>
-#include <cloysterhpc/services/xcat.h>
-#include <cloysterhpc/services/log.h>
 #include <cloysterhpc/NFS.h>
+#include <cloysterhpc/services/ansible/roles/xcat.h>
+#include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/xcat.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>

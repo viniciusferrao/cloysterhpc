@@ -74,13 +74,15 @@ void OFED::install() const
                 = cloyster::Singleton<cloyster::services::IRunner>::get();
             auto repoManager = cloyster::Singleton<
                 cloyster::services::repos::RepoManager>::get();
-            const auto kernelVersion = cloyster::utils::singleton::answerfile()->system.kernel;
+            const auto kernelVersion
+                = cloyster::utils::singleton::answerfile()->system.kernel;
 
             repoManager->enable("doca");
             // Install the required packages
             runner->checkCommand("dnf makecache --repo=doca");
             if (kernelVersion) {
-                LOG_WARN("Building OFED with kernel version from the answerfile {} @ [system].kernel: {}",
+                LOG_WARN("Building OFED with kernel version from the "
+                         "answerfile {} @ [system].kernel: {}",
                     cloyster::utils::singleton::answerfile()->path(),
                     kernelVersion.value());
                 runner->checkCommand(
@@ -88,7 +90,8 @@ void OFED::install() const
                                 "kernel-devel-{kernelVersion} doca-extra",
                         fmt::arg("kernelVersion", kernelVersion.value())));
             } else {
-                runner->checkCommand("dnf -y --nogpg install kernel kernel-devel doca-extra");
+                runner->checkCommand(
+                    "dnf -y --nogpg install kernel kernel-devel doca-extra");
             }
 
             LOG_INFO("Compiling OFED DOCA drivers, this may take a while, use "
@@ -116,7 +119,8 @@ void OFED::install() const
             runner->executeCommand(fmt::format("dnf install -y {}", rpm[0]));
 
             runner->checkCommand("dnf makecache --repo=doca*");
-            runner->checkCommand("dnf install --nogpg -y doca-ofed mlnx-fw-updater");
+            runner->checkCommand(
+                "dnf install --nogpg -y doca-ofed mlnx-fw-updater");
             runner->executeCommand("systemctl restart openibd");
             // runner->executeCommand("systemctl enable --now opensmd");
         } break;

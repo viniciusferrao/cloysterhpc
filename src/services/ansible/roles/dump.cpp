@@ -54,9 +54,6 @@ void dumpPreInstallState()
 
 namespace cloyster::services::ansible::roles::dump {
 
-void run(const Role& role)
-{
-    dumpPreInstallState();
-}
+void run(const Role& role) { dumpPreInstallState(); }
 
 }

@@ -6,8 +6,8 @@
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/patterns/wrapper.h>
-#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/services/init.h>
+#include <cloysterhpc/services/options.h>
 #include <cloysterhpc/utils/singleton.h>
 
 #include <chrono>
@@ -96,7 +96,8 @@ void touchFile(const std::filesystem::path& path)
 
 void createDirectory(const std::filesystem::path& path)
 {
-    cloyster::services::initializeSingletonsOptions(std::make_unique<cloyster::services::Options>());
+    cloyster::services::initializeSingletonsOptions(
+        std::make_unique<cloyster::services::Options>());
     auto opts = cloyster::utils::singleton::options();
     if (opts->dryRun) {
         LOG_INFO("Dry Run: Would create directory {}", path.string())

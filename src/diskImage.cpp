@@ -8,12 +8,12 @@
 #include <cloysterhpc/diskImage.h>
 #include <cloysterhpc/functions.h>
 #include <cloysterhpc/models/os.h>
+#include <cloysterhpc/services/cache.h>
 #include <cloysterhpc/services/files.h>
 #include <cloysterhpc/services/log.h>
 #include <cloysterhpc/services/options.h>
-#include <cloysterhpc/services/cache.h>
-#include <cloysterhpc/utils/singleton.h>
 #include <cloysterhpc/utils/optional.h>
+#include <cloysterhpc/utils/singleton.h>
 #include <unordered_map>
 
 // @FIXME: This file need some work
@@ -114,10 +114,12 @@ bool DiskImage::hasVerifiedChecksum(const std::filesystem::path& path)
             "e" }
     };
 
-    std::string checksum = cloyster::services::cache::fs::checksum("iso-checksum", path);
+    std::string checksum
+        = cloyster::services::cache::fs::checksum("iso-checksum", path);
     LOG_INFO("SHA256 checksum of file {} is: {}", path.string(), checksum);
 
-    if (auto pair = hash_map.find(path.filename().string()); pair != hash_map.end()) {
+    if (auto pair = hash_map.find(path.filename().string());
+        pair != hash_map.end()) {
         if (checksum == pair->second) {
             LOG_TRACE("Checksum - The disk image is valid")
             return true;

@@ -382,7 +382,6 @@ public:
     void loadFile(const std::filesystem::path& path);
     void dumpFile(const std::filesystem::path& path);
 
-
     [[nodiscard]] auto path() const -> const std::filesystem::path&;
 
     explicit AnswerFile(const std::filesystem::path& path);

@@ -1,6 +1,6 @@
-#include <cloysterhpc/services/ansible/roles/selinux.h>
-#include <cloysterhpc/models/cluster.h>
 #include <cloysterhpc/functions.h>
+#include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/services/ansible/roles/selinux.h>
 #include <cloysterhpc/services/log.h>
 
 #ifdef BUILD_TESTING
@@ -22,10 +22,10 @@ void disableSELinux()
     const auto filename = CHROOT "/etc/sysconfig/selinux";
 
     cloyster::functions::backupFile(filename);
-    cloyster::functions::changeValueInConfigurationFile(filename, "SELINUX", "disabled");
+    cloyster::functions::changeValueInConfigurationFile(
+        filename, "SELINUX", "disabled");
 
     LOG_WARN("SELinux has been disabled")
-
 }
 void configureSELinuxMode()
 {
@@ -52,9 +52,6 @@ void configureSELinuxMode()
 
 namespace cloyster::services::ansible::roles::selinux {
 
-void run(const Role& role)
-{
-    configureSELinuxMode();
-}
+void run(const Role& role) { configureSELinuxMode(); }
 
 }

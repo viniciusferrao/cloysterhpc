@@ -104,14 +104,9 @@ OS::OS(const Distro& distro, const Platform& platform,
     , m_distro(distro)
     , m_minorVersion(minorVersion)
 {
-    LOG_INFO(
-        "Initializing OS (ctr 2), platform={}, minorVersion={}, arch={}, family={}",
-        distro,
-        platform,
-        minorVersion,
-        arch,
-        family
-    );
+    LOG_INFO("Initializing OS (ctr 2), platform={}, minorVersion={}, arch={}, "
+             "family={}",
+        distro, platform, minorVersion, arch, family);
     switch (platform) {
         case OS::Platform::el10:
             m_majorVersion = 10;

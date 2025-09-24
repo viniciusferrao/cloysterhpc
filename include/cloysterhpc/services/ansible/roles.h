@@ -1,8 +1,8 @@
 #ifndef CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_H_
 #define CLOYSTERHPC_SERVICES_ANSIBLE_ROLES_H_
 
-#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/models/cluster.h>
+#include <cloysterhpc/models/os.h>
 #include <cloysterhpc/services/ansible/role.h>
 #include <cloysterhpc/services/osservice.h>
 
@@ -40,36 +40,40 @@ namespace cloyster::services::ansible::roles {
 /**
  * @brief Represents a callable unit of Ansible role logic.
  *
- * `RoleRunnable` is a type alias for a standard C++ function object (`std::function`).
- * It encapsulates the executable logic for a specific Ansible role, making it
- * possible to store and invoke different role implementations in a uniform way.
+ * `RoleRunnable` is a type alias for a standard C++ function object
+ * (`std::function`). It encapsulates the executable logic for a specific
+ * Ansible role, making it possible to store and invoke different role
+ * implementations in a uniform way.
  *
  * The function signature defined by `RoleRunnable` takes a single constant
  * reference to a `Role` object as its parameter and returns nothing (`void`).
- * This design ensures that all runnable role implementations share a common interface,
- * regardless of whether they are a simple function, a lambda expression, or a
- * function object.
+ * This design ensures that all runnable role implementations share a common
+ * interface, regardless of whether they are a simple function, a lambda
+ * expression, or a function object.
  *
- * This type is a key component of the dispatcher pattern used by the `getRunnable()`
- * function, allowing it to return a generic callable that can be executed later.
+ * This type is a key component of the dispatcher pattern used by the
+ * `getRunnable()` function, allowing it to return a generic callable that can
+ * be executed later.
  */
 using RoleRunnable = std::function<void(const Role& role)>;
 
 /**
  * @brief Retrieves a runnable role function based on the role name.
  *
- * This function acts as a factory or dispatch mechanism, returning the appropriate
- * function pointer or functor (a `RoleRunnable`) to execute a specific Ansible role's
- * `run` or `installScript` method.
+ * This function acts as a factory or dispatch mechanism, returning the
+ * appropriate function pointer or functor (a `RoleRunnable`) to execute a
+ * specific Ansible role's `run` or `installScript` method.
  *
  * It maps a given `role.m_roleName` string to a corresponding
- * function. For some roles, it directly returns a function pointer (e.g., `repos::run`),
- * while for others (the `installScript` roles), it wraps the script-generating
- * function in a lambda to ensure it matches the `RoleRunnable` signature.
+ * function. For some roles, it directly returns a function pointer (e.g.,
+ * `repos::run`), while for others (the `installScript` roles), it wraps the
+ * script-generating function in a lambda to ensure it matches the
+ * `RoleRunnable` signature.
  *
- * @param role The `Role` object containing the name of the role to get the runnable for.
- * @param osinfo The `models::OS` object, providing operating system information,
- * which is passed to the script-generating functions.
+ * @param role The `Role` object containing the name of the role to get the
+ * runnable for.
+ * @param osinfo The `models::OS` object, providing operating system
+ * information, which is passed to the script-generating functions.
  * @return A `RoleRunnable` functor or function pointer that can be invoked to
  * execute the logic for the specified role.
  * @throws std::invalid_argument Throws an exception if the `role.m_roleName`
@@ -106,8 +110,7 @@ void run(const Role& role, const models::OS& osinfo);
  * @param osinfo The operating system information used to evaluate the role
  * condition.
  */
-void run(Roles role, const models::OS& osinfo,
-    Role::Vars&& vars = {},
+void run(Roles role, const models::OS& osinfo, Role::Vars&& vars = {},
     Role::Tags&& tags = {},
     std::optional<
         std::function<bool(const models::OS& osinfo)>>&& = std::nullopt);
@@ -116,7 +119,7 @@ void run(Roles role, const models::OS& osinfo,
  * @brief Executor implementation for Ansible roles.
  *
  * This class provides the concrete implementation of the Execution interface
- * specifically for executing Ansible roles. It executes the roles in the order 
+ * specifically for executing Ansible roles. It executes the roles in the order
  * they appear in --roles command line argument. If --roles the Shell execution
  * is used instead.
  */

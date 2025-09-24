@@ -7,7 +7,6 @@
 namespace cloyster::services::ansible::roles::network {
 
 void run(const Role& role);
- 
 
 };
 

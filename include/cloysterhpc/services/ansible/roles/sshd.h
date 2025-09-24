@@ -7,7 +7,6 @@
 namespace cloyster::services::ansible::roles::sshd {
 
 void run(const Role& role);
- 
 
 };
 

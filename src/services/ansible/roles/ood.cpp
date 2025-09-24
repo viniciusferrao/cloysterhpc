@@ -12,9 +12,6 @@
 
 namespace cloyster::services::ansible::roles::ood {
 
-void run(const Role& role)
-{
-    throw std::logic_error("Not implemented");
-}
+void run(const Role& role) { throw std::logic_error("Not implemented"); }
 
 }

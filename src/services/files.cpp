@@ -174,8 +174,7 @@ std::string checksum(const std::string& data)
     return checksum.get_string();
 }
 
-std::string checksum(
-    const fs::path& path, const std::size_t chunkSize)
+std::string checksum(const fs::path& path, const std::size_t chunkSize)
 {
     Glib::Checksum checksum(Glib::Checksum::ChecksumType::CHECKSUM_SHA256);
     std::ifstream file(path, std::ios::in | std::ios::binary);
@@ -212,21 +211,17 @@ std::string md5sum(const std::string& data)
 }
 
 namespace {
-void check(const auto& file, const fs::path& path)
-{
-    if (!file.is_open()) {
-        throw std::system_error(
-            errno, std::generic_category(), fmt::format(
-                "File error {}", path.string()));
+    void check(const auto& file, const fs::path& path)
+    {
+        if (!file.is_open()) {
+            throw std::system_error(errno, std::generic_category(),
+                fmt::format("File error {}", path.string()));
+        }
     }
-}
 
 }
 
-bool exists(const fs::path& path)
-{
-    return fs::exists(path);
-}
+bool exists(const fs::path& path) { return fs::exists(path); }
 
 void create(const fs::path& path)
 {
@@ -260,7 +255,7 @@ std::string read(const fs::path& path)
     std::string contents(static_cast<std::size_t>(size), '\0');
     if (!file.read(contents.data(), size)) {
         throw std::system_error(errno, std::generic_category(),
-                                "Failed to read file: " + path.string());
+            "Failed to read file: " + path.string());
     }
     return contents;
 }
@@ -285,8 +280,8 @@ void append(const fs::path& path, std::string_view contents)
     file << contents;
 }
 
-
-TEST_CASE("create/remove/read/write/append") {
+TEST_CASE("create/remove/read/write/append")
+{
     const fs::path testPath = "test/files/read_write.txt";
 
     files::remove(testPath);
@@ -304,6 +299,5 @@ TEST_CASE("create/remove/read/write/append") {
 }
 
 TEST_SUITE_END();
-
 
 } // namespace cloyster::services::files

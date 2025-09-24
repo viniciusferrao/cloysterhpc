@@ -122,10 +122,10 @@ int main(int argc, const char** argv)
     }
 
     if (optsMut->listRoles) {
-        const auto roles = utils::string::lower(fmt::format("{}", fmt::join(
-            utils::enums::toStrings<services::ansible::roles::Roles>(), 
-            ","
-        )));
+        const auto roles = utils::string::lower(fmt::format("{}",
+            fmt::join(
+                utils::enums::toStrings<services::ansible::roles::Roles>(),
+                ",")));
 
         fmt::print("Roles: {}", roles);
         return EXIT_SUCCESS;
@@ -172,7 +172,8 @@ int main(int argc, const char** argv)
         LOG_ERROR("CLI feature not implemented.\n");
         return EXIT_FAILURE;
     }
-    optsMut->enableTUI = optsMut->answerfile.empty() && optsMut->testCommand.empty();
+    optsMut->enableTUI
+        = optsMut->answerfile.empty() && optsMut->testCommand.empty();
 
     // Initialize options singleton making it const
     LOG_DEBUG("Initializing command line options");
@@ -180,7 +181,6 @@ int main(int argc, const char** argv)
     auto opts = utils::singleton::options();
     // Assert that opts is const from now on
     static_assert(std::is_const_v<std::remove_reference_t<decltype(*opts)>>);
-
 
     LOG_INFO("Initializing the model");
     auto model = std::make_unique<cloyster::models::Cluster>();
@@ -192,7 +192,6 @@ int main(int argc, const char** argv)
         model->fillData(*answerfile);
     }
     LOG_INFO("Answerfile loaded: {}", opts->answerfile)
-
 
 #ifndef NDEBUG
     // model->fillTestData();
@@ -219,11 +218,12 @@ int main(int argc, const char** argv)
     }
 #endif
     LOG_TRACE("Starting execution engine");
-    auto executionEngine = [&]() -> std::unique_ptr<Execution>{ 
+    auto executionEngine = [&]() -> std::unique_ptr<Execution> {
         if (opts->roles.empty()) {
             return std::make_unique<cloyster::services::Shell>();
         } else {
-            return std::make_unique<cloyster::services::ansible::roles::Executor>();
+            return std::make_unique<
+                cloyster::services::ansible::roles::Executor>();
         };
     }();
 

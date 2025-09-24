@@ -1,8 +1,8 @@
-#include <cloysterhpc/services/ansible/roles/slurm.h>
 #include <cloysterhpc/functions.h>
-#include <cloysterhpc/utils/optional.h>
-#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/services/ansible/roles/slurm.h>
 #include <cloysterhpc/services/log.h>
+#include <cloysterhpc/services/runner.h>
+#include <cloysterhpc/utils/optional.h>
 
 #ifdef BUILD_TESTING
 #include <doctest/doctest.h>
@@ -23,32 +23,25 @@ void run(const Role& role)
     cloyster::functions::abortif(nodesNames.size() < 1,
         "At last one node need to be defined in the answerfile {}",
         answerfile()->path());
-    const auto nodesConfig = optional::unwrap(
-        answerfile()->nodes.generic, 
+    const auto nodesConfig = optional::unwrap(answerfile()->nodes.generic,
         "[node] section not loaded or missing from the answerfile {}",
         answerfile()->path());
-    const auto nodesPrefix = optional::unwrap(
-        nodesConfig.prefix,
+    const auto nodesPrefix = optional::unwrap(nodesConfig.prefix,
         "prefix missing in [node] section in the answerfile {}",
         answerfile()->path());
-    const auto cpusPerNode = optional::unwrap(
-        nodesConfig.cpus_per_node,
+    const auto cpusPerNode = optional::unwrap(nodesConfig.cpus_per_node,
         "cpus_per_node missing in [node] section in the answerfile {}",
         answerfile()->path());
-    const auto realMemory = optional::unwrap(
-        nodesConfig.real_memory,
+    const auto realMemory = optional::unwrap(nodesConfig.real_memory,
         "real_memory missing in [node] section in the answerfile {}",
         answerfile()->path());
-    const auto coresPerSocket = optional::unwrap(
-        nodesConfig.cores_per_socket,
+    const auto coresPerSocket = optional::unwrap(nodesConfig.cores_per_socket,
         "cores_per_socket missing in [node] section in the answerfile {}",
         answerfile()->path());
-    const auto threadsPerCore = optional::unwrap(
-        nodesConfig.threads_per_core,
+    const auto threadsPerCore = optional::unwrap(nodesConfig.threads_per_core,
         "threads_per_core missing in [node] section in the answerfile {}",
         answerfile()->path());
-    const auto sockets = optional::unwrap(
-        nodesConfig.sockets,
+    const auto sockets = optional::unwrap(nodesConfig.sockets,
         "sockets missing in [node] section in the answerfile {}",
         answerfile()->path());
 
@@ -115,12 +108,11 @@ chown slurm:slurm /etc/slurm/slurmdbd.conf
 chmod 600 /etc/slurm/slurmdbd.conf
 
 )del",
-                       fmt::arg("hostname", answerfile()->hostname.hostname),
-                       fmt::arg("mariadb_root_pass", answerfile()->slurm.mariadb_root_password),
-                       fmt::arg("slurmdb_pass", answerfile()->slurm.slurmdb_password),
-                       fmt::arg("storage_pass", answerfile()->slurm.storage_password)
-    );
-
+        fmt::arg("hostname", answerfile()->hostname.hostname),
+        fmt::arg(
+            "mariadb_root_pass", answerfile()->slurm.mariadb_root_password),
+        fmt::arg("slurmdb_pass", answerfile()->slurm.slurmdb_password),
+        fmt::arg("storage_pass", answerfile()->slurm.storage_password));
 
     runner::shell::fmt(R"del(
 # Minimal /etc/slurm/slurm.conf
@@ -144,9 +136,8 @@ sed -i \
     "$slurm_conf"
 
 )del",
-                       fmt::arg("hostname", answerfile()->hostname.hostname),
-                       fmt::arg("cluster_name",  answerfile()->information.cluster_name)
-       );
+        fmt::arg("hostname", answerfile()->hostname.hostname),
+        fmt::arg("cluster_name", answerfile()->information.cluster_name));
 
     runner::shell::fmt(R"del(
 slurm_conf=/etc/slurm/slurm.conf
@@ -178,17 +169,15 @@ sleep 3
 # Check that sacct works
 sacct
 )del",
-                       fmt::arg("hostname", answerfile()->hostname.hostname),
-                       fmt::arg("node_names", fmt::join(nodesNames, " ")),
-                       fmt::arg("node_prefix", nodesPrefix),
-                       fmt::arg("cpus_per_node", cpusPerNode),
-                       fmt::arg("sockets", sockets),
-                       fmt::arg("real_memory", realMemory),
-                       fmt::arg("cores_per_socket", coresPerSocket),
-                       fmt::arg("threads_per_core", threadsPerCore),
-                       fmt::arg("last_node_num", nodesNames.size()),
-                       fmt::arg("partition_name", answerfile()->slurm.partition_name)
-                       );
+        fmt::arg("hostname", answerfile()->hostname.hostname),
+        fmt::arg("node_names", fmt::join(nodesNames, " ")),
+        fmt::arg("node_prefix", nodesPrefix),
+        fmt::arg("cpus_per_node", cpusPerNode), fmt::arg("sockets", sockets),
+        fmt::arg("real_memory", realMemory),
+        fmt::arg("cores_per_socket", coresPerSocket),
+        fmt::arg("threads_per_core", threadsPerCore),
+        fmt::arg("last_node_num", nodesNames.size()),
+        fmt::arg("partition_name", answerfile()->slurm.partition_name));
 }
 
 }

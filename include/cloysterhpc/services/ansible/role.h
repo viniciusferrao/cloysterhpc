@@ -17,35 +17,34 @@ namespace cloyster::services::ansible::roles {
 /**
  * @brief Enumeration of all supported Ansible roles in the system.
  *
- * This enum provides identifiers for each available Ansible role that can be executed.
- * The values correspond to the role names and are used for dispatching to the
- * appropriate role implementation.
+ * This enum provides identifiers for each available Ansible role that can be
+ * executed. The values correspond to the role names and are used for
+ * dispatching to the appropriate role implementation.
  */
 enum class Roles : std::uint8_t {
-    CHECK,       ///< Pre install check/validation role
-    REPOS,       ///< Repository configuration role
-    NETWORK,     ///< Network configuration role
-    SSHD,        ///< SSH daemon configuration role
-    OFED,        ///< OpenFabrics Enterprise Distribution role
-    DUMP,        ///< System dump/crash role
-    LOCALE,      ///< System locale configuration role
-    FIREWALL,    ///< Firewall configuration role
-    SELINUX,     ///< SELinux configuration role
-    NFS,         ///< NFS server/client role
+    CHECK, ///< Pre install check/validation role
+    REPOS, ///< Repository configuration role
+    NETWORK, ///< Network configuration role
+    SSHD, ///< SSH daemon configuration role
+    OFED, ///< OpenFabrics Enterprise Distribution role
+    DUMP, ///< System dump/crash role
+    LOCALE, ///< System locale configuration role
+    FIREWALL, ///< Firewall configuration role
+    SELINUX, ///< SELinux configuration role
+    NFS, ///< NFS server/client role
     QUEUESYSTEM, ///< Queue system role, SLURM + PBS logic
-    SLURM,       ///< SLURM role
-    OHPC,        ///< OpenHPC components role
+    SLURM, ///< SLURM role
+    OHPC, ///< OpenHPC components role
     PROVISIONER, ///< Dispatches to XCAT or CONFLUENT roles
-    XCAT,        ///< xCAT management role
-    CONFLUENT,   ///< Confluent platform role
-    BASE,        ///< Base system configuration role
-    AUDIT,       ///< Audit system role
-    AIDE,        ///< Advanced Intrusion Detection Environment role
-    FAIL2BAN,    ///< Fail2ban security role
-    TIMESYNC,    ///< Time synchronization role
-    SPACK,       ///< Spack package manager role
+    XCAT, ///< xCAT management role
+    CONFLUENT, ///< Confluent platform role
+    BASE, ///< Base system configuration role
+    AUDIT, ///< Audit system role
+    AIDE, ///< Advanced Intrusion Detection Environment role
+    FAIL2BAN, ///< Fail2ban security role
+    TIMESYNC, ///< Time synchronization role
+    SPACK, ///< Spack package manager role
 };
-
 
 /**
  * @brief Represents an Ansible role and its associated metadata.
@@ -59,20 +58,23 @@ public:
     using Vars = std::unordered_map<std::string, std::string>;
     using When = std::function<bool(const models::OS&)>;
     using Tags = std::set<std::string>;
+
 private:
     Roles m_role;
     std::string m_roleName;
     Tags m_tags;
     Vars m_vars;
     std::optional<When> m_when = std::nullopt;
+
 public:
     Role(Roles role, auto&& tags, auto&& vars, auto&& when)
-    : m_role(role)
-    , m_roleName(utils::enums::toStringLower(role))
-    , m_tags(std::forward<decltype(tags)>(tags))
-    , m_vars(std::forward<decltype(vars)>(vars))
-    , m_when(std::forward<decltype(when)>(when))
-    {}
+        : m_role(role)
+        , m_roleName(utils::enums::toStringLower(role))
+        , m_tags(std::forward<decltype(tags)>(tags))
+        , m_vars(std::forward<decltype(vars)>(vars))
+        , m_when(std::forward<decltype(when)>(when))
+    {
+    }
 
     auto role() const -> const auto& { return m_role; }
     auto roleName() const -> const auto& { return m_roleName; }
