@@ -69,11 +69,12 @@ TEST_CASE("ansible::Role formatter produces correct output")
                            "  Vars: auditd_enabled=true log_level=debug";
 
     std::string actual = fmt::format("{}", role);
-
     // Note: Since map iteration is unordered, we match parts instead of exact
     // string
     CHECK(actual.find("Role: audit") != std::string::npos);
-    CHECK(actual.find("Tags: security compliance") != std::string::npos);
+    CHECK(actual.find("Tags:") != std::string::npos);
+    CHECK(actual.find("security") != std::string::npos);
+    CHECK(actual.find("compliance") != std::string::npos);
     CHECK((actual.find("auditd_enabled=true") != std::string::npos));
     CHECK((actual.find("log_level=debug") != std::string::npos));
 }

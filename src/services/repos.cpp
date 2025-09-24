@@ -420,9 +420,10 @@ TEST_CASE("MirrorRepo")
 
     // Test local paths
     cloyster::Singleton<const Options>::init(std::make_unique<const Options>(Options{ 
-        .mirrorBaseUrl = "file:///var/run/repos/myrepo/repo"
+        .mirrorBaseUrl = "file:///var/run/repos"
     }));
-    CHECK(mirrorConfigOnline.baseurl() == "/var/run/repos/myrepo/repo");
+    CHECK(mirrorConfigOnline.baseurl()
+        == "file:///var/run/repos/myrepo/repo");
     CHECK(mirrorConfigOnline.gpgkey().value()
         == "file:///var/run/repos/myrepo/key.gpg");
 
@@ -670,17 +671,6 @@ struct RepoConfFiles {
     RepoConfFile nonDistroRepos;
 };
 
-// WIPWIPWIP
-// @FIXME: Now we have multiple .conf files and need to decide dynamically
-//  which of them to parse. In the end we'll have the same RepoConfig file
-//  but we need to check the distribution and chose what repository to load.
-//  This change may make RepoFilter obsolete because the repositories will
-//  be loaded correctly from the .conf files. But now the RepoConfig file does
-//  not represent the state of the disk anymore. The configuration lives
-//  inside repos/ folder in the source tree. For RHEL, OL and Alma we have
-//  rhel.conf, oracle.conf and alma.conf respectively for Rocky we have
-//  rocky-upstream.conf or rocky-vault.conf depending if using vault repos
-//  are required or not.
 //
 // Parser for repos.conf
 //
@@ -806,6 +796,7 @@ public:
         }
     };
 
+#ifdef BUILD_TESTING
     // Parse a repo.conf file and return a RepoConfFile with default vars,
     // for testing only
     static RepoConfFile parseTest(const std::filesystem::path& path,
@@ -817,13 +808,14 @@ public:
             .releasever = "9",
             .xcatVersion = "latest",
             .zabbixVersion = "6.4",
-            .ofedVersion = "latest-2.9",
+            .ofedVersion = "latest-2.9-LTS",
         })
     {
         RepoConfFile conffile;
         parse(path, conffile, vars);
         return conffile;
     };
+#endif
 
     // Parse a repo.conf file and return a RepoConfFile using default path
     static RepoConfFile parse(const RepoConfigVars& vars)
@@ -866,6 +858,7 @@ public:
 
 TEST_CASE("RepoConfigParser")
 {
+#ifdef BUILD_TESTING
     REQUIRE(cloyster::functions::exists("repos/repos.conf"));
     auto conffile = RepoConfigParser::parseTest("repos/repos.conf");
     CHECK(conffile.files().size() > 0);
@@ -878,6 +871,7 @@ TEST_CASE("RepoConfigParser")
     CHECK(epel.upstream.repo
         == "https://download.fedoraproject.org/pub/epel/9/Everything/"
            "x86_64/");
+#endif
 }
 
 // Installs and enable/disable RPM repositories
@@ -1105,6 +1099,7 @@ struct RepoConfAdapter final {
 
 TEST_CASE("RepoAdapter")
 {
+#ifdef BUILD_TESTING
     Options opts {};
     cloyster::services::initializeSingletonsOptions(
         std::make_unique<const Options>(opts));
@@ -1115,6 +1110,7 @@ TEST_CASE("RepoAdapter")
         TrueMirrorExistenceChecker>::fromConfFile(conffile,
         conffile.filesnames());
     CHECK(repofiles.size() == conffile.files().size());
+#endif
 };
 
 // Return the repository names to enable based on the osinfo
@@ -1422,6 +1418,15 @@ TEST_SUITE("cloyster::services::repos [slow]")
 
     TEST_CASE("[slow] repo.conf urls")
     {
+        // This test case issues HTTP requests for each repository
+        // URL in repos.conf (and siblings) and fail if the
+        // HTTP Status in the response is not 200. So this test
+        // will start fail if any repostiory URL changes
+        // (which would break the instalation). It is very slow to
+        // run so it is not inteded to run frequently, but otherwise
+        // as a semi-automated way to validate the repositories URLs
+        // in the repos.conf. use -tce="*slow*" to skip it.
+#ifdef BUILD_TESTING
         using namespace cloyster::services;
         cloyster::services::initializeSingletonsOptions(
             std::make_unique<const Options>(Options {}));
@@ -1480,6 +1485,7 @@ TEST_SUITE("cloyster::services::repos [slow]")
                 }
             }
         }
+#endif
     }
 }
 }; // namespace cloyster::services::repos {

@@ -385,7 +385,6 @@ public:
 
     [[nodiscard]] auto path() const -> const std::filesystem::path&;
 
-    AnswerFile();
     explicit AnswerFile(const std::filesystem::path& path);
 };
 

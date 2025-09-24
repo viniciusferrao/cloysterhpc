@@ -31,8 +31,6 @@ AnswerFile::AnswerFile(const std::filesystem::path& path)
     loadFile(m_path);
 }
 
-// AnswerFile::AnswerFile() {};
-
 void AnswerFile::loadFile(const std::filesystem::path& path)
 {
     m_path = path;
