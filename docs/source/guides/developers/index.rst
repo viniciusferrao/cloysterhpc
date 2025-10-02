@@ -10,6 +10,3 @@ Content
 
    contributing.rst
    submission-guidelines.rst
-   testing/ansible.rst
-
-

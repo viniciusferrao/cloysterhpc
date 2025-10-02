@@ -24,22 +24,13 @@ Head node
 Operating System Requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :widths: 20 10 10
+.. list-table:: Supported Operating Systems
+   :widths: 30 20
    :header-rows: 1
 
-   * - Name
-     - 8.8
-     - 9.3
-   * - RHEL
+   * - Distribution
+     - Status
+   * - RHEL 9.x
      - Passing
-     - Passing
-   * - RockyLinux
-     - Passing
-     - Passing
-   * - Alma
-     - Passing
-     - Passing
-   * - Oracle
-     - Passing
+   * - Rocky Linux 9.x
      - Passing

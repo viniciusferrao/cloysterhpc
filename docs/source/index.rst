@@ -2,8 +2,9 @@
 Welcome to CloysterHPC documentation!
 =====================================
 
-**CloysterHPC** is a software that guides the user to set up an HPC clustered environment.
-It asks for specific questions regarding the system to get an HPC cluster up and running as quick as possible.
+**CloysterHPC** guides you through building a fully configured HPC cluster. It
+collects environment details, validates them, and automates the provisioning
+workflow end to end.
 
 .. note::
 
@@ -15,6 +16,7 @@ Contents
 .. toctree::
    :maxdepth: 1
 
+   cli_reference
    overview/index.rst
    guides/developers/index.rst
    guides/install/index.rst

@@ -4,18 +4,21 @@
 Installation Guide for Command Line Interface
 =============================================
 
-To set up Cloyster in your environment, you must first download the project in the head node.
+CloysterHPC ships as a single binary optimized for unattended rollouts. Follow
+these quick steps to launch a build from the command line:
 
-For the current list of operating systems supported and minimum requirements, read section ":doc:`System Requirements <../../overview/sys_os_requirements>`"
+1. Review the :ref:`Answerfile Reference <answerfile-reference>` to tailor the
+   cluster blueprint for your environment.
+2. Copy the answerfile to the head node alongside the ``cloysterhpc`` binary.
+3. Execute the installer with elevated privileges:
 
-Read section ":ref:`Assembling an answerfile <assembling-an-answerfile>`" before running.
+   .. code-block:: bash
 
-You can read a full commands list by running on your terminal the command:
+      cloysterhpc -a /path/to/answerfile.ini -l6 -u
 
-``./cloyster -h``
+   ``-a`` reads your blueprint, ``-l6`` increases log verbosity during the run,
+   and ``-u`` skips confirmation prompts so the deployment can proceed
+   unattended.
 
-To run Cloyster with an answerfile you must use the command:
-
-``./cloyster -a /path/to/answerfile.ini``
-
-
+For an overview of every CLI flag or to fine-tune specific roles, jump to the
+:doc:`CloysterHPC Operations Guide <../../cli_reference>`.

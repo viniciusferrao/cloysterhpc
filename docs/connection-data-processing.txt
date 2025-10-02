@@ -1,0 +1,23 @@
+anserfile.cpp
+  - loadExternalNetwork()
+  - loadManagementNetwork()
+  - loadApplicationNetwork()
+    - noop if commented
+  - loadServiceNetwork()
+    - noop if commented
+
+  - loadNetwork(network)
+    network.con_interface = m_keyfile.getString(networkSection, "interface");
+    convertNetworkAddressAndValidate(networkSection, "ip_address", network.con_ip_addr);
+    network.con_mac_addr = m_keyfile.getString(networkSection, "mac_address", "");
+    convertNetworkAddressAndValidate(networkSection, "subnet_mask", network.subnet_mask);
+    network.domain_name = m_keyfile.getStringOpt(networkSection, "domain_name");
+    convertNetworkAddressAndValidate(networkSection, "gateway", network.gateway);
+
+    if (auto opt = m_keyfile.getStringOpt(networkSection, "nameservers")) {
+        std::vector<std::string> nameservers;
+        boost::split(nameservers, opt.value(), boost::is_any_of(", "),
+            boost::token_compress_on);
+
+        network.nameservers = nameservers;
+    }

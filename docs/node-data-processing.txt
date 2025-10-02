@@ -1,0 +1,67 @@
+How nodes data is loaded and used
+- answerfile.loadNodes()
+  - Generic [node] section is loaded (answerfile.cpp loadNodes)
+    - Settings loaded from generic [node] section:
+        prefix padding root_password sockets cores_per_socket cpus_per_node
+        threads_per_core real_memory bmc_username bmc_password bmc_serialport
+        bmc_serialspeed start_ip
+  - For each [node.N] section:
+      - Load node section, calls loadNode(nodeSection), default to empty
+        string if missing
+          hostname root_password sockets cores_per_socket cores_per_socket
+          threads_per_core bmc_address bmc_username bmc_password bmc_serialport
+          bmc_serialspeed
+      - If hostname is empty assemble hostname
+          -> {prefix}{padding(N)}
+      - Calls validateNode
+        - This copies nodeN.attr = genericNode.attr if nodeN.attr is empty
+        - BUG? This is not fixing the node address based on N
+          "node_ip", node.start_ip <- generic->start_ip
+          "node_root_password", node.root_password <- generic->root_password
+          "sockets", node.sockets <- generic->sockets
+          "cores_per_socket", node.cores_per_socket <- generic->cores_per_socket
+          "threads_per_core", node.threads_per_core <- generic->threads_per_core
+          "bmc_address", node.bmc_address <- generic->bmc_address
+          "bmc_username", node.bmc_username <- generic->bmc_username
+          "bmc_password", node.bmc_password <- generic->bmc_password
+          "bmc_serialport", node.bmc_serialport <- generic->bmc_serialport
+          "bmc_serialspeed", node.bmc_serialspeed <- generic->bmc_serialspeed
+    - Emplace the new node at aswerfile.nodes.nodes
+- cluster.fillData()
+  - for (const auto& node : answerfil.nodes.nodes) 
+    Node newNode;
+    BMC newNodeBMC;
+    newNode.setHostname(nodename);
+    newNode.setNodeStartIp(node.start_ip.value());
+      // (naive setter)
+      m_node_start_ip = nodeStartIp;
+      // Note: (All Node setters are naive)
+    newNode.setMACAddress(mac_address.value()); (MAC is validated by Connection::validateMAC)
+    newNode.setNodeRootPassword(node.root_password.value());
+    auto& connection = nodeConnections.emplace_back(&getNetwork(Network::Profile::Management));
+    connection.setAddress(newNode.getNodeStartIp().value());
+      // (naive setter)
+    addNode(newNode)
+      // (naive setter)
+      m_nodes.emplace_back(node)
+
+- later on ..
+
+// Configuring SLURM
+- roles/slurm.cpp
+  - Uses generic config from answerfile to generate the slurm.conf
+    - BUG: per node cpus_per_node sockets real memory is not being configured
+    - From generic config
+      -> prefix, cpus_per_node, real_memory, cores_per_socket, threads_per_core, sockets
+      -> node names are retrieved from anserfile.node<N>.hostname (this is correct)
+     
+// Confluent 
+- services/confluent.cpp
+  - foreach node in cluster->nodes(): addNode(node)
+    - Uses:
+      - root password, hostname, network submas username password and MAC from node
+        (this is correct)
+      - Uses node.getConnection(Management).getAddress() for the IP, this is probably wrong
+        -> the IP is not getting incremented
+
+
