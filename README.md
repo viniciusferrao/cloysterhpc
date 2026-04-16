@@ -1,3 +1,9 @@
+> This repository is now read-only and kept for historical reference.
+>
+> Development has continued at [VersatusHPC/opencattus](https://github.com/VersatusHPC/opencattus).
+>
+> Please use that repository for active development, issues, pull requests, and current documentation.
+
 # CloysterHPC
 
 CloysterHPC is a software that guides the user to set up
